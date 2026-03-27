@@ -1,29 +1,34 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { Menu, Sun, ChevronRight } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { TodaysRecipeCard } from './todays-recipe-card'
-import { QuickTipCard } from './quick-tip-card'
-import { CategoryCard } from './recipe-card'
-import { ExploreMoreSection, defaultExploreItems } from './explore-more-section'
-import { AppSidebar } from './app-sidebar'
-import { dummyCategories } from '@/lib/dummy-data'
-import type { User } from '@supabase/supabase-js'
+import { useState } from "react";
+import Link from "next/link";
+import { Menu, Sun, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { TodaysRecipeCard } from "./todays-recipe-card";
+import { QuickTipCard } from "./quick-tip-card";
+import { CategoryCard } from "./recipe-card";
+import {
+  ExploreMoreSection,
+  defaultExploreItems,
+} from "./explore-more-section";
+import { AppSidebar } from "./app-sidebar";
+import { dummyCategories } from "@/lib/dummy-data";
+import type { User } from "@supabase/supabase-js";
+import ThemeToggleButton from "../theme-toggle-button";
 
 interface HomeContentProps {
-  user: User | null
+  user: User | null;
 }
 
 export function HomeContent({ user }: HomeContentProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const isSignedIn = !!user
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isSignedIn = !!user;
 
-  const userName = user?.user_metadata?.full_name || 
-                   user?.user_metadata?.name || 
-                   user?.email?.split('@')[0] || 
-                   'Franklin'
+  const userName =
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
+    user?.email?.split("@")[0] ||
+    "Franklin";
 
   return (
     <div className="min-h-screen bg-background">
@@ -52,9 +57,7 @@ export function HomeContent({ user }: HomeContentProps) {
             )}
           </div>
           <div className="flex items-center gap-2">
-            <button className="w-10 h-10 rounded-full bg-card flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
-              <Sun className="w-5 h-5" />
-            </button>
+            <ThemeToggleButton />
             {isSignedIn ? (
               <button
                 onClick={() => setSidebarOpen(true)}
@@ -77,9 +80,7 @@ export function HomeContent({ user }: HomeContentProps) {
       {/* Main Content */}
       <main className="px-4 pb-8 space-y-6">
         {/* Today's Recipe Card */}
-        <TodaysRecipeCard
-          onExplore={() => {}}
-        />
+        <TodaysRecipeCard onExplore={() => {}} />
 
         {/* Quick Tip */}
         <QuickTipCard
@@ -90,7 +91,9 @@ export function HomeContent({ user }: HomeContentProps) {
         {/* Wellness Recipes Section */}
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-foreground">Wellness Recipes</h2>
+            <h2 className="text-lg font-semibold text-foreground">
+              Wellness Recipes
+            </h2>
             <Link
               href="/categories"
               className="flex items-center gap-1 text-sm text-foreground hover:opacity-80 transition-opacity"
@@ -104,7 +107,7 @@ export function HomeContent({ user }: HomeContentProps) {
                 <CategoryCard
                   id={category.id}
                   title={category.title}
-                  color={index % 2 === 0 ? 'sage' : 'gray'}
+                  color={index % 2 === 0 ? "sage" : "gray"}
                   href={`/categories/${category.id}`}
                 />
               </div>
@@ -125,5 +128,5 @@ export function HomeContent({ user }: HomeContentProps) {
         />
       )}
     </div>
-  )
+  );
 }
