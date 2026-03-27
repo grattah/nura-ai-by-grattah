@@ -48,7 +48,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <meta name="apple-mobile-web-app-title" content="ConnectHub" />
         <meta name="mobile-web-app-capable" content="yes" />
