@@ -2,7 +2,6 @@ export * from "./nura-logo";
 export * from "./page-header";
 export * from "./recipe-card";
 export * from "./notification-card";
-export * from "./filter-tabs";
 export * from "./quick-tip-card";
 export * from "./home/todays-recipe-card";
 export * from "./home/explore-more-section";

@@ -3,18 +3,15 @@
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Flame, Leaf } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { FollowUpSection } from "@/components/nura/follow-up-section";
-import {
-  dummyRiskItems,
-  recipeFollowUpQuestions,
-} from "@/lib/nura-dummy-data-v1";
-import type { RiskItem } from "@/lib/nura-dummy-data-v1";
+import { dummyGuides } from "@/lib/nura-dummy-data";
+import type { RiskItem } from "@/lib/nura-dummy-data";
 import { cn } from "@/lib/utils";
+import { dummyRiskItems } from "@/lib/nura-dummy-data-v1";
 
-// ─── Risk level config ───────────────────────────────────────────────────────
+// ─── Risk level config ────────────────────────────────────────────────────────
 const levelConfig = {
   1: {
     dot: "bg-red-500",
@@ -57,8 +54,19 @@ const riskLabelConfig: Record<
   },
 };
 
+// This page is the concrete implementation of the "high-cancer-risks" guide.
+// The slug is the contextId used to scope Pinecone/Supabase vector queries.
+const GUIDE_SLUG = "high-cancer-risks";
+
 export default function CancerRisksPage() {
   const router = useRouter();
+
+  // Pull title + description + follow-up questions from the guide record
+  // so they stay in sync with the data layer — no hardcoded strings here.
+  const guide = dummyGuides.find((g) => g.slug === GUIDE_SLUG);
+  const title = guide?.title ?? "High Cancer Risks";
+  const description = guide?.description ?? "";
+  const staticQuestions = guide?.followUpQuestions ?? [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -74,11 +82,10 @@ export default function CancerRisksPage() {
           <span className="text-sm">Back</span>
         </Button>
         <h1 className="text-2xl font-bold text-foreground mb-1 leading-tight">
-          High Cancer Risks
+          {title}
         </h1>
         <p className="text-sm text-muted-foreground leading-snug max-w-xs">
-          The body naturally detoxifies itself constantly via the liver,
-          kidneys, lungs, intestines, and skin.
+          {description}
         </p>
       </header>
 
@@ -120,16 +127,22 @@ export default function CancerRisksPage() {
           ))}
         </div>
 
-        {/* ── Follow Up Questions ──────────────────────────────────────────── */}
+        {/* ── Follow Up Questions + RAG chat ───────────────────────────────── */}
         <div className="pt-2">
-          <FollowUpSection questions={recipeFollowUpQuestions} />
+          <FollowUpSection
+            contextId={GUIDE_SLUG}
+            contextType="guide"
+            title={title}
+            description={description}
+            staticQuestions={staticQuestions}
+          />
         </div>
       </main>
     </div>
   );
 }
 
-// ─── RiskCard ────────────────────────────────────────────────────────────────
+// ─── RiskCard ─────────────────────────────────────────────────────────────────
 function RiskCard({ item }: { item: RiskItem }) {
   const lvl = levelConfig[item.level];
   const risk = riskLabelConfig[item.riskLabel];
@@ -138,7 +151,6 @@ function RiskCard({ item }: { item: RiskItem }) {
     <Card className="border-0 rounded-3xl shadow-none overflow-hidden bg-card">
       <CardContent className="p-4">
         <div className="flex gap-3 mb-3">
-          {/* Thumbnail */}
           <div className="w-14 h-14 rounded-xl bg-muted shrink-0 overflow-hidden">
             {item.imageUrl && (
               <img
@@ -148,8 +160,6 @@ function RiskCard({ item }: { item: RiskItem }) {
               />
             )}
           </div>
-
-          {/* Title + description */}
           <div className="flex-1 min-w-0">
             <p className="text-base font-bold text-foreground leading-snug mb-0.5">
               {item.title}
@@ -160,9 +170,7 @@ function RiskCard({ item }: { item: RiskItem }) {
           </div>
         </div>
 
-        {/* Badges */}
         <div className="flex items-center gap-2 mb-3 flex-wrap">
-          {/* Level badge */}
           <span
             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
             style={{ backgroundColor: lvl.badgeBg, color: lvl.badgeText }}
@@ -170,8 +178,6 @@ function RiskCard({ item }: { item: RiskItem }) {
             <span className={cn("w-2 h-2 rounded-full shrink-0", lvl.dot)} />
             {lvl.label}
           </span>
-
-          {/* Risk label badge */}
           <span
             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
             style={{ backgroundColor: risk.bg, color: risk.text }}
@@ -181,7 +187,6 @@ function RiskCard({ item }: { item: RiskItem }) {
           </span>
         </div>
 
-        {/* Details */}
         <div className="space-y-1">
           <p className="text-xs text-muted-foreground leading-snug">
             <span className="mr-1">•</span>

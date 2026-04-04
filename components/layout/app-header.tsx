@@ -21,8 +21,6 @@ interface AppHeaderProps {
   user: AppHeaderUser | null;
 }
 
-const DETAIL_PATHS = ["/categories/", "/guides/"];
-
 export function AppHeader({ user }: AppHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();

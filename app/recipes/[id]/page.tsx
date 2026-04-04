@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ChevronLeft, Share, Bookmark, Info } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -17,12 +16,9 @@ import { dummyRecipes, defaultFollowUpQuestions } from "@/lib/nura-dummy-data";
 
 export default function RecipeDetailPage() {
   const params = useParams();
-  const slug = params.slug as string;
   const id = params.id as string;
 
-  const recipe =
-    dummyRecipes.find((r) => r.id === id && r.categorySlug === slug) ??
-    dummyRecipes[0];
+  const recipe = dummyRecipes.find((r) => r.id === id) ?? dummyRecipes[0];
 
   return (
     <div className="min-h-screen bg-background">
@@ -34,7 +30,7 @@ export default function RecipeDetailPage() {
           asChild
           className="p-0 h-auto min-h-11 min-w-11 text-foreground hover:opacity-70 transition-opacity gap-1 font-normal"
         >
-          <Link href={`/categories/${slug}`}>
+          <Link href={`/recipes`}>
             <ChevronLeft className="w-5 h-5" />
             <span className="text-sm">Back</span>
           </Link>
@@ -74,7 +70,7 @@ export default function RecipeDetailPage() {
           )}
         </div>
 
-        {/* Title + description — text-base for older users */}
+        {/* Title + description */}
         <div className="px-4 mb-5">
           <h1 className="text-2xl font-bold text-foreground mb-1.5 leading-tight">
             {recipe.title}
@@ -191,12 +187,18 @@ export default function RecipeDetailPage() {
             </AccordionItem>
           </Accordion>
 
-          {/* Follow-up questions + chat input */}
+          {/* Follow-up questions + RAG chat */}
           <div className="pt-2">
-            <FollowUpSection questions={defaultFollowUpQuestions} />
+            <FollowUpSection
+              contextId={recipe.id}
+              contextType="recipe"
+              title={recipe.title}
+              description={recipe.description}
+              staticQuestions={defaultFollowUpQuestions}
+            />
           </div>
 
-          {/* "Done" affordance for older users — explicit next step */}
+          {/* "Done" affordance */}
           <div className="pt-2 pb-2">
             <Separator className="bg-border mb-5" />
             <p className="text-sm text-muted-foreground text-center mb-3">
@@ -207,7 +209,7 @@ export default function RecipeDetailPage() {
               variant="secondary"
               className="w-full rounded-full min-h-13 text-base font-semibold bg-card text-foreground border-0 shadow-none hover:opacity-80 transition-opacity"
             >
-              <Link href={`/categories/${slug}`}>← Browse more recipes</Link>
+              <Link href={`/recipes`}>← Browse more recipes</Link>
             </Button>
           </div>
         </div>

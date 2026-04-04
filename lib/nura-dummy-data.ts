@@ -31,6 +31,7 @@ export interface Recipe {
   howToMake: string[];
   whyItWorks: string;
   insideTip: string;
+  tags: string[];
 }
 
 export interface RiskItem {
@@ -62,6 +63,16 @@ export const filterPills: FilterPill[] = [
   { value: "weight", label: "Weight" },
   { value: "liver-kidney", label: "Liver/Kidney" },
   { value: "detoxing", label: "Detoxing" },
+  { value: "immunity", label: "Immunity" },
+  { value: "digestion", label: "Digestion" },
+  { value: "energy", label: "Energy" },
+  { value: "skin", label: "Skin" },
+  { value: "anti-inflammatory", label: "Anti-Inflammatory" },
+  { value: "gut-health", label: "Gut Health" },
+  { value: "hydration", label: "Hydration" },
+  { value: "brain", label: "Brain" },
+  { value: "blood-sugar", label: "Blood Sugar" },
+  { value: "bone", label: "Bone" },
 ];
 
 // ─── Categories ──────────────────────────────────────────────────────────────
@@ -100,89 +111,227 @@ export const dummyCategories: Category[] = [
 export const dummyRecipes: Recipe[] = [
   {
     id: "rec-1",
-    slug: "rec-1",
+    slug: "green-detox-juice",
     categorySlug: "detoxing",
-    title: "Healthy Juice Cleanses",
-    description:
-      "The body naturally detoxifies itself constantly via the liver, kidneys, lungs, intestines, and skin.",
-    previewIngredients: ["Roots & Spices", "Citrus", "Detox Boosters"],
+    tags: ["detoxing", "hydration"],
+    title: "Green Detox Juice",
+    description: "Supports natural detox and hydration.",
+    previewIngredients: ["Spinach", "Cucumber", "Apple"],
     recipeTitle: "Green Detox Juice Recipe",
     ingredients: [
       { icon: "🥬", label: "1 cup spinach" },
-      { icon: "🥒", label: "Half cucumber" },
+      { icon: "🥒", label: "1 cucumber" },
       { icon: "🍏", label: "1 green apple" },
-      { icon: "🍋", label: "Half lemon (juice)" },
-      { icon: "🌿", label: "Fresh mint leaves" },
-      { icon: "🥥", label: "Half cup coconut water" },
+      { icon: "🍋", label: "Half lemon" },
     ],
     howToMake: [
-      "Wash Thoroughly: rinse all produce under cold running water.",
-      "Prep Produce: core the apple, peel the lemon, roughly chop cucumber.",
-      "Juice Order: start with leafy greens, then soft produce, then hard items.",
-      "Storage: drink immediately or refrigerate in an airtight jar for up to 24 hrs.",
+      "Wash all ingredients.",
+      "Chop into pieces.",
+      "Blend or juice.",
+      "Serve immediately.",
     ],
     whyItWorks:
-      "Spinach and cucumber are excellent for hydration and cleansing because they have a high water content and lots of essential minerals. Green apples add a low glycemic touch of sweetness, while lemon juice contains antioxidants and can even prevent some kidney stone formation. Coconut water replenishes your electrolytes.",
-    insideTip:
-      "Maximize nutrient retention by using a Hurom juicer. Our patented Slow Squeeze Technology means all your nutrients get inside your glass of juice – and not in the pulp collector.",
+      "Hydrating ingredients support the body’s natural detox systems.",
+    insideTip: "Add ginger for extra anti-inflammatory benefits.",
   },
+
   {
     id: "rec-2",
-    slug: "rec-2",
+    slug: "lemon-detox-water",
     categorySlug: "detoxing",
-    title: "Body Detox",
-    description:
-      "A powerful blend that supports your body's natural detox pathways.",
-    previewIngredients: [
-      "1 green apple",
-      "Half lemon (juice)",
-      "1 cup spinach",
-    ],
-    recipeTitle: "Body Detox Blend",
+    tags: ["hydration", "skin"],
+    title: "Lemon Detox Water",
+    description: "Boosts hydration and skin health.",
+    previewIngredients: ["Lemon", "Water", "Mint"],
+    recipeTitle: "Lemon Detox Water",
     ingredients: [
-      { icon: "🍏", label: "1 green apple" },
-      { icon: "🍋", label: "Half lemon (juice)" },
-      { icon: "🥬", label: "1 cup spinach" },
-      { icon: "🫚", label: "1 tbsp flaxseed oil" },
-      { icon: "💧", label: "1 cup filtered water" },
+      { icon: "🍋", label: "1 lemon" },
+      { icon: "💧", label: "2 cups water" },
+      { icon: "🌿", label: "Mint leaves" },
     ],
-    howToMake: [
-      "Prep: peel and core apple, squeeze lemon.",
-      "Blend: combine all ingredients in a high-speed blender.",
-      "Strain: pour through a fine mesh sieve if desired.",
-      "Serve: enjoy immediately over ice.",
-    ],
-    whyItWorks:
-      "Green apples provide pectin which binds to toxins in the digestive tract. Lemon juice stimulates liver enzyme production and alkalises the body. Spinach delivers chlorophyll which acts as a natural cleanser.",
-    insideTip:
-      "Add a pinch of activated charcoal powder for an extra detox boost — it binds to toxins before they can be absorbed.",
+    howToMake: ["Slice, mix, infuse, serve."],
+    whyItWorks: "Vitamin C supports hydration and skin clarity.",
+    insideTip: "Drink in the morning.",
   },
+
   {
     id: "rec-3",
-    slug: "rec-3",
+    slug: "beet-heart-tonic",
     categorySlug: "heart-health",
+    tags: ["heart", "energy"],
     title: "Beet Heart Tonic",
-    description:
-      "Naturally lowers blood pressure and supports cardiovascular health.",
-    previewIngredients: ["Beets", "Ginger", "Pomegranate"],
-    recipeTitle: "Heart Beet Tonic Recipe",
+    description: "Improves circulation and stamina.",
+    previewIngredients: ["Beetroot", "Ginger", "Lemon"],
+    recipeTitle: "Beet Heart Tonic",
     ingredients: [
-      { icon: "🫀", label: "2 medium beets" },
-      { icon: "🫚", label: "1 tbsp ginger root" },
-      { icon: "🍎", label: "1 pomegranate (seeds)" },
-      { icon: "🍋", label: "Juice of 1 lemon" },
+      { icon: "🫀", label: "2 beets" },
+      { icon: "🫚", label: "Ginger" },
+      { icon: "🍋", label: "Lemon" },
     ],
-    howToMake: [
-      "Peel and chop beets and ginger.",
-      "Juice beets and ginger first.",
-      "Add pomegranate seeds and lemon juice.",
-      "Stir well and serve chilled.",
-    ],
-    whyItWorks:
-      "Beets are rich in nitrates which the body converts to nitric oxide, relaxing blood vessels and lowering blood pressure. Pomegranate polyphenols reduce LDL oxidation.",
-    insideTip:
-      "Drink this tonic 2–3 hours before exercise for a natural performance boost.",
+    howToMake: ["Juice, mix, serve chilled."],
+    whyItWorks: "Boosts nitric oxide and blood flow.",
+    insideTip: "Drink pre-workout.",
   },
+
+  {
+    id: "rec-4",
+    slug: "berry-antioxidant-smoothie",
+    categorySlug: "immunity",
+    tags: ["immunity", "skin"],
+    title: "Berry Antioxidant Smoothie",
+    description: "Strengthens immunity.",
+    previewIngredients: ["Blueberries", "Strawberries", "Yogurt"],
+    recipeTitle: "Berry Smoothie",
+    ingredients: [
+      { icon: "🫐", label: "Blueberries" },
+      { icon: "🍓", label: "Strawberries" },
+      { icon: "🥛", label: "Yogurt" },
+    ],
+    howToMake: ["Blend and serve."],
+    whyItWorks: "High antioxidants reduce oxidative stress.",
+    insideTip: "Add chia seeds.",
+  },
+
+  {
+    id: "rec-5",
+    slug: "gut-healing-smoothie",
+    categorySlug: "gut-health",
+    tags: ["gut-health", "digestion"],
+    title: "Gut Healing Smoothie",
+    description: "Supports digestion.",
+    previewIngredients: ["Banana", "Yogurt", "Honey"],
+    recipeTitle: "Gut Smoothie",
+    ingredients: [
+      { icon: "🍌", label: "Banana" },
+      { icon: "🥛", label: "Yogurt" },
+      { icon: "🍯", label: "Honey" },
+    ],
+    howToMake: ["Blend and serve."],
+    whyItWorks: "Probiotics improve gut flora.",
+    insideTip: "Use kefir instead.",
+  },
+
+  {
+    id: "rec-6",
+    slug: "fat-burning-green-tea",
+    categorySlug: "weight-loss",
+    tags: ["weight", "energy"],
+    title: "Fat Burning Green Tea",
+    description: "Boosts metabolism.",
+    previewIngredients: ["Green tea", "Lemon", "Honey"],
+    recipeTitle: "Green Tea Drink",
+    ingredients: [
+      { icon: "🍵", label: "Green tea" },
+      { icon: "🍋", label: "Lemon" },
+      { icon: "🍯", label: "Honey" },
+    ],
+    howToMake: ["Brew and mix."],
+    whyItWorks: "Improves fat oxidation.",
+    insideTip: "Drink before workouts.",
+  },
+
+  {
+    id: "rec-7",
+    slug: "turmeric-drink",
+    categorySlug: "anti-inflammatory",
+    tags: ["anti-inflammatory", "immunity"],
+    title: "Turmeric Drink",
+    description: "Reduces inflammation.",
+    previewIngredients: ["Turmeric", "Milk", "Honey"],
+    recipeTitle: "Golden Milk",
+    ingredients: [
+      { icon: "🟡", label: "Turmeric" },
+      { icon: "🥛", label: "Milk" },
+      { icon: "🍯", label: "Honey" },
+    ],
+    howToMake: ["Heat and mix."],
+    whyItWorks: "Curcumin fights inflammation.",
+    insideTip: "Add black pepper.",
+  },
+
+  {
+    id: "rec-8",
+    slug: "electrolyte-drink",
+    categorySlug: "hydration",
+    tags: ["hydration", "energy"],
+    title: "Electrolyte Drink",
+    description: "Rehydrates quickly.",
+    previewIngredients: ["Coconut water", "Salt", "Lime"],
+    recipeTitle: "Electrolyte Drink",
+    ingredients: [
+      { icon: "🥥", label: "Coconut water" },
+      { icon: "🧂", label: "Salt" },
+      { icon: "🍋", label: "Lime" },
+    ],
+    howToMake: ["Mix and chill."],
+    whyItWorks: "Restores electrolytes.",
+    insideTip: "Post-workout drink.",
+  },
+
+  {
+    id: "rec-9",
+    slug: "brain-smoothie",
+    categorySlug: "brain",
+    tags: ["brain", "energy"],
+    title: "Brain Smoothie",
+    description: "Enhances focus.",
+    previewIngredients: ["Blueberries", "Walnuts", "Milk"],
+    recipeTitle: "Brain Boost",
+    ingredients: [
+      { icon: "🫐", label: "Blueberries" },
+      { icon: "🌰", label: "Walnuts" },
+      { icon: "🥛", label: "Milk" },
+    ],
+    howToMake: ["Blend."],
+    whyItWorks: "Supports cognitive function.",
+    insideTip: "Add flax seeds.",
+  },
+
+  {
+    id: "rec-10",
+    slug: "cinnamon-blood-sugar-drink",
+    categorySlug: "blood-sugar",
+    tags: ["blood-sugar", "weight"],
+    title: "Cinnamon Drink",
+    description: "Balances blood sugar.",
+    previewIngredients: ["Apple", "Cinnamon", "Water"],
+    recipeTitle: "Cinnamon Drink",
+    ingredients: [
+      { icon: "🍎", label: "Apple" },
+      { icon: "🟤", label: "Cinnamon" },
+      { icon: "💧", label: "Water" },
+    ],
+    howToMake: ["Boil and infuse."],
+    whyItWorks: "Improves insulin response.",
+    insideTip: "Drink after meals.",
+  },
+
+  // 11–40 (auto-generated but with tags array)
+
+  ...Array.from({ length: 30 }).map((_, i) => ({
+    id: `rec-${i + 11}`,
+    slug: `recipe-${i + 11}`,
+    categorySlug: "detoxing",
+    tags: [
+      ["detoxing", "hydration"],
+      ["heart", "energy"],
+      ["weight", "blood-sugar"],
+      ["immunity", "skin"],
+      ["gut-health", "digestion"],
+    ][i % 5],
+    title: `Healthy Recipe ${i + 11}`,
+    description: "Supports overall wellness.",
+    previewIngredients: ["Fruit", "Herbs", "Liquid"],
+    recipeTitle: `Wellness Recipe ${i + 11}`,
+    ingredients: [
+      { icon: "🍏", label: "Fruit" },
+      { icon: "🌿", label: "Herbs" },
+      { icon: "💧", label: "Liquid" },
+    ],
+    howToMake: ["Prep", "Blend", "Serve"],
+    whyItWorks: "Provides essential nutrients.",
+    insideTip: "Adjust to taste.",
+  })),
 ];
 
 // ─── Guides ───────────────────────────────────────────────────────────────────
