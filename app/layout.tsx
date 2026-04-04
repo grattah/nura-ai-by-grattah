@@ -3,6 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { createClient } from "@/lib/supabase/server";
+import { AppHeader } from "@/components/layout/app-header";
+import { BottomNav } from "@/components/layout/bottom-nav";
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
@@ -43,11 +46,35 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const headerUser = user
+    ? {
+        name:
+          user.user_metadata?.full_name ||
+          user.user_metadata?.name ||
+          user.email?.split("@")[0] ||
+          "You",
+        email: user.email,
+        avatarLetter: (
+          user.user_metadata?.full_name ||
+          user.user_metadata?.name ||
+          user.email ||
+          "N"
+        )
+          .charAt(0)
+          .toUpperCase(),
+      }
+    : null;
+
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
@@ -62,7 +89,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <AppHeader user={headerUser} />
+          <main className="min-h-[calc(100svh-56px)] pb-24">{children}</main>
+          <BottomNav />
         </ThemeProvider>
         <Analytics />
       </body>

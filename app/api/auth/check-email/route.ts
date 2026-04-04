@@ -49,24 +49,31 @@ export async function POST(req: NextRequest) {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      db: { schema: "auth" },
+    },
   );
 
   try {
     // const { data, error } = await supabase.auth.admin.getUserByEmail(
     //   email.toLowerCase(),
     // );
-    const { data } = await supabase
-      .from("auth.users")
-      .select("id")
-      .eq("email", email.toLowerCase())
-      .maybeSingle();
+    // TODO: find a more efficient way to achieve this
+    const { data } = await supabase.auth.admin.listUsers();
+    // const { data } = await supabase
+    //   .from("users")
+    //   .select("id")
+    //   .eq("email", email.toLowerCase())
+    //   .maybeSingle();
 
     // Add a small artificial delay to deter timing-based enumeration
     await new Promise((resolve) => setTimeout(resolve, 200));
 
     // If error code is 'user_not_found' the email is new — otherwise it exists
-    const exists = !!data;
-    // const exists = !error && !!data?.user;
+    const exists = data.users.find(
+      (user) => user.email?.toLocaleLowerCase() === email.toLowerCase(),
+    );
+    // const exists = !!data;
 
     return NextResponse.json({ exists });
   } catch {
