@@ -120,6 +120,12 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   const supabase = await createServiceRoleClient();
 
+  // Log everything relevant before the insert
+  console.log("[webhook] Session ID:", session.id);
+  console.log("[webhook] Email:", session.customer_details?.email);
+  console.log("[webhook] Metadata:", session.metadata);
+  console.log("[webhook] UI mode:", session.ui_mode);
+
   const { data: tokenRow, error: insertError } = await supabase
     .from("access_tokens")
     .insert({
@@ -131,10 +137,10 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       status: "active",
       expires_at: getExpiry(plan),
     })
-    .select("token")
+    .select("token, stripe_session_id")
     .single();
 
-  console.log("Response Data:", tokenRow);
+  console.log("[webhook] Insert result:", { tokenRow, insertError });
 
   if (insertError) {
     throw new Error(`Failed to insert access_token: ${insertError.message}`);
