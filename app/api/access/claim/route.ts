@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   // Verify the caller is actually authenticated as this email
   // — prevents one user from claiming another user's tokens
   const supabase = await createClient();
-  const adminSupabase = await createServiceRoleClient();
+  const adminSupabase = createServiceRoleClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
