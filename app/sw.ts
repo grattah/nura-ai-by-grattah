@@ -1,6 +1,6 @@
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { Serwist } from "serwist";
+import { NetworkOnly, Serwist } from "serwist";
 
 // Tells TypeScript about the injected precache manifest
 declare global {
@@ -10,6 +10,20 @@ declare global {
 }
 
 declare const self: ServiceWorkerGlobalScope;
+
+const BYPASS_DOMAINS = [
+  "js.stripe.com",
+  "checkout.stripe.com",
+  "api.stripe.com",
+  "hooks.stripe.com",
+  "r.stripe.com",
+  // Replace with your actual Supabase project hostname
+  new URL(self.location.href).hostname === "localhost"
+    ? "localhost"
+    : process.env.NEXT_PUBLIC_SUPABASE_URL
+      ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
+      : "",
+];
 
 const serwist = new Serwist({
   // __SW_MANIFEST is replaced at build time by Serwist with the list of
@@ -34,7 +48,30 @@ const serwist = new Serwist({
   // - JS/CSS: stale-while-revalidate (serve cached, update in background)
   // - Images: cache-first with expiry
   // - API routes: network-first with cache fallback
-  runtimeCaching: defaultCache,
+  runtimeCaching: [
+    // ── Stripe — always network, never cache ─────────────────────────────
+    {
+      matcher: ({ url }) =>
+        BYPASS_DOMAINS.some((domain) => url.hostname.includes(domain)),
+      handler: new NetworkOnly(),
+    },
+    // ── Supabase API — network only, auth/data must never be stale ───────
+    {
+      matcher: ({ url }) =>
+        url.pathname.startsWith("/rest/v1") ||
+        url.pathname.startsWith("/auth/v1") ||
+        url.pathname.startsWith("/realtime/v1"),
+      handler: new NetworkOnly(),
+    },
+    // ── Your app's own API routes — network only ─────────────────────────
+    {
+      matcher: ({ url, request }) =>
+        url.origin === self.location.origin && url.pathname.startsWith("/api/"),
+      handler: new NetworkOnly(),
+    },
+    // ── Everything else — Serwist's sensible defaults ────────────────────
+    ...defaultCache,
+  ],
 
   fallbacks: {
     entries: [
