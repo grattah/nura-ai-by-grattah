@@ -11,5 +11,7 @@ export async function POST(req: Request) {
     .eq("stripe_session_id", stripeSessionId)
     .maybeSingle();
 
+  console.log("Get Token For Session Response:", data);
+
   return NextResponse.json({ token: data?.token ?? null });
 }
