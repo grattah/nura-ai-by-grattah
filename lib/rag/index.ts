@@ -19,7 +19,9 @@ export async function retrieve(
   minScore = 0.72,
 ): Promise<RetrieveResult> {
   const vector = await embedder.embed(query);
-  const chunks = await vectorDB.query({ vector, contextId, topK, minScore });
+  const chunks = await (
+    await vectorDB
+  ).query({ vector, contextId, topK, minScore });
   return { chunks, hasGoodResults: chunks.length > 0 };
 }
 

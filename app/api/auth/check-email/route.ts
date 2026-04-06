@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
     const exists = data.users.find(
       (user) => user.email?.toLocaleLowerCase() === email.toLowerCase(),
     );
-    // const exists = !!data;
+    // const exists = !!data
 
     return NextResponse.json({ exists });
   } catch {

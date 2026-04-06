@@ -2,6 +2,8 @@
 // VectorDB interface — swap implementations without touching any calling code.
 // Toggle the active export at the bottom of this file.
 
+import { createServiceRoleClient } from "../supabase/server";
+
 export interface RetrievedChunk {
   text: string;
   sourceUrl: string;
@@ -101,12 +103,9 @@ export function createPineconeDB(): VectorDB {
 //     limit  match_count;
 //   $$;
 
-export function createSupabaseVectorDB(): VectorDB {
+export async function createSupabaseVectorDB(): Promise<VectorDB> {
   const { createClient } = require("@supabase/supabase-js");
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
+  const supabase = await createServiceRoleClient();
 
   return {
     async upsert(vectors) {
@@ -150,4 +149,4 @@ export function createSupabaseVectorDB(): VectorDB {
 
 // ─── Active instance — change one line to switch DB ──────────────────────────
 // export const vectorDB: VectorDB = createPineconeDB();
-export const vectorDB: VectorDB = createSupabaseVectorDB();
+export const vectorDB: Promise<VectorDB> = createSupabaseVectorDB();
