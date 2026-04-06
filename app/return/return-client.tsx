@@ -31,8 +31,12 @@ export function ReturnClient({
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <p className="text-muted-foreground text-sm">Setting up your access…</p>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-3">
+      <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      <p className="text-muted-foreground text-sm">Activating your access…</p>
     </div>
+    // <div className="min-h-screen flex items-center justify-center bg-background">
+    //   <p className="text-muted-foreground text-sm">Setting up your access…</p>
+    // </div>
   );
 }
