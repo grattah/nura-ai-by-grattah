@@ -103,9 +103,9 @@ export function createPineconeDB(): VectorDB {
 //     limit  match_count;
 //   $$;
 
-export async function createSupabaseVectorDB(): Promise<VectorDB> {
-  const { createClient } = require("@supabase/supabase-js");
-  const supabase = await createServiceRoleClient();
+export function createSupabaseVectorDB(): VectorDB {
+  // const { createClient } = require("@supabase/supabase-js");
+  const supabase = createServiceRoleClient();
 
   return {
     async upsert(vectors) {
@@ -149,4 +149,4 @@ export async function createSupabaseVectorDB(): Promise<VectorDB> {
 
 // ─── Active instance — change one line to switch DB ──────────────────────────
 // export const vectorDB: VectorDB = createPineconeDB();
-export const vectorDB: Promise<VectorDB> = createSupabaseVectorDB();
+export const vectorDB: VectorDB = createSupabaseVectorDB();

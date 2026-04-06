@@ -116,9 +116,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return;
   }
 
-  console.log("Email:", email);
-
-  const supabase = await createServiceRoleClient();
+  const supabase = createServiceRoleClient();
 
   // Log everything relevant before the insert
   console.log("[webhook] Session ID:", session.id);
@@ -153,7 +151,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 }
 
 async function handleSubscriptionDeleted(sub: Stripe.Subscription) {
-  const supabase = await createServiceRoleClient();
+  const supabase = createServiceRoleClient();
   const { error } = await supabase
     .from("access_tokens")
     .update({ status: "cancelled" })
@@ -169,7 +167,7 @@ async function handleSubscriptionDeleted(sub: Stripe.Subscription) {
 async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
   // If Stripe moves the subscription to past_due or unpaid, revoke access
   if (sub.status === "past_due" || sub.status === "unpaid") {
-    const supabase = await createServiceRoleClient();
+    const supabase = createServiceRoleClient();
     const { error } = await supabase
       .from("access_tokens")
       .update({ status: "suspended" })
@@ -184,7 +182,7 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
 
   // If it comes back active (e.g. after a failed payment is retried)
   if (sub.status === "active") {
-    const supabase = await createServiceRoleClient();
+    const supabase = createServiceRoleClient();
     const { error } = await supabase
       .from("access_tokens")
       .update({ status: "active" })

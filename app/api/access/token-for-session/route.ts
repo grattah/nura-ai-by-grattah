@@ -15,7 +15,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ token: null }, { status: 400 });
   }
 
-  const supabase = await createServiceRoleClient();
+  const supabase = createServiceRoleClient();
+
+  console.log(
+    "[token-for-session] Key length:",
+    process.env.SUPABASE_SERVICE_ROLE_KEY?.length,
+  );
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     const { data, error } = await supabase

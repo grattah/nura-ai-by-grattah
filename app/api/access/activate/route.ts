@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ valid: false }, { status: 400 });
   }
 
-  const supabase = await createServiceRoleClient();
+  const supabase = createServiceRoleClient();
 
   const { data } = await supabase
     .from("access_tokens")
