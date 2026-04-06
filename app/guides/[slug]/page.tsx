@@ -10,6 +10,7 @@ import { dummyGuides } from "@/lib/nura-dummy-data";
 import type { RiskItem } from "@/lib/nura-dummy-data";
 import { cn } from "@/lib/utils";
 import { dummyRiskItems } from "@/lib/nura-dummy-data-v1";
+import { PaywallGate } from "@/components/paywall/paywall-gate";
 
 // ─── Risk level config ────────────────────────────────────────────────────────
 const levelConfig = {
@@ -58,7 +59,7 @@ const riskLabelConfig: Record<
 // The slug is the contextId used to scope Pinecone/Supabase vector queries.
 const GUIDE_SLUG = "high-cancer-risks";
 
-export default function CancerRisksPage() {
+export default function GuidesPage() {
   const router = useRouter();
 
   // Pull title + description + follow-up questions from the guide record
@@ -69,76 +70,78 @@ export default function CancerRisksPage() {
   const staticQuestions = guide?.followUpQuestions ?? [];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <header className="px-4 pt-12 pb-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.back()}
-          className="p-0 h-auto text-foreground hover:opacity-70 transition-opacity gap-1 font-normal mb-4"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          <span className="text-sm">Back</span>
-        </Button>
-        <h1 className="text-2xl font-bold text-foreground mb-1 leading-tight">
-          {title}
-        </h1>
-        <p className="text-sm text-muted-foreground leading-snug max-w-xs">
-          {description}
-        </p>
-      </header>
+    <PaywallGate>
+      <div className="min-h-screen bg-background">
+        {/* ── Header ──────────────────────────────────────────────────────────── */}
+        <header className="px-4 pt-12 pb-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.back()}
+            className="p-0 h-auto text-foreground hover:opacity-70 transition-opacity gap-1 font-normal mb-4"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            <span className="text-sm">Back</span>
+          </Button>
+          <h1 className="text-2xl font-bold text-foreground mb-1 leading-tight">
+            {title}
+          </h1>
+          <p className="text-sm text-muted-foreground leading-snug max-w-xs">
+            {description}
+          </p>
+        </header>
 
-      <main className="px-4 pb-10 space-y-4">
-        {/* ── Risk Level Legend ────────────────────────────────────────────── */}
-        <Card className="border-0 rounded-2xl shadow-none bg-card">
-          <CardContent className="px-4 py-3">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-medium text-foreground mr-1">
-                Risk Level :
-              </span>
-              {([1, 2, 3] as const).map((lvl, i) => (
-                <div key={lvl} className="flex items-center gap-1.5">
-                  {i > 0 && (
-                    <Separator
-                      orientation="vertical"
-                      className="h-3 bg-border mx-0.5"
-                    />
-                  )}
-                  <span
-                    className={cn(
-                      "w-2.5 h-2.5 rounded-full shrink-0",
-                      levelConfig[lvl].dot,
+        <main className="px-4 pb-10 space-y-4">
+          {/* ── Risk Level Legend ────────────────────────────────────────────── */}
+          <Card className="border-0 rounded-2xl shadow-none bg-card">
+            <CardContent className="px-4 py-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-medium text-foreground mr-1">
+                  Risk Level :
+                </span>
+                {([1, 2, 3] as const).map((lvl, i) => (
+                  <div key={lvl} className="flex items-center gap-1.5">
+                    {i > 0 && (
+                      <Separator
+                        orientation="vertical"
+                        className="h-3 bg-border mx-0.5"
+                      />
                     )}
-                  />
-                  <span className="text-sm text-foreground/70">
-                    {levelConfig[lvl].label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                    <span
+                      className={cn(
+                        "w-2.5 h-2.5 rounded-full shrink-0",
+                        levelConfig[lvl].dot,
+                      )}
+                    />
+                    <span className="text-sm text-foreground/70">
+                      {levelConfig[lvl].label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* ── Risk Item Cards ──────────────────────────────────────────────── */}
-        <div className="space-y-3">
-          {dummyRiskItems.map((item) => (
-            <RiskCard key={item.id} item={item} />
-          ))}
-        </div>
+          {/* ── Risk Item Cards ──────────────────────────────────────────────── */}
+          <div className="space-y-3">
+            {dummyRiskItems.map((item) => (
+              <RiskCard key={item.id} item={item} />
+            ))}
+          </div>
 
-        {/* ── Follow Up Questions + RAG chat ───────────────────────────────── */}
-        <div className="pt-2">
-          <FollowUpSection
-            contextId={GUIDE_SLUG}
-            contextType="guide"
-            title={title}
-            description={description}
-            staticQuestions={staticQuestions}
-          />
-        </div>
-      </main>
-    </div>
+          {/* ── Follow Up Questions + RAG chat ───────────────────────────────── */}
+          <div className="pt-2">
+            <FollowUpSection
+              contextId={GUIDE_SLUG}
+              contextType="guide"
+              title={title}
+              description={description}
+              staticQuestions={staticQuestions}
+            />
+          </div>
+        </main>
+      </div>
+    </PaywallGate>
   );
 }
 
