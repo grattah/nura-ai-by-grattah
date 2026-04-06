@@ -59,6 +59,19 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     }
   };
 
+  const claimTokens = async (userEmail: string) => {
+    try {
+      await fetch("/api/access/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: userEmail }),
+      });
+    } catch {
+      // Non-fatal — token remains anonymous, user can restore manually
+      console.warn("[claimTokens] Failed to claim tokens for", userEmail);
+    }
+  };
+
   // ─── Step 2a: Sign in with password ───────────────────────────────────────
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -73,6 +86,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         password,
       });
       if (error) throw error;
+      claimTokens(email);
       router.push("/");
       router.refresh();
     } catch (err: unknown) {
@@ -122,6 +136,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       // Supabase returns a session immediately if email confirmation is off.
       // If email confirmation is on, data.session will be null — redirect to success page.
       if (data.session) {
+        claimTokens(email);
         router.push("/");
         router.refresh();
       } else {
