@@ -11,6 +11,7 @@ import { FilterPills } from "@/components/nura/filter-pills";
 import { filterPills, dummyRecipes, type Recipe } from "@/lib/nura-dummy-data";
 import { cn } from "@/lib/utils";
 import { RecipeCard } from "@/components/nura";
+import { PaywallGate } from "@/components/paywall/paywall-gate";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 // Recipes per infinite-scroll page. When wiring Supabase, replace the
@@ -134,209 +135,211 @@ export default function AllRecipesPage() {
   const isFiltered = committedTag !== "all" || committedSearch !== "";
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* ── Sub-header ───────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 pt-5 pb-3">
-        <div className="flex items-center gap-2">
+    <PaywallGate>
+      <div className="min-h-screen bg-background">
+        {/* ── Sub-header ───────────────────────────────────────────────────────── */}
+        <div className="flex items-center justify-between px-4 pt-5 pb-3">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="p-0 h-auto min-h-11 min-w-11 text-foreground hover:opacity-70 transition-opacity gap-1 font-normal"
+            >
+              <Link href="/">
+                <ChevronLeft className="w-5 h-5" />
+                <span className="text-sm">Back</span>
+              </Link>
+            </Button>
+            <h1 className="text-xl font-bold text-foreground">All Recipes</h1>
+          </div>
+
+          {/* Drawer trigger — dot indicator when filters are active */}
           <Button
             variant="ghost"
-            size="sm"
-            asChild
-            className="p-0 h-auto min-h-11 min-w-11 text-foreground hover:opacity-70 transition-opacity gap-1 font-normal"
+            size="icon"
+            onClick={() => setDrawerOpen(true)}
+            className="relative w-11 h-11 rounded-full bg-card text-foreground hover:opacity-80 transition-opacity"
+            aria-label="Open search and filters"
           >
-            <Link href="/">
-              <ChevronLeft className="w-5 h-5" />
-              <span className="text-sm">Back</span>
-            </Link>
+            <SlidersHorizontal className="w-5 h-5" />
+            {isFiltered && (
+              <span
+                className="absolute top-2 right-2 w-2 h-2 rounded-full"
+                style={{ backgroundColor: "#E8836A" }}
+              />
+            )}
           </Button>
-          <h1 className="text-xl font-bold text-foreground">All Recipes</h1>
         </div>
 
-        {/* Drawer trigger — dot indicator when filters are active */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setDrawerOpen(true)}
-          className="relative w-11 h-11 rounded-full bg-card text-foreground hover:opacity-80 transition-opacity"
-          aria-label="Open search and filters"
-        >
-          <SlidersHorizontal className="w-5 h-5" />
-          {isFiltered && (
-            <span
-              className="absolute top-2 right-2 w-2 h-2 rounded-full"
-              style={{ backgroundColor: "#E8836A" }}
+        {/* ── Filter pills (committed tag) ──────────────────────────────────── */}
+        <div className="px-4 mb-4">
+          <FilterPills
+            pills={filterPills}
+            active={committedTag}
+            onChange={handlePillChange}
+          />
+        </div>
+
+        {/* Active search query badge */}
+        {committedSearch && (
+          <div className="px-4 mb-3 flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Search:</span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-card text-foreground">
+              "{committedSearch}"
+              <button
+                onClick={() => {
+                  const params = new URLSearchParams(searchParams.toString());
+                  params.delete("q");
+                  router.replace(`/recipes?${params.toString()}`, {
+                    scroll: false,
+                  });
+                }}
+                aria-label="Clear search"
+              >
+                <X className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground transition-colors" />
+              </button>
+            </span>
+          </div>
+        )}
+
+        {/* ── Recipe grid ──────────────────────────────────────────────────────── */}
+        <main className="px-4 pb-10">
+          {visibleRecipes.length > 0 ? (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                {visibleRecipes.map((recipe) => (
+                  <RecipeCard key={recipe.id} recipe={recipe} />
+                ))}
+              </div>
+
+              {/* Infinite scroll sentinel + loader */}
+              <div ref={sentinelRef} className="py-6 flex justify-center">
+                {isLoadingMore && (
+                  <div className="flex gap-1.5 items-center">
+                    {[0, 150, 300].map((delay) => (
+                      <span
+                        key={delay}
+                        className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce"
+                        style={{ animationDelay: `${delay}ms` }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <EmptyState
+              hasFilters={isFiltered}
+              onClear={() => {
+                router.replace("/recipes", { scroll: false });
+              }}
             />
           )}
-        </Button>
-      </div>
+        </main>
 
-      {/* ── Filter pills (committed tag) ──────────────────────────────────── */}
-      <div className="px-4 mb-4">
-        <FilterPills
-          pills={filterPills}
-          active={committedTag}
-          onChange={handlePillChange}
-        />
-      </div>
+        {/* ── Filter & Search Drawer ────────────────────────────────────────────── */}
+        <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+          <DrawerContent
+            className="border-0 rounded-t-3xl bg-card focus:outline-none"
+            style={{ maxHeight: "85svh" }}
+          >
+            {/* Hidden a11y title */}
+            <div className="mx-auto mt-3 mb-1 h-1 w-10 rounded-full bg-border" />
+            <DrawerTitle className="sr-only">
+              Search and filter recipes
+            </DrawerTitle>
 
-      {/* Active search query badge */}
-      {committedSearch && (
-        <div className="px-4 mb-3 flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Search:</span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-card text-foreground">
-            "{committedSearch}"
-            <button
-              onClick={() => {
-                const params = new URLSearchParams(searchParams.toString());
-                params.delete("q");
-                router.replace(`/recipes?${params.toString()}`, {
-                  scroll: false,
-                });
-              }}
-              aria-label="Clear search"
-            >
-              <X className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground transition-colors" />
-            </button>
-          </span>
-        </div>
-      )}
-
-      {/* ── Recipe grid ──────────────────────────────────────────────────────── */}
-      <main className="px-4 pb-10">
-        {visibleRecipes.length > 0 ? (
-          <>
-            <div className="grid grid-cols-2 gap-3">
-              {visibleRecipes.map((recipe) => (
-                <RecipeCard key={recipe.id} recipe={recipe} />
-              ))}
-            </div>
-
-            {/* Infinite scroll sentinel + loader */}
-            <div ref={sentinelRef} className="py-6 flex justify-center">
-              {isLoadingMore && (
-                <div className="flex gap-1.5 items-center">
-                  {[0, 150, 300].map((delay) => (
-                    <span
-                      key={delay}
-                      className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce"
-                      style={{ animationDelay: `${delay}ms` }}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </>
-        ) : (
-          <EmptyState
-            hasFilters={isFiltered}
-            onClear={() => {
-              router.replace("/recipes", { scroll: false });
-            }}
-          />
-        )}
-      </main>
-
-      {/* ── Filter & Search Drawer ────────────────────────────────────────────── */}
-      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <DrawerContent
-          className="border-0 rounded-t-3xl bg-card focus:outline-none"
-          style={{ maxHeight: "85svh" }}
-        >
-          {/* Hidden a11y title */}
-          <div className="mx-auto mt-3 mb-1 h-1 w-10 rounded-full bg-border" />
-          <DrawerTitle className="sr-only">
-            Search and filter recipes
-          </DrawerTitle>
-
-          <div className="flex flex-col overflow-y-auto px-5 pb-8">
-            {/* Drawer header */}
-            <div className="flex items-center justify-between py-4">
-              <h2 className="text-lg font-bold text-foreground">
-                Search & Filter
-              </h2>
-              {hasDraftChanges && (
-                <button
-                  onClick={handleClearAll}
-                  className="text-sm font-medium transition-opacity hover:opacity-70"
-                  style={{ color: "#E8836A" }}
-                >
-                  Clear all
-                </button>
-              )}
-            </div>
-
-            <Separator className="bg-border mb-5" />
-
-            {/* Search input */}
-            <div className="mb-6">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Search Recipes
-              </p>
-              <div className="flex items-center gap-2 bg-background rounded-2xl px-4 py-3.5 border border-border">
-                <Search className="w-4 h-4 text-muted-foreground shrink-0" />
-                <input
-                  type="text"
-                  value={draftSearch}
-                  onChange={(e) => setDraftSearch(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleDone()}
-                  placeholder="e.g. spinach, detox, lemon..."
-                  autoComplete="off"
-                  className="flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground"
-                />
-                {draftSearch && (
+            <div className="flex flex-col overflow-y-auto px-5 pb-8">
+              {/* Drawer header */}
+              <div className="flex items-center justify-between py-4">
+                <h2 className="text-lg font-bold text-foreground">
+                  Search & Filter
+                </h2>
+                {hasDraftChanges && (
                   <button
-                    onClick={() => setDraftSearch("")}
-                    aria-label="Clear search"
-                    className="text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={handleClearAll}
+                    className="text-sm font-medium transition-opacity hover:opacity-70"
+                    style={{ color: "#E8836A" }}
                   >
-                    <X className="w-4 h-4" />
+                    Clear all
                   </button>
                 )}
               </div>
-            </div>
 
-            <Separator className="bg-border mb-5" />
+              <Separator className="bg-border mb-5" />
 
-            {/* Tag list */}
-            <div className="mb-6">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Filter by Tag
-              </p>
-              <div className="flex flex-col gap-2">
-                {filterPills.map((pill) => {
-                  const isActive = pill.value === draftTag;
-                  return (
+              {/* Search input */}
+              <div className="mb-6">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                  Search Recipes
+                </p>
+                <div className="flex items-center gap-2 bg-background rounded-2xl px-4 py-3.5 border border-border">
+                  <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <input
+                    type="text"
+                    value={draftSearch}
+                    onChange={(e) => setDraftSearch(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleDone()}
+                    placeholder="e.g. spinach, detox, lemon..."
+                    autoComplete="off"
+                    className="flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground"
+                  />
+                  {draftSearch && (
                     <button
-                      key={pill.value}
-                      onClick={() => setDraftTag(pill.value)}
-                      className={cn(
-                        "flex items-center justify-between px-4 min-h-12 rounded-2xl text-sm font-semibold transition-all duration-150 active:scale-[0.98]",
-                        isActive
-                          ? "bg-foreground text-background"
-                          : "bg-background text-foreground hover:opacity-80",
-                      )}
+                      onClick={() => setDraftSearch("")}
+                      aria-label="Clear search"
+                      className="text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      <span>{pill.label}</span>
-                      {isActive && (
-                        <span className="w-2 h-2 rounded-full bg-background/60 shrink-0" />
-                      )}
+                      <X className="w-4 h-4" />
                     </button>
-                  );
-                })}
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* Done button */}
-            <Button
-              onClick={handleDone}
-              className="w-full rounded-full min-h-14 text-base font-bold bg-foreground text-background hover:bg-foreground/85 border-0 shadow-none active:scale-[0.98] transition-all sticky bottom-2 mt-auto"
-            >
-              Done
-            </Button>
-          </div>
-        </DrawerContent>
-      </Drawer>
-    </div>
+              <Separator className="bg-border mb-5" />
+
+              {/* Tag list */}
+              <div className="mb-6">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                  Filter by Tag
+                </p>
+                <div className="flex flex-col gap-2">
+                  {filterPills.map((pill) => {
+                    const isActive = pill.value === draftTag;
+                    return (
+                      <button
+                        key={pill.value}
+                        onClick={() => setDraftTag(pill.value)}
+                        className={cn(
+                          "flex items-center justify-between px-4 min-h-12 rounded-2xl text-sm font-semibold transition-all duration-150 active:scale-[0.98]",
+                          isActive
+                            ? "bg-foreground text-background"
+                            : "bg-background text-foreground hover:opacity-80",
+                        )}
+                      >
+                        <span>{pill.label}</span>
+                        {isActive && (
+                          <span className="w-2 h-2 rounded-full bg-background/60 shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Done button */}
+              <Button
+                onClick={handleDone}
+                className="w-full rounded-full min-h-14 text-base font-bold bg-foreground text-background hover:bg-foreground/85 border-0 shadow-none active:scale-[0.98] transition-all sticky bottom-2 mt-auto"
+              >
+                Done
+              </Button>
+            </div>
+          </DrawerContent>
+        </Drawer>
+      </div>
+    </PaywallGate>
   );
 }
 

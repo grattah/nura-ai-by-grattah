@@ -38,7 +38,7 @@ export function PaywallGate({ children }: PaywallGateProps) {
         )}
       </div>
 
-      <PaywallModal open={modalOpen} onOpenChange={setModalOpen} />
+      <PaywallModal open={modalOpen} onOpenChange={() => setModalOpen(true)} />
     </>
   );
 }
