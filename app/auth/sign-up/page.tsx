@@ -1,4 +1,4 @@
-import { NuraAuthForm } from "@/components/nura/nura-auth-form";
+import { NuraAuthForm } from "@/components/auth/auth-form";
 
 export default function SignUpPage() {
   return <NuraAuthForm />;

@@ -5,11 +5,9 @@ import { ChevronLeft, Flame, Leaf } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { FollowUpSection } from "@/components/nura/follow-up-section";
-import { dummyGuides } from "@/lib/nura-dummy-data";
-import type { RiskItem } from "@/lib/nura-dummy-data";
+import { FollowUpSection } from "@/components/follow-up-section";
+import { dummyGuides, dummyRiskItems, RiskItem } from "@/lib/nura-dummy-data";
 import { cn } from "@/lib/utils";
-import { dummyRiskItems } from "@/lib/nura-dummy-data-v1";
 import { PaywallGate } from "@/components/paywall/paywall-gate";
 
 // ─── Risk level config ────────────────────────────────────────────────────────

@@ -7,9 +7,10 @@ import { Menu, X, Bookmark, Bell, LogOut, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import ThemeToggleButton from "../theme-toggle-button";
-import { NuraLeafIcon } from "../nura";
+
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { NuraLeafIcon } from "../nura-logo";
 
 interface AppHeaderUser {
   name: string;

@@ -9,7 +9,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { FollowUpSection } from "@/components/nura/follow-up-section";
+import { FollowUpSection } from "@/components/follow-up-section";
 import { PaywallGate } from "@/components/paywall/paywall-gate";
 import { createClient } from "@/lib/supabase/server";
 import { defaultFollowUpQuestions } from "@/lib/nura-dummy-data";

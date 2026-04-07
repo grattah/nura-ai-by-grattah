@@ -6,7 +6,7 @@ import { useAccess } from "@/hooks/use-access";
 import { ArrowLeft, Mail, Key, CheckCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { NuraLogo } from "../nura";
+import { NuraLogo } from "../nura-logo";
 
 type RestoreStep =
   | "choice" // email or paste token

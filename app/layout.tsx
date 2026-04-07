@@ -90,6 +90,7 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <AppHeader user={headerUser} />
+
           <main>{children}</main>
         </ThemeProvider>
         <Analytics />

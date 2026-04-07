@@ -11,8 +11,6 @@ import { Button } from "@/components/ui/button";
 import { defaultFollowUpQuestions } from "@/lib/nura-dummy-data";
 import { cn } from "@/lib/utils";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 interface FollowUpSectionProps {
   contextId: string;
   contextType: "recipe" | "guide";
@@ -21,8 +19,6 @@ interface FollowUpSectionProps {
   allowedDomains?: string[];
   staticQuestions?: string[];
 }
-
-// ─── Root component ───────────────────────────────────────────────────────────
 
 export function FollowUpSection({
   contextId,
@@ -35,19 +31,7 @@ export function FollowUpSection({
   const [questions, setQuestions] = useState<string[]>(staticQuestions);
   const [questionsLoading, setQuestionsLoading] = useState(true);
 
-  // AI SDK 5: useChat no longer manages input state.
-  // We own it with a plain useState below.
   const [input, setInput] = useState("");
-
-  // AI SDK 5: `body` is static — captured at first render only.
-  // This is fine here: contextId/title/etc are page-level props that
-  // never change during the component's lifecycle.
-
-  // NOTE: AI SDK V4
-  // const { messages, sendMessage, status } = useChat({
-  //   api: "/api/rag/chat",
-  //   body: { contextId, contextType, title, allowedDomains },
-  // });
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
@@ -56,8 +40,6 @@ export function FollowUpSection({
     }),
   });
 
-  // Derived loading flag from AI SDK 5's `status`
-  // ('submitted' = waiting for first token, 'streaming' = tokens arriving)
   const isLoading = status === "submitted" || status === "streaming";
 
   useEffect(() => {
@@ -89,11 +71,7 @@ export function FollowUpSection({
 
   const handleSend = () => {
     if (!input.trim() || isLoading) return;
-    // AI SDK 5: sendMessage replaces handleSubmit/append.
-    // Requires a structured message object with `text`.
 
-    // NOTE: AI SDK V4
-    // sendMessage({ role: "user", text:input });
     sendMessage({ role: "user", parts: [{ type: "text", text: input }] });
     setInput("");
   };
@@ -125,8 +103,6 @@ export function FollowUpSection({
     </div>
   );
 }
-
-// ─── QuestionsList ─────────────────────────────────────────────────────────────
 
 interface QuestionsListProps {
   questions: string[];
@@ -175,8 +151,6 @@ function QuestionsList({ questions, loading, onSelect }: QuestionsListProps) {
     </Card>
   );
 }
-
-// ─── ChatThread ────────────────────────────────────────────────────────────────
 
 interface ChatThreadProps {
   messages: UIMessage[];

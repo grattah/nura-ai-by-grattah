@@ -1,17 +1,4 @@
-// lib/rag/embedder.ts
-// Uses AI SDK 5's embed/embedMany so the abstraction is provider-agnostic.
-// No direct calls to OpenAI or Google SDKs.
-//
-// Switching providers:
-//   OpenAI  → openai.embedding("text-embedding-3-small")  1536 dims  (current)
-//   Gemini  → google.textEmbeddingModel("text-embedding-004")  768 dims
-//
-// After switching: update `dimensions`, re-create the vector index with the
-// new dimension, and re-run scripts/vectorise.ts from scratch.
-
 import { embed, embedMany, type EmbeddingModel } from "ai";
-// import { openai } from "@ai-sdk/openai";
-// To switch to Gemini, uncomment:
 import { google } from "@ai-sdk/google";
 
 export interface Embedder {

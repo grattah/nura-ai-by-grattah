@@ -1,6 +1,3 @@
-// lib/nura-dummy-data.ts
-// Replace all static data here with Supabase queries in production.
-
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type GuideType = "risk_list" | "article" | "remedies";
@@ -431,4 +428,43 @@ export const defaultFollowUpQuestions = [
   "How long will the detox take and is it sustainable?",
   "Are specialized detox diets or cleanses safe for me?",
   "What are the best foods to include in a detox diet?",
+];
+
+export const dummyRiskItems: RiskItem[] = [
+  {
+    id: "risk-1",
+    title: "Plastic Food Container",
+    description: "Effect and cancer type description here...",
+    level: 1,
+    riskLabel: "High Risk",
+    cancerType: "Breast / Lungs",
+    risksFrom: "Daily Spray / Enclosed Spaces",
+  },
+  {
+    id: "risk-2",
+    title: "Air Fresheners",
+    description: "Effect and cancer type description here...",
+    level: 3,
+    riskLabel: "Low Risk",
+    cancerType: "Breast / Lungs",
+    risksFrom: "Daily Spray / Enclosed Spaces",
+  },
+  {
+    id: "risk-3",
+    title: "Processed Meats",
+    description: "Effect and cancer type description here...",
+    level: 2,
+    riskLabel: "Medium Risk",
+    cancerType: "Breast / Lungs",
+    risksFrom: "Daily Spray / Enclosed Spaces",
+  },
+  {
+    id: "risk-4",
+    title: "Non-Stick Pans",
+    description: "Effect and cancer type description here...",
+    level: 3,
+    riskLabel: "Low Risk",
+    cancerType: "Breast / Lungs",
+    risksFrom: "Daily Spray / Enclosed Spaces",
+  },
 ];

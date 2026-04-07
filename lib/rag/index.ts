@@ -1,7 +1,3 @@
-// lib/rag/index.ts
-// Composes embedder + vectorDB into the two operations the routes need.
-// Neither route imports Pinecone, Supabase, OpenAI, or Google directly.
-
 import { embedder } from "./embedder";
 import { vectorDB, type RetrievedChunk } from "./vector-db";
 

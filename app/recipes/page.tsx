@@ -8,13 +8,14 @@ import { ChevronLeft, SlidersHorizontal, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { Separator } from "@/components/ui/separator";
-import { FilterPills } from "@/components/nura/filter-pills";
-import { RecipeCard } from "@/components/nura";
+import { FilterPills } from "@/components/filter-pills";
+
 import { PaywallGate } from "@/components/paywall/paywall-gate";
 
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { Recipe, Tag } from "@/lib/types";
+import { RecipeCard } from "@/components/recipe-card";
 
 const PAGE_SIZE = 8;
 

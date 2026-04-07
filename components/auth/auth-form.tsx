@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight, Apple, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { NuraLogo } from "./nura-logo";
+import { NuraLogo } from "../nura-logo";
 import { cn } from "@/lib/utils";
 
 // The three distinct UI states of the form
