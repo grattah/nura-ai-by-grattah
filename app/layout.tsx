@@ -90,8 +90,7 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <AppHeader user={headerUser} />
-          <main className="min-h-[calc(100svh-56px)] pb-24">{children}</main>
-          <BottomNav />
+          <main>{children}</main>
         </ThemeProvider>
         <Analytics />
       </body>

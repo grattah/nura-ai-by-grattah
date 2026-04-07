@@ -4,183 +4,214 @@ import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ChevronLeft, SlidersHorizontal, Search, X } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { Separator } from "@/components/ui/separator";
 import { FilterPills } from "@/components/nura/filter-pills";
-import { filterPills, dummyRecipes, type Recipe } from "@/lib/nura-dummy-data";
-import { cn } from "@/lib/utils";
 import { RecipeCard } from "@/components/nura";
 import { PaywallGate } from "@/components/paywall/paywall-gate";
 
-// ─── Config ───────────────────────────────────────────────────────────────────
-// Recipes per infinite-scroll page. When wiring Supabase, replace the
-// client-side slice with:
-//   supabase.from("recipes")
-//     .select("id, title, image_url, preview_ingredients, category_slug, tags")
-//     .contains("tags", tag === "all" ? [] : [tag])
-//     .ilike("title", `%${search}%`)
-//     .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
-const PAGE_SIZE = 6;
+import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
+import { Recipe, Tag } from "@/lib/types";
+
+const PAGE_SIZE = 8;
 
 export default function AllRecipesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const supabase = createClient();
 
-  // ── Committed filter state — lives in the URL ─────────────────────────────
+  // ─── State ──────────────────────────────────────────────────────────────────
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
+
+  // ─── Filter State (Source of Truth is the URL) ─────────────────────────────
   const committedTag = searchParams.get("tag") ?? "all";
   const committedSearch = searchParams.get("q") ?? "";
 
-  // ── Drawer state — local draft until the user hits Done ───────────────────
+  // ─── Drawer State (Local draft until "Done" is clicked) ────────────────────
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [draftTag, setDraftTag] = useState(committedTag);
   const [draftSearch, setDraftSearch] = useState(committedSearch);
 
-  // Keep draft in sync when URL changes externally (e.g. back button)
-  useEffect(() => {
-    setDraftTag(committedTag);
-    setDraftSearch(committedSearch);
-  }, [committedTag, committedSearch]);
+  // ─── Data Fetching ────────────────────────────────────────────────────────
 
-  // ── Infinite scroll ───────────────────────────────────────────────────────
-  const [page, setPage] = useState(1);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  // Fetch available tags once on mount
+  useEffect(() => {
+    async function getTags() {
+      const { data } = await supabase
+        .from("tags")
+        .select("id, name, slug, display_order")
+        .order("name");
+      if (data) setTags(data);
+    }
+    getTags();
+  }, [supabase]);
+
+  // Main fetch function for recipes
+  const fetchRecipes = useCallback(
+    async (pageNum: number, isInitial: boolean = false) => {
+      const start = pageNum * PAGE_SIZE;
+      const end = start + PAGE_SIZE - 1;
+
+      let query = supabase
+        .from("recipes")
+        .select(
+          `
+      *,
+      recipe_tags!inner(tags!inner(slug))
+    `,
+        )
+        .order("created_at", { ascending: false })
+        .range(start, end);
+
+      if (committedTag !== "all") {
+        query = query.eq("recipe_tags.tags.slug", committedTag);
+      }
+      if (committedSearch) {
+        query = query.ilike("title", `%${committedSearch}%`);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Supabase Error:", error.message);
+        return [];
+      }
+
+      const newRecipes = (data as any) || [];
+
+      if (isInitial) {
+        setRecipes(newRecipes);
+      } else {
+        setRecipes((prev) => [...prev, ...newRecipes]);
+      }
+
+      // If we got fewer results than a full page, we've reached the end
+      setHasMore(newRecipes.length === PAGE_SIZE);
+      return newRecipes;
+    },
+    [supabase, committedTag, committedSearch],
+  );
+
+  useEffect(() => {
+    async function resetAndFetch() {
+      setIsLoading(true);
+      setPage(0);
+      setHasMore(true);
+      await fetchRecipes(0, true);
+      setIsLoading(false);
+    }
+    resetAndFetch();
+  }, [committedTag, committedSearch, fetchRecipes]);
+
+  // ─── Infinite Scroll Logic ────────────────────────────────────────────────
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // Reset page when committed filters change
-  useEffect(() => {
-    setPage(1);
-  }, [committedTag, committedSearch]);
+  const loadMore = useCallback(async () => {
+    // Prevent loading if already loading, or if we've reached the end
+    if (isLoading || isLoadingMore || !hasMore) return;
 
-  // ── Filter + search against committed values ──────────────────────────────
-  const filteredRecipes = useMemo(() => {
-    let results = dummyRecipes;
-
-    if (committedTag !== "all") {
-      results = results.filter((r) => r.tags?.includes(committedTag));
-    }
-
-    if (committedSearch.trim()) {
-      const q = committedSearch.toLowerCase();
-      results = results.filter(
-        (r) =>
-          r.title.toLowerCase().includes(q) ||
-          r.previewIngredients.some((i) => i.toLowerCase().includes(q)),
-      );
-    }
-
-    return results;
-  }, [committedTag, committedSearch]);
-
-  const visibleRecipes = filteredRecipes.slice(0, page * PAGE_SIZE);
-  const hasMore = visibleRecipes.length < filteredRecipes.length;
-
-  // ── IntersectionObserver ──────────────────────────────────────────────────
-  const loadMore = useCallback(() => {
-    if (isLoadingMore || !hasMore) return;
     setIsLoadingMore(true);
-    // Remove setTimeout when using real async Supabase queries
-    setTimeout(() => {
-      setPage((p) => p + 1);
-      setIsLoadingMore(false);
-    }, 500);
-  }, [isLoadingMore, hasMore]);
+    const nextPage = page + 1;
+
+    const results = await fetchRecipes(nextPage, false);
+
+    if (results.length > 0) {
+      setPage(nextPage);
+    }
+    setIsLoadingMore(false);
+  }, [isLoading, isLoadingMore, hasMore, page, fetchRecipes]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
+
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) loadMore();
+        if (
+          entries[0].isIntersecting &&
+          hasMore &&
+          !isLoading &&
+          !isLoadingMore
+        ) {
+          loadMore();
+        }
       },
-      { rootMargin: "200px" },
+      { rootMargin: "200px" }, // Increased margin to start loading before user hits bottom
     );
+
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [loadMore]);
+  }, [loadMore, hasMore, isLoading, isLoadingMore]);
 
-  // ── Pill change (outside drawer — commits immediately) ────────────────────
-  const handlePillChange = (value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    value === "all" ? params.delete("tag") : params.set("tag", value);
+  // ─── UI Handlers ──────────────────────────────────────────────────────────
+  const updateURL = (tag: string, search: string) => {
+    const params = new URLSearchParams();
+    if (tag !== "all") params.set("tag", tag);
+    if (search.trim()) params.set("q", search.trim());
     router.replace(`/recipes?${params.toString()}`, { scroll: false });
   };
 
-  // ── Done — commits draft state to URL and closes drawer ───────────────────
+  const handlePillChange = (value: string) => updateURL(value, committedSearch);
+
   const handleDone = () => {
-    const params = new URLSearchParams(searchParams.toString());
-
-    draftTag === "all" ? params.delete("tag") : params.set("tag", draftTag);
-    draftSearch.trim()
-      ? params.set("q", draftSearch.trim())
-      : params.delete("q");
-
-    router.replace(`/recipes?${params.toString()}`, { scroll: false });
+    updateURL(draftTag, draftSearch);
     setDrawerOpen(false);
   };
 
-  // ── Clear all ─────────────────────────────────────────────────────────────
   const handleClearAll = () => {
     setDraftTag("all");
     setDraftSearch("");
   };
 
   const hasDraftChanges =
-    draftTag !== committedTag || draftSearch !== committedSearch;
+    (draftTag !== committedTag && draftTag !== "all") ||
+    draftSearch !== committedSearch;
 
-  const activeLabel =
-    filterPills.find((p) => p.value === committedTag)?.label ?? "All";
-
-  // Active filter indicator shown in the header trigger button
   const isFiltered = committedTag !== "all" || committedSearch !== "";
 
   return (
     <PaywallGate>
       <div className="min-h-screen bg-background">
-        {/* ── Sub-header ───────────────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between px-4 pt-5 pb-3">
+        {/* Header */}
+        <header className="flex items-center justify-between px-4 pt-5 pb-3 sticky top-0 bg-background/80 backdrop-blur-md z-10">
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              asChild
-              className="p-0 h-auto min-h-11 min-w-11 text-foreground hover:opacity-70 transition-opacity gap-1 font-normal"
-            >
+            <Button variant="ghost" size="sm" asChild className="p-0 h-11 w-11">
               <Link href="/">
-                <ChevronLeft className="w-5 h-5" />
-                <span className="text-sm">Back</span>
+                <ChevronLeft className="w-6 h-6" />
               </Link>
             </Button>
-            <h1 className="text-xl font-bold text-foreground">All Recipes</h1>
+            <h1 className="text-xl font-bold tracking-tight">All Recipes</h1>
           </div>
 
-          {/* Drawer trigger — dot indicator when filters are active */}
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setDrawerOpen(true)}
-            className="relative w-11 h-11 rounded-full bg-card text-foreground hover:opacity-80 transition-opacity"
-            aria-label="Open search and filters"
+            className="relative w-11 h-11 rounded-full bg-secondary/50"
           >
             <SlidersHorizontal className="w-5 h-5" />
             {isFiltered && (
-              <span
-                className="absolute top-2 right-2 w-2 h-2 rounded-full"
-                style={{ backgroundColor: "#E8836A" }}
-              />
+              <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-orange-500 border-2 border-background" />
             )}
           </Button>
-        </div>
+        </header>
 
-        {/* ── Filter pills (committed tag) ──────────────────────────────────── */}
-        <div className="px-4 mb-4">
+        {/* Top Pills Bar */}
+        <div className="px-4 mb-4 overflow-hidden">
           <FilterPills
-            pills={filterPills}
+            pills={tags}
             active={committedTag}
             onChange={handlePillChange}
           />
         </div>
-
         {/* Active search query badge */}
         {committedSearch && (
           <div className="px-4 mb-3 flex items-center gap-2">
@@ -203,18 +234,24 @@ export default function AllRecipesPage() {
           </div>
         )}
 
-        {/* ── Recipe grid ──────────────────────────────────────────────────────── */}
-        <main className="px-4 pb-10">
-          {visibleRecipes.length > 0 ? (
+        {/* Recipe Grid */}
+        <main className="px-4 pb-12">
+          {isLoading ? (
+            <div className="grid grid-cols-2 gap-4 animate-pulse">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="aspect-square bg-muted rounded-3xl" />
+              ))}
+            </div>
+          ) : recipes.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 gap-3">
-                {visibleRecipes.map((recipe) => (
+              <div className="grid grid-cols-2 gap-4">
+                {recipes.map((recipe) => (
                   <RecipeCard key={recipe.id} recipe={recipe} />
                 ))}
               </div>
 
-              {/* Infinite scroll sentinel + loader */}
-              <div ref={sentinelRef} className="py-6 flex justify-center">
+              {/* Infinite Scroll Sentinel */}
+              <div ref={sentinelRef} className="py-10 flex justify-center">
                 {isLoadingMore && (
                   <div className="flex gap-1.5 items-center">
                     {[0, 150, 300].map((delay) => (
@@ -231,28 +268,20 @@ export default function AllRecipesPage() {
           ) : (
             <EmptyState
               hasFilters={isFiltered}
-              onClear={() => {
-                router.replace("/recipes", { scroll: false });
-              }}
+              onClear={() => updateURL("all", "")}
             />
           )}
         </main>
 
-        {/* ── Filter & Search Drawer ────────────────────────────────────────────── */}
+        {/* Filter Drawer */}
         <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-          <DrawerContent
-            className="border-0 rounded-t-3xl bg-card focus:outline-none"
-            style={{ maxHeight: "85svh" }}
-          >
-            {/* Hidden a11y title */}
-            <div className="mx-auto mt-3 mb-1 h-1 w-10 rounded-full bg-border" />
+          <DrawerContent className="bg-card px-6 pb-10">
             <DrawerTitle className="sr-only">
               Search and filter recipes
             </DrawerTitle>
 
-            <div className="flex flex-col overflow-y-auto px-5 pb-8">
-              {/* Drawer header */}
-              <div className="flex items-center justify-between py-4">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between pt-4">
                 <h2 className="text-lg font-bold text-foreground">
                   Search & Filter
                 </h2>
@@ -267,73 +296,58 @@ export default function AllRecipesPage() {
                 )}
               </div>
 
-              <Separator className="bg-border mb-5" />
-
-              {/* Search input */}
-              <div className="mb-6">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              <Separator className="bg-border p-0" />
+              <section>
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest block mb-4">
                   Search Recipes
-                </p>
-                <div className="flex items-center gap-2 bg-background rounded-2xl px-4 py-3.5 border border-border">
-                  <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+                </label>
+                <div className="flex items-center gap-3 bg-secondary/30 rounded-2xl px-4 py-4 border border-border/50 focus-within:border-orange-500 transition-colors">
+                  <Search className="w-5 h-5 text-muted-foreground" />
                   <input
-                    type="text"
+                    className="bg-transparent outline-none flex-1 text-base"
+                    placeholder="Lemon, Chicken, Breakfast..."
                     value={draftSearch}
                     onChange={(e) => setDraftSearch(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleDone()}
-                    placeholder="e.g. spinach, detox, lemon..."
-                    autoComplete="off"
-                    className="flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground"
                   />
                   {draftSearch && (
-                    <button
-                      onClick={() => setDraftSearch("")}
-                      aria-label="Clear search"
-                      className="text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <X className="w-4 h-4" />
+                    <button onClick={() => setDraftSearch("")}>
+                      <X className="w-5 h-5" />
                     </button>
                   )}
                 </div>
-              </div>
+              </section>
 
-              <Separator className="bg-border mb-5" />
-
-              {/* Tag list */}
-              <div className="mb-6">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                  Filter by Tag
-                </p>
-                <div className="flex flex-col gap-2">
-                  {filterPills.map((pill) => {
-                    const isActive = pill.value === draftTag;
-                    return (
-                      <button
-                        key={pill.value}
-                        onClick={() => setDraftTag(pill.value)}
-                        className={cn(
-                          "flex items-center justify-between px-4 min-h-12 rounded-2xl text-sm font-semibold transition-all duration-150 active:scale-[0.98]",
-                          isActive
-                            ? "bg-foreground text-background"
-                            : "bg-background text-foreground hover:opacity-80",
-                        )}
-                      >
-                        <span>{pill.label}</span>
-                        {isActive && (
-                          <span className="w-2 h-2 rounded-full bg-background/60 shrink-0" />
-                        )}
-                      </button>
-                    );
-                  })}
+              <section>
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest block mb-4">
+                  Tags
+                </label>
+                <div className="grid grid-cols-1 gap-2 max-h-[30vh] overflow-y-auto pr-2">
+                  {tags.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => setDraftTag(t.slug)}
+                      className={cn(
+                        "flex justify-between items-center px-5 py-4 rounded-2xl font-semibold transition-all",
+                        draftTag === t.slug
+                          ? "bg-foreground text-background scale-[0.98]"
+                          : "bg-secondary/50 text-foreground active:scale-95",
+                      )}
+                    >
+                      {t.name}
+                      {draftTag === t.slug && (
+                        <span className="w-2 h-2 rounded-full bg-background/60 shrink-0" />
+                      )}
+                    </button>
+                  ))}
                 </div>
-              </div>
+              </section>
 
-              {/* Done button */}
               <Button
                 onClick={handleDone}
                 className="w-full rounded-full min-h-14 text-base font-bold bg-foreground text-background hover:bg-foreground/85 border-0 shadow-none active:scale-[0.98] transition-all sticky bottom-2 mt-auto"
               >
-                Done
+                Show Results
               </Button>
             </div>
           </DrawerContent>
@@ -342,10 +356,6 @@ export default function AllRecipesPage() {
     </PaywallGate>
   );
 }
-
-// ─── RecipeCard ───────────────────────────────────────────────────────────────
-
-// ─── EmptyState ───────────────────────────────────────────────────────────────
 
 function EmptyState({
   hasFilters,

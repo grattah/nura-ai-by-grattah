@@ -3,15 +3,15 @@
 import { cn } from "@/lib/utils";
 
 export interface FilterPill {
-  value: string;
-  label: string;
+  slug: string;
+  name: string;
 }
 
 interface FilterPillsProps {
   pills: FilterPill[];
   active: string;
   activeLabel?: string;
-  onChange: (value: string) => void;
+  onChange: (slug: string) => void;
 }
 
 export function FilterPills({
@@ -20,7 +20,7 @@ export function FilterPills({
   activeLabel,
   onChange,
 }: FilterPillsProps) {
-  const label = activeLabel ?? pills.find((p) => p.value === active)?.label;
+  const label = activeLabel ?? pills.find((p) => p.slug === active)?.name;
 
   return (
     <div className="space-y-2.5">
@@ -29,11 +29,11 @@ export function FilterPills({
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {pills.map((pill) => {
-          const isActive = pill.value === active;
+          const isActive = pill.slug === active;
           return (
             <button
-              key={pill.value}
-              onClick={() => onChange(pill.value)}
+              key={pill.slug}
+              onClick={() => onChange(pill.slug)}
               className={cn(
                 "shrink-0 px-5 min-h-11 rounded-full text-sm font-semibold transition-all duration-150 active:scale-95",
                 isActive
@@ -42,7 +42,7 @@ export function FilterPills({
               )}
               aria-pressed={isActive}
             >
-              {pill.label}
+              {pill.name}
             </button>
           );
         })}

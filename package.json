@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build --webpack",
     "lint": "eslint .",
-    "start": "next start"
+    "start": "next start",
+    "generate-types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > lib/database.types.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.0",
@@ -82,6 +83,7 @@
     "@types/react-dom": "19.2.3",
     "@types/web-push": "^3.6.4",
     "postcss": "^8.5",
+    "supabase": "^2.87.0",
     "tailwindcss": "^4.2.0",
     "tw-animate-css": "1.3.3",
     "typescript": "5.7.3"

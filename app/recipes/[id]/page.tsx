@@ -1,7 +1,5 @@
-"use client";
-
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { notFound } from "next/navigation";
 import { ChevronLeft, Share, Bookmark, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -12,14 +10,33 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { FollowUpSection } from "@/components/nura/follow-up-section";
-import { dummyRecipes, defaultFollowUpQuestions } from "@/lib/nura-dummy-data";
 import { PaywallGate } from "@/components/paywall/paywall-gate";
+import { createClient } from "@/lib/supabase/server";
+import { defaultFollowUpQuestions } from "@/lib/nura-dummy-data";
 
-export default function RecipeDetailPage() {
-  const params = useParams();
-  const id = params.id as string;
+export default async function RecipeDetailPage({
+  params,
+}: {
+  params: Promise<{ [key: string]: string }>;
+}) {
+  const { id } = await params;
+  const supabase = await createClient();
 
-  const recipe = dummyRecipes.find((r) => r.id === id) ?? dummyRecipes[0];
+  const { data: recipe, error } = await supabase
+    .from("recipes")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error || !recipe) {
+    return notFound();
+  }
+
+  const ingredients =
+    (recipe.ingredients as Array<{ emoji: string; label: string }>) || [];
+
+  const howToMake =
+    (recipe.how_to_make as Array<{ step: string; instruction: string }>) || [];
 
   return (
     <PaywallGate>
@@ -63,9 +80,9 @@ export default function RecipeDetailPage() {
             className="mx-4 rounded-3xl overflow-hidden bg-muted mb-5"
             style={{ aspectRatio: "16/9" }}
           >
-            {recipe.imageUrl && (
+            {recipe.image_url && (
               <img
-                src={recipe.imageUrl}
+                src={recipe.image_url}
                 alt={recipe.title}
                 className="w-full h-full object-cover"
               />
@@ -78,17 +95,13 @@ export default function RecipeDetailPage() {
               {recipe.title}
             </h1>
             <p className="text-base text-muted-foreground leading-relaxed">
-              {recipe.description}
+              {recipe.short_description}
             </p>
           </div>
 
           {/* Accordion sections */}
           <div className="px-4 space-y-3">
-            <Accordion
-              type="multiple"
-              defaultValue={["ingredients", "how-to", "why", "tip"]}
-              className="space-y-3"
-            >
+            <Accordion type="multiple" defaultValue={[]} className="space-y-3">
               {/* 1 — Ingredients */}
               <AccordionItem
                 value="ingredients"
@@ -97,18 +110,20 @@ export default function RecipeDetailPage() {
               >
                 <AccordionTrigger className="px-5 py-4 hover:no-underline min-h-14">
                   <span className="text-base font-semibold text-foreground">
-                    {recipe.recipeTitle}
+                    {recipe.recipe_section_title}
                   </span>
                 </AccordionTrigger>
                 <AccordionContent className="px-4 pb-4 pt-0">
                   <div className="space-y-2">
-                    {recipe.ingredients.map((ing, i) => (
+                    {ingredients.map((ing, i) => (
                       <div
                         key={i}
                         className="flex items-center gap-3 rounded-2xl px-4 min-h-12"
                         style={{ backgroundColor: "#E8836A" }}
                       >
-                        <span className="text-lg leading-none">{ing.icon}</span>
+                        <span className="text-lg leading-none">
+                          {ing.emoji}
+                        </span>
                         <span className="text-sm font-medium text-foreground/85">
                           {ing.label}
                         </span>
@@ -130,15 +145,15 @@ export default function RecipeDetailPage() {
                 </AccordionTrigger>
                 <AccordionContent className="px-5 pb-5 pt-0">
                   <ol className="space-y-3">
-                    {recipe.howToMake.map((step, i) => (
+                    {howToMake.map((step, i) => (
                       <li
                         key={i}
                         className="flex gap-3 text-base text-muted-foreground leading-relaxed"
                       >
                         <span className="text-foreground font-bold shrink-0 min-w-5">
-                          {i + 1}.
+                          {step.step}.
                         </span>
-                        <span>{step}</span>
+                        <span>{step.instruction}</span>
                       </li>
                     ))}
                   </ol>
@@ -157,7 +172,7 @@ export default function RecipeDetailPage() {
                 </AccordionTrigger>
                 <AccordionContent className="px-5 pb-5 pt-0">
                   <p className="text-base text-muted-foreground leading-relaxed">
-                    {recipe.whyItWorks}
+                    {recipe.why_it_works}
                   </p>
                 </AccordionContent>
               </AccordionItem>
@@ -183,7 +198,7 @@ export default function RecipeDetailPage() {
                 </AccordionTrigger>
                 <AccordionContent className="px-5 pb-5 pt-0">
                   <p className="text-base text-muted-foreground leading-relaxed">
-                    {recipe.insideTip}
+                    {recipe.inside_tip}
                   </p>
                 </AccordionContent>
               </AccordionItem>
@@ -195,7 +210,7 @@ export default function RecipeDetailPage() {
                 contextId={recipe.id}
                 contextType="recipe"
                 title={recipe.title}
-                description={recipe.description}
+                description={recipe.short_description}
                 staticQuestions={defaultFollowUpQuestions}
               />
             </div>
