@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight, Apple, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { NuraLogo } from "./nura-logo";
+import { NuraLogo } from "../nura-logo";
 import { cn } from "@/lib/utils";
 
 // The three distinct UI states of the form
@@ -249,14 +249,14 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
               </button>
 
               {/* Apple — UI only, not implemented */}
-              <button
+              {/* <button
                 disabled
                 title="Coming soon"
                 className="w-full flex items-center justify-center gap-3 bg-card text-foreground py-4 rounded-full font-medium border border-border opacity-50 cursor-not-allowed"
               >
                 <Apple className="h-5 w-5" />
                 Continue with Apple
-              </button>
+              </button> */}
 
               {/* Divider */}
               <div className="flex items-center gap-3 py-1">

@@ -7,7 +7,6 @@ import { Separator } from "@/components/ui/separator";
 import { exploreMoreItems } from "@/lib/nura-dummy-data";
 
 interface ExploreMoreSectionProps {
-  /** Defaults to all guides from nura-dummy-data */
   items?: typeof exploreMoreItems;
 }
 

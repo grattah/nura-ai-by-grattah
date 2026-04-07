@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { createClient as createClientImport } from "@supabase/supabase-js";
+import { Database } from "../database.types";
 
 /**
  * If using Fluid compute: Don't put this client in a global variable. Always create a new client within each
@@ -9,7 +10,7 @@ import { createClient as createClientImport } from "@supabase/supabase-js";
 export async function createClient() {
   const cookieStore = await cookies();
 
-  return createServerClient(
+  return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -33,7 +34,7 @@ export async function createClient() {
   );
 }
 export function createServiceRoleClient() {
-  return createClientImport(
+  return createClientImport<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     {
