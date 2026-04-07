@@ -36,5 +36,3 @@ next-env.d.ts
 # config
 *.toml
 
-# DB types
-*/database.types.ts
