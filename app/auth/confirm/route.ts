@@ -1,29 +1,30 @@
 import { type EmailOtpType } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { type NextRequest } from "next/server";
-
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
+  const { searchParams, origin } = new URL(request.url);
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
-  const _next = searchParams.get("next");
+  const _next = searchParams.get("next") ?? "/";
+
   console.log("[confirm route] redirect URL initial:", _next);
 
   let next = "/";
 
-  if (_next) {
-    try {
+  try {
+    if (_next.startsWith("http")) {
       const url = new URL(_next);
-      if (url.origin === process.env.NEXT_PUBLIC_APP_URL) {
+      if (url.origin === origin) {
         next = url.pathname + url.search;
       }
-    } catch {
-      if (_next.startsWith("/")) {
-        next = _next;
-      }
+    } else if (_next.startsWith("/")) {
+      next = _next;
     }
+  } catch (e) {
+    console.error("[confirm route] URL parsing error:", e);
+    next = "/";
   }
 
   if (token_hash && type) {
@@ -33,16 +34,18 @@ export async function GET(request: NextRequest) {
       type,
       token_hash,
     });
+
     if (!error) {
-      console.log("[confirm route] redirect URL after OTP verification:", next);
-      // redirect user to specified redirect URL or root of app
+      console.log(
+        "[confirm route] Successful verification. Redirecting to:",
+        next,
+      );
       redirect(next);
     } else {
-      // redirect the user to an error page with some instructions
-      redirect(`/auth/error?error=${error?.message}`);
+      console.error("[confirm route] OTP Verification failed:", error.message);
+      redirect(`/auth/error?error=${encodeURIComponent(error.message)}`);
     }
   }
 
-  // redirect the user to an error page with some instructions
-  redirect(`/auth/error?error=No token hash or type`);
+  redirect(`/auth/error?error=Missing token hash or type`);
 }
