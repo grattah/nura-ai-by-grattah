@@ -11,20 +11,6 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
-// const BYPASS_DOMAINS = [
-//   "js.stripe.com",
-//   "checkout.stripe.com",
-//   "api.stripe.com",
-//   "hooks.stripe.com",
-//   "r.stripe.com",
-//   // Replace with your actual Supabase project hostname
-//   new URL(self.location.href).hostname === "localhost"
-//     ? "localhost"
-//     : process.env.NEXT_PUBLIC_SUPABASE_URL
-//       ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
-//       : "",
-// ];
-
 const STRIPE_DOMAINS = [
   "js.stripe.com",
   "checkout.stripe.com",
@@ -58,11 +44,6 @@ const serwist = new Serwist({
   // - API routes: network-first with cache fallback
   runtimeCaching: [
     // ── Stripe — always network, never cache ─────────────────────────────
-    // {
-    //   matcher: ({ url }) =>
-    //     BYPASS_DOMAINS.some((domain) => url.hostname.includes(domain)),
-    //   handler: new NetworkOnly(),
-    // },
     {
       matcher: ({ url }) => STRIPE_DOMAINS.some((d) => url.hostname === d),
       handler: new NetworkOnly(),

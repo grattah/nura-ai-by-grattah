@@ -14,26 +14,38 @@ function createEmbedder(
   return {
     dimensions,
     async embed(text) {
-      const result = await embed({ model, value: text });
-      return result.embedding;
+      if (!text?.trim()) throw new Error("Cannot embed empty string");
+      const { embedding } = await embed({
+        model,
+        value: text,
+        providerOptions: {
+          google: {
+            outputDimensionality: dimensions,
+            taskType: "RETRIEVAL_QUERY",
+          },
+        },
+      });
+      return embedding;
     },
     async embedBatch(texts) {
-      const result = await embedMany({ model, values: texts });
-      return result.embeddings;
+      const { embeddings } = await embedMany({
+        model,
+        values: texts,
+        providerOptions: {
+          google: {
+            outputDimensionality: dimensions,
+            taskType: "RETRIEVAL_DOCUMENT",
+          },
+        },
+      });
+      return embeddings;
     },
   };
 }
 
-// const openAIEmbedder = createEmbedder(
-//   openai.embedding("text-embedding-3-small"),
-//   1536,
-// );
-
-// Gemini option — swap activeEmbedder below to use:
 const geminiEmbedder = createEmbedder(
   google.textEmbeddingModel("gemini-embedding-001"),
   768,
 );
 
-// ─── Change this one line to switch embedding providers ───────────────────────
 export const embedder: Embedder = geminiEmbedder;

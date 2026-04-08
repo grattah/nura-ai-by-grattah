@@ -12,7 +12,8 @@ import {
 import { FollowUpSection } from "@/components/follow-up-section";
 import { PaywallGate } from "@/components/paywall/paywall-gate";
 import { createClient } from "@/lib/supabase/server";
-import { defaultFollowUpQuestions } from "@/lib/nura-dummy-data";
+import { isBookmarked } from "@/actions/bookmark";
+import { BookmarkButton } from "@/components/bookmark-button";
 
 export default async function RecipeDetailPage({
   params,
@@ -24,13 +25,18 @@ export default async function RecipeDetailPage({
 
   const { data: recipe, error } = await supabase
     .from("recipes")
-    .select("*")
+    .select("*, follow_up_questions")
     .eq("id", id)
     .single();
 
   if (error || !recipe) {
     return notFound();
   }
+
+  const bookmarked = await isBookmarked(recipe.id);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const ingredients =
     (recipe.ingredients as Array<{ emoji: string; label: string }>) || [];
@@ -63,14 +69,11 @@ export default async function RecipeDetailPage({
             >
               <Share className="w-5 h-5" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="w-11 h-11 text-foreground hover:opacity-70 transition-opacity"
-              aria-label="Bookmark recipe"
-            >
-              <Bookmark className="w-5 h-5" />
-            </Button>
+            <BookmarkButton
+              recipeId={recipe.id}
+              initialBookmarked={bookmarked}
+              isAuthenticated={!!user}
+            />
           </div>
         </div>
 
@@ -211,7 +214,7 @@ export default async function RecipeDetailPage({
                 contextType="recipe"
                 title={recipe.title}
                 description={recipe.short_description}
-                staticQuestions={defaultFollowUpQuestions}
+                savedQuestions={recipe.follow_up_questions}
               />
             </div>
 

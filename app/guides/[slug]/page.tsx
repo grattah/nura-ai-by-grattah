@@ -134,7 +134,7 @@ export default function GuidesPage() {
               contextType="guide"
               title={title}
               description={description}
-              staticQuestions={staticQuestions}
+              savedQuestions={staticQuestions}
             />
           </div>
         </main>

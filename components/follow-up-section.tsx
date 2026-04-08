@@ -17,7 +17,7 @@ interface FollowUpSectionProps {
   title: string;
   description: string;
   allowedDomains?: string[];
-  staticQuestions?: string[];
+  savedQuestions?: string[] | null;
 }
 
 export function FollowUpSection({
@@ -26,23 +26,30 @@ export function FollowUpSection({
   title,
   description,
   allowedDomains = ["healthline.com", "webmd.com", "nhs.uk", "mayoclinic.org"],
-  staticQuestions = defaultFollowUpQuestions,
+  savedQuestions,
 }: FollowUpSectionProps) {
-  const [questions, setQuestions] = useState<string[]>(staticQuestions);
-  const [questionsLoading, setQuestionsLoading] = useState(true);
+  const [questions, setQuestions] = useState<string[]>(
+    savedQuestions?.length ? savedQuestions : [],
+  );
+
+  const [questionsLoading, setQuestionsLoading] = useState(
+    !savedQuestions?.length,
+  );
 
   const [input, setInput] = useState("");
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/rag/chat",
-      body: { contextId, contextType, title, allowedDomains },
+      body: { input, contextId, contextType, title, allowedDomains },
     }),
   });
 
   const isLoading = status === "submitted" || status === "streaming";
 
   useEffect(() => {
+    if (savedQuestions?.length) return;
+
     let cancelled = false;
     setQuestionsLoading(true);
 
@@ -55,6 +62,13 @@ export function FollowUpSection({
       .then(({ questions: aiQs }) => {
         if (!cancelled && Array.isArray(aiQs) && aiQs.length > 0) {
           setQuestions(aiQs);
+          fetch("/api/rag/save-questions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ contextId, contextType, questions: aiQs }),
+          }).catch(() => {
+            /* non-critical, fail silently */
+          });
         }
       })
       .catch(() => {
@@ -72,7 +86,8 @@ export function FollowUpSection({
   const handleSend = () => {
     if (!input.trim() || isLoading) return;
 
-    sendMessage({ role: "user", parts: [{ type: "text", text: input }] });
+    sendMessage({ text: input });
+    // sendMessage({ role: "user", parts: [{ type: "text", text: input }] });
     setInput("");
   };
 

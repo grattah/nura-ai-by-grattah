@@ -9,8 +9,6 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get("type") as EmailOtpType | null;
   const _next = searchParams.get("next") ?? "/";
 
-  console.log("[confirm route] redirect URL initial:", _next);
-
   let next = "/";
 
   try {
@@ -36,10 +34,6 @@ export async function GET(request: NextRequest) {
     });
 
     if (!error) {
-      console.log(
-        "[confirm route] Successful verification. Redirecting to:",
-        next,
-      );
       redirect(next);
     } else {
       console.error("[confirm route] OTP Verification failed:", error.message);

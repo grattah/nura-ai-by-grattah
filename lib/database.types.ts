@@ -56,6 +56,35 @@ export type Database = {
         };
         Relationships: [];
       };
+      bookmarks: {
+        Row: {
+          created_at: string;
+          id: string;
+          recipe_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          recipe_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          recipe_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bookmarks_recipe_id_fkey";
+            columns: ["recipe_id"];
+            isOneToOne: false;
+            referencedRelation: "recipes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       guides: {
         Row: {
           created_at: string;
@@ -89,6 +118,33 @@ export type Database = {
           source_url?: string;
           title?: string;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      notifications: {
+        Row: {
+          body: string;
+          created_at: string;
+          id: string;
+          read_at: string | null;
+          title: string;
+          user_id: string;
+        };
+        Insert: {
+          body: string;
+          created_at?: string;
+          id?: string;
+          read_at?: string | null;
+          title: string;
+          user_id: string;
+        };
+        Update: {
+          body?: string;
+          created_at?: string;
+          id?: string;
+          read_at?: string | null;
+          title?: string;
+          user_id?: string;
         };
         Relationships: [];
       };
@@ -156,6 +212,7 @@ export type Database = {
         Row: {
           created_at: string;
           display_order: number;
+          follow_up_questions: string[] | null;
           how_to_make: Json;
           id: string;
           image_url: string | null;
@@ -173,6 +230,7 @@ export type Database = {
         Insert: {
           created_at?: string;
           display_order?: number;
+          follow_up_questions?: string[] | null;
           how_to_make?: Json;
           id?: string;
           image_url?: string | null;
@@ -190,6 +248,7 @@ export type Database = {
         Update: {
           created_at?: string;
           display_order?: number;
+          follow_up_questions?: string[] | null;
           how_to_make?: Json;
           id?: string;
           image_url?: string | null;
