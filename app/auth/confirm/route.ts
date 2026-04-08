@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
   const _next = searchParams.get("next");
+  console.log("[confirm route] redirect URL initial:", _next);
 
   let next = "/";
 
@@ -33,6 +34,7 @@ export async function GET(request: NextRequest) {
       token_hash,
     });
     if (!error) {
+      console.log("[confirm route] redirect URL after OTP verification:", next);
       // redirect user to specified redirect URL or root of app
       redirect(next);
     } else {
