@@ -5,10 +5,13 @@ import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { exploreMoreItems } from "@/lib/nura-dummy-data";
 import { InteractionGuard } from "@/components/paywall/interaction-guard";
-import { RecipeCard } from "@/components/recipe-card";
 import { ExploreMoreSection } from "@/components/home/explore-more-section";
 import { TodaysRecipeCard } from "@/components/home/todays-recipe-card";
 import { QuickTipCard } from "@/components/home/quick-tip-card";
+import { HomeRecipeCard } from "@/components/home/home-recipe-card";
+
+// Alternating palette for recipe cards — matches Figma category card colors
+const CARD_COLORS = ["sage", "slate", "sage", "slate"] as const;
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -21,27 +24,32 @@ export default async function HomePage() {
   if (error || !recipes) {
     return notFound();
   }
+
   return (
     <div className="min-h-screen bg-background">
       <InteractionGuard>
-        <main className="px-4 pb-8 space-y-6">
-          <TodaysRecipeCard />
+        <main className="px-4 pt-2 pb-10 space-y-8">
+          <div className="space-y-4">
+            {/* Hero — Today's Recipe */}
+            <TodaysRecipeCard />
 
-          <QuickTipCard
-            title="Gain Body Mass"
-            description="Consume a calorie surplus of 300–500 daily"
-          />
+            {/* Quick Tip */}
+            <QuickTipCard
+              title="Gain Body Mass"
+              description="Consume a calorie surplus of 300–500 daily"
+            />
+          </div>
 
           {/* Wellness Recipes */}
           <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-foreground">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-semibold text-foreground">
                 Wellness Recipes
               </h2>
               <Button
                 variant="link"
                 asChild
-                className="p-0 h-auto text-sm text-foreground font-normal gap-1 hover:no-underline hover:opacity-80 transition-opacity"
+                className="p-0 h-auto text-sm text-foreground font-normal gap-0.5 hover:no-underline hover:opacity-70 transition-opacity"
               >
                 <Link href="/recipes">
                   See all <ChevronRight className="w-4 h-4" />
@@ -49,15 +57,22 @@ export default async function HomePage() {
               </Button>
             </div>
 
-            <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
+            <div className="flex gap-3 overflow-x-auto hide-scrollbar -mx-4 px-4 pb-1">
               {recipes.slice(0, 4).map((recipe, index) => (
-                <div key={recipe.id} className="shrink-0 w-40">
-                  <RecipeCard key={recipe.id} recipe={recipe} />
+                <div key={recipe.id} className="shrink-0 w-[42vw] max-w-44">
+                  <HomeRecipeCard
+                    id={recipe.id}
+                    title={recipe.title}
+                    imageUrl={recipe.image_url ?? undefined}
+                    color={CARD_COLORS[index % CARD_COLORS.length]}
+                    href={`/recipes/${recipe.id}`}
+                  />
                 </div>
               ))}
             </div>
           </section>
 
+          {/* Explore More */}
           <ExploreMoreSection items={exploreMoreItems} />
         </main>
       </InteractionGuard>

@@ -24,7 +24,7 @@ const ThemeToggleButton = () => {
 
   return (
     <Button
-      className="w-10 h-10 rounded-full bg-card flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+      className="w-10 h-10 rounded-full bg-card/70 backdrop-blur-sm flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
       onClick={toggleTheme}
       size="icon"
     >
