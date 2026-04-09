@@ -41,10 +41,10 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
               "Full recipes with ingredients & steps",
               "Why it works & inside chef tips",
               "AI-powered follow-up Q&A",
-              "Cancer risk guides & personalised advice",
+              // "Cancer risk guides & personalised advice",
             ].map((item) => (
               <li key={item} className="flex items-center gap-2">
-                <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
+                <span className="w-1.5 h-1.5 rounded-full bg-nura-peach shrink-0" />
                 {item}
               </li>
             ))}
