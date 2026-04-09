@@ -32,7 +32,7 @@ export function TodaysRecipeCard({
     <>
       {/* ── Hero Card ──────────────────────────────────────────────────────── */}
       <Card
-        className="relative overflow-hidden border-0 rounded-3xl shadow-none"
+        className="relative overflow-hidden border-0 rounded-3xl shadow-none p-0"
         style={{ backgroundColor: "#E8836A" }}
       >
         {/* Noise texture overlay */}
@@ -48,17 +48,17 @@ export function TodaysRecipeCard({
           <div className="flex items-start justify-between">
             <div className="flex-1 pr-4">
               {/* Breadcrumb */}
-              <p className="text-xs font-medium tracking-wide mb-2 text-foreground/55">
+              <p className="text-xs font-medium tracking-wide mb-2 text-black/70">
                 {category} → {date}
               </p>
 
               {/* Title */}
-              <h2 className="text-2xl font-bold leading-tight mb-2 text-foreground/80">
+              <h2 className="text-2xl font-bold leading-tight mb-2 text-black/75">
                 {title}
               </h2>
 
               {/* Description */}
-              <p className="text-sm leading-snug mb-5 max-w-50 text-foreground/55">
+              <p className="text-sm leading-snug mb-5 max-w-50 text-black/70">
                 {description}
               </p>
 
@@ -67,7 +67,7 @@ export function TodaysRecipeCard({
                 variant="secondary"
                 size="sm"
                 onClick={() => setOpen(true)}
-                className="rounded-full bg-white/90 hover:bg-white text-foreground/75 font-semibold px-4 h-9 shadow-none border-0"
+                className="rounded-full bg-white/30 backdrop-blur-sm hover:bg-white text-black/70 font-semibold px-4 h-9 shadow-none border-0"
               >
                 Explore →
               </Button>

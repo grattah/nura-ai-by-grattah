@@ -187,10 +187,11 @@ export default function AllRecipesPage() {
             <Button variant="ghost" size="sm" asChild className="p-0 h-11 w-11">
               <Link href="/">
                 <ChevronLeft className="w-6 h-6" />
+                <span>Back</span>
               </Link>
             </Button>
-            <h1 className="text-xl font-bold tracking-tight">All Recipes</h1>
           </div>
+          <h1 className="text-xl font-bold tracking-tight">All Recipes</h1>
 
           <Button
             variant="ghost"
@@ -283,7 +284,7 @@ export default function AllRecipesPage() {
 
             <div className="space-y-6">
               <div className="flex items-center justify-between pt-4">
-                <h2 className="text-lg font-bold text-foreground">
+                <h2 className="text-xl font-bold text-foreground">
                   Search & Filter
                 </h2>
                 {hasDraftChanges && (
@@ -331,7 +332,7 @@ export default function AllRecipesPage() {
                       className={cn(
                         "flex justify-between items-center px-5 py-4 rounded-2xl font-semibold transition-all",
                         draftTag === t.slug
-                          ? "bg-foreground text-background scale-[0.98]"
+                          ? "bg-foreground/80 text-background scale-[0.98]"
                           : "bg-secondary/50 text-foreground active:scale-95",
                       )}
                     >
@@ -346,7 +347,7 @@ export default function AllRecipesPage() {
 
               <Button
                 onClick={handleDone}
-                className="w-full rounded-full min-h-14 text-base font-bold bg-foreground text-background hover:bg-foreground/85 border-0 shadow-none active:scale-[0.98] transition-all sticky bottom-2 mt-auto"
+                className="w-full rounded-full min-h-14 text-base font-bold bg-foreground/80 text-background hover:bg-foreground/75 border-0 shadow-none active:scale-[0.98] transition-all sticky bottom-2 mt-auto"
               >
                 Show Results
               </Button>

@@ -14,7 +14,7 @@ export function ExploreMoreSection({
   items = exploreMoreItems,
 }: ExploreMoreSectionProps) {
   return (
-    <Card className="border-0 rounded-3xl shadow-none overflow-hidden bg-card">
+    <Card className="border-0 rounded-3xl shadow-none overflow-hidden bg-card p-0">
       <CardHeader className="px-5 pt-5 pb-1">
         <CardTitle className="text-lg font-semibold text-foreground">
           Explore More

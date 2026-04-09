@@ -5,7 +5,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { createClient } from "@/lib/supabase/server";
 import { AppHeader } from "@/components/layout/app-header";
-import { BottomNav } from "@/components/layout/bottom-nav";
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
@@ -78,7 +78,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
-        <meta name="apple-mobile-web-app-title" content="ConnectHub" />
+        <meta name="apple-mobile-web-app-title" content="Nura" />
         <meta name="mobile-web-app-capable" content="yes" />
         <link rel="apple-touch-icon" href="/web-app-manifest-192x192.png" />
       </head>
@@ -92,6 +92,7 @@ export default async function RootLayout({
           <AppHeader user={headerUser} />
 
           <main>{children}</main>
+          <PWAInstallPrompt />
         </ThemeProvider>
         <Analytics />
       </body>
