@@ -17,12 +17,7 @@ export default async function ReturnPage({
   if (session.status === "open") redirect("/");
 
   if (session.status === "complete") {
-    return (
-      <ReturnClient
-        email={session.customer_details?.email ?? ""}
-        stripeSessionId={sessionId}
-      />
-    );
+    return <ReturnClient userId={session.client_reference_id ?? ""} />;
   }
 
   redirect("/");

@@ -1,44 +1,45 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-
-const TOKEN_KEY = "nura_access_token";
-
-export type AccessState = "loading" | "granted" | "denied";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 export function useAccess() {
-  const [state, setState] = useState<AccessState>("loading");
+  const [hasAccess, setHasAccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) {
-      setState("denied");
-      return;
+    const supabase = createClient();
+
+    async function check() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        setHasAccess(false);
+        setIsLoading(false);
+        return;
+      }
+
+      const { data } = await supabase
+        .from("subscriptions")
+        .select("status, expires_at")
+        .eq("user_id", session.user.id)
+        .eq("status", "active")
+        .maybeSingle();
+
+      const valid =
+        !!data && (!data.expires_at || new Date(data.expires_at) > new Date());
+      setHasAccess(valid);
+      setIsLoading(false);
     }
-    // Validate token + bridge it to an HttpOnly cookie for middleware
-    fetch("/api/access/activate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token }),
-    })
-      .then((r) => r.json())
-      .then(({ valid }) => setState(valid ? "granted" : "denied"))
-      .catch(() => setState("denied"));
+
+    check();
+    // Re-check when auth state changes (sign in/out)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => check());
+    return () => subscription.unsubscribe();
   }, []);
 
-  const saveToken = useCallback((token: string) => {
-    localStorage.setItem(TOKEN_KEY, token);
-    setState("granted");
-    // Immediately bridge to cookie
-    fetch("/api/access/activate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token }),
-    });
-  }, []);
-
-  const hasAccess = state === "granted";
-  const isLoading = state === "loading";
-
-  return { hasAccess, isLoading, saveToken };
+  return { hasAccess, isLoading };
 }

@@ -1,29 +1,20 @@
 "use client";
 
 import { useEffect } from "react";
-import { useAccess } from "@/hooks/use-access";
 import { useRouter } from "next/navigation";
 
-export function ReturnClient({
-  email,
-  stripeSessionId,
-}: {
-  email: string;
-  stripeSessionId: string;
-}) {
-  const { saveToken } = useAccess();
+export function ReturnClient({ userId }: { userId: string }) {
   const router = useRouter();
 
   useEffect(() => {
-    // Fetch the token that the webhook inserted
-    fetch("/api/access/token-for-session", {
+    fetch("/api/access", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ stripeSessionId }),
+      body: JSON.stringify({ userId }),
     })
       .then((r) => r.json())
-      .then(({ token }) => {
-        if (token) saveToken(token);
+      .then(({ success }) => {
+        console.log("Account activation result:", success);
       })
       .finally(() => {
         router.replace("/");
@@ -33,10 +24,9 @@ export function ReturnClient({
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-3">
       <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-      <p className="text-muted-foreground text-sm">Activating your access…</p>
+      <p className="text-muted-foreground text-sm">
+        Activating your account...
+      </p>
     </div>
-    // <div className="min-h-screen flex items-center justify-center bg-background">
-    //   <p className="text-muted-foreground text-sm">Setting up your access…</p>
-    // </div>
   );
 }
