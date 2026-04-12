@@ -315,6 +315,45 @@ export type Database = {
           },
         ];
       };
+      subscriptions: {
+        Row: {
+          created_at: string | null;
+          expires_at: string | null;
+          id: string;
+          plan: string;
+          status: string;
+          stripe_customer_id: string | null;
+          stripe_session_id: string | null;
+          stripe_subscription_id: string | null;
+          updated_at: string | null;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          expires_at?: string | null;
+          id?: string;
+          plan?: string;
+          status?: string;
+          stripe_customer_id?: string | null;
+          stripe_session_id?: string | null;
+          stripe_subscription_id?: string | null;
+          updated_at?: string | null;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string | null;
+          expires_at?: string | null;
+          id?: string;
+          plan?: string;
+          status?: string;
+          stripe_customer_id?: string | null;
+          stripe_session_id?: string | null;
+          stripe_subscription_id?: string | null;
+          updated_at?: string | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       tags: {
         Row: {
           created_at: string;

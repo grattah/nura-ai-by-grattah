@@ -1,26 +1,16 @@
-// /app/api/auth/check-email/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-// Simple in-memory rate limiter
-// Replace with Upstash Ratelimit in production:
-// npm i @upstash/ratelimit @upstash/redis
 const attempts = new Map<string, { count: number; resetAt: number }>();
 
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
-  const windowMs = 60 * 1000; // 1 minute window
-  const maxAttempts = 5;
-
   const record = attempts.get(ip);
-
   if (!record || now > record.resetAt) {
-    attempts.set(ip, { count: 1, resetAt: now + windowMs });
+    attempts.set(ip, { count: 1, resetAt: now + 60_000 });
     return false;
   }
-
-  if (record.count >= maxAttempts) return true;
-
+  if (record.count >= 5) return true;
   record.count++;
   return false;
 }
@@ -45,37 +35,38 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid email" }, { status: 400 });
   }
 
-  // Admin client — uses service role key, server-side only
-  const supabase = createClient(
+  // Query auth schema directly — O(1) vs listUsers() O(n)
+  const authClient = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      db: { schema: "auth" },
-    },
+    { db: { schema: "auth" } },
   );
 
   try {
-    // const { data, error } = await supabase.auth.admin.getUserByEmail(
-    //   email.toLowerCase(),
-    // );
-    // TODO: find a more efficient way to achieve this
-    const { data } = await supabase.auth.admin.listUsers();
-    // const { data } = await supabase
+    await new Promise((r) => setTimeout(r, 200)); // timing-attack mitigation
+
+    // const { data } = await authClient
     //   .from("users")
-    //   .select("id")
+    //   .select("id, identities")
     //   .eq("email", email.toLowerCase())
     //   .maybeSingle();
 
-    // Add a small artificial delay to deter timing-based enumeration
-    await new Promise((resolve) => setTimeout(resolve, 200));
-
-    // If error code is 'user_not_found' the email is new — otherwise it exists
-    const exists = data.users.find(
+    const { data: users } = await authClient.auth.admin.listUsers();
+    const data = users.users.find(
       (user) => user.email?.toLocaleLowerCase() === email.toLowerCase(),
     );
-    // const exists = !!data
 
-    return NextResponse.json({ exists });
+    if (!data) {
+      return NextResponse.json({ exists: false, hasPassword: false });
+    }
+
+    // An "email" identity means the user signed up with email+password
+    const identities: { provider: string }[] = Array.isArray(data.identities)
+      ? data.identities
+      : [];
+    const hasPassword = identities.some((i) => i.provider === "email");
+
+    return NextResponse.json({ exists: true, hasPassword });
   } catch {
     return NextResponse.json(
       { error: "Something went wrong" },

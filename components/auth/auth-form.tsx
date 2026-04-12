@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight, Apple, ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronRight, KeyRound } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { NuraLogo } from "../nura-logo";
 import { cn } from "@/lib/utils";
 
-// The three distinct UI states of the form
-type AuthStep = "email" | "login" | "signup";
+// "login-otp" → user exists but has no password (OAuth / checkout-created)
+type AuthStep = "email" | "login" | "login-otp" | "signup";
 
 interface NuraAuthFormProps {
   className?: string;
@@ -21,12 +21,13 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [otpCode, setOtpCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const router = useRouter();
 
-  // ─── Step 1: Check if email exists ────────────────────────────────────────
+  // ─── Step 1: resolve email ─────────────────────────────────────────────────
 
   const handleEmailContinue = async () => {
     if (!email) return;
@@ -44,14 +45,36 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         setError("Too many attempts. Please wait a minute and try again.");
         return;
       }
-
       if (!res.ok) {
         setError("Something went wrong. Please try again.");
         return;
       }
 
-      const { exists } = await res.json();
-      setStep(exists ? "login" : "signup");
+      const { exists, hasPassword } = await res.json();
+
+      if (!exists) {
+        setStep("signup");
+        return;
+      }
+
+      if (hasPassword) {
+        setStep("login");
+        return;
+      }
+
+      // User exists but signed up via OAuth or checkout — send OTP
+      const supabase = createClient();
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email,
+        options: { shouldCreateUser: false },
+      });
+
+      if (otpError) {
+        setError("Failed to send sign-in code. Please try again.");
+        return;
+      }
+
+      setStep("login-otp");
     } catch {
       setError("Network error. Please check your connection.");
     } finally {
@@ -59,20 +82,50 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     }
   };
 
-  const claimTokens = async (userEmail: string) => {
+  // ─── OTP verification ──────────────────────────────────────────────────────
+
+  const handleOtpVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otpCode.trim()) return;
+    setIsLoading(true);
+    setError(null);
+
+    const supabase = createClient();
+
     try {
-      await fetch("/api/access/claim", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: userEmail }),
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        email,
+        token: otpCode.trim(),
+        type: "email",
       });
+
+      if (verifyError) {
+        setError("Invalid or expired code. Please request a new one.");
+        return;
+      }
+
+      router.push("/");
+      router.refresh();
     } catch {
-      // Non-fatal — token remains anonymous, user can restore manually
-      console.warn("[claimTokens] Failed to claim tokens for", userEmail);
+      setError("Verification failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // ─── Step 2a: Sign in with password ───────────────────────────────────────
+  const handleResendOtp = async () => {
+    setIsLoading(true);
+    setError(null);
+    const supabase = createClient();
+    await supabase.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: false },
+    });
+    setIsLoading(false);
+    setOtpCode("");
+  };
+
+  // ─── Password sign-in ──────────────────────────────────────────────────────
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,11 +139,9 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         password,
       });
       if (error) throw error;
-      claimTokens(email);
       router.push("/");
       router.refresh();
     } catch (err: unknown) {
-      // Give a friendly message rather than exposing Supabase error strings
       setError(
         err instanceof Error &&
           err.message.includes("Invalid login credentials")
@@ -102,7 +153,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     }
   };
 
-  // ─── Step 2b: Create account ───────────────────────────────────────────────
+  // ─── Sign up ───────────────────────────────────────────────────────────────
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,7 +163,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       setError("Passwords do not match.");
       return;
     }
-
     if (password.length < 8) {
       setError("Password must be at least 8 characters.");
       return;
@@ -133,11 +183,8 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
       if (error) throw error;
 
-      // Supabase returns a session immediately if email confirmation is off.
-      // If email confirmation is on, data.session will be null — redirect to success page.
       if (data.session) {
-        claimTokens(email);
-        router.push("/");
+        router.push("/checkout");
         router.refresh();
       } else {
         router.push("/auth/verify-email");
@@ -149,7 +196,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     }
   };
 
-  // ─── Google Sign-In ────────────────────────────────────────────────────────
+  // ─── Google ────────────────────────────────────────────────────────────────
 
   const handleGoogleSignIn = async () => {
     const supabase = createClient();
@@ -161,10 +208,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: {
-            access_type: "offline",
-            prompt: "consent",
-          },
+          queryParams: { access_type: "offline", prompt: "consent" },
         },
       });
       if (error) throw error;
@@ -183,20 +227,20 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     setPassword("");
     setConfirmPassword("");
     setFullName("");
+    setOtpCode("");
     setError(null);
   };
 
   const isEmailStep = step === "email";
-  const isLoginStep = step === "login";
-  const isSignupStep = step === "signup";
+  const showBackButton = step !== "email";
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className={cn("min-h-screen flex flex-col", className)}>
-      {/* Top bar — Skip or Back depending on step */}
+      {/* Top bar */}
       <div className="flex items-center justify-between p-4 pt-6">
-        {!isEmailStep ? (
+        {showBackButton ? (
           <button
             onClick={goBack}
             className="flex items-center gap-1 px-3 py-2 rounded-full text-sm font-medium text-foreground hover:opacity-70 transition-opacity"
@@ -205,7 +249,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
             Back
           </button>
         ) : (
-          <div /> // spacer to keep Skip right-aligned on the email step
+          <div />
         )}
         <Link
           href="/"
@@ -215,30 +259,29 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         </Link>
       </div>
 
-      {/* Main content */}
+      {/* Main */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 pb-12">
-        {/* Logo */}
         <div className="mb-8">
           <NuraLogo size="lg" variant="full" />
         </div>
 
-        {/* Heading — changes per step */}
         <h1 className="text-2xl font-semibold text-foreground text-center mb-2">
-          {isEmailStep && "Sign in or create an account"}
-          {isLoginStep && "Welcome back"}
-          {isSignupStep && "Create your account"}
+          {step === "email" && "Sign in or create an account"}
+          {step === "login" && "Welcome back"}
+          {step === "login-otp" && "Check your email"}
+          {step === "signup" && "Create your account"}
         </h1>
         <p className="text-muted-foreground text-center mb-8 text-sm">
-          {isEmailStep && "Save and retrieve your research"}
-          {isLoginStep && email}
-          {isSignupStep && email}
+          {step === "email" && "Save and retrieve your research"}
+          {step === "login" && email}
+          {step === "login-otp" && `We sent a 6-digit code to ${email}`}
+          {step === "signup" && email}
         </p>
 
         <div className="w-full max-w-sm space-y-3">
           {/* ── Email step ── */}
-          {isEmailStep && (
+          {step === "email" && (
             <>
-              {/* Google — primary action, visually dominant */}
               <button
                 onClick={handleGoogleSignIn}
                 disabled={isGoogleLoading}
@@ -248,24 +291,12 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 {isGoogleLoading ? "Connecting..." : "Continue with Google"}
               </button>
 
-              {/* Apple — UI only, not implemented */}
-              {/* <button
-                disabled
-                title="Coming soon"
-                className="w-full flex items-center justify-center gap-3 bg-card text-foreground py-4 rounded-full font-medium border border-border opacity-50 cursor-not-allowed"
-              >
-                <Apple className="h-5 w-5" />
-                Continue with Apple
-              </button> */}
-
-              {/* Divider */}
               <div className="flex items-center gap-3 py-1">
                 <div className="flex-1 border-t border-border" />
                 <span className="text-xs text-muted-foreground">or</span>
                 <div className="flex-1 border-t border-border" />
               </div>
 
-              {/* Email input */}
               <input
                 type="email"
                 placeholder="Enter your email"
@@ -283,13 +314,16 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
               >
                 {isLoading ? "Checking..." : "Continue with email"}
               </button>
+
+              {error && (
+                <p className="text-sm text-destructive text-center">{error}</p>
+              )}
             </>
           )}
 
-          {/* ── Login step ── */}
-          {isLoginStep && (
+          {/* ── Password login step ── */}
+          {step === "login" && (
             <form onSubmit={handleSignIn} className="space-y-3">
-              {/* Readonly email — makes it clear which account they're signing into */}
               <div className="w-full px-4 py-4 rounded-2xl bg-muted text-muted-foreground text-sm">
                 {email}
               </div>
@@ -317,7 +351,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 {isLoading ? "Signing in..." : "Sign in"}
               </button>
 
-              {/* Visible forgot password — important for 40+ users */}
               <Link
                 href="/auth/forgot-password"
                 className="block text-center text-sm text-muted-foreground hover:text-foreground transition-colors pt-1"
@@ -327,10 +360,55 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
             </form>
           )}
 
+          {/* ── OTP login step ── */}
+          {step === "login-otp" && (
+            <form onSubmit={handleOtpVerify} className="space-y-3">
+              {/* Icon */}
+              <div className="flex justify-center py-2">
+                <div className="w-14 h-14 rounded-full bg-card flex items-center justify-center">
+                  <KeyRound className="w-6 h-6 text-muted-foreground" />
+                </div>
+              </div>
+
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="Enter 8-digit code"
+                value={otpCode}
+                onChange={(e) =>
+                  setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 8))
+                }
+                autoFocus
+                autoComplete="one-time-code"
+                className="w-full px-4 py-4 rounded-2xl bg-muted text-foreground placeholder:text-muted-foreground border-0 focus:ring-2 focus:ring-ring outline-none text-center text-xl tracking-widest"
+              />
+
+              {error && (
+                <p className="text-sm text-destructive text-center">{error}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={isLoading || otpCode.length < 6}
+                className="w-full flex items-center justify-center bg-nura-cream text-nura-forest py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+              >
+                {isLoading ? "Verifying..." : "Verify code"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={isLoading}
+                className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+              >
+                Didn't receive it? Resend code
+              </button>
+            </form>
+          )}
+
           {/* ── Signup step ── */}
-          {isSignupStep && (
+          {step === "signup" && (
             <form onSubmit={handleSignUp} className="space-y-3">
-              {/* Readonly email */}
               <div className="w-full px-4 py-4 rounded-2xl bg-muted text-muted-foreground text-sm">
                 {email}
               </div>
@@ -366,7 +444,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 className="w-full px-4 py-4 rounded-2xl bg-muted text-foreground placeholder:text-muted-foreground border-0 focus:ring-2 focus:ring-ring outline-none"
               />
 
-              {/* Live password hint */}
               {password.length > 0 && password.length < 8 && (
                 <p className="text-xs text-muted-foreground text-center">
                   Password must be at least 8 characters
@@ -388,19 +465,11 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
               </button>
             </form>
           )}
-
-          {/* Global error (email step only) */}
-          {isEmailStep && error && (
-            <p className="text-sm text-destructive text-center">{error}</p>
-          )}
         </div>
       </div>
     </div>
   );
 }
-
-// ─── Inline Google icon ──────────────────────────────────────────────────────
-// Kept inline to avoid an extra import for a single-use SVG
 
 function GoogleIcon() {
   return (

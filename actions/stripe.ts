@@ -7,7 +7,6 @@ import { headers } from "next/headers";
 export async function fetchClientSecret() {
   const origin = (await headers()).get("origin");
 
-  // Pre-fill email if user is already signed in
   const supabase = await createClient();
   const {
     data: { user },
@@ -17,15 +16,14 @@ export async function fetchClientSecret() {
     ui_mode: "embedded_page",
     line_items: [
       {
-        price: "price_1TIxBlGkqlyarHOT9Rtnhx8M",
+        price: process.env.STRIPE_PRICE_ID,
         quantity: 1,
       },
     ],
     mode: "subscription",
     return_url: `${origin}/return?session_id={CHECKOUT_SESSION_ID}`,
-    metadata: {
-      plan: "annual", // ← your webhook reads this
-    },
+    metadata: { plan: "annual" },
+    ...(user?.id ? { client_reference_id: user.id } : {}),
     ...(user?.email ? { customer_email: user.email } : {}),
   });
 
