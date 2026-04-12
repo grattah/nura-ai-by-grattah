@@ -14,6 +14,7 @@ export function useAccess() {
       const {
         data: { session },
       } = await supabase.auth.getSession();
+
       if (!session) {
         setHasAccess(false);
         setIsLoading(false);

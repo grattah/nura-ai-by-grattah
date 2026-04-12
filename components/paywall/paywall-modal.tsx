@@ -69,13 +69,6 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
 
           <div className="text-center space-y-1">
             <Link
-              href="/restore"
-              className="block text-xs text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() => onOpenChange(false)}
-            >
-              Already paid? Restore access →
-            </Link>
-            <Link
               href="/auth/login"
               className="block text-xs text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => onOpenChange(false)}
