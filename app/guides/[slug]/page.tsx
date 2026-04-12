@@ -9,6 +9,7 @@ import { FollowUpSection } from "@/components/follow-up-section";
 import { dummyGuides, dummyRiskItems, RiskItem } from "@/lib/nura-dummy-data";
 import { cn } from "@/lib/utils";
 import { PaywallGate } from "@/components/paywall/paywall-gate";
+import BackButton from "@/components/back-button";
 
 // ─── Risk level config ────────────────────────────────────────────────────────
 const levelConfig = {
@@ -72,15 +73,8 @@ export default function GuidesPage() {
       <div className="min-h-screen bg-background">
         {/* ── Header ──────────────────────────────────────────────────────────── */}
         <header className="px-4 pt-12 pb-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.back()}
-            className="p-0 h-auto text-foreground hover:opacity-70 transition-opacity gap-1 font-normal mb-4"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            <span className="text-sm">Back</span>
-          </Button>
+          <BackButton className="p-0 h-auto text-foreground hover:opacity-70 transition-opacity gap-1 font-normal mb-4" />
+
           <h1 className="text-2xl font-bold text-foreground mb-1 leading-tight">
             {title}
           </h1>

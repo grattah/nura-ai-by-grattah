@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, Share, Bookmark, Info } from "lucide-react";
+import { Share, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -14,6 +14,7 @@ import { PaywallGate } from "@/components/paywall/paywall-gate";
 import { createClient } from "@/lib/supabase/server";
 import { isBookmarked } from "@/actions/bookmark";
 import { BookmarkButton } from "@/components/bookmark-button";
+import BackButton from "@/components/back-button";
 
 export default async function RecipeDetailPage({
   params,
@@ -49,17 +50,7 @@ export default async function RecipeDetailPage({
       <div className="min-h-screen bg-background">
         {/* Sub-header */}
         <div className="flex items-center justify-between px-4 pt-5 pb-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            asChild
-            className="p-0 h-auto min-h-11 min-w-11 text-foreground hover:opacity-70 transition-opacity gap-1 font-normal"
-          >
-            <Link href={`/recipes`}>
-              <ChevronLeft className="w-5 h-5" />
-              <span className="text-sm">Back</span>
-            </Link>
-          </Button>
+          <BackButton className="p-0 h-auto min-h-11 min-w-11 text-foreground hover:opacity-70 transition-opacity gap-1 font-normal" />
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { exploreMoreItems } from "@/lib/nura-dummy-data";
-import { InteractionGuard } from "@/components/paywall/interaction-guard";
 import { ExploreMoreSection } from "@/components/home/explore-more-section";
 import { TodaysRecipeCard } from "@/components/home/todays-recipe-card";
 import { QuickTipCard } from "@/components/home/quick-tip-card";
@@ -27,55 +26,53 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <InteractionGuard>
-        <main className="px-4 pt-2 pb-10 space-y-8">
-          <div className="space-y-4">
-            {/* Hero — Today's Recipe */}
-            <TodaysRecipeCard />
+      <main className="px-4 pt-2 pb-10 space-y-8">
+        <div className="space-y-4">
+          {/* Hero — Today's Recipe */}
+          <TodaysRecipeCard />
 
-            {/* Quick Tip */}
-            <QuickTipCard
-              title="Gain Body Mass"
-              description="Consume a calorie surplus of 300–500 daily"
-            />
+          {/* Quick Tip */}
+          <QuickTipCard
+            title="Gain Body Mass"
+            description="Consume a calorie surplus of 300–500 daily"
+          />
+        </div>
+
+        {/* Wellness Recipes */}
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold text-foreground">
+              Wellness Recipes
+            </h2>
+            <Button
+              variant="link"
+              asChild
+              className="p-0 h-auto text-sm text-foreground font-normal gap-0.5 hover:no-underline hover:opacity-70 transition-opacity"
+            >
+              <Link href="/recipes">
+                See all <ChevronRight className="w-4 h-4" />
+              </Link>
+            </Button>
           </div>
 
-          {/* Wellness Recipes */}
-          <section>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-base font-semibold text-foreground">
-                Wellness Recipes
-              </h2>
-              <Button
-                variant="link"
-                asChild
-                className="p-0 h-auto text-sm text-foreground font-normal gap-0.5 hover:no-underline hover:opacity-70 transition-opacity"
-              >
-                <Link href="/recipes">
-                  See all <ChevronRight className="w-4 h-4" />
-                </Link>
-              </Button>
-            </div>
+          <div className="flex gap-3 overflow-x-auto hide-scrollbar -mx-4 px-4 pb-1">
+            {recipes.slice(0, 4).map((recipe, index) => (
+              <div key={recipe.id} className="shrink-0 w-[42vw] max-w-44">
+                <HomeRecipeCard
+                  id={recipe.id}
+                  title={recipe.title}
+                  imageUrl={recipe.image_url ?? undefined}
+                  color={CARD_COLORS[index % CARD_COLORS.length]}
+                  href={`/recipes/${recipe.id}`}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
 
-            <div className="flex gap-3 overflow-x-auto hide-scrollbar -mx-4 px-4 pb-1">
-              {recipes.slice(0, 4).map((recipe, index) => (
-                <div key={recipe.id} className="shrink-0 w-[42vw] max-w-44">
-                  <HomeRecipeCard
-                    id={recipe.id}
-                    title={recipe.title}
-                    imageUrl={recipe.image_url ?? undefined}
-                    color={CARD_COLORS[index % CARD_COLORS.length]}
-                    href={`/recipes/${recipe.id}`}
-                  />
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Explore More */}
-          <ExploreMoreSection items={exploreMoreItems} />
-        </main>
-      </InteractionGuard>
+        {/* Explore More */}
+        <ExploreMoreSection items={exploreMoreItems} />
+      </main>
     </div>
   );
 }
