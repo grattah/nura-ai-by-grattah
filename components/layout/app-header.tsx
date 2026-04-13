@@ -7,7 +7,6 @@ import { Menu, X, Bookmark, Bell, LogOut, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import ThemeToggleButton from "../theme-toggle-button";
-
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { NuraLeafIcon } from "../nura-logo";
@@ -53,7 +52,6 @@ export function AppHeader({ user }: AppHeaderProps) {
       )}
     >
       <div className="flex items-center justify-between h-14">
-        {/* ── Left: greeting on home, wordmark on sub-pages ───────────────── */}
         <div>
           {isHome && user ? (
             <>
@@ -83,13 +81,11 @@ export function AppHeader({ user }: AppHeaderProps) {
           )}
         </div>
 
-        {/* ── Right: theme toggle + auth action ───────────────────────────── */}
         <div className="flex items-center gap-2">
           <ThemeToggleButton />
 
           {user ? (
             <>
-              {/* Trigger button — sits outside Sheet so it's always in the header */}
               <Button
                 variant="ghost"
                 size="icon"
@@ -100,18 +96,14 @@ export function AppHeader({ user }: AppHeaderProps) {
                 <Menu className="w-5 h-5" />
               </Button>
 
-              {/* Sheet — controlled externally so the trigger button stays in header DOM */}
               <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
                 <SheetContent
                   side="right"
-                  // [&>button]:hidden suppresses shadcn's built-in X button
-                  // because we render our own below to match AppSidebar's style
                   className="w-80 max-w-[85vw] border-0 p-0 flex flex-col bg-background [&>button]:hidden"
                 >
-                  {/* sr-only title required by shadcn for a11y */}
                   <SheetTitle className="sr-only">Navigation menu</SheetTitle>
 
-                  {/* ── Sidebar header ────────────────────────────────────── */}
+                  {/* Header */}
                   <div className="flex items-center justify-between p-6 pt-12">
                     <h2 className="text-xl font-semibold text-foreground">
                       Menu
@@ -127,7 +119,7 @@ export function AppHeader({ user }: AppHeaderProps) {
                     </Button>
                   </div>
 
-                  {/* ── Nav links ─────────────────────────────────────────── */}
+                  {/* Nav links */}
                   <nav className="flex-1 px-6 py-4">
                     <div className="space-y-3">
                       {[
@@ -158,14 +150,33 @@ export function AppHeader({ user }: AppHeaderProps) {
                     </div>
                   </nav>
 
-                  {/* ── User profile + sign out ────────────────────────────── */}
-                  <div className="p-6 border-t border-nura-forest-light">
-                    <div className="flex items-center gap-3 mb-6">
-                      <NuraLeafIcon size="sm" />
-                      <span className="text-foreground font-medium">
-                        {user.name}
-                      </span>
-                    </div>
+                  {/* ── Profile footer — tapping navigates to /profile ─────── */}
+                  <div className="p-6 border-t border-nura-forest-light space-y-4">
+                    <Link
+                      href="/profile"
+                      onClick={() => setSidebarOpen(false)}
+                      className="flex items-center gap-3 p-3 -mx-3 rounded-xl hover:bg-card transition-colors active:scale-[0.98]"
+                    >
+                      {/* Avatar letter */}
+                      <div
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-base font-bold shrink-0"
+                        style={{ backgroundColor: "#5C6B3A", color: "#D4C48A" }}
+                      >
+                        {user.avatarLetter}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate">
+                          {user.name}
+                        </p>
+                        {user.email && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            {user.email}
+                          </p>
+                        )}
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                    </Link>
+
                     <Button
                       onClick={handleSignOut}
                       disabled={isSigningOut}
