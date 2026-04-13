@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { createClient } from "@/lib/supabase/server";
 import { AppHeader } from "@/components/layout/app-header";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
+import { MobileGate } from "@/components/mobile-gate";
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
@@ -89,10 +90,12 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AppHeader user={headerUser} />
+          <MobileGate>
+            <AppHeader user={headerUser} />
 
-          <main>{children}</main>
-          <PWAInstallPrompt />
+            <main>{children}</main>
+            <PWAInstallPrompt />
+          </MobileGate>
         </ThemeProvider>
         <Analytics />
       </body>
