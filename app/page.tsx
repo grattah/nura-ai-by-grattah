@@ -33,8 +33,8 @@ export default async function HomePage() {
 
           {/* Quick Tip */}
           <QuickTipCard
-            title="Gain Body Mass"
-            description="Consume a calorie surplus of 300–500 daily"
+            title="Breast Health Assessment"
+            description="Assess your risk factors in 2 minutes"
           />
         </div>
 
