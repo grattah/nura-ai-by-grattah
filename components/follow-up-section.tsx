@@ -276,12 +276,6 @@ function ChatInput({ input, isLoading, onChange, onSend }: ChatInputProps) {
               disabled={isLoading}
               className="w-full bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground disabled:opacity-50"
             />
-            <div className="flex items-center gap-1.5 mt-2">
-              <Sparkles className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">
-                Deep research on this topic
-              </span>
-            </div>
           </div>
           <Button
             size="icon"

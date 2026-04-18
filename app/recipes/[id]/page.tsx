@@ -103,7 +103,7 @@ export default async function RecipeDetailPage({
                 style={{ backgroundColor: "#FAF0EE" }}
               >
                 <AccordionTrigger className="px-5 py-4 hover:no-underline min-h-14">
-                  <span className="text-base font-semibold text-foreground">
+                  <span className="text-base font-semibold text-black/80">
                     {recipe.recipe_section_title}
                   </span>
                 </AccordionTrigger>
