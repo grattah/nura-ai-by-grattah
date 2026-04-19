@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { NuraLogo } from "@/components/nura-logo";
 import type { GailModelInput, GailModelResult } from "@/lib/gail-model/types";
+import BackButton from "./back-button";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -220,7 +221,7 @@ export function BreastCancerRiskChecker() {
       <main className="max-w-lg mx-auto pb-20">
         <div className="px-4 pt-5 pb-6">
           <div className="flex items-center justify-between mb-5">
-            <NuraLogo size="sm" variant="full" />
+             <BackButton className="p-0 h-auto text-foreground hover:opacity-70 transition-opacity gap-1 font-normal mb-4" />
             <span className="text-xs font-semibold px-3 py-1 rounded-full bg-primary/10 text-primary tracking-wide">
               Gail Model
             </span>

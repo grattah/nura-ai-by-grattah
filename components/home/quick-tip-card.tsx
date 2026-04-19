@@ -3,23 +3,28 @@
 import Link from "next/link";
 import { ChevronRight, ShieldCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface QuickTipCardProps {
   title?: string;
   description?: string;
   href?: string;
+  className?: string;
 }
 
 export function QuickTipCard({
   title = "Breast Health Assessment",
   description = "Assess your risk factors in 2 minutes",
   href = "/risk-checker",
+  className,
 }: QuickTipCardProps) {
   return (
     <Link href={href} className="block">
       <Card
-        className="border-0 rounded-2xl shadow-none hover:opacity-90 active:scale-[0.98] transition-all duration-150 p-0"
-        style={{ backgroundColor: "#F9A8D4" }} // Switched to a soft pink-rose to align with the theme
+        className={cn(
+          "border-0 rounded-2xl shadow-none hover:opacity-90 active:scale-[0.98] transition-all duration-150 p-0 bg-[#F9A8D4]",
+          className,
+        )}
       >
         <CardContent className="p-0">
           <div className="flex items-center gap-3 px-4 py-3.5">
