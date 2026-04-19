@@ -3,8 +3,6 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { exploreMoreItems } from "@/lib/nura-dummy-data";
-import { ExploreMoreSection } from "@/components/home/explore-more-section";
 import { TodaysRecipeCard } from "@/components/home/todays-recipe-card";
 import { QuickTipCard } from "@/components/home/quick-tip-card";
 import { HomeRecipeCard } from "@/components/home/home-recipe-card";
@@ -35,6 +33,13 @@ export default async function HomePage() {
           <QuickTipCard
             title="Breast Health Assessment"
             description="Assess your risk factors in 2 minutes"
+            href="/breast-risk-checker"
+          />
+          <QuickTipCard
+            title="Prostate Health Assessment"
+            description="Assess your risk factors in 2 minutes"
+            href="/prostate-risk-checker"
+            className="bg-[#5db1d0]"
           />
         </div>
 
@@ -55,9 +60,22 @@ export default async function HomePage() {
             </Button>
           </div>
 
-          <div className="flex gap-3 overflow-x-auto hide-scrollbar -mx-4 px-4 pb-1">
+          {/* <div className="flex gap-3 overflow-x-auto hide-scrollbar -mx-4 px-4 pb-1">
             {recipes.slice(0, 4).map((recipe, index) => (
               <div key={recipe.id} className="shrink-0 w-[42vw] max-w-44">
+                <HomeRecipeCard
+                  id={recipe.id}
+                  title={recipe.title}
+                  imageUrl={recipe.image_url ?? undefined}
+                  color={CARD_COLORS[index % CARD_COLORS.length]}
+                  href={`/recipes/${recipe.id}`}
+                />
+              </div>
+            ))}
+          </div> */}
+          <div className="grid grid-cols-2 gap-2">
+            {recipes.slice(0, 6).map((recipe, index) => (
+              <div key={recipe.id} className="shrink-0">
                 <HomeRecipeCard
                   id={recipe.id}
                   title={recipe.title}
@@ -71,7 +89,7 @@ export default async function HomePage() {
         </section>
 
         {/* Explore More */}
-        <ExploreMoreSection items={exploreMoreItems} />
+        {/* <ExploreMoreSection items={exploreMoreItems} /> */}
       </main>
     </div>
   );
