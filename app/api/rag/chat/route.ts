@@ -5,9 +5,9 @@
 
 import {
   convertToModelMessages,
-  // stepCountIs,
+  stepCountIs,
   streamText,
-  // tool,
+  tool,
   UIMessage,
 } from "ai";
 import { google } from "@ai-sdk/google";
@@ -95,58 +95,60 @@ export async function POST(req: NextRequest) {
       return result.toUIMessageStreamResponse();
     }
 
-    return new Response(
-      JSON.stringify({ error: "No relevant context found." }),
-      { status: 404, headers: { "Content-Type": "application/json" } },
-    );
+    // return new Response(
+    //   JSON.stringify({ error: "No relevant context found." }),
+    //   { status: 404, headers: { "Content-Type": "application/json" } },
+    // );
 
     // ── Path B: restricted web search fallback ─────────────────────────────────
-    //   const result = streamText({
-    //     model: google("gemini-2.5-flash"),
-    //     system: buildSystemPrompt(typeLabel, title, null, domainList),
-    //     messages,
-    //     tools: {
-    //       webSearch: tool({
-    //         description: `Search trusted health websites for information about "${title}".
-    // Always include the domain restriction in your query: ${domainList}`,
-    //         inputSchema: z.object({
-    //           query: z
-    //             .string()
-    //             .describe("Search query including required site: domain filters."),
-    //         }),
-    //         execute: async ({ query }) => {
-    //           const res = await fetch(
-    //             `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=5`,
-    //             {
-    //               headers: {
-    //                 Accept: "application/json",
-    //                 "Accept-Encoding": "gzip",
-    //                 "X-Subscription-Token": process.env.BRAVE_SEARCH_API_KEY!,
-    //               },
-    //             },
-    //           );
+    const result = streamText({
+      model: google("gemini-2.5-flash"),
+      system: buildSystemPrompt(typeLabel, title, null, domainList),
+      messages: convertToModelMessages(messages),
+      tools: {
+        webSearch: tool({
+          description: `Search trusted health websites for information about "${title}".
+    Always include the domain restriction in your query: ${domainList}`,
+          inputSchema: z.object({
+            query: z
+              .string()
+              .describe(
+                "Search query including required site: domain filters.",
+              ),
+          }),
+          execute: async ({ query }) => {
+            const res = await fetch(
+              `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=5`,
+              {
+                headers: {
+                  Accept: "application/json",
+                  "Accept-Encoding": "gzip",
+                  "X-Subscription-Token": process.env.BRAVE_SEARCH_API_KEY!,
+                },
+              },
+            );
 
-    //           if (!res.ok) return { results: [] };
+            if (!res.ok) return { results: [] };
 
-    //           const data = await res.json();
-    //           return {
-    //             results: (data.web?.results ?? [])
-    //               .slice(0, 5)
-    //               .map(
-    //                 (r: { title: string; description: string; url: string }) => ({
-    //                   title: r.title,
-    //                   snippet: r.description,
-    //                   url: r.url,
-    //                 }),
-    //               ),
-    //           };
-    //         },
-    //       }),
-    //     },
-    //     stopWhen: stepCountIs(5),
-    //   });
+            const data = await res.json();
+            return {
+              results: (data.web?.results ?? [])
+                .slice(0, 5)
+                .map(
+                  (r: { title: string; description: string; url: string }) => ({
+                    title: r.title,
+                    snippet: r.description,
+                    url: r.url,
+                  }),
+                ),
+            };
+          },
+        }),
+      },
+      stopWhen: stepCountIs(5),
+    });
 
-    // return result.toUIMessageStreamResponse();
+    return result.toUIMessageStreamResponse();
   } catch (err) {
     console.error("[chat route error]", err);
     return new Response(JSON.stringify({ error: "Internal server error" }), {

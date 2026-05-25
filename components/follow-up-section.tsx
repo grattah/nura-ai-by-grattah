@@ -1,14 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronRight, Sparkles, Send, Loader2, Bot } from "lucide-react";
-// AI SDK 5: useChat moved to @ai-sdk/react. Import from "ai/react" is removed.
+import { ChevronRight, SendHorizonal, Loader2, Bot } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { defaultFollowUpQuestions } from "@/lib/nura-dummy-data";
 import { cn } from "@/lib/utils";
 
 interface FollowUpSectionProps {
@@ -261,9 +259,9 @@ interface ChatInputProps {
 function ChatInput({ input, isLoading, onChange, onSend }: ChatInputProps) {
   return (
     <Card className="border-0 rounded-3xl shadow-none bg-card">
-      <CardContent className="px-4 py-3.5">
-        <p className="text-sm font-semibold text-muted-foreground mb-2">
-          Ask a follow-up
+      <CardContent className="px-4">
+        <p className="text-sm font-semibold mb-2 text-foreground/80">
+          Ask a follow-up question
         </p>
         <div className="flex items-end gap-3">
           <div className="flex-1">
@@ -281,13 +279,13 @@ function ChatInput({ input, isLoading, onChange, onSend }: ChatInputProps) {
             size="icon"
             onClick={onSend}
             disabled={isLoading || !input.trim()}
-            className="w-11 h-11 rounded-full bg-foreground hover:bg-foreground/85 text-background shrink-0 shadow-none border-0 disabled:opacity-40"
+            className="w-10 h-10 rounded-full bg-foreground hover:bg-foreground/85 text-background shrink-0 shadow-none border-0 disabled:opacity-40"
             aria-label="Send question"
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <Send className="w-4 h-4 rotate-[-30deg]" />
+              <SendHorizonal className="w-4 h-4 rotate-[-20deg]" />
             )}
           </Button>
         </div>
