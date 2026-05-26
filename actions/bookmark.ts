@@ -38,7 +38,7 @@ export async function toggleBookmark(
       .insert({ user_id: user.id, recipe_id: recipeId });
 
     revalidatePath("/bookmarks");
-    revalidatePath(`/recipes/$${recipeId}`);
+    revalidatePath(`/recipes/${recipeId}`);
     return { bookmarked: true };
   }
 }
