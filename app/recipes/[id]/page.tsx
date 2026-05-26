@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Share, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/accordion";
 import { FollowUpSection } from "@/components/follow-up-section";
 import { PaywallGate } from "@/components/paywall/paywall-gate";
+import { ShareButton } from "@/components/share-button";
 import { createClient } from "@/lib/supabase/server";
 import { isBookmarked } from "@/actions/bookmark";
 import { BookmarkButton } from "@/components/bookmark-button";
@@ -52,14 +53,7 @@ export default async function RecipeDetailPage({
         <div className="flex items-center justify-between px-4 pt-5 pb-3">
           <BackButton className="p-0 h-auto min-h-11 min-w-11 text-foreground hover:opacity-70 transition-opacity gap-1 font-normal" />
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="w-11 h-11 text-foreground hover:opacity-70 transition-opacity"
-              aria-label="Share recipe"
-            >
-              <Share className="w-5 h-5" />
-            </Button>
+            <ShareButton recipeId={recipe.id} recipeTitle={recipe.title} />
             <BookmarkButton
               recipeId={recipe.id}
               initialBookmarked={bookmarked}
@@ -104,7 +98,7 @@ export default async function RecipeDetailPage({
               >
                 <AccordionTrigger className="px-5 py-4 hover:no-underline min-h-14">
                   <span className="text-base font-semibold text-black/80">
-                    {recipe.recipe_section_title}
+                    Ingredients
                   </span>
                 </AccordionTrigger>
                 <AccordionContent className="px-4 pb-4 pt-0">
