@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { toggleBookmark } from "@/actions/bookmark";
 
@@ -19,6 +20,7 @@ export function BookmarkButton({
   isAuthenticated,
 }: BookmarkButtonProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [bookmarked, setBookmarked] = useState(initialBookmarked);
   const [isPending, startTransition] = useTransition();
 
@@ -34,8 +36,24 @@ export function BookmarkButton({
     startTransition(async () => {
       const result = await toggleBookmark(recipeId);
       // Revert if the server action failed
-      if (result.error) setBookmarked((prev) => !prev);
-      else setBookmarked(result.bookmarked);
+      if (result.error) {
+        setBookmarked((prev) => !prev);
+        toast({
+          title: "Error",
+          description: "Failed to update bookmark. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        setBookmarked(result.bookmarked);
+        toast({
+          title: result.bookmarked
+            ? "Added to bookmarks"
+            : "Removed from bookmarks",
+          description: result.bookmarked
+            ? "You can find this recipe in your bookmarks."
+            : "This recipe has been removed from your bookmarks.",
+        });
+      }
     });
   };
 
