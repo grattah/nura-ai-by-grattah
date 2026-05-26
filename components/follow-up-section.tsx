@@ -89,6 +89,11 @@ export function FollowUpSection({
     setInput("");
   };
 
+  const handleSelectQuestion = (question: string) => {
+    if (isLoading) return;
+    sendMessage({ text: question });
+  };
+
   return (
     <div className="space-y-3">
       <h2 className="text-lg font-semibold text-foreground">
@@ -98,9 +103,7 @@ export function FollowUpSection({
       <QuestionsList
         questions={questions}
         loading={questionsLoading}
-        onSelect={(q) => {
-          setInput(q);
-        }}
+        onSelect={handleSelectQuestion}
       />
 
       {messages.length > 0 && (
