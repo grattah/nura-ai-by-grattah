@@ -44,7 +44,7 @@ function createEmbedder(
 }
 
 const geminiEmbedder = createEmbedder(
-  google.textEmbeddingModel("gemini-embedding-001"),
+  google.textEmbeddingModel("gemini-embedding-2"),
   768,
 );
 
