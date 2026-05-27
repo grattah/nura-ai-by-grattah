@@ -10,7 +10,7 @@ import {
   tool,
   UIMessage,
 } from "ai";
-import { google } from "@ai-sdk/google";
+import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { type NextRequest } from "next/server";
 import { retrieve, formatContext } from "@/lib/rag";
@@ -23,6 +23,7 @@ interface ChatRequestBody {
   contextType: "recipe" | "guide";
   title: string;
   allowedDomains: string[];
+  description: string;
 }
 
 function buildSystemPrompt(
@@ -30,13 +31,15 @@ function buildSystemPrompt(
   title: string,
   context: string | null,
   domainList: string,
+  description?: string,
 ): string {
   if (context) {
     return `You are a knowledgeable health and wellness assistant for the Nura app.
 You are answering a follow-up question about a specific ${typeLabel} called "${title}".
 
-Use ONLY the retrieved context below to answer. If the context does not contain
-enough information, say so clearly — do not invent health claims.
+Use the retrieved context below as your primary source. If the context alone is
+insufficient, you may supplement with your general knowledge — but never invent
+health claims or cite sources you have not seen.
 Keep your answer concise (3–5 sentences), warm, and plain-English.
 Do not use bullet points or headers.
 
@@ -46,14 +49,40 @@ ${context}`;
 
   return `You are a knowledgeable health and wellness assistant for the Nura app.
 You are answering a follow-up question about a specific ${typeLabel} called "${title}".
+${description ? `\nHere is a brief description to give you context for your search:\n${description}\n` : ""}
+You have access to a web search tool. Follow these search rules strictly:
 
-You have access to a web search tool. You MUST restrict every search to these
-trusted health sources by including the site filter in every query:
+PREFERRED SOURCES (search these first):
 ${domainList}
 
+ALSO ACCEPTABLE if the preferred sources yield no useful results:
+- Peer-reviewed journals and preprint servers (PubMed, PMC, bioRxiv, NEJM, Lancet, BMJ)
+- Government and intergovernmental health bodies (CDC, NHS, WHO, NIH, EMA)
+- Accredited university medical centres and teaching hospitals
+- Professional clinical associations (AHA, ADA, BDA, etc.)
+
+NEVER USE:
+- Forums, blogs, social media, or personal testimonials
+- Commercial supplement or product websites
+- Any source that makes unsupported or sensationalist health claims
+
+SEARCH STRATEGY:
+1. Start with a targeted query restricted to the preferred sources using a site: filter.
+2. If that yields insufficient results, broaden to the acceptable sources above — still
+   using site: filters where possible.
+3. Run up to 3 searches before composing your answer; stop as soon as you have
+   enough credible information.
+4. If no credible source addresses the question, say so clearly — do not fill gaps
+   with speculation.
+
+Do NOT narrate your search process. Do not write phrases like "Let me search…",
+"Let me try a broader query…", or any other commentary between tool calls.
+Return ONLY your final answer after all searches are complete.
+
 Keep your answer concise (3–5 sentences), warm, and plain-English.
-Do not use bullet points or headers.
-If none of the allowed sources have relevant information, say so clearly.`;
+Do not use any markdown formatting — no bold, no italics, no bullet points,
+no headers, no asterisks. Write in plain prose only.
+Briefly note the source(s) you relied on at the end of your answer (e.g. "According to the NHS…").`;
 }
 
 export async function POST(req: NextRequest) {
@@ -64,6 +93,7 @@ export async function POST(req: NextRequest) {
       contextType,
       title,
       allowedDomains,
+      description,
     }: ChatRequestBody = await req.json();
 
     const lastMessage = messages[messages.length - 1];
@@ -82,7 +112,7 @@ export async function POST(req: NextRequest) {
     // ── Path A: answer grounded in vector DB context ───────────────────────────
     if (hasGoodResults) {
       const result = streamText({
-        model: google("gemini-2.5-flash"),
+        model: anthropic("claude-sonnet-4-6"),
         system: buildSystemPrompt(
           typeLabel,
           title,
@@ -95,20 +125,30 @@ export async function POST(req: NextRequest) {
       return result.toUIMessageStreamResponse();
     }
 
-    // return new Response(
-    //   JSON.stringify({ error: "No relevant context found." }),
-    //   { status: 404, headers: { "Content-Type": "application/json" } },
-    // );
-
-    // ── Path B: restricted web search fallback ─────────────────────────────────
+    // PATH B: Web search fallback
     const result = streamText({
-      model: google("gemini-2.5-flash"),
-      system: buildSystemPrompt(typeLabel, title, null, domainList),
+      model: anthropic("claude-sonnet-4-6"),
+      system: buildSystemPrompt(
+        typeLabel,
+        title,
+        null,
+        domainList,
+        description,
+      ),
       messages: convertToModelMessages(messages),
+
+      providerOptions: {
+        anthropic: {
+          disableParallelToolUse: true,
+        },
+      },
+
       tools: {
         webSearch: tool({
-          description: `Search trusted health websites for information about "${title}".
-    Always include the domain restriction in your query: ${domainList}`,
+          description: `Search for health and wellness information about the ${typeLabel} "${title}".
+Use site: filters for trusted sources. Start with the preferred domains (${domainList}),
+then broaden to authoritative sources like site:nhs.uk, site:nih.gov, site:pubmed.ncbi.nlm.nih.gov
+if the preferred domains return no useful results.`,
           inputSchema: z.object({
             query: z
               .string()
@@ -116,6 +156,15 @@ export async function POST(req: NextRequest) {
                 "Search query including required site: domain filters.",
               ),
           }),
+
+          // Cache the tool definition with Anthropic — saves tokens on every
+          // step of the agentic loop after the first call
+          providerOptions: {
+            anthropic: {
+              cacheControl: { type: "ephemeral" },
+            },
+          },
+
           execute: async ({ query }) => {
             const res = await fetch(
               `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=5`,
@@ -145,9 +194,9 @@ export async function POST(req: NextRequest) {
           },
         }),
       },
+
       stopWhen: stepCountIs(5),
     });
-
     return result.toUIMessageStreamResponse();
   } catch (err) {
     console.error("[chat route error]", err);
