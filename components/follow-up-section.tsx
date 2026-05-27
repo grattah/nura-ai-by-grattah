@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { stripMarkdown } from "@/lib/strip-markdown";
 
 interface FollowUpSectionProps {
   contextId: string;
@@ -39,7 +40,14 @@ export function FollowUpSection({
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/rag/chat",
-      body: { input, contextId, contextType, title, allowedDomains },
+      body: {
+        input,
+        contextId,
+        contextType,
+        title,
+        allowedDomains,
+        description,
+      },
     }),
   });
 
@@ -180,62 +188,91 @@ function ChatThread({ messages, isLoading }: ChatThreadProps) {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const lastMsg = messages[messages.length - 1];
+
   const awaitingFirstToken =
-    isLoading && messages[messages.length - 1]?.role === "user";
+    isLoading &&
+    (lastMsg?.role === "user" ||
+      (lastMsg?.role === "assistant" &&
+        !lastMsg.parts?.some(
+          (p) => p.type === "text" || p.type === "tool-webSearch",
+        )));
 
   return (
     <div className="space-y-3">
-      {messages.map((m) => (
-        <div
-          key={m.id}
-          className={cn(
-            "flex gap-3",
-            m.role === "user" ? "justify-end" : "justify-start",
-          )}
-        >
-          {m.role === "assistant" && <NuraAvatar />}
+      {messages.map((m) => {
+        if (m.role === "assistant" && isLoading && !m.parts?.length) {
+          return null;
+        }
 
+        const isCurrentMessage =
+          isLoading && m === messages[messages.length - 1];
+
+        return (
           <div
+            key={m.id}
             className={cn(
-              "max-w-[85%] px-4 py-3 rounded-2xl text-base leading-relaxed",
-              m.role === "user"
-                ? "bg-foreground text-background rounded-br-sm"
-                : "bg-card text-foreground rounded-bl-sm",
+              "flex gap-3",
+              m.role === "user" ? "justify-end" : "justify-start",
             )}
           >
-            {/* AI SDK 5: render via m.parts — typed array per message.
-                Text parts have type "text", tool parts have type "tool-{name}".
-                Fall back to m.content for simple text-only cases. */}
-            {m.parts && m.parts.length > 0
-              ? m.parts.map((part, i) => {
-                  if (part.type === "text") {
-                    return <span key={i}>{part.text}</span>;
-                  }
-                  // Tool-call in progress — show inline indicator.
-                  // In AI SDK 5, tool part type is "tool-webSearch".
-                  // State is "input-streaming" | "input" | "output".
-                  if (
-                    part.type === "tool-webSearch" &&
-                    part.state !== "output-available"
-                  ) {
-                    return (
-                      <div
-                        key={i}
-                        className="flex items-center gap-1.5 text-sm text-muted-foreground"
-                      >
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        Searching trusted sources…
-                      </div>
-                    );
-                  }
-                  return null;
-                })
-              : "Nura couldn't generate a response. Please try asking a different question or check back later."}
-          </div>
-        </div>
-      ))}
+            {m.role === "assistant" && <NuraAvatar />}
 
-      {/* Typing indicator — shows while waiting for first streamed token */}
+            <div
+              className={cn(
+                "max-w-[85%] px-4 py-3 rounded-2xl text-base leading-relaxed",
+                m.role === "user"
+                  ? "bg-foreground text-background rounded-br-sm"
+                  : "bg-card text-foreground rounded-bl-sm",
+              )}
+            >
+              {m.role === "user" ? (
+                <span>
+                  {m.parts?.find((p) => p.type === "text")?.text ?? ""}
+                </span>
+              ) : (
+                (() => {
+                  const hasActiveTool =
+                    isCurrentMessage &&
+                    m.parts?.some(
+                      (p) =>
+                        p.type === "tool-webSearch" &&
+                        p.state !== "output-available",
+                    );
+
+                  const textParts =
+                    m.parts?.filter((p) => p.type === "text") ?? [];
+                  const finalText = textParts[textParts.length - 1];
+
+                  const betweenToolAndText =
+                    isCurrentMessage && !hasActiveTool && !finalText;
+
+                  return (
+                    <>
+                      {(hasActiveTool || betweenToolAndText) && (
+                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          Searching trusted sources…
+                        </div>
+                      )}
+
+                      {finalText ? (
+                        <span>{stripMarkdown(finalText.text)}</span>
+                      ) : !isLoading ? (
+                        <span className="text-sm text-muted-foreground">
+                          Nura couldn't generate a response. Please try asking a
+                          different question or check back later.
+                        </span>
+                      ) : null}
+                    </>
+                  );
+                })()
+              )}
+            </div>
+          </div>
+        );
+      })}
+
       {awaitingFirstToken && (
         <div className="flex gap-3 justify-start">
           <NuraAvatar />
@@ -249,7 +286,6 @@ function ChatThread({ messages, isLoading }: ChatThreadProps) {
     </div>
   );
 }
-
 // ─── ChatInput ─────────────────────────────────────────────────────────────────
 
 interface ChatInputProps {

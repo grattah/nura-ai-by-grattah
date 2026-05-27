@@ -45,13 +45,8 @@ export function AppHeader({ user }: AppHeaderProps) {
   };
 
   return (
-    <header
-      className={cn(
-        "sticky top-0 z-40 bg-background/90 backdrop-blur-md border-b border-border/40 px-4",
-        isHome ? "py-4" : "",
-      )}
-    >
-      <div className="flex items-center justify-between h-14">
+    <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-md border-b border-border/40 px-4 py-2">
+      <div className="flex items-center justify-between h-12">
         <div>
           {isHome && user ? (
             <>
