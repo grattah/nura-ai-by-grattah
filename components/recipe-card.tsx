@@ -13,7 +13,10 @@ export function RecipeCard({
   return (
     <Link href={`/recipes/${recipe.id}`}>
       <Card className="border-0 rounded-3xl shadow-none overflow-hidden bg-card hover:opacity-90 active:scale-[0.97] transition-all duration-150">
-        <div className="w-full bg-muted" style={{ aspectRatio: "4/3" }}>
+        <div
+          className="w-full bg-muted relative"
+          style={{ aspectRatio: "4/3" }}
+        >
           {recipe.image_url && (
             <Image
               src={recipe.image_url}
