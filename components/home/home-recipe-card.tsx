@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 type CardColor = "sage" | "slate";
@@ -11,20 +12,20 @@ interface HomeRecipeCardProps {
   imageUrl?: string;
   color?: CardColor;
   href?: string;
+  /**
+   * Pass `priority` for cards that are visible on first paint (e.g. the first
+   * 2–3 cards in the scroll). Omit it for the rest — they'll lazy-load.
+   */
+  priority?: boolean;
 }
 
-/**
- * Square recipe card used on the Home page "Wellness Recipes" horizontal scroll.
- * Uses semantic CSS variable tokens — no hardcoded colors.
- * The `sage` / `slate` colors are mapped to --nura-sage and --nura-slate
- * which are defined in globals.css and adapt correctly to light/dark mode.
- */
 export function HomeRecipeCard({
   id,
   title,
   imageUrl,
   color = "sage",
   href = "#",
+  priority = false,
 }: HomeRecipeCardProps) {
   return (
     <Link href={href} className="block">
@@ -35,21 +36,21 @@ export function HomeRecipeCard({
           color === "sage" ? "bg-nura-sage" : "bg-nura-slate",
         )}
       >
-        {/* Image layer */}
         {imageUrl && (
-          <img
+          <Image
             src={imageUrl}
             alt={title}
-            className="absolute inset-0 w-full h-full object-cover"
+            fill
+            sizes="(max-width: 640px) 160px, (max-width: 1024px) 200px, 260px"
+            className="object-cover"
+            priority={priority}
           />
         )}
 
-        {/* Gradient scrim for readability when image is present */}
         {imageUrl && (
           <div className="absolute inset-0 bg-linear-to-t from-black/30 via-transparent to-transparent" />
         )}
 
-        {/* Title */}
         <div className="absolute bottom-0 left-0 right-0 p-3">
           <p
             className={cn(
