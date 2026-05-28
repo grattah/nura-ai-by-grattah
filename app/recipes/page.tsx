@@ -246,8 +246,12 @@ export default function AllRecipesPage() {
         ) : recipes.length > 0 ? (
           <>
             <div className="grid grid-cols-2 gap-4">
-              {recipes.map((recipe) => (
-                <RecipeCard key={recipe.id} recipe={recipe} />
+              {recipes.map((recipe, index) => (
+                <RecipeCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  priority={index < 6}
+                />
               ))}
             </div>
 
