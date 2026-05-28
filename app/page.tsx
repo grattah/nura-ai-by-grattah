@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { TodaysRecipeCard } from "@/components/home/todays-recipe-card";
 import { QuickTipCard } from "@/components/home/quick-tip-card";
 import { HomeRecipeCard } from "@/components/home/home-recipe-card";
+import { TrendingRecipes } from "@/components/home/trending-recipes";
 
 // Alternating palette for recipe cards — matches Figma category card colors
 const CARD_COLORS = ["sage", "slate", "sage", "slate"] as const;
@@ -21,9 +22,12 @@ export default async function HomePage() {
   if (error || !recipes) {
     return notFound();
   }
-
+  const wellnessRecipes = recipes.slice(0, 12);
+  const trendingRecipes = [...recipes.slice(12)].sort(
+    () => Math.random() - 0.5,
+  );
   // Shuffle recipes for trending section
-  const shuffled = [...recipes].sort(() => Math.random() - 0.5);
+  // const shuffled = [...recipes].sort(() => Math.random() - 0.5);
 
   return (
     <div className="min-h-screen bg-background">
@@ -81,7 +85,7 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {recipes.slice(0, 12).map((recipe, index) => (
+            {wellnessRecipes.map((recipe, index) => (
               <div key={recipe.id}>
                 <HomeRecipeCard
                   id={recipe.id}
@@ -89,6 +93,7 @@ export default async function HomePage() {
                   imageUrl={recipe.image_url ?? undefined}
                   color={CARD_COLORS[index % CARD_COLORS.length]}
                   href={`/recipes/${recipe.id}`}
+                  priority={index < 6}
                 />
               </div>
             ))}
@@ -96,7 +101,7 @@ export default async function HomePage() {
         </section>
 
         {/* Trending Recipes */}
-        <section>
+        {/* <section>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-lg font-semibold text-foreground">
@@ -121,7 +126,8 @@ export default async function HomePage() {
               </div>
             ))}
           </div>
-        </section>
+        </section> */}
+        <TrendingRecipes recipes={trendingRecipes} cardColors={CARD_COLORS} />
 
         {/* Info Section */}
         <section className="bg-card rounded-2xl p-6 space-y-4">
