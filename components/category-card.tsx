@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 interface CategoryCardProps {
   id: string;
@@ -30,10 +31,12 @@ export function CategoryCard({
     <>
       <div className={cn("h-32 rounded-t-xl", colorClasses[color])}>
         {imageUrl && (
-          <img
+          <Image
             src={imageUrl}
             alt={title}
             className="w-full h-full object-cover rounded-t-xl"
+            width={128}
+            height={128}
           />
         )}
       </div>
