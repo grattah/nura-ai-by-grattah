@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { redirect } from "next/navigation";
+import Image from "next/image";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -116,10 +117,12 @@ function BookmarkCard({ bookmark }: { bookmark: BookmarkedRecipe }) {
             {/* Thumbnail */}
             <div className="w-20 h-20 rounded-2xl bg-muted shrink-0 overflow-hidden">
               {bookmark.image_url ? (
-                <img
+                <Image
                   src={bookmark.image_url}
                   alt={bookmark.title}
                   className="w-full h-full object-cover"
+                  width={80}
+                  height={80}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">

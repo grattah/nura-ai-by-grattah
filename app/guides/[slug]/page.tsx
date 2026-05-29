@@ -10,6 +10,7 @@ import { dummyGuides, dummyRiskItems, RiskItem } from "@/lib/nura-dummy-data";
 import { cn } from "@/lib/utils";
 import { PaywallGate } from "@/components/paywall/paywall-gate";
 import BackButton from "@/components/back-button";
+import Image from "next/image";
 
 // ─── Risk level config ────────────────────────────────────────────────────────
 const levelConfig = {
@@ -148,10 +149,12 @@ function RiskCard({ item }: { item: RiskItem }) {
         <div className="flex gap-3 mb-3">
           <div className="w-14 h-14 rounded-xl bg-muted shrink-0 overflow-hidden">
             {item.imageUrl && (
-              <img
+              <Image
                 src={item.imageUrl}
                 alt={item.title}
                 className="w-full h-full object-cover"
+                width={56}
+                height={56}
               />
             )}
           </div>
