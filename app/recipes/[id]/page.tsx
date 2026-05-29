@@ -55,6 +55,9 @@ export async function generateMetadata({
       url,
       type: "article",
     },
+    other: {
+      "fb:app_id": process.env.NEXT_PUBLIC_FACEBOOK_APP_ID!,
+    },
   };
 }
 
