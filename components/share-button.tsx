@@ -84,8 +84,8 @@ export function ShareButton({ recipeId, recipeTitle }: ShareButtonProps) {
       icon: Facebook,
       label: "Share on Facebook",
       action: () => {
-        const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(recipeUrl)}&quote=${encodeURIComponent(shareText)}`;
-        window.open(url, "_blank", "width=550,height=420");
+        const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(recipeUrl)}`;
+        window.open(url, "_blank", "width=550,height=450,noopener,noreferrer");
       },
     },
     {
