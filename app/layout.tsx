@@ -37,6 +37,9 @@ export const metadata: Metadata = {
     ],
     apple: "/apple-icon.png",
   },
+  other: {
+    "fb:app_id": process.env.NEXT_PUBLIC_FACEBOOK_APP_ID!,
+  },
 };
 
 export const viewport: Viewport = {
