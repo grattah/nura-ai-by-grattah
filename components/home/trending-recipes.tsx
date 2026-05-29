@@ -2,12 +2,7 @@
 
 import { useMemo } from "react";
 import { HomeRecipeCard } from "@/components/home/home-recipe-card";
-
-interface Recipe {
-  id: string;
-  title: string;
-  imageUrl?: string;
-}
+import { Recipe } from "@/lib/types";
 
 interface TrendingRecipesProps {
   recipes: Recipe[];
@@ -41,7 +36,7 @@ export function TrendingRecipes({ recipes, cardColors }: TrendingRecipesProps) {
             key={`trending-${recipe.id}`}
             id={recipe.id}
             title={recipe.title}
-            imageUrl={recipe.imageUrl}
+            imageUrl={recipe.image_url ?? undefined}
             color={
               cardColors[(index + 2) % cardColors.length] as "sage" | "slate"
             }
