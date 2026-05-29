@@ -1,3 +1,4 @@
+import { getCloudinaryUrl } from "@/lib/cloudinary";
 import { Recipe } from "@/lib/types";
 import { Card, CardContent } from "@/ui/card";
 import Image from "next/image";
@@ -10,6 +11,9 @@ export function RecipeCard({
   recipe: Recipe;
   priority?: boolean;
 }) {
+  const imageUrl = recipe.image_url
+    ? getCloudinaryUrl(recipe.image_url, { width: 600, height: 450 })
+    : undefined;
   return (
     <Link href={`/recipes/${recipe.id}`}>
       <Card className="border-0 rounded-3xl shadow-none overflow-hidden bg-card hover:opacity-90 active:scale-[0.97] transition-all duration-150">
@@ -17,9 +21,9 @@ export function RecipeCard({
           className="w-full bg-muted relative"
           style={{ aspectRatio: "4/3" }}
         >
-          {recipe.image_url && (
+          {imageUrl && (
             <Image
-              src={recipe.image_url}
+              src={imageUrl}
               alt={recipe.title}
               fill
               sizes="(max-width: 640px) 160px, (max-width: 1024px) 200px, 260px"
