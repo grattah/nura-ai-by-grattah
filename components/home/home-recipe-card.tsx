@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { getCloudinaryUrl } from "@/lib/cloudinary";
 
 type CardColor = "sage" | "slate";
 
@@ -27,6 +28,10 @@ export function HomeRecipeCard({
   href = "#",
   priority = false,
 }: HomeRecipeCardProps) {
+  const transformedImageUrl = imageUrl
+    ? getCloudinaryUrl(imageUrl, { width: 600, height: 450 })
+    : undefined;
+
   return (
     <Link href={href} className="block">
       <div
@@ -36,9 +41,9 @@ export function HomeRecipeCard({
           color === "sage" ? "bg-nura-sage" : "bg-nura-slate",
         )}
       >
-        {imageUrl && (
+        {transformedImageUrl && (
           <Image
-            src={imageUrl}
+            src={transformedImageUrl}
             alt={title}
             fill
             sizes="(max-width: 640px) 160px, (max-width: 1024px) 200px, 260px"
@@ -47,7 +52,7 @@ export function HomeRecipeCard({
           />
         )}
 
-        {imageUrl && (
+        {transformedImageUrl && (
           <div className="absolute inset-0 bg-linear-to-t from-black/30 via-transparent to-transparent" />
         )}
 
@@ -55,7 +60,7 @@ export function HomeRecipeCard({
           <p
             className={cn(
               "text-sm font-semibold leading-snug",
-              imageUrl ? "text-white" : "text-black/75",
+              transformedImageUrl ? "text-white" : "text-black/75",
             )}
           >
             {title}
