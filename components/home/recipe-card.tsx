@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 type CardColor = "sage" | "gray";
 
@@ -33,10 +34,12 @@ export function CategoryCard({
         style={{ backgroundColor: colorMap[color] }}
       >
         {imageUrl && (
-          <img
+          <Image
             src={imageUrl}
             alt={title}
             className="absolute inset-0 w-full h-full object-cover"
+            width={200}
+            height={200}
           />
         )}
 

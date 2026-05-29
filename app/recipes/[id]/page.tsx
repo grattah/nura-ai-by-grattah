@@ -1,4 +1,7 @@
+import type { Metadata } from "next";
+import { cache } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,38 +16,75 @@ import { FollowUpSection } from "@/components/follow-up-section";
 import { PaywallGate } from "@/components/paywall/paywall-gate";
 import { ShareButton } from "@/components/share-button";
 import { createClient } from "@/lib/supabase/server";
+import { getCloudinaryUrl } from "@/lib/cloudinary";
 import { isBookmarked } from "@/actions/bookmark";
 import { BookmarkButton } from "@/components/bookmark-button";
 import BackButton from "@/components/back-button";
 
-export default async function RecipeDetailPage({
-  params,
-}: {
-  params: Promise<{ [key: string]: string }>;
-}) {
-  const { id } = await params;
+// React cache deduplicates this fetch — generateMetadata and the page
+// both call getRecipe(id) but Supabase is only queried once per request.
+const getRecipe = cache(async (id: string) => {
   const supabase = await createClient();
-
-  const { data: recipe, error } = await supabase
+  const { data, error } = await supabase
     .from("recipes")
     .select("*, follow_up_questions")
     .eq("id", id)
     .single();
+  if (error || !data) return null;
+  return data;
+});
 
-  if (error || !recipe) {
-    return notFound();
-  }
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const recipe = await getRecipe(id);
+  if (!recipe) return {};
 
-  const bookmarked = await isBookmarked(recipe.id);
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const url = `${process.env.NEXT_PUBLIC_APP_URL}/recipes/${recipe.id}`;
+
+  return {
+    title: recipe.title,
+    description: recipe.short_description,
+    openGraph: {
+      title: recipe.title,
+      description: recipe.short_description,
+      images: [{ url: recipe.image_url! }],
+      url,
+      type: "article",
+    },
+  };
+}
+
+export default async function RecipeDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+
+  const [recipe, supabase] = await Promise.all([getRecipe(id), createClient()]);
+
+  if (!recipe) return notFound();
+
+  const [
+    bookmarked,
+    {
+      data: { user },
+    },
+  ] = await Promise.all([isBookmarked(recipe.id), supabase.auth.getUser()]);
 
   const ingredients =
-    (recipe.ingredients as Array<{ emoji: string; label: string }>) || [];
+    (recipe.ingredients as Array<{ emoji: string; label: string }>) ?? [];
 
   const howToMake =
-    (recipe.how_to_make as Array<{ step: string; instruction: string }>) || [];
+    (recipe.how_to_make as Array<{ step: string; instruction: string }>) ?? [];
+
+  const heroImageUrl = recipe.image_url
+    ? getCloudinaryUrl(recipe.image_url, { width: 900, height: 506 })
+    : undefined;
 
   return (
     <PaywallGate>
@@ -63,16 +103,17 @@ export default async function RecipeDetailPage({
         </div>
 
         <main className="pb-6">
-          {/* Hero image */}
-          <div
-            className="mx-4 rounded-3xl overflow-hidden bg-muted mb-5"
-            style={{ aspectRatio: "16/9" }}
-          >
-            {recipe.image_url && (
-              <img
-                src={recipe.image_url}
+          {/* Hero image — LCP element, load eagerly */}
+          <div className="mx-4 rounded-3xl overflow-hidden bg-muted mb-5 relative aspect-video">
+            {heroImageUrl && (
+              <Image
+                src={heroImageUrl}
                 alt={recipe.title}
-                className="w-full h-full object-cover"
+                fill
+                // Full width minus mx-4 (16px each side)
+                sizes="calc(100vw - 32px)"
+                className="object-cover"
+                priority
               />
             )}
           </div>
@@ -93,8 +134,7 @@ export default async function RecipeDetailPage({
               {/* 1 — Ingredients */}
               <AccordionItem
                 value="ingredients"
-                className="border-0 rounded-3xl overflow-hidden"
-                style={{ backgroundColor: "#FAF0EE" }}
+                className="border-0 rounded-3xl overflow-hidden bg-[#FAF0EE]"
               >
                 <AccordionTrigger className="px-5 py-4 hover:no-underline min-h-14">
                   <span className="text-base font-semibold text-black/80">
@@ -106,8 +146,7 @@ export default async function RecipeDetailPage({
                     {ingredients.map((ing, i) => (
                       <div
                         key={i}
-                        className="flex items-center gap-3 rounded-2xl px-4 min-h-12"
-                        style={{ backgroundColor: "#E8836A" }}
+                        className="flex items-center gap-3 rounded-2xl px-4 min-h-12 bg-[#E8836A]"
                       >
                         <span className="text-lg leading-none">
                           {ing.emoji}
@@ -155,7 +194,7 @@ export default async function RecipeDetailPage({
               >
                 <AccordionTrigger className="px-5 py-4 hover:no-underline min-h-14">
                   <span className="text-base font-semibold text-foreground">
-                    Why it works:
+                    Why it works
                   </span>
                 </AccordionTrigger>
                 <AccordionContent className="px-5 pb-5 pt-0">
@@ -168,18 +207,14 @@ export default async function RecipeDetailPage({
               {/* 4 — Inside Tip */}
               <AccordionItem
                 value="tip"
-                className="border-0 rounded-3xl overflow-hidden"
-                style={{ backgroundColor: "#EEF4FB" }}
+                className="border-0 rounded-3xl overflow-hidden bg-[#EEF4FB]"
               >
                 <AccordionTrigger className="px-5 py-4 hover:no-underline min-h-14">
                   <div className="flex items-center gap-2.5">
                     <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center shrink-0">
                       <Info className="w-3.5 h-3.5 text-white" />
                     </div>
-                    <span
-                      className="text-base font-semibold"
-                      style={{ color: "#2563EB" }}
-                    >
+                    <span className="text-base font-semibold text-blue-600">
                       Inside Tip
                     </span>
                   </div>
@@ -203,7 +238,7 @@ export default async function RecipeDetailPage({
               />
             </div>
 
-            {/* "Done" affordance */}
+            {/* Done affordance */}
             <div className="pt-2 pb-2">
               <Separator className="bg-border mb-5" />
               <p className="text-sm text-muted-foreground text-center mb-3">
@@ -214,7 +249,7 @@ export default async function RecipeDetailPage({
                 variant="secondary"
                 className="w-full rounded-full min-h-13 text-base font-semibold bg-card text-foreground border-0 shadow-none hover:opacity-80 transition-opacity"
               >
-                <Link href={`/recipes`}>← Browse more recipes</Link>
+                <Link href="/recipes">← Browse more recipes</Link>
               </Button>
             </div>
           </div>
