@@ -1,8 +1,6 @@
-// Generates 4 contextual follow-up questions for a recipe or guide.
-
 import { NextRequest, NextResponse } from "next/server";
 import { generateText } from "ai";
-import { google } from "@ai-sdk/google";
+import { anthropic } from "@ai-sdk/anthropic";
 
 export interface QuestionsRequestBody {
   contextId: string;
@@ -20,7 +18,7 @@ export async function POST(req: NextRequest) {
       contextType === "recipe" ? "wellness recipe" : "health guide";
 
     const { text } = await generateText({
-      model: google("gemini-3.5-flash"),
+      model: anthropic("claude-sonnet-4-6"),
       system: `You are a health and wellness assistant for the Nura app.
     Generate exactly 4 natural follow-up questions a curious user might ask
     after reading a ${typeLabel}.
