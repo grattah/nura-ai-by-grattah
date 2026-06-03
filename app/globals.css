@@ -1,7 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+/* DARK MODE: uncomment to re-enable dark variant */
+/* @custom-variant dark (&:is(.dark *)); */
 
 /* Nura Health & Wellness Theme */
 :root {
