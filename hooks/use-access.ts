@@ -8,6 +8,11 @@ export function useAccess() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_DEV_BYPASS_PAYWALL === "true") {
+      setHasAccess(true);
+      setIsLoading(false);
+      return;
+    }
     const supabase = createClient();
 
     async function check() {
