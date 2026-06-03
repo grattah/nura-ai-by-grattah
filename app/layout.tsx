@@ -80,7 +80,9 @@ export default async function RootLayout({
     : null;
 
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    // DARK MODE: to re-enable, restore className="dark" on <html> and revert
+    // ThemeProvider to: defaultTheme="system" enableSystem disableTransitionOnChange
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="apple-mobile-web-app-title" content="Nura" />
         <meta name="mobile-web-app-capable" content="yes" />
@@ -89,8 +91,7 @@ export default async function RootLayout({
       <body className="font-sans antialiased">
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          forcedTheme="light"
           disableTransitionOnChange
         >
           <MobileGate>
