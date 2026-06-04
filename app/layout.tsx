@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Red_Hat_Text } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -11,6 +11,7 @@ import { MobileGate } from "@/components/mobile-gate";
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const _redHatText = Red_Hat_Text({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Nura",
@@ -98,7 +99,7 @@ export default async function RootLayout({
           <MobileGate>
             <div className="min-h-dvh flex flex-col">
               <AppHeader user={headerUser} />
-              <main className="flex-1">{children}</main>
+              <main className="flex-1 pb-16">{children}</main>
               <BottomNav />
               <PWAInstallPrompt />
             </div>
