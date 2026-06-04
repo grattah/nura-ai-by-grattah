@@ -1,163 +1,117 @@
-import { createClient } from "@/lib/supabase/server";
-import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { TodaysRecipeCard } from "@/components/home/todays-recipe-card";
-import { QuickTipCard } from "@/components/home/quick-tip-card";
-import { HomeRecipeCard } from "@/components/home/home-recipe-card";
-import { TrendingRecipes } from "@/components/home/trending-recipes";
+import { createClient } from "@/lib/supabase/server";
+import { SearchSection } from "@/components/home/search-section";
+import { RecipeCardNew } from "@/components/home/recipe-card-new";
+import { WellnessTipCard } from "@/components/home/wellness-tip-card";
+import { CategorySection } from "@/components/home/category-section";
+import { UpgradeBanner } from "@/components/home/upgrade-banner";
 
-// Alternating palette for recipe cards — matches Figma category card colors
-const CARD_COLORS = ["sage", "slate", "sage", "slate"] as const;
+type RecipeWithTags = {
+  id: string;
+  title: string;
+  image_url: string | null;
+  recipe_tags: Array<{ tags: { name: string; slug: string } | null }>;
+};
+
+// Static wellness tip — swap for a DB-driven fetch when ready
+const WELLNESS_TIP = {
+  title: "Chew a little longer",
+  description:
+    "Digestion begins in the mouth. Twenty unhurried chews per bite can noticeably reduce bloating.",
+  imageUrl: undefined as string | undefined,
+};
 
 export default async function HomePage() {
   const supabase = await createClient();
 
-  const { data: recipes, error } = await supabase
-    .from("recipes")
-    .select("*")
-    .limit(20);
+  const [
+    {
+      data: { user },
+    },
+    { data: rawRecipes },
+  ] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase
+      .from("recipes")
+      .select("id, title, image_url, recipe_tags(tags(name, slug))")
+      .order("display_order", { ascending: true })
+      .limit(10),
+  ]);
 
-  if (error || !recipes) {
-    return notFound();
+  // Check subscription status server-side
+  let hasAccess = process.env.NEXT_PUBLIC_DEV_BYPASS_PAYWALL === "true";
+  if (!hasAccess && user) {
+    const { data: sub } = await supabase
+      .from("subscriptions")
+      .select("status, expires_at")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .maybeSingle();
+    hasAccess =
+      !!sub && (!sub.expires_at || new Date(sub.expires_at) > new Date());
   }
-  const wellnessRecipes = recipes.slice(0, 12);
-  const trendingRecipes = [...recipes.slice(12)].sort(
-    () => Math.random() - 0.5,
-  );
-  // Shuffle recipes for trending section
-  // const shuffled = [...recipes].sort(() => Math.random() - 0.5);
+
+  const recipes = (rawRecipes ?? []) as unknown as RecipeWithTags[];
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="px-4 pt-4 pb-12 space-y-10">
-        {/* Welcome Hero Section */}
-        <section className="space-y-3">
-          <h1 className="text-3xl font-bold text-foreground">
-            Welcome to Nura
+    <div className="bg-background">
+      <main className="px-4 pt-2 space-y-6">
+        {/* Hero */}
+        <section className="space-y-4">
+          <h1 className="text-[1.75rem] font-semibold text-grey-c950 leading-snug">
+            Hello! what would you like to{" "}
+            <span className="text-mint-green">improve</span> today?
           </h1>
-          <p className="text-base text-muted-foreground leading-relaxed">
-            Discover wellness recipes designed to support your health journey.
-            Explore nourishing meals, learn about functional ingredients, and
-            make informed choices for a healthier you.
-          </p>
+          <SearchSection />
         </section>
 
-        <div className="space-y-4">
-          {/* Hero — Today's Recipe */}
-          {/* <TodaysRecipeCard /> */}
-
-          {/* Quick Tip */}
-          {/* <QuickTipCard
-            title="Breast Health Assessment"
-            description="Assess your risk factors in 2 minutes"
-            href="/breast-risk-checker"
-          />
-          <QuickTipCard
-            title="Prostate Health Assessment"
-            description="Assess your risk factors in 2 minutes"
-            href="/prostate-risk-checker"
-            className="bg-[#5db1d0]"
-          /> */}
-        </div>
-
-        {/* Wellness Recipes */}
+        {/* Popular Recipes */}
         <section>
           <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-semibold text-foreground">
-                Wellness Recipes
-              </h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Curated recipes to support your wellness goals
-              </p>
-            </div>
-            <Button
-              variant="link"
-              asChild
-              className="p-0 h-auto text-sm text-foreground font-normal gap-0.5 hover:no-underline hover:opacity-70 transition-opacity"
+            <h2 className="text-2xl leading-none font-semibold text-grey-c950">
+              Popular recipes
+            </h2>
+            <Link
+              href="/recipes"
+              className="text-base text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4"
             >
-              <Link href="/recipes">
-                See all <ChevronRight className="w-4 h-4" />
-              </Link>
-            </Button>
+              See all
+            </Link>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {wellnessRecipes.map((recipe, index) => (
-              <div key={recipe.id}>
-                <HomeRecipeCard
-                  id={recipe.id}
-                  title={recipe.title}
-                  imageUrl={recipe.image_url ?? undefined}
-                  color={CARD_COLORS[index % CARD_COLORS.length]}
-                  href={`/recipes/${recipe.id}`}
-                  priority={index < 6}
-                />
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Trending Recipes */}
-        {/* <section>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-semibold text-foreground">
-                Trending Right Now
-              </h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Popular recipes loved by our community
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {shuffled.slice(0, 8).map((recipe, index) => (
-              <div key={`trending-${recipe.id}`}>
-                <HomeRecipeCard
-                  id={recipe.id}
-                  title={recipe.title}
-                  imageUrl={recipe.image_url ?? undefined}
-                  color={CARD_COLORS[(index + 2) % CARD_COLORS.length]}
-                  href={`/recipes/${recipe.id}`}
-                />
-              </div>
-            ))}
-          </div>
-        </section> */}
-        <TrendingRecipes recipes={trendingRecipes} cardColors={CARD_COLORS} />
-
-        {/* Info Section */}
-        <section className="bg-card rounded-2xl p-6 space-y-4">
-          <h3 className="text-lg font-semibold text-foreground">
-            About Our Recipes
-          </h3>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Each recipe in our collection is thoughtfully selected to provide
-            nutritional benefits and support various health goals. From
-            anti-inflammatory ingredients to energy-boosting superfoods,
-            discover meals that nourish your body and delight your palate.
-          </p>
-          <div className="grid grid-cols-2 gap-4 mt-4">
-            <div>
-              <p className="text-2xl font-bold text-foreground">100+</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Wellness Recipes
-              </p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">10+</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Health Categories
-              </p>
+          <div className="">
+            <div className="flex gap-x-5 overflow-x-auto hide-scrollbar snap-x snap-mandatory">
+              {recipes.slice(0, 5).map((recipe, i) => {
+                const firstTag = recipe.recipe_tags?.[0]?.tags?.name;
+                return (
+                  <div key={recipe.id} className="shrink-0 w-50 snap-start">
+                    <RecipeCardNew
+                      id={recipe.id}
+                      title={recipe.title}
+                      imageUrl={recipe.image_url ?? undefined}
+                      category={firstTag}
+                      href={`/recipes/${recipe.id}`}
+                      priority={i < 2}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>
 
-        {/* Explore More */}
-        {/* <ExploreMoreSection items={exploreMoreItems} /> */}
+        {/* Daily Wellness Tip */}
+        <WellnessTipCard
+          title={WELLNESS_TIP.title}
+          description={WELLNESS_TIP.description}
+          imageUrl={WELLNESS_TIP.imageUrl}
+        />
+
+        {/* Categories */}
+        <CategorySection />
+
+        {/* Upgrade / Pending banner */}
+        <UpgradeBanner hasAccess={hasAccess} />
       </main>
     </div>
   );

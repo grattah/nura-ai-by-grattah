@@ -5,6 +5,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { createClient } from "@/lib/supabase/server";
 import { AppHeader } from "@/components/layout/app-header";
+import { BottomNav } from "@/components/layout/bottom-nav";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { MobileGate } from "@/components/mobile-gate";
 
@@ -95,10 +96,12 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <MobileGate>
-            <AppHeader user={headerUser} />
-
-            <main>{children}</main>
-            <PWAInstallPrompt />
+            <div className="min-h-dvh flex flex-col">
+              <AppHeader user={headerUser} />
+              <main className="flex-1">{children}</main>
+              <BottomNav />
+              <PWAInstallPrompt />
+            </div>
           </MobileGate>
         </ThemeProvider>
         <Analytics />
