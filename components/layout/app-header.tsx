@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Menu, X, Bookmark, Bell, LogOut, ChevronRight } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { Bell, X, Bookmark, LogOut, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import ThemeToggleButton from "../theme-toggle-button";
 import { createClient } from "@/lib/supabase/client";
-import { cn } from "@/lib/utils";
 import { NuraLeafIcon } from "../nura-logo";
 
 interface AppHeaderUser {
@@ -22,12 +21,9 @@ interface AppHeaderProps {
 }
 
 export function AppHeader({ user }: AppHeaderProps) {
-  const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
-
-  const isHome = pathname === "/";
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
@@ -45,154 +41,139 @@ export function AppHeader({ user }: AppHeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-md border-b border-border/40 px-4 py-2">
-      <div className="flex items-center justify-between h-12">
-        <div>
-          {isHome && user ? (
-            <>
-              <h1 className="text-xl font-semibold text-foreground leading-tight">
-                <span className="italic font-normal text-muted-foreground">
-                  Hi,{" "}
-                </span>
-                {user.name}
-              </h1>
-              <p className="text-xs text-muted-foreground leading-none mt-0.5">
-                {"Let's answer some questions today."}
-              </p>
-            </>
-          ) : isHome && !user ? (
-            <>
-              <h1 className="text-xl font-semibold italic text-foreground">
-                Explore Nura
-              </h1>
-              <p className="text-xs text-muted-foreground leading-none mt-0.5">
-                Health & Wellness Companion
-              </p>
-            </>
-          ) : (
-            <Link href="/" className="text-base font-bold text-foreground">
-              Nura
-            </Link>
-          )}
-        </div>
+    <header className="sticky top-0 z-40 bg-background px-4 py-3">
+      <div className="flex items-center justify-between h-10">
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-1">
+          <Image
+            src="/logo-outlined.svg"
+            alt="Nuko Logo"
+            width={32}
+            height={32}
+          />
+          <span className="text-lg font-semibold text-brown tracking-tight">
+            Nuko
+          </span>
+        </Link>
 
-        <div className="flex items-center gap-2">
-          {user ? (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSidebarOpen(true)}
-                className="w-10 h-10 rounded-full bg-card text-foreground hover:opacity-80 transition-opacity"
-                aria-label="Open menu"
-              >
-                <Menu className="w-5 h-5" />
-              </Button>
-
-              <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-                <SheetContent
-                  side="right"
-                  className="w-80 max-w-[85vw] border-0 p-0 flex flex-col bg-background [&>button]:hidden"
-                >
-                  <SheetTitle className="sr-only">Navigation menu</SheetTitle>
-
-                  {/* Header */}
-                  <div className="flex items-center justify-between p-6 pt-12">
-                    <h2 className="text-xl font-semibold text-foreground">
-                      Menu
-                    </h2>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setSidebarOpen(false)}
-                      className="w-10 h-10 rounded-full bg-card text-foreground hover:opacity-80 transition-opacity border-0"
-                      aria-label="Close menu"
-                    >
-                      <X className="w-5 h-5" />
-                    </Button>
-                  </div>
-
-                  {/* Nav links */}
-                  <nav className="flex-1 px-6 py-4">
-                    <div className="space-y-3">
-                      {[
-                        {
-                          label: "My Bookmarks",
-                          href: "/bookmarks",
-                          icon: <Bookmark className="w-5 h-5" />,
-                        },
-                        {
-                          label: "Notifications",
-                          href: "/notifications",
-                          icon: <Bell className="w-5 h-5" />,
-                        },
-                      ].map((item) => (
-                        <Link
-                          key={item.label}
-                          href={item.href}
-                          onClick={() => setSidebarOpen(false)}
-                          className="flex items-center justify-between p-4 bg-card rounded-xl text-foreground hover:opacity-80 transition-opacity min-h-14"
-                        >
-                          <div className="flex items-center gap-3">
-                            {item.icon}
-                            <span className="font-medium">{item.label}</span>
-                          </div>
-                          <ChevronRight className="w-5 h-5 text-foreground/60" />
-                        </Link>
-                      ))}
-                    </div>
-                  </nav>
-
-                  {/* ── Profile footer — tapping navigates to /profile ─────── */}
-                  <div className="p-6 border-t border-nura-forest-light space-y-4">
-                    <Link
-                      href="/profile"
-                      onClick={() => setSidebarOpen(false)}
-                      className="flex items-center gap-3 p-3 -mx-3 rounded-xl hover:bg-card transition-colors active:scale-[0.98]"
-                    >
-                      {/* Avatar letter */}
-                      <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-base font-bold shrink-0"
-                        style={{ backgroundColor: "#5C6B3A", color: "#D4C48A" }}
-                      >
-                        {user.avatarLetter}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-foreground truncate">
-                          {user.name}
-                        </p>
-                        {user.email && (
-                          <p className="text-xs text-muted-foreground truncate">
-                            {user.email}
-                          </p>
-                        )}
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-                    </Link>
-
-                    <Button
-                      onClick={handleSignOut}
-                      disabled={isSigningOut}
-                      className="w-full flex items-center justify-center gap-2 bg-nura-cream text-nura-forest h-auto py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-50 border-0 shadow-none"
-                    >
-                      <LogOut className="w-5 h-5" />
-                      {isSigningOut ? "Signing out..." : "Sign Out"}
-                    </Button>
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </>
-          ) : (
-            <Button
-              asChild
-              variant="secondary"
-              className="rounded-full px-5 h-11 text-sm font-semibold border-0 shadow-none bg-card text-foreground hover:opacity-80 transition-opacity"
+        {/* Right side */}
+        {user ? (
+          <div className="flex items-center gap-2">
+            <Link
+              href="/notifications"
+              className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-card transition-colors"
+              aria-label="Notifications"
             >
-              <Link href="/auth/login">Sign in</Link>
-            </Button>
-          )}
-        </div>
+              <Bell className="w-5 h-5 text-foreground" strokeWidth={1.75} />
+            </Link>
+
+            {/* Avatar — opens sidebar */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-[#D4C48A] hover:opacity-80 transition-opacity"
+              style={{ backgroundColor: "#5C6B3A" }}
+              aria-label="Open menu"
+            >
+              {user.avatarLetter}
+            </button>
+          </div>
+        ) : (
+          <Link
+            href="/auth/login"
+            className="text-base font-semibold text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4"
+          >
+            Sign in
+          </Link>
+        )}
       </div>
+
+      {/* Sidebar — kept intact for all nav/sign-out actions */}
+      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <SheetContent
+          side="right"
+          className="w-80 max-w-[85vw] border-0 p-0 flex flex-col bg-background [&>button]:hidden"
+        >
+          <SheetTitle className="sr-only">Navigation menu</SheetTitle>
+
+          <div className="flex items-center justify-between p-6 pt-12">
+            <h2 className="text-xl font-semibold text-foreground">Menu</h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarOpen(false)}
+              className="w-10 h-10 rounded-full bg-card text-foreground hover:opacity-80 transition-opacity border-0"
+              aria-label="Close menu"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+
+          <nav className="flex-1 px-6 py-4">
+            <div className="space-y-3">
+              {[
+                {
+                  label: "My Bookmarks",
+                  href: "/bookmarks",
+                  icon: <Bookmark className="w-5 h-5" />,
+                },
+                {
+                  label: "Notifications",
+                  href: "/notifications",
+                  icon: <Bell className="w-5 h-5" />,
+                },
+              ].map((item) => (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className="flex items-center justify-between p-4 bg-card rounded-xl text-foreground hover:opacity-80 transition-opacity min-h-14"
+                >
+                  <div className="flex items-center gap-3">
+                    {item.icon}
+                    <span className="font-medium">{item.label}</span>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-foreground/60" />
+                </Link>
+              ))}
+            </div>
+          </nav>
+
+          <div className="p-6 border-t border-nura-forest-light space-y-4">
+            <Link
+              href="/profile"
+              onClick={() => setSidebarOpen(false)}
+              className="flex items-center gap-3 p-3 -mx-3 rounded-xl hover:bg-card transition-colors active:scale-[0.98]"
+            >
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center text-base font-bold shrink-0"
+                style={{ backgroundColor: "#5C6B3A", color: "#D4C48A" }}
+              >
+                {user?.avatarLetter}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground truncate">
+                  {user?.name}
+                </p>
+                {user?.email && (
+                  <p className="text-xs text-muted-foreground truncate">
+                    {user.email}
+                  </p>
+                )}
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+            </Link>
+
+            <Button
+              onClick={handleSignOut}
+              disabled={isSigningOut}
+              className="w-full flex items-center justify-center gap-2 bg-nura-cream text-nura-forest h-auto py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-50 border-0 shadow-none"
+            >
+              <LogOut className="w-5 h-5" />
+              {isSigningOut ? "Signing out..." : "Sign Out"}
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </header>
   );
 }
