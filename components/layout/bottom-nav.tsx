@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Grid2X2, Bookmark } from "lucide-react";
+import { Home, Search, Users, Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { label: "Home", href: "/", icon: Home },
-  { label: "Categories", href: "/recipes", icon: Grid2X2 },
-  { label: "Saved", href: "/protected", icon: Bookmark },
+  { label: "Find recipe", href: "/recipes", icon: Search },
+  { label: "Community", href: "/community", icon: Users },
+  { label: "Saved", href: "/bookmarks", icon: Bookmark },
 ] as const;
 
 export function BottomNav() {
@@ -20,42 +21,35 @@ export function BottomNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-background/90 backdrop-blur-md border-t border-border/40 pb-safe">
-      <div className="flex items-center justify-around px-2 h-16">
+    <nav className="sticky bottom-0 z-40 w-full pb-safe">
+      <div
+        className="mx-0 flex items-center justify-around px-2 h-16 rounded-t-2xl"
+        style={{ backgroundColor: "#1E2D1A" }}
+      >
         {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
           const active = isActive(href);
           return (
             <Link
               key={href}
               href={href}
-              className={cn(
-                "flex flex-col items-center justify-center gap-1 min-w-16 min-h-11 px-2 py-1 rounded-xl transition-all duration-150 active:scale-95",
-                active
-                  ? "text-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
+              className="flex flex-col items-center justify-center gap-1 min-w-16 min-h-11 px-2 py-1 rounded-xl transition-all duration-150 active:scale-95"
               aria-label={label}
             >
               <Icon
                 className={cn(
                   "w-5 h-5 transition-all duration-150",
-                  active ? "stroke-[2.5px]" : "stroke-[1.75px]",
+                  active ? "text-white" : "text-white/45",
                 )}
+                strokeWidth={active ? 2.5 : 1.75}
               />
               <span
                 className={cn(
-                  "text-[11px] font-medium leading-none",
-                  active ? "text-foreground" : "text-muted-foreground",
+                  "text-[11px] font-medium leading-none transition-colors duration-150",
+                  active ? "text-white" : "text-white/45",
                 )}
               >
                 {label}
               </span>
-              {active && (
-                <span
-                  className="absolute bottom-0 w-1 h-1 rounded-full"
-                  style={{ backgroundColor: "#E8836A" }}
-                />
-              )}
             </Link>
           );
         })}
