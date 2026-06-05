@@ -13,7 +13,7 @@ const NAV_ITEMS = [
   { label: "Saved", href: "/bookmarks", icon: Bookmark },
 ] as const;
 
-const HIDE_ON = ["/personalized-search"];
+const HIDE_ON = ["/personalized-search", "/auth"];
 
 export function BottomNav() {
   const pathname = usePathname();
