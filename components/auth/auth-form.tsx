@@ -24,8 +24,8 @@ interface NuraAuthFormProps {
 }
 
 export function NuraAuthForm({ className }: NuraAuthFormProps) {
-  const [step, setStep] = useState<AuthStep>("login");
-  const [email, setEmail] = useState("odukwechiemeka@gmail.com");
+  const [step, setStep] = useState<AuthStep>("email");
+  const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -275,7 +275,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       <div className="flex-1 flex flex-col items-center px-6 pb-12">
         <div className="flex items-center justify-between w-full mb-8">
           <button className="p-2 bg-[#E8E6DC] rounded-full" onClick={goBack}>
-            <ArrowLeft size={24}/>
+            <ArrowLeft size={24} />
           </button>
 
           <div className="flex flex-col items-center gap-1">
@@ -306,7 +306,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                   disabled={isGoogleLoading}
                   className="w-full flex items-center justify-center gap-3 bg-[#E8E6DC] text-nura-forest py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
-                  <GoogleIcon />
+                  <AppleIcon />
                   {isGoogleLoading ? "Connecting..." : "Continue with Apple"}
                 </button>
 
@@ -394,12 +394,12 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 <div className="relative">
                   <LockKeyhole
                     size={20}
-                    color={email ? "#57605E" : "#9CA5A3"}
+                    color={password ? "#57605E" : "#9CA5A3"}
                     className="absolute top-4.75 left-3"
                   />
                   <input
                     type={showPassword ? "text" : "password"}
-                    placeholder="Password"
+                    placeholder="********"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete="current-password"
@@ -453,7 +453,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                   disabled={isGoogleLoading}
                   className="w-full flex items-center justify-center gap-3 bg-[#E8E6DC] text-nura-forest py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
-                  <GoogleIcon />
+                  <AppleIcon />
                   {isGoogleLoading ? "Connecting..." : "Continue with Apple"}
                 </button>
 
@@ -538,12 +538,12 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 <div className="relative">
                   <LockKeyhole
                     size={20}
-                    color={email ? "#57605E" : "#9CA5A3"}
+                    color={password ? "#57605E" : "#9CA5A3"}
                     className="absolute top-4.75 left-3"
                   />
                   <input
                     type={showPassword ? "text" : "password"}
-                    placeholder="Create a password"
+                    placeholder="********"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete="new-password"
@@ -634,6 +634,17 @@ function GoogleIcon() {
       <path
         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
         fill="#EA4335"
+      />
+    </svg>
+  );
+}
+
+function AppleIcon() {
+  return (
+    <svg className="h-6.5 w-6.5" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"
+        fill="currentColor"
       />
     </svg>
   );
