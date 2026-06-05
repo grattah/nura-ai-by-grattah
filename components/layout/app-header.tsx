@@ -20,7 +20,7 @@ interface AppHeaderProps {
   user: AppHeaderUser | null;
 }
 
-const HIDE_ON = ["/personalized-search"];
+const HIDE_ON = ["/personalized-search", "/auth"];
 
 export function AppHeader({ user }: AppHeaderProps) {
   const router = useRouter();
