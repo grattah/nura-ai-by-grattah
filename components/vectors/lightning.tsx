@@ -7,7 +7,7 @@ export default function Lightning() {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <g clip-path="url(#clip0_2294_2906)">
+      <g clipPath="url(#clip0_2294_2906)">
         <path
           d="M8.38184 6.39941H11.5225L7.74316 13.959V9.72559H4.60254L8.38184 2.16602V6.39941Z"
           fill="#F8A900"
