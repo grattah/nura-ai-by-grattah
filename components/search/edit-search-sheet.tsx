@@ -94,7 +94,7 @@ export function EditSearchSheet({
 
         <div className="flex-1 overflow-y-auto px-4 pb-8 space-y-5">
           {/* Search input */}
-          <div className="flex items-center gap-3 bg-card rounded-[12px] px-3 h-12 border border-[var(--mint-green)]">
+          <div className="flex items-center gap-3 bg-card rounded-[12px] px-3 h-12 border border-mint-green">
             <Search
               className="w-4 h-4 text-muted-foreground shrink-0"
               strokeWidth={1.75}
