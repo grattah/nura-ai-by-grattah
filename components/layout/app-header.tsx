@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Bell, X, Bookmark, LogOut, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -20,10 +20,15 @@ interface AppHeaderProps {
   user: AppHeaderUser | null;
 }
 
+const HIDE_ON = ["/personalized-search"];
+
 export function AppHeader({ user }: AppHeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+
+  if (HIDE_ON.some((p) => pathname.startsWith(p))) return null;
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
