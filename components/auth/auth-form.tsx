@@ -1,20 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
-  ChevronRight,
-  KeyRound,
   Mail,
   EyeOff,
   Eye,
   LockKeyhole,
+  X,
+  ShieldCheck,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { NuraLogo } from "../nura-logo";
 import { cn } from "@/lib/utils";
+
+import loader from "@/public/loader.png";
 
 // "login-otp" → user exists but has no password (OAuth / checkout-created)
 type AuthStep = "email" | "login" | "login-otp" | "signup";
@@ -93,8 +95,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
   // ─── OTP verification ──────────────────────────────────────────────────────
 
-  const handleOtpVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleOtpVerify = async () => {
     if (!otpCode.trim()) return;
     setIsLoading(true);
     setError(null);
@@ -168,10 +169,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     e.preventDefault();
     setError(null);
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
     if (password.length < 8) {
       setError("Password must be at least 8 characters.");
       return;
@@ -229,6 +226,12 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     }
   };
 
+  useEffect(() => {
+    if (otpCode.length === 8) {
+      handleOtpVerify();
+    }
+  }, [otpCode]);
+
   // ─── Helpers ───────────────────────────────────────────────────────────────
 
   const goBack = () => {
@@ -244,41 +247,42 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   };
 
   const isEmailStep = step === "email";
-  const showBackButton = step !== "email";
+  const isLoginOtpStep = step == "login-otp";
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className={cn("min-h-screen flex flex-col", className)}>
       {/* Top bar */}
-      {/* <div className="flex items-center justify-between p-4 pt-6">
-        {showBackButton ? (
+      <div className="flex items-center justify-end px-4 pb-4 mb-6">
+        {isLoginOtpStep && (
           <button
+            className="p-2 rounded-full bg-[#E8E6DC] hover:bg-[#D8D6CC]"
             onClick={goBack}
-            className="flex items-center gap-1 px-3 py-2 rounded-full text-sm font-medium text-foreground hover:opacity-70 transition-opacity"
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back
+            <X size={24} />
           </button>
-        ) : (
-          <div />
         )}
-        <Link
-          href="/"
-          className="flex items-center gap-1 px-4 py-2 bg-card rounded-full text-sm font-medium text-foreground hover:opacity-80 transition-opacity"
-        >
-          Skip <ChevronRight className="w-4 h-4" />
-        </Link>
-      </div> */}
+      </div>
 
       {/* Main */}
       <div className="flex-1 flex flex-col items-center px-6 pb-12">
-        <div className="flex items-center justify-between w-full mb-8">
-          <button className="p-2 bg-[#E8E6DC] rounded-full" onClick={goBack}>
-            <ArrowLeft size={24} />
-          </button>
+        <div className="relative flex justify-center w-full mb-8">
+          {!isLoginOtpStep && (
+            <button
+              className="absolute left-0 p-2 bg-[#E8E6DC] rounded-full"
+              onClick={goBack}
+            >
+              <ArrowLeft size={24} />
+            </button>
+          )}
 
-          <div className="flex flex-col items-center gap-1">
+          <div className="flex flex-col items-center text-center gap-1">
+            {isLoginOtpStep && (
+              <div className="p-3 rounded-full bg-[#227B6F] mb-2">
+                <ShieldCheck color="#FFFFFF" size={24} />
+              </div>
+            )}
             <h1 className="text-xl font-semibold text-foreground text-center">
               {step === "email" && "Get full access"}
               {step === "login" && "Enter your password"}
@@ -288,7 +292,14 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
             <p className="text-muted-foreground text-center text-sm">
               {step === "email" && "Enter your email to continue"}
               {step === "login" && "Enter your password to login"}
-              {step === "login-otp" && `We sent an 8-digit code to ${email}`}
+              {step === "login-otp" && (
+                <p>
+                  We sent an 8-digit code to{" "}
+                  <span className="text-[#1B1D1D] underline inline font-semibold">
+                    {email}
+                  </span>
+                </p>
+              )}
               {step === "signup" && "Create your profile to proceed"}
             </p>
           </div>
@@ -473,44 +484,47 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
           {step === "login-otp" && (
             <form onSubmit={handleOtpVerify} className="space-y-3">
               {/* Icon */}
-              <div className="flex justify-center py-2">
-                <div className="w-14 h-14 rounded-full bg-card flex items-center justify-center">
-                  <KeyRound className="w-6 h-6 text-muted-foreground" />
-                </div>
-              </div>
-
               <input
                 type="text"
                 inputMode="numeric"
-                placeholder="Enter 8-digit code"
+                placeholder="Enter code here"
                 value={otpCode}
                 onChange={(e) =>
                   setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 8))
                 }
                 autoFocus
                 autoComplete="one-time-code"
-                className="w-full px-4 py-4 rounded-2xl bg-muted text-foreground placeholder:text-muted-foreground border-0 focus:ring-2 focus:ring-ring outline-none text-center text-xl tracking-widest"
+                className="w-full px-4 py-4 rounded-lg bg-[#FFFFFF] text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] focus:ring-2 focus:ring-ring outline-none text-center text-xl tracking-widest"
               />
 
-              {error && (
-                <p className="text-sm text-destructive text-center">{error}</p>
+              {isLoading && (
+                <div
+                  className="flex justify-center py-2"
+                  role="status"
+                  aria-label="Verifying code"
+                >
+                  <Image
+                    src={loader}
+                    alt=""
+                    width={32}
+                    height={32}
+                    className="animate-spin"
+                  />
+                  <span className="sr-only">Verifying code...</span>
+                </div>
               )}
 
-              <button
-                type="submit"
-                disabled={isLoading || otpCode.length < 6}
-                className="w-full flex items-center justify-center bg-nura-cream text-nura-forest py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
-              >
-                {isLoading ? "Verifying..." : "Verify code"}
-              </button>
+              {error && !isLoading && (
+                <p className="text-sm text-destructive text-center">{error}</p>
+              )}
 
               <button
                 type="button"
                 onClick={handleResendOtp}
                 disabled={isLoading}
-                className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                className="w-full text-center text-sm text-[#227B6F] hover:text-foreground transition-colors disabled:opacity-50 underline font-medium"
               >
-                Didn't receive it? Resend code
+                Resend code
               </button>
             </form>
           )}
@@ -595,7 +609,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 <button
                   type="submit"
                   disabled={
-                    isLoading || !fullName || !password || !confirmPassword
+                    isLoading || !fullName || !password
                   }
                   className="w-full flex items-center justify-center bg-[#227B6F] text-[#FFFFFF] py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
                 >
