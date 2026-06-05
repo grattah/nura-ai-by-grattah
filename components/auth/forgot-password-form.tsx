@@ -62,7 +62,7 @@ export function ForgotPasswordForm({
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn("flex flex-col gap-6 pt-5", className)} {...props}>
       <div className="flex w-full justify-end">
         <button className="p-2 rounded-full bg-[#E8E6DC] hover:bg-[#D8D6CC]" onClick={goBack}>
           <X size={24} />
@@ -85,9 +85,9 @@ export function ForgotPasswordForm({
           </div>
         </div>
     
-        <div className="rounded-xl bg-[#F5F3EC] p-4 flex items-start gap-3">
+        <div className="rounded-xl bg-[#E8E6DC] p-4 flex items-start gap-3">
           <Mail size={20} className="text-[#227B6F] mt-0.5 shrink-0" />
-          <div className="flex flex-col">
+          <div className="flex flex-col ">
             <p className="text-xs text-[#57605E] uppercase tracking-wide font-medium">
               Sent to
             </p>

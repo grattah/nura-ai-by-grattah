@@ -252,7 +252,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className={cn("min-h-screen flex flex-col", className)}>
+    <div className={cn("min-h-screen flex flex-col pt-5", className)}>
       {/* Top bar */}
       <div className="flex items-center justify-end px-4 pb-4 mb-6">
         {isLoginOtpStep && (
