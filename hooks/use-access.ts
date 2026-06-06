@@ -21,7 +21,7 @@ export function useAccess() {
       } = await supabase.auth.getSession();
 
       if (!session) {
-        setHasAccess(false);
+        setHasAccess(true);
         setIsLoading(false);
         return;
       }

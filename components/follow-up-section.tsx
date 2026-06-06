@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronRight, SendHorizonal, Loader2, Bot } from "lucide-react";
+import { ChevronRight, SendHorizontal, Loader2, Bot } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { Card, CardContent } from "@/components/ui/card";
@@ -136,7 +136,7 @@ interface QuestionsListProps {
 
 function QuestionsList({ questions, loading, onSelect }: QuestionsListProps) {
   return (
-    <Card className="border-0 rounded-3xl shadow-none overflow-hidden bg-card">
+    <Card className="border-0 rounded-3xl shadow-none overflow-hidden bg-[#FFFFFF]">
       <CardContent className="p-0">
         {loading
           ? Array.from({ length: 4 }).map((_, i) => (
@@ -164,7 +164,7 @@ function QuestionsList({ questions, loading, onSelect }: QuestionsListProps) {
                   onClick={() => onSelect(q)}
                   className="w-full flex items-center justify-between px-5 min-h-14 py-3 text-left hover:opacity-75 transition-opacity active:scale-[0.98]"
                 >
-                  <span className="text-base text-foreground/80 leading-snug pr-4">
+                  <span className="text-[#57605E] font-medium leading-snug pr-4">
                     {q}
                   </span>
                   <ChevronRight className="w-5 h-5 shrink-0 text-muted-foreground" />
@@ -297,9 +297,9 @@ interface ChatInputProps {
 
 function ChatInput({ input, isLoading, onChange, onSend }: ChatInputProps) {
   return (
-    <Card className="border-0 rounded-3xl shadow-none bg-card">
+    <Card className="border-0 rounded-3xl shadow-none bg-[#FFFFFF]">
       <CardContent className="px-4">
-        <p className="text-sm font-semibold mb-2 text-foreground/80">
+        <p className="text-sm font-semibold mb-2 text-[#1B1D1D]">
           Ask a follow-up question
         </p>
         <div className="flex items-end gap-3">
@@ -324,7 +324,7 @@ function ChatInput({ input, isLoading, onChange, onSend }: ChatInputProps) {
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <SendHorizonal className="w-4 h-4 rotate-[-20deg]" />
+              <SendHorizontal className="w-4 h-4" />
             )}
           </Button>
         </div>
