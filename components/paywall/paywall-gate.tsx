@@ -14,7 +14,6 @@ export function PaywallGate({ children }: PaywallGateProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const showOverlay = !isLoading && !hasAccess;
-
   useEffect(() => {
     if (!showOverlay) return;
 
