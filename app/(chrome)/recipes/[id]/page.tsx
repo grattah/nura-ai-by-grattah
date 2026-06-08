@@ -49,7 +49,7 @@ const mockComment: CommentData = {
 };
 
 // React cache deduplicates this fetch — generateMetadata and the page
-// both call getRecipe(id) but Supabase is only queried once per request.
+// both call getRecipe(id) but Supabase is only queried once per request
 const getRecipe = cache(async (id: string) => {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -171,7 +171,11 @@ export default async function RecipeDetailPage({
 
           {/* Accordion sections */}
           <div className="px-4 space-y-3">
-            <AccordionSection recipe={recipe} ingredients={ingredients} howToMake={howToMake} />
+            <AccordionSection
+              recipe={recipe}
+              ingredients={ingredients}
+              howToMake={howToMake}
+            />
 
             {/* Follow-up questions + RAG chat */}
             <div className="pt-2">
