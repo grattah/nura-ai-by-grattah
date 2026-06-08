@@ -1,12 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ChevronRight, KeyRound } from "lucide-react";
+import {
+  ArrowLeft,
+  Mail,
+  EyeOff,
+  Eye,
+  LockKeyhole,
+  X,
+  ShieldCheck,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { NuraLogo } from "../nura-logo";
 import { cn } from "@/lib/utils";
+
+import loader from "@/public/loader.png";
 
 // "login-otp" → user exists but has no password (OAuth / checkout-created)
 type AuthStep = "email" | "login" | "login-otp" | "signup";
@@ -20,6 +30,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -84,8 +95,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
   // ─── OTP verification ──────────────────────────────────────────────────────
 
-  const handleOtpVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleOtpVerify = async () => {
     if (!otpCode.trim()) return;
     setIsLoading(true);
     setError(null);
@@ -146,7 +156,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         err instanceof Error &&
           err.message.includes("Invalid login credentials")
           ? "Incorrect password. Please try again."
-          : "Sign in failed. Please try again.",
+          : "Sign in failed. Please try again."
       );
     } finally {
       setIsLoading(false);
@@ -159,10 +169,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     e.preventDefault();
     setError(null);
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
     if (password.length < 8) {
       setError("Password must be at least 8 characters.");
       return;
@@ -214,11 +220,17 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       if (error) throw error;
     } catch (err: unknown) {
       setError(
-        err instanceof Error ? err.message : "Failed to sign in with Google.",
+        err instanceof Error ? err.message : "Failed to sign in with Google."
       );
       setIsGoogleLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (otpCode.length === 8) {
+      handleOtpVerify();
+    }
+  }, [otpCode]);
 
   // ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -229,67 +241,95 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     setFullName("");
     setOtpCode("");
     setError(null);
+    if (step === "email") {
+      router.back();
+    }
   };
 
   const isEmailStep = step === "email";
-  const showBackButton = step !== "email";
+  const isLoginOtpStep = step == "login-otp";
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className={cn("min-h-screen flex flex-col", className)}>
+    <div className={cn("min-h-screen flex flex-col pt-5", className)}>
       {/* Top bar */}
-      <div className="flex items-center justify-between p-4 pt-6">
-        {showBackButton ? (
+      <div className="flex items-center justify-end px-4 pb-4 mb-6">
+        {isLoginOtpStep && (
           <button
+            className="p-2 rounded-full bg-[#E8E6DC] hover:bg-[#D8D6CC]"
             onClick={goBack}
-            className="flex items-center gap-1 px-3 py-2 rounded-full text-sm font-medium text-foreground hover:opacity-70 transition-opacity"
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back
+            <X size={24} />
           </button>
-        ) : (
-          <div />
         )}
-        <Link
-          href="/"
-          className="flex items-center gap-1 px-4 py-2 bg-card rounded-full text-sm font-medium text-foreground hover:opacity-80 transition-opacity"
-        >
-          Skip <ChevronRight className="w-4 h-4" />
-        </Link>
       </div>
 
       {/* Main */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-12">
-        <div className="mb-8">
-          <NuraLogo size="lg" variant="full" />
-        </div>
+      <div className="flex-1 flex flex-col items-center px-6 pb-12">
+        <div className="relative flex justify-center w-full mb-8">
+          {!isLoginOtpStep && (
+            <button
+              className="absolute left-0 p-2 bg-[#E8E6DC] rounded-full"
+              onClick={goBack}
+            >
+              <ArrowLeft size={24} />
+            </button>
+          )}
 
-        <h1 className="text-2xl font-semibold text-foreground text-center mb-2">
-          {step === "email" && "Sign in or create an account"}
-          {step === "login" && "Welcome back"}
-          {step === "login-otp" && "Check your email"}
-          {step === "signup" && "Create your account"}
-        </h1>
-        <p className="text-muted-foreground text-center mb-8 text-sm">
-          {step === "email" && "Save and retrieve your research"}
-          {step === "login" && email}
-          {step === "login-otp" && `We sent a 6-digit code to ${email}`}
-          {step === "signup" && email}
-        </p>
+          <div className="flex flex-col items-center text-center gap-1">
+            {isLoginOtpStep && (
+              <div className="p-3 rounded-full bg-[#227B6F] mb-2">
+                <ShieldCheck color="#FFFFFF" size={24} />
+              </div>
+            )}
+            <h1 className="text-xl font-semibold text-foreground text-center">
+              {step === "email" && "Get full access"}
+              {step === "login" && "Enter your password"}
+              {step === "login-otp" && "Check your email"}
+              {step === "signup" && "Welcome to Nuko"}
+            </h1>
+            <p className="text-muted-foreground text-center text-sm">
+              {step === "email" && "Enter your email to continue"}
+              {step === "login" && "Enter your password to login"}
+              {step === "login-otp" && (
+                <p>
+                  We sent an 8-digit code to{" "}
+                  <span className="text-[#1B1D1D] underline inline font-semibold">
+                    {email}
+                  </span>
+                </p>
+              )}
+              {step === "signup" && "Create your profile to proceed"}
+            </p>
+          </div>
+
+          <div />
+        </div>
 
         <div className="w-full max-w-sm space-y-3">
           {/* ── Email step ── */}
           {step === "email" && (
-            <>
-              <button
-                onClick={handleGoogleSignIn}
-                disabled={isGoogleLoading}
-                className="w-full flex items-center justify-center gap-3 bg-nura-cream text-nura-forest py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
-              >
-                <GoogleIcon />
-                {isGoogleLoading ? "Connecting..." : "Continue with Google"}
-              </button>
+            <div className="flex flex-col gap-10">
+              <div className="flex flex-col gap-2 items-center">
+                <button
+                  onClick={handleGoogleSignIn}
+                  disabled={isGoogleLoading}
+                  className="w-full flex items-center justify-center gap-3 bg-[#E8E6DC] text-nura-forest py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  <AppleIcon />
+                  {isGoogleLoading ? "Connecting..." : "Continue with Apple"}
+                </button>
+
+                <button
+                  onClick={handleGoogleSignIn}
+                  disabled={isGoogleLoading}
+                  className="w-full flex items-center justify-center gap-3 bg-[#E8E6DC] text-nura-forest py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  <GoogleIcon />
+                  {isGoogleLoading ? "Connecting..." : "Continue with Google"}
+                </button>
+              </div>
 
               <div className="flex items-center gap-3 py-1">
                 <div className="flex-1 border-t border-border" />
@@ -297,173 +337,292 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 <div className="flex-1 border-t border-border" />
               </div>
 
-              <input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleEmailContinue()}
-                autoComplete="email"
-                className="w-full px-4 py-4 rounded-2xl bg-muted text-foreground placeholder:text-muted-foreground border-0 focus:ring-2 focus:ring-ring outline-none"
-              />
+              <div className="flex flex-col gap-2">
+                <div>
+                  <label
+                    htmlFor=""
+                    className="text-[#57605E] text-sm font-medium"
+                  >
+                    Your email address
+                  </label>
+                  <div className="relative">
+                    <Mail
+                      size={20}
+                      color={email ? "#57605E" : "#9CA5A3"}
+                      className="absolute top-4.75 left-3"
+                    />
+                    <input
+                      type="email"
+                      placeholder="name@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && handleEmailContinue()
+                      }
+                      autoComplete="email"
+                      className="w-full pl-10 pr-4 py-4 rounded-lg bg-[#FFFFFF] text-foreground placeholder:text-muted-foreground border focus:ring-2 focus:ring-ring outline-none"
+                    />
+                  </div>
+                </div>
 
-              <button
-                onClick={handleEmailContinue}
-                disabled={!email || isLoading}
-                className="w-full flex items-center justify-center bg-card text-foreground py-4 rounded-full font-medium border border-border hover:opacity-90 transition-opacity disabled:opacity-40"
-              >
-                {isLoading ? "Checking..." : "Continue with email"}
-              </button>
+                <button
+                  onClick={handleEmailContinue}
+                  disabled={!email || isLoading}
+                  className="w-full flex items-center justify-center bg-[#227B6F] text-[#FFFFFF] py-4 rounded-full font-medium border border-border hover:opacity-90 transition-opacity disabled:opacity-40"
+                >
+                  {isLoading ? "Checking..." : "Continue"}
+                </button>
 
-              {error && (
-                <p className="text-sm text-destructive text-center">{error}</p>
-              )}
-            </>
+                {error && (
+                  <p className="text-sm text-destructive text-center">
+                    {error}
+                  </p>
+                )}
+              </div>
+            </div>
           )}
 
           {/* ── Password login step ── */}
           {step === "login" && (
-            <form onSubmit={handleSignIn} className="space-y-3">
-              <div className="w-full px-4 py-4 rounded-2xl bg-muted text-muted-foreground text-sm">
-                {email}
+            <div className="flex flex-col gap-10">
+              <form onSubmit={handleSignIn} className="space-y-3">
+                <div>
+                  <p className="text-[#57605E] text-sm font-medium">
+                    Your email address
+                  </p>
+                  <div className="w-full px-4 py-4 rounded-lg bg-muted text-sm flex gap-2 items-center">
+                    <Mail size={20} color="#57605E" />
+                    <p>{email}</p>
+                  </div>
+                </div>
+
+                <label
+                  htmlFor=""
+                  className="text-[#57605E] text-sm font-medium"
+                >
+                  Password
+                </label>
+                <div className="relative">
+                  <LockKeyhole
+                    size={20}
+                    color={password ? "#57605E" : "#9CA5A3"}
+                    className="absolute top-4.75 left-3"
+                  />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="********"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                    autoFocus
+                    required
+                    className="w-full pl-10 pr-4 py-4 rounded-lg bg-[#FFFFFF] text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] focus:ring-2 focus:ring-ring outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute top-4.75 right-3"
+                  >
+                    {showPassword ? (
+                      <Eye size={20} color="#57605E" />
+                    ) : (
+                      <EyeOff size={20} color="#9CA5A3" />
+                    )}
+                  </button>
+                  <Link
+                    href="/auth/forgot-password"
+                    className="block text-sm underline text-[#227B6F] hover:text-foreground transition-colors pt-1"
+                  >
+                    Forgot your password?
+                  </Link>
+                </div>
+
+                {error && (
+                  <p className="text-sm text-destructive text-center">
+                    {error}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isLoading || !password}
+                  className="w-full flex items-center justify-center bg-[#227B6F] text-[#FFFFFF] py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+                >
+                  {isLoading ? "Signing in..." : "Sign in"}
+                </button>
+              </form>
+
+              <div className="flex items-center gap-3 py-1">
+                <div className="flex-1 border-t border-border" />
+                <span className="text-xs text-muted-foreground">or</span>
+                <div className="flex-1 border-t border-border" />
               </div>
 
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-                autoFocus
-                required
-                className="w-full px-4 py-4 rounded-2xl bg-muted text-foreground placeholder:text-muted-foreground border-0 focus:ring-2 focus:ring-ring outline-none"
-              />
+              <div className="flex flex-col gap-2 items-center">
+                <button
+                  onClick={handleGoogleSignIn}
+                  disabled={isGoogleLoading}
+                  className="w-full flex items-center justify-center gap-3 bg-[#E8E6DC] text-nura-forest py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  <AppleIcon />
+                  {isGoogleLoading ? "Connecting..." : "Continue with Apple"}
+                </button>
 
-              {error && (
-                <p className="text-sm text-destructive text-center">{error}</p>
-              )}
-
-              <button
-                type="submit"
-                disabled={isLoading || !password}
-                className="w-full flex items-center justify-center bg-nura-cream text-nura-forest py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
-              >
-                {isLoading ? "Signing in..." : "Sign in"}
-              </button>
-
-              <Link
-                href="/auth/forgot-password"
-                className="block text-center text-sm text-muted-foreground hover:text-foreground transition-colors pt-1"
-              >
-                Forgot your password?
-              </Link>
-            </form>
+                <button
+                  onClick={handleGoogleSignIn}
+                  disabled={isGoogleLoading}
+                  className="w-full flex items-center justify-center gap-3 bg-[#E8E6DC] text-nura-forest py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  <GoogleIcon />
+                  {isGoogleLoading ? "Connecting..." : "Continue with Google"}
+                </button>
+              </div>
+            </div>
           )}
 
           {/* ── OTP login step ── */}
           {step === "login-otp" && (
             <form onSubmit={handleOtpVerify} className="space-y-3">
               {/* Icon */}
-              <div className="flex justify-center py-2">
-                <div className="w-14 h-14 rounded-full bg-card flex items-center justify-center">
-                  <KeyRound className="w-6 h-6 text-muted-foreground" />
-                </div>
-              </div>
-
               <input
                 type="text"
                 inputMode="numeric"
-                placeholder="Enter 8-digit code"
+                placeholder="Enter code here"
                 value={otpCode}
                 onChange={(e) =>
                   setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 8))
                 }
                 autoFocus
                 autoComplete="one-time-code"
-                className="w-full px-4 py-4 rounded-2xl bg-muted text-foreground placeholder:text-muted-foreground border-0 focus:ring-2 focus:ring-ring outline-none text-center text-xl tracking-widest"
+                className="w-full px-4 py-4 rounded-lg bg-[#FFFFFF] text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] focus:ring-2 focus:ring-ring outline-none text-center text-xl tracking-widest"
               />
 
-              {error && (
-                <p className="text-sm text-destructive text-center">{error}</p>
+              {isLoading && (
+                <div
+                  className="flex justify-center py-2"
+                  role="status"
+                  aria-label="Verifying code"
+                >
+                  <Image
+                    src={loader}
+                    alt=""
+                    width={32}
+                    height={32}
+                    className="animate-spin"
+                  />
+                  <span className="sr-only">Verifying code...</span>
+                </div>
               )}
 
-              <button
-                type="submit"
-                disabled={isLoading || otpCode.length < 6}
-                className="w-full flex items-center justify-center bg-nura-cream text-nura-forest py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
-              >
-                {isLoading ? "Verifying..." : "Verify code"}
-              </button>
+              {error && !isLoading && (
+                <p className="text-sm text-destructive text-center">{error}</p>
+              )}
 
               <button
                 type="button"
                 onClick={handleResendOtp}
                 disabled={isLoading}
-                className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                className="w-full text-center text-sm text-[#227B6F] hover:text-foreground transition-colors disabled:opacity-50 underline font-medium"
               >
-                Didn't receive it? Resend code
+                Resend code
               </button>
             </form>
           )}
 
           {/* ── Signup step ── */}
           {step === "signup" && (
-            <form onSubmit={handleSignUp} className="space-y-3">
-              <div className="w-full px-4 py-4 rounded-2xl bg-muted text-muted-foreground text-sm">
-                {email}
-              </div>
+            <>
+              <form onSubmit={handleSignUp} className="space-y-3">
+                <div>
+                  <p className="text-[#57605E] text-sm font-medium">
+                    Your email address
+                  </p>
+                  <div className="w-full px-4 py-4 rounded-lg bg-muted text-sm flex gap-2 items-center">
+                    <Mail size={20} color="#57605E" />
+                    <p>{email}</p>
+                  </div>
+                </div>
 
-              <input
-                type="text"
-                placeholder="Full name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                autoComplete="name"
-                autoFocus
-                required
-                className="w-full px-4 py-4 rounded-2xl bg-muted text-foreground placeholder:text-muted-foreground border-0 focus:ring-2 focus:ring-ring outline-none"
-              />
+                <label
+                  htmlFor=""
+                  className="text-[#57605E] text-sm font-medium"
+                >
+                  Create Password
+                </label>
+                <div className="relative">
+                  <LockKeyhole
+                    size={20}
+                    color={password ? "#57605E" : "#9CA5A3"}
+                    className="absolute top-4.75 left-3"
+                  />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="********"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="new-password"
+                    required
+                    className="w-full pl-10 pr-4 py-4 rounded-lg bg-[#FFFFFF] text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] focus:ring-2 focus:ring-ring outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute top-4.75 right-3"
+                  >
+                    {showPassword ? (
+                      <Eye size={20} color="#57605E" />
+                    ) : (
+                      <EyeOff size={20} color="#9CA5A3" />
+                    )}
+                  </button>
+                </div>
 
-              <input
-                type="password"
-                placeholder="Create a password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="new-password"
-                required
-                className="w-full px-4 py-4 rounded-2xl bg-muted text-foreground placeholder:text-muted-foreground border-0 focus:ring-2 focus:ring-ring outline-none"
-              />
+                {password.length > 0 && password.length < 8 && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    Password must be at least 8 characters
+                  </p>
+                )}
 
-              <input
-                type="password"
-                placeholder="Confirm your password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                autoComplete="new-password"
-                required
-                className="w-full px-4 py-4 rounded-2xl bg-muted text-foreground placeholder:text-muted-foreground border-0 focus:ring-2 focus:ring-ring outline-none"
-              />
+                <label
+                  htmlFor=""
+                  className="text-[#57605E] text-sm font-medium"
+                >
+                  Your full name
+                </label>
+                <input
+                  type="text"
+                  placeholder="Full name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  autoComplete="name"
+                  autoFocus
+                  required
+                  className="w-full px-4 py-4 rounded-lg bg-[#FFFFFF] text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] focus:ring-2 focus:ring-ring outline-none"
+                />
 
-              {password.length > 0 && password.length < 8 && (
-                <p className="text-xs text-muted-foreground text-center">
-                  Password must be at least 8 characters
-                </p>
-              )}
+                {error && (
+                  <p className="text-sm text-destructive text-center">
+                    {error}
+                  </p>
+                )}
 
-              {error && (
-                <p className="text-sm text-destructive text-center">{error}</p>
-              )}
-
+                <button
+                  type="submit"
+                  disabled={
+                    isLoading || !fullName || !password
+                  }
+                  className="w-full flex items-center justify-center bg-[#227B6F] text-[#FFFFFF] py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+                >
+                  {isLoading ? "Creating account..." : "Create profile"}
+                </button>
+              </form>
               <button
-                type="submit"
-                disabled={
-                  isLoading || !fullName || !password || !confirmPassword
-                }
-                className="w-full flex items-center justify-center bg-nura-cream text-nura-forest py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+                className="w-full flex items-center justify-center bg-[#E8E6DC] py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+                onClick={goBack}
               >
-                {isLoading ? "Creating account..." : "Create account"}
+                Do this later
               </button>
-            </form>
+            </>
           )}
         </div>
       </div>
@@ -489,6 +648,17 @@ function GoogleIcon() {
       <path
         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
         fill="#EA4335"
+      />
+    </svg>
+  );
+}
+
+function AppleIcon() {
+  return (
+    <svg className="h-6.5 w-6.5" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"
+        fill="currentColor"
       />
     </svg>
   );

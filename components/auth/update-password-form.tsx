@@ -5,25 +5,23 @@ import { useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { PasswordRequirements, isPasswordValid } from "./PasswordRequirements";
+import { EyeOff, Eye, LockKeyhole, X } from "lucide-react";
 
 export function UpdatePasswordForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  const passwordsMatch = password === confirmPassword && password.length > 0;
+  const canSubmit = isPasswordValid(password) && passwordsMatch;
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,40 +38,111 @@ export function UpdatePasswordForm({
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setIsLoading(false);
+      router.push("/auth/login");
     }
   };
 
+  const goBack = () => {
+    router.back();
+  };
+
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Reset Your Password</CardTitle>
-          <CardDescription>
-            Please enter your new password below.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+    <div className={cn("flex flex-col gap-6 pt-5", className)} {...props}>
+      <div className="flex w-full justify-end">
+        <button
+          className="p-2 rounded-full bg-[#E8E6DC] hover:bg-[#D8D6CC]"
+          onClick={goBack}
+        >
+          <X size={24} />
+        </button>
+      </div>
+      <div>
+        <div className="text-center flex flex-col items-center space-y-2">
+          <div className="p-3 rounded-full bg-[#227B6F] w-min">
+            <LockKeyhole color="#FFFFFF" size={24} />
+          </div>
+          <p className="text-xl">Reset Your Password</p>
+          <p className="text-muted-foreground text-sm">
+            Create your new secure password
+          </p>
+        </div>
+        <div className="mt-6">
           <form onSubmit={handleForgotPassword}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
-                <Label htmlFor="password">New password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="New password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
+                <label htmlFor="password" className="text-[#57605E] text-sm font-medium">Enter new password</label>
+                <div className="relative">
+                  <LockKeyhole
+                    size={20}
+                    color={password ? "#57605E" : "#9CA5A3"}
+                    className="absolute top-4.75 left-3"
+                  />
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="********"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-10 pr-4 py-4 rounded-lg bg-[#FFFFFF] text-foreground placeholder:text-muted-foreground border focus:ring-2 focus:ring-ring outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute top-4.75 right-3"
+                  >
+                    {showPassword ? (
+                      <Eye size={20} color="#57605E" />
+                    ) : (
+                      <EyeOff size={20} color="#9CA5A3" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <label htmlFor="confirm-password" className="text-[#57605E] text-sm font-medium">Re-enter new password</label>
+                <div className="relative">
+                  <LockKeyhole
+                    size={20}
+                    color={confirmPassword ? "#57605E" : "#9CA5A3"}
+                    className="absolute top-4.75 left-3"
+                  />
+                  <input
+                    id="confirm-password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="********"
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full pl-10 pr-4 py-4 rounded-lg bg-[#FFFFFF] text-foreground placeholder:text-muted-foreground border focus:ring-2 focus:ring-ring outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    className="absolute top-4.75 right-3"
+                  >
+                    {showConfirmPassword ? (
+                      <Eye size={20} color="#57605E" />
+                    ) : (
+                      <EyeOff size={20} color="#9CA5A3" />
+                    )}
+                  </button>
+                </div>
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Saving..." : "Save new password"}
-              </Button>
+              <PasswordRequirements password={password} />
+              <button
+                type="submit"
+                className="w-full flex items-center justify-center bg-[#227B6F] text-[#FFFFFF] py-4 rounded-full font-medium border border-border hover:opacity-90 transition-opacity disabled:opacity-40"
+                disabled={!password || isLoading || !canSubmit}
+              >
+                {isLoading ? "Reseting..." : "Reset"}
+              </button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
