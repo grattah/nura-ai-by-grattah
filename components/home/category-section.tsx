@@ -32,9 +32,12 @@ export function CategorySection() {
         <h2 className="text-2xl leading-none font-semibold text-grey-c950">
           Category
         </h2>
-        <button className="flex items-center gap-1 text-base text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4">
+        <Link
+          href="/categories"
+          className="flex items-center gap-1 text-base text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4"
+        >
           See all <Lock className="w-3 h-3" />
-        </button>
+        </Link>
       </div>
       <div className="flex gap-2 w-full">
         {CATEGORIES.map((cat) => (
