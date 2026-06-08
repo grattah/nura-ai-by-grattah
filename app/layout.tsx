@@ -3,10 +3,6 @@ import { Geist, Geist_Mono, Red_Hat_Text } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import { createClient } from "@/lib/supabase/server";
-import { AppHeader } from "@/components/layout/app-header";
-import { BottomNav } from "@/components/layout/bottom-nav";
-import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { MobileGate } from "@/components/mobile-gate";
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -52,35 +48,11 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const headerUser = user
-    ? {
-        name:
-          user.user_metadata?.full_name ||
-          user.user_metadata?.name ||
-          user.email?.split("@")[0] ||
-          "You",
-        email: user.email,
-        avatarLetter: (
-          user.user_metadata?.full_name ||
-          user.user_metadata?.name ||
-          user.email ||
-          "N"
-        )
-          .charAt(0)
-          .toUpperCase(),
-      }
-    : null;
-
   return (
     // DARK MODE: to re-enable, restore className="dark" on <html> and revert
     // ThemeProvider to: defaultTheme="system" enableSystem disableTransitionOnChange
@@ -96,14 +68,7 @@ export default async function RootLayout({
           forcedTheme="light"
           disableTransitionOnChange
         >
-          <MobileGate>
-            <div className="min-h-dvh flex flex-col">
-              <AppHeader user={headerUser} />
-              <main className="flex-1 pb-16">{children}</main>
-              <BottomNav />
-              <PWAInstallPrompt />
-            </div>
-          </MobileGate>
+          <MobileGate>{children}</MobileGate>
         </ThemeProvider>
         <Analytics />
       </body>
