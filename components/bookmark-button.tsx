@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { Bookmark } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -12,17 +11,22 @@ interface BookmarkButtonProps {
   recipeId: string;
   initialBookmarked: boolean;
   isAuthenticated: boolean;
+  text: string;
+  addText: string;
 }
 
 export function BookmarkButton({
   recipeId,
   initialBookmarked,
   isAuthenticated,
+  text,
+  addText,
 }: BookmarkButtonProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [bookmarked, setBookmarked] = useState(initialBookmarked);
   const [isPending, startTransition] = useTransition();
+  const showText = addText === "show";
 
   const handleToggle = () => {
     if (!isAuthenticated) {
@@ -58,20 +62,22 @@ export function BookmarkButton({
   };
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
+    <button
       onClick={handleToggle}
       disabled={isPending}
-      className="w-11 h-11 text-foreground hover:opacity-70 transition-opacity disabled:opacity-50"
+      className={`rounded-full text-[#57605E] hover:opacity-70 transition-opacity disabled:opacity-50 flex items-center ${
+        showText ? "border border-[#C4CAC8] bg-inherit px-4 py-3" : "bg-[#E8E6DC] p-3"
+      }`}
       aria-label={bookmarked ? "Remove bookmark" : "Bookmark recipe"}
     >
       <Bookmark
-        className={cn(
-          "w-5 h-5 transition-all",
-          bookmarked && "fill-foreground",
-        )}
+        strokeWidth={2.5}
+        size={16}
+        className={cn("transition-all", bookmarked && "fill-foreground")}
       />
-    </Button>
+      {showText && (
+        <span className="ml-2 font-medium text-xs text-[#727E7A]">{text}</span>
+      )}
+    </button>
   );
 }

@@ -3,9 +3,9 @@ import { cache } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { Info } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { Heart } from "lucide-react";
+import { FaInfoCircle } from "react-icons/fa";
+
 import {
   Accordion,
   AccordionContent,
@@ -20,6 +20,33 @@ import { getCloudinaryUrl } from "@/lib/cloudinary";
 import { isBookmarked } from "@/actions/bookmark";
 import { BookmarkButton } from "@/components/bookmark-button";
 import BackButton from "@/components/back-button";
+import { DetoxCard } from "@/components/recipe/DetoxCard";
+import Comment from "@/components/recipe/Comment";
+import iconIngredients from "@/public/ingredients.png";
+import iconHTMI from "@/public/HTMI.png";
+import iconWIW from "@/public/WIW.png";
+import AccordionSection from "@/components/recipe/AccordionSection";
+
+interface CommentData {
+  id: string;
+  username: string;
+  avatarUrl: string;
+  content: string;
+  timestamp: string;
+  likes: number;
+  hasLiked?: boolean;
+}
+
+const mockComment: CommentData = {
+  id: "comment-1",
+  username: "gut.healer",
+  avatarUrl: "/assets/avatars/gut-healer.jpg",
+  content:
+    "This juice reduced my bloating in just 2 days! I feel so light and fresh. 🌿",
+  timestamp: "2d ago",
+  likes: 24,
+  hasLiked: false,
+};
 
 // React cache deduplicates this fetch — generateMetadata and the page
 // both call getRecipe(id) but Supabase is only queried once per request.
@@ -94,20 +121,27 @@ export default async function RecipeDetailPage({
       <div className="min-h-screen bg-background">
         {/* Sub-header */}
         <div className="flex items-center justify-between px-4 pt-5 pb-3">
-          <BackButton className="p-0 h-auto min-h-11 min-w-11 text-foreground hover:opacity-70 transition-opacity gap-1 font-normal" />
+          <BackButton className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
           <div className="flex items-center gap-2">
-            <ShareButton recipeId={recipe.id} recipeTitle={recipe.title} />
+            <ShareButton
+              recipeId={recipe.id}
+              recipeTitle={recipe.title}
+              addText=""
+              text=""
+            />
             <BookmarkButton
               recipeId={recipe.id}
               initialBookmarked={bookmarked}
               isAuthenticated={!!user}
+              text=""
+              addText=""
             />
           </div>
         </div>
 
         <main className="pb-6">
           {/* Hero image — LCP element, load eagerly */}
-          <div className="mx-4 rounded-3xl overflow-hidden bg-muted mb-5 relative aspect-video">
+          <div className="mx-4 rounded-3xl overflow-hidden bg-muted mb-8 relative aspect-video">
             {heroImageUrl && (
               <Image
                 src={heroImageUrl}
@@ -122,7 +156,7 @@ export default async function RecipeDetailPage({
           </div>
 
           {/* Title + description */}
-          <div className="px-4 mb-5">
+          <div className="px-4 mb-8">
             <h1 className="text-2xl font-bold text-foreground mb-1.5 leading-tight">
               {recipe.title}
             </h1>
@@ -131,104 +165,13 @@ export default async function RecipeDetailPage({
             </p>
           </div>
 
+          <div className="px-4 mb-8">
+            <DetoxCard detoxPercent={91} hydrationPercent={2} />
+          </div>
+
           {/* Accordion sections */}
           <div className="px-4 space-y-3">
-            <Accordion type="multiple" defaultValue={[]} className="space-y-3">
-              {/* 1 — Ingredients */}
-              <AccordionItem
-                value="ingredients"
-                className="border-0 rounded-3xl overflow-hidden bg-[#FAF0EE]"
-              >
-                <AccordionTrigger className="px-5 py-4 hover:no-underline min-h-14">
-                  <span className="text-base font-semibold text-black/80">
-                    Ingredients
-                  </span>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4 pt-0">
-                  <div className="space-y-2">
-                    {ingredients.map((ing, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center gap-3 rounded-2xl px-4 min-h-12 bg-[#E8836A]"
-                      >
-                        <span className="text-lg leading-none">
-                          {ing.emoji}
-                        </span>
-                        <span className="text-sm font-medium text-foreground/85">
-                          {ing.label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* 2 — How to make it */}
-              <AccordionItem
-                value="how-to"
-                className="border-0 rounded-3xl overflow-hidden bg-card"
-              >
-                <AccordionTrigger className="px-5 py-4 hover:no-underline min-h-14">
-                  <span className="text-base font-semibold text-foreground">
-                    How to make it
-                  </span>
-                </AccordionTrigger>
-                <AccordionContent className="px-5 pb-5 pt-0">
-                  <ol className="space-y-3">
-                    {howToMake.map((step, i) => (
-                      <li
-                        key={i}
-                        className="flex gap-3 text-base text-muted-foreground leading-relaxed"
-                      >
-                        <span className="text-foreground font-bold shrink-0 min-w-5">
-                          {step.step}.
-                        </span>
-                        <span>{step.instruction}</span>
-                      </li>
-                    ))}
-                  </ol>
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* 3 — Why it works */}
-              <AccordionItem
-                value="why"
-                className="border-0 rounded-3xl overflow-hidden bg-card"
-              >
-                <AccordionTrigger className="px-5 py-4 hover:no-underline min-h-14">
-                  <span className="text-base font-semibold text-foreground">
-                    Why it works
-                  </span>
-                </AccordionTrigger>
-                <AccordionContent className="px-5 pb-5 pt-0">
-                  <p className="text-base text-muted-foreground leading-relaxed">
-                    {recipe.why_it_works}
-                  </p>
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* 4 — Inside Tip */}
-              <AccordionItem
-                value="tip"
-                className="border-0 rounded-3xl overflow-hidden bg-[#EEF4FB]"
-              >
-                <AccordionTrigger className="px-5 py-4 hover:no-underline min-h-14">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center shrink-0">
-                      <Info className="w-3.5 h-3.5 text-white" />
-                    </div>
-                    <span className="text-base font-semibold text-blue-600">
-                      Inside Tip
-                    </span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-5 pb-5 pt-0">
-                  <p className="text-base text-muted-foreground leading-relaxed">
-                    {recipe.inside_tip}
-                  </p>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+            <AccordionSection recipe={recipe} ingredients={ingredients} howToMake={howToMake} />
 
             {/* Follow-up questions + RAG chat */}
             <div className="pt-2">
@@ -241,19 +184,40 @@ export default async function RecipeDetailPage({
               />
             </div>
 
-            {/* Done affordance */}
-            <div className="pt-2 pb-2">
-              <Separator className="bg-border mb-5" />
-              <p className="text-sm text-muted-foreground text-center mb-3">
-                Enjoyed this recipe?
+            <div className="flex justify-between items-center mt-8">
+              <div className="flex items-center gap-2">
+                <p className="text-[#727E7A] text-xs">Was this helpful?</p>
+                <button className="p-2 rounded-full bg-[#E8E6DC]">
+                  <Heart size={16} color="#227B6F" strokeWidth={1.5} />
+                </button>
+              </div>
+              <p className="font-medium text-xs">
+                1.6k people found this helpful
               </p>
-              <Button
-                asChild
-                variant="secondary"
-                className="w-full rounded-full min-h-13 text-base font-semibold bg-card text-foreground border-0 shadow-none hover:opacity-80 transition-opacity"
-              >
-                <Link href="/recipes">← Browse more recipes</Link>
-              </Button>
+            </div>
+
+            <div className="flex justify-between items-center mt-8">
+              <ShareButton
+                recipeId={recipe.id}
+                recipeTitle={recipe.title}
+                text="Send this to a friend"
+                addText="show"
+              />
+              <BookmarkButton
+                recipeId={recipe.id}
+                initialBookmarked={bookmarked}
+                isAuthenticated={!!user}
+                text="Save this recipe"
+                addText="show"
+              />
+            </div>
+
+            <div className="mt-8">
+              <Comment
+                total={12}
+                latestComment={mockComment}
+                seeAllHref="/recipes/ashwagandha-moon-milk/comments"
+              />
             </div>
           </div>
         </main>
