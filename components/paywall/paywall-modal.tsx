@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Lock, Sparkles } from "lucide-react";
+import { Sparkles, LockKeyhole, Check } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -23,57 +23,81 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
     onOpenChange(val);
   };
 
+  const benefits = [
+    {
+      title: "See the highest-scoring recipes",
+      subtitle: "Based on your needs",
+    },
+    {
+      title: "10,000+ wellness recipes",
+      subtitle: "with expert tips",
+    },
+    {
+      title: "Personalized nutrient guidance",
+      subtitle: "Tailored to you",
+    },
+  ];
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
+      <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden" showCloseButton={false}>
         <div className="p-6 space-y-5">
-          <DialogHeader className="space-y-3">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <Lock className="w-5 h-5 text-primary" />
+          <DialogHeader className="flex flex-col items-center justify-center text-center space-y-3">
+            <div className="p-3 rounded-full bg-[#227B6F] w-min">
+              <LockKeyhole size={20} color="#FFFFFF" />
             </div>
             <DialogTitle className="text-xl font-semibold text-foreground">
-              Unlock Full Access
+              A premium remedy
             </DialogTitle>
+            <p className="text-[#57605E]">
+              Unlock the full method, ingredients and gain full access to all
+              Nuko’s recipes
+            </p>
           </DialogHeader>
 
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            {[
-              "Full recipes with ingredients & steps",
-              "Why it works & inside chef tips",
-              "AI-powered follow-up Q&A",
-              // "Cancer risk guides & personalised advice",
-            ].map((item) => (
-              <li key={item} className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-nura-peach shrink-0" />
-                {item}
+          <ul className="rounded-xl bg-[#F2F3F3] p-4 space-y-3">
+            {benefits.map((item) => (
+              <li key={item.title} className="flex items-center gap-3">
+                <Check
+                  size={16}
+                  className="text-[#227B6F] shrink-0 mt-0.5"
+                  strokeWidth={1}
+                />
+                <div className="flex flex-col gap-1">
+                  <p className="font-semibold text-[#1A1A1A] text-sm">
+                    {item.title}
+                  </p>
+                  <p className="text-sm text-[#57605E]">{item.subtitle}</p>
+                </div>
               </li>
             ))}
           </ul>
 
-          <div className="rounded-xl border border-border bg-card p-4 text-center space-y-1">
-            <p className="text-2xl font-bold text-foreground">£79</p>
-            <p className="text-sm text-muted-foreground">
-              per year · cancel anytime
+          <div className="rounded-xl bg-[#F2F3F3] p-4">
+            <p className="text-sm font-medium text-[#57605E]">Monthly</p>
+            <p className="mt-1">
+              <span className="text-xl font-semibold text-[#1A1A1A]">£7.99</span>
+              <span className="text-sm text-[#57605E]"> / month</span>
             </p>
           </div>
 
-          <Button
-            className="w-full"
+          <button
+            className="w-full py-4 rounded-4xl bg-[#227B6F] text-[#FFFFFF] font-medium"
             onClick={() => {
               onOpenChange(false);
               router.push("/checkout");
             }}
           >
             Get full access
-          </Button>
+          </button>
 
           <div className="text-center space-y-1">
             <Link
               href="/auth/login"
-              className="block text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="block text-xs text-[#57605E]"
               onClick={() => onOpenChange(false)}
             >
-              Have an account? Sign in →
+              Have an account? <span className="font-semibold text-[#227B6F]">Sign in</span>
             </Link>
           </div>
         </div>
