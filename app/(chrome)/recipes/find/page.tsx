@@ -31,8 +31,21 @@ const mockRecipes = [
   },
 ];
 
+interface Recipe {
+  created_at: string;
+  display_order: number;
+  follow_up_questions: string[] | null;
+  how_to_make: any;
+  id: string;
+  title: string;
+  image_url: string | null;
+  ingredients: any;
+  inside_tip: string;
+  why_it_works: string;
+}
+
 const page = () => {
-  type SearchState = "idle" | "searching" | "results" | "empty";
+  type SearchState = "idle" | "searching" | "results" | "empty" | "suggestions";
 
   const supabase = createClient();
   const [searchTerm, setSearchTerm] = React.useState("");
@@ -51,6 +64,7 @@ const page = () => {
       }[]
     | null
   >([]);
+  const [suggestedRecipes, setSuggestedRecipes] = React.useState<Recipe[]>([]);
   const [step, setStep] = React.useState(1);
   const [searchState, setSearchState] = React.useState<SearchState>("idle");
   const [pendingRecipe, setPendingRecipe] = React.useState<string | null>(null);
@@ -111,6 +125,41 @@ const page = () => {
       addRecent(searchTerm);
     }
   };
+
+  React.useEffect(() => {
+    if (recents.length === 0) {
+      setSuggestedRecipes([]);
+      return;
+    }
+
+    const fetchSuggestions = async () => {
+      // Build an OR filter across all recent search terms.
+      // Each term searches both title and short_description.
+      const orFilter = recents
+        .flatMap((term) => [
+          `title.ilike.%${term}%`,
+          `short_description.ilike.%${term}%`,
+        ])
+        .join(",");
+
+      const { data, error } = await supabase
+        .from("recipes")
+        .select("*")
+        .or(orFilter)
+        .limit(10);
+
+      if (error) {
+        console.error("Failed to fetch suggestions:", error);
+        return;
+      }
+
+      // Shuffle and take 3 so the user sees variety each visit
+      const shuffled = (data ?? []).sort(() => Math.random() - 0.5);
+      setSuggestedRecipes(shuffled.slice(0, 3));
+    };
+
+    fetchSuggestions();
+  }, [recents]);
 
   return (
     <div className="bg-background">
@@ -196,41 +245,29 @@ const page = () => {
                       </div>
                     </div>
 
-                    <div className="mt-14 flex flex-col gap-5">
-                      <p className="text-sm text-[#57605E]">You may like</p>
-                      <div className="flex flex-col gap-3">
-                        <div className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3">
-                          <GlassWater
-                            size={20}
-                            color="#9CA5A3"
-                            strokeWidth={2}
-                          />
-                          <p className="font-medium">
-                            Morning green resilience bowl
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3">
-                          <GlassWater
-                            size={20}
-                            color="#9CA5A3"
-                            strokeWidth={2}
-                          />
-                          <p className="font-medium">
-                            Morning green resilience bowl
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3">
-                          <GlassWater
-                            size={20}
-                            color="#9CA5A3"
-                            strokeWidth={2}
-                          />
-                          <p className="font-medium">
-                            Morning green resilience bowl
-                          </p>
+                    {suggestedRecipes.length > 0 && (
+                      <div className="mt-14 flex flex-col gap-5">
+                        <p className="text-sm text-[#57605E]">You may like</p>
+                        <div className="flex flex-col gap-3">
+                          {suggestedRecipes.map((recipe) => (
+                            <button
+                              key={recipe.id}
+                              onClick={() =>
+                                handleRecipeClick(recipe.id, recipe.title)
+                              }
+                              className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3 text-left w-full"
+                            >
+                              <GlassWater
+                                size={20}
+                                color="#9CA5A3"
+                                strokeWidth={2}
+                              />
+                              <p className="font-medium">{recipe.title}</p>
+                            </button>
+                          ))}
                         </div>
                       </div>
-                    </div>
+                    )}
                   </>
                 )}
             </div>
@@ -265,7 +302,7 @@ const page = () => {
               </div>
               <button
                 className="border border-[#227B6F] w-full py-4 flex items-center justify-center gap-3 rounded-full"
-                onClick={() => setStep(3)}
+                onClick={() => setSearchState("suggestions")}
               >
                 <Sparkles color="#227B6F" size={20} strokeWidth={2} />
                 <span className="text-[#227B6F] font-medium">
@@ -276,7 +313,7 @@ const page = () => {
           </>
         )}
 
-        {step === 3 && (
+        {searchState === "suggestions" && (
           <>
             <div className="mt-8 flex flex-col gap-24">
               <div className="flex flex-col gap-5">
@@ -301,7 +338,7 @@ const page = () => {
               </div>
               <button
                 className="border border-[#227B6F] w-full py-4 flex items-center justify-center gap-3 rounded-full"
-                onClick={() => setStep(2)}
+                onClick={() => setSearchState("results")}
               >
                 <ArrowLeft color="#227B6F" size={20} strokeWidth={2} />
                 <span className="text-[#227B6F] font-medium">
