@@ -4,14 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Heart } from "lucide-react";
-import { FaInfoCircle } from "react-icons/fa";
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { FollowUpSection } from "@/components/follow-up-section";
 import { PaywallGate } from "@/components/paywall/paywall-gate";
 import { ShareButton } from "@/components/share-button";
@@ -22,9 +15,6 @@ import { BookmarkButton } from "@/components/bookmark-button";
 import BackButton from "@/components/back-button";
 import { DetoxCard } from "@/components/recipe/DetoxCard";
 import Comment from "@/components/recipe/Comment";
-import iconIngredients from "@/public/ingredients.png";
-import iconHTMI from "@/public/HTMI.png";
-import iconWIW from "@/public/WIW.png";
 import AccordionSection from "@/components/recipe/AccordionSection";
 
 interface CommentData {

@@ -11,7 +11,7 @@ const page = () => {
     <div className="bg-background">
       <main className="px-4 pt-3 flex flex-col gap-10">
         <div className="flex items-center justify-between">
-          <Link href="/recipes" className="rounded-full bg-[#E8E6DC] p-3">
+          <Link href="/" className="rounded-full bg-[#E8E6DC] p-3">
             <ArrowLeft size={20} color="#1B1D1D" strokeWidth={1.5} />
           </Link>
           <p className="font-semibold text-xl">Popular Recipes</p>

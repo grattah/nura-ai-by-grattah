@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Search,
@@ -12,14 +13,41 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
-const recipes = [
-  { id: "b1fe27ea-a018-4238-be1a-8504a90efe2b", title: "Morning green resilience bowl" },
-  { id: "4d1fe0fd-831a-44c1-9a55-b75e6c93babb", title: "Morning green resilience bowl" },
-  { id: "b6f7912d-83ed-4f43-a102-0c97f2ece073", title: "Morning green resilience bowl" },
+import { createClient } from "@/lib/supabase/client";
+
+const mockRecipes = [
+  {
+    id: "b1fe27ea-a018-4238-be1a-8504a90efe2b",
+    title: "Morning green resilience bowl",
+  },
+  {
+    id: "4d1fe0fd-831a-44c1-9a55-b75e6c93babb",
+    title: "Morning green resilience bowl",
+  },
+  {
+    id: "b6f7912d-83ed-4f43-a102-0c97f2ece073",
+    title: "Morning green resilience bowl",
+  },
 ];
 
 const page = () => {
+  const supabase = createClient();
   const [searchTerm, setSearchTerm] = React.useState("");
+  const [recipes, setRecipes] = React.useState<
+    | {
+        created_at: string;
+        display_order: number;
+        follow_up_questions: string[] | null;
+        how_to_make: any;
+        id: string;
+        title: string;
+        image_url: string | null;
+        ingredients: any;
+        inside_tip: string;
+        why_it_works: string;
+      }[]
+    | null
+  >(null);
   const [step, setStep] = React.useState(1);
   const [pendingRecipe, setPendingRecipe] = React.useState<string | null>(null);
   const [isPending, startTransition] = React.useTransition();
@@ -34,14 +62,31 @@ const page = () => {
     });
   };
 
-  if( searchTerm.length > 0 && step === 1) {
-    setStep(2);
-  };
-
   // Show the full-screen loading state while navigation is in progress
   if (isPending && pendingRecipe) {
     return <RecipeLoadingScreen recipeName={pendingRecipe} />;
   }
+
+  const recipeSearch = async () => {
+    const { data, error } = await supabase
+      .from("recipes")
+      .select("*")
+      .or(
+        `title.ilike.%${searchTerm}%,short_description.ilike.%${searchTerm}%`
+      );
+
+    if (error) {
+      console.log(error);
+    }
+
+    if (data?.length === 0) {
+      setRecipes(data);
+      setStep(1);
+    }
+    setRecipes(data);
+    setStep(2);
+    console.log(data);
+  };
 
   return (
     <div className="bg-background">
@@ -64,7 +109,10 @@ const page = () => {
             {searchTerm.length > 0 && (
               <button
                 className="absolute top-3.75 right-3"
-                onClick={() => setSearchTerm("")}
+                onClick={() => {
+                  setSearchTerm("");
+                  setStep(1);
+                }}
               >
                 <X color="#9CA5A3" size={16} />
               </button>
@@ -74,46 +122,73 @@ const page = () => {
 
         {step === 1 && (
           <>
-            <div className="mt-8 flex flex-col gap-5">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-[#57605E]">Recently searched</p>
-                <p className="text-[#227B6F] underline font-semibold text-sm">
-                  Clear
-                </p>
+            {searchTerm.length > 0 ? (
+              <div className="mt-5">
+                <button
+                  className="w-full bg-[#227B6F] text-[#FFFFFF] flex justify-center py-4 rounded-full hover:opacity-90 transition-opacity"
+                  onClick={recipeSearch}
+                >
+                  Find recipe
+                </button>
+                {searchTerm && recipes?.length === 0 && (
+                  <div className="mt-10 flex flex-col gap-2">
+                    <p className="font-medium">Results</p>
+                    <p className="text-sm text-[#57605E]">
+                      {recipes?.length} recipes found
+                    </p>
+                  </div>
+                )}
               </div>
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3">
-                  <Clock size={20} color="#9CA5A3" strokeWidth={2} />
-                  <p className="font-medium">Ginger-lemon shot</p>
+            ) : (
+              <div className="mt-8">
+                <div className="flex flex-col gap-5">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-[#57605E]">Recently searched</p>
+                    <button className="text-[#227B6F] underline font-semibold text-sm hover:opacity-90 transition-opacity">
+                      Clear
+                    </button>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3">
+                      <Clock size={20} color="#9CA5A3" strokeWidth={2} />
+                      <p className="font-medium">Ginger-lemon shot</p>
+                    </div>
+                    <div className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3">
+                      <Clock size={20} color="#9CA5A3" strokeWidth={2} />
+                      <p className="font-medium">Ginger-lemon shot</p>
+                    </div>
+                    <div className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3">
+                      <Clock size={20} color="#9CA5A3" strokeWidth={2} />
+                      <p className="font-medium">Ginger-lemon shot</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3">
-                  <Clock size={20} color="#9CA5A3" strokeWidth={2} />
-                  <p className="font-medium">Ginger-lemon shot</p>
-                </div>
-                <div className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3">
-                  <Clock size={20} color="#9CA5A3" strokeWidth={2} />
-                  <p className="font-medium">Ginger-lemon shot</p>
-                </div>
-              </div>
-            </div>
 
-            <div className="mt-14 flex flex-col gap-5">
-              <p className="text-sm text-[#57605E]">You may like</p>
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3">
-                  <GlassWater size={20} color="#9CA5A3" strokeWidth={2} />
-                  <p className="font-medium">Morning green resilience bowl</p>
-                </div>
-                <div className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3">
-                  <GlassWater size={20} color="#9CA5A3" strokeWidth={2} />
-                  <p className="font-medium">Morning green resilience bowl</p>
-                </div>
-                <div className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3">
-                  <GlassWater size={20} color="#9CA5A3" strokeWidth={2} />
-                  <p className="font-medium">Morning green resilience bowl</p>
+                <div className="mt-14 flex flex-col gap-5">
+                  <p className="text-sm text-[#57605E]">You may like</p>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3">
+                      <GlassWater size={20} color="#9CA5A3" strokeWidth={2} />
+                      <p className="font-medium">
+                        Morning green resilience bowl
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3">
+                      <GlassWater size={20} color="#9CA5A3" strokeWidth={2} />
+                      <p className="font-medium">
+                        Morning green resilience bowl
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3">
+                      <GlassWater size={20} color="#9CA5A3" strokeWidth={2} />
+                      <p className="font-medium">
+                        Morning green resilience bowl
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </>
         )}
 
@@ -123,54 +198,24 @@ const page = () => {
               <div className="flex flex-col gap-5">
                 <div className="flex flex-col gap-2">
                   <p className="font-medium">Results</p>
-                  <p className="text-sm text-[#57605E]">5 recipes found</p>
+                  <p className="text-sm text-[#57605E]">
+                    {recipes?.length} recipes found
+                  </p>
                 </div>
                 <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between border-b border-[#E2E4E4] pb-3">
-                    <div className="flex items-center gap-3">
-                      <GlassWater size={20} color="#9CA5A3" strokeWidth={2} />
-                      <p className="font-medium">
-                        Morning green resilience bowl
-                      </p>
-                    </div>
-                    <ChevronRight size={16} color="#3F4644" />
-                  </div>
-                  <div className="flex items-center justify-between border-b border-[#E2E4E4] pb-3">
-                    <div className="flex items-center gap-3">
-                      <GlassWater size={20} color="#9CA5A3" strokeWidth={2} />
-                      <p className="font-medium">
-                        Morning green resilience bowl
-                      </p>
-                    </div>
-                    <ChevronRight size={16} color="#3F4644" />
-                  </div>
-                  <div className="flex items-center justify-between border-b border-[#E2E4E4] pb-3">
-                    <div className="flex items-center gap-3">
-                      <GlassWater size={20} color="#9CA5A3" strokeWidth={2} />
-                      <p className="font-medium">
-                        Morning green resilience bowl
-                      </p>
-                    </div>
-                    <ChevronRight size={16} color="#3F4644" />
-                  </div>
-                  <div className="flex items-center justify-between border-b border-[#E2E4E4] pb-3">
-                    <div className="flex items-center gap-3">
-                      <GlassWater size={20} color="#9CA5A3" strokeWidth={2} />
-                      <p className="font-medium">
-                        Morning green resilience bowl
-                      </p>
-                    </div>
-                    <ChevronRight size={16} color="#3F4644" />
-                  </div>
-                  <div className="flex items-center justify-between border-b border-[#E2E4E4] pb-3">
-                    <div className="flex items-center gap-3">
-                      <GlassWater size={20} color="#9CA5A3" strokeWidth={2} />
-                      <p className="font-medium">
-                        Morning green resilience bowl
-                      </p>
-                    </div>
-                    <ChevronRight size={16} color="#3F4644" />
-                  </div>
+                  {recipes?.map((recipe) => (
+                    <Link
+                      key={recipe.id}
+                      href={`/recipes/${recipe.id}`}
+                      className="flex items-center justify-between border-b border-[#E2E4E4] pb-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <GlassWater size={20} color="#9CA5A3" strokeWidth={2} />
+                        <p className="font-medium">{recipe.title}</p>
+                      </div>
+                      <ChevronRight size={16} color="#3F4644" />
+                    </Link>
+                  ))}
                 </div>
               </div>
               <button
@@ -197,7 +242,7 @@ const page = () => {
                   </p>
                 </div>
                 <div className="flex flex-col gap-3">
-                  {recipes.map((recipe) => (
+                  {mockRecipes.map((recipe) => (
                     <button
                       key={recipe.id}
                       onClick={() => handleRecipeClick(recipe.id, recipe.title)}
