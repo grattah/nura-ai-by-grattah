@@ -13,9 +13,11 @@ interface BookmarkedRecipe {
   bookmark_id: string;
   recipe_id: string;
   title: string;
+  description: string;
   image_url: string | null;
   preview_ingredients: string[];
   bookmarked_at: string;
+  likes: number;
 }
 
 // ─── Data fetching ────────────────────────────────────────────────────────────
@@ -38,6 +40,7 @@ async function getBookmarks(): Promise<BookmarkedRecipe[]> {
       recipes (
         id,
         title,
+        short_description,
         image_url,
         preview_ingredients
       )
@@ -54,6 +57,8 @@ async function getBookmarks(): Promise<BookmarkedRecipe[]> {
       bookmark_id: b.id,
       recipe_id: (b.recipes as any).id,
       title: (b.recipes as any).title,
+      description: (b.recipes as any).short_description,
+      likes: (b.recipes as any).likes,
       image_url: (b.recipes as any).image_url,
       preview_ingredients: (b.recipes as any).preview_ingredients ?? [],
       category_slug: (b.recipes as any).category_slug,
@@ -140,16 +145,16 @@ function BookmarkCard({ bookmark }: { bookmark: BookmarkedRecipe }) {
                 <p className="text-base font-medium text-foreground leading-snug">
                   {bookmark.title}
                 </p>
-                <p className="text-sm">{truncateText(text)}</p>
+                <p className="text-sm">{truncateText(bookmark.description)}</p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1">
                   <Clock size={16} color="#9CA5A3" />
-                  <p className="text-[#57605E] text-sm">12m</p>
+                  <p className="text-[#57605E] text-sm">{bookmark.bookmarked_at}</p>
                 </div>
                 <div className="flex items-center gap-1">
                   <FaHeart size={16} color="#227B6F" />
-                  <p className="text-[#227B6F] text-sm">1.2k</p>
+                  <p className="text-[#227B6F] text-sm">{bookmark.likes}</p>
                 </div>
               </div>
             </div>
