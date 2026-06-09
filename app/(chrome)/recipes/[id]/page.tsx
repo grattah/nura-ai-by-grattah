@@ -125,6 +125,7 @@ export default async function RecipeDetailPage({
               isAuthenticated={!!user}
               text=""
               addText=""
+              popularStyle=""
             />
           </div>
         </div>
@@ -203,6 +204,7 @@ export default async function RecipeDetailPage({
                 isAuthenticated={!!user}
                 text="Save this recipe"
                 addText="show"
+                popularStyle=""
               />
             </div>
 
