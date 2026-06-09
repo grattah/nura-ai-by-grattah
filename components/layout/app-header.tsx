@@ -67,15 +67,15 @@ export function AppHeader({ user }: AppHeaderProps) {
               <Bell className="w-5 h-5 text-foreground" strokeWidth={1.75} />
             </Link>
 
-            {/* Avatar — opens sidebar */}
-            <button
-              onClick={() => setSidebarOpen(true)}
+            {/* Avatar — navigates to /account */}
+            <Link
+              href="/account"
               className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-[#D4C48A] hover:opacity-80 transition-opacity"
               style={{ backgroundColor: "#5C6B3A" }}
-              aria-label="Open menu"
+              aria-label="Account"
             >
               {user.avatarLetter}
-            </button>
+            </Link>
           </div>
         ) : (
           <Link

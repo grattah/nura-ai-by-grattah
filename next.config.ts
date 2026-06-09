@@ -26,6 +26,11 @@ const nextConfig: NextConfig = {
         hostname: "rrawqwnupvlfonteiyrt.supabase.co",
         port: "",
       },
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+        port: "",
+      },
     ],
   },
   async headers() {
