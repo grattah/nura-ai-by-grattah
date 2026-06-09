@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
+import { useRecentSearches } from "@/hooks/use-recent-searches";
 
 const mockRecipes = [
   {
@@ -31,6 +32,8 @@ const mockRecipes = [
 ];
 
 const page = () => {
+  type SearchState = "idle" | "searching" | "results" | "empty";
+
   const supabase = createClient();
   const [searchTerm, setSearchTerm] = React.useState("");
   const [recipes, setRecipes] = React.useState<
@@ -47,12 +50,30 @@ const page = () => {
         why_it_works: string;
       }[]
     | null
-  >(null);
+  >([]);
   const [step, setStep] = React.useState(1);
+  const [searchState, setSearchState] = React.useState<SearchState>("idle");
   const [pendingRecipe, setPendingRecipe] = React.useState<string | null>(null);
   const [isPending, startTransition] = React.useTransition();
 
+  const { recents, add: addRecent, clear: clearRecents } = useRecentSearches();
+
   const router = useRouter();
+
+  const handleSearchTermChange = (value: string) => {
+    setSearchTerm(value);
+    // Any new typing resets us to idle. Previous results are no longer relevant.
+    if (searchState !== "idle") {
+      setSearchState("idle");
+      setRecipes([]);
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm("");
+    setRecipes([]);
+    setSearchState("idle");
+  };
 
   const handleRecipeClick = (id: string, title: string) => {
     setPendingRecipe(title);
@@ -77,15 +98,18 @@ const page = () => {
 
     if (error) {
       console.log(error);
+      setSearchState("idle");
+      return;
     }
 
-    if (data?.length === 0) {
+    if (!data || data.length === 0) {
+      setRecipes([]);
+      setSearchState("empty");
+    } else {
       setRecipes(data);
-      setStep(1);
+      setSearchState("results");
+      addRecent(searchTerm);
     }
-    setRecipes(data);
-    setStep(2);
-    console.log(data);
   };
 
   return (
@@ -101,7 +125,7 @@ const page = () => {
             <input
               name="search"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleSearchTermChange(e.target.value)}
               type="text"
               className="w-full bg-[#FFFFFF] py-3 pl-9 pr-3 rounded-lg border border-[#E6ECEA] text-sm placeholder:text-[#9CA5A3] focus:ring-2 focus:ring-ring outline-none"
               placeholder="Search recipe..."
@@ -109,10 +133,7 @@ const page = () => {
             {searchTerm.length > 0 && (
               <button
                 className="absolute top-3.75 right-3"
-                onClick={() => {
-                  setSearchTerm("");
-                  setStep(1);
-                }}
+                onClick={handleClearSearch}
               >
                 <X color="#9CA5A3" size={16} />
               </button>
@@ -122,7 +143,7 @@ const page = () => {
 
         {step === 1 && (
           <>
-            {searchTerm.length > 0 ? (
+            {searchState === "idle" && searchTerm.length > 0 && (
               <div className="mt-5">
                 <button
                   className="w-full bg-[#227B6F] text-[#FFFFFF] flex justify-center py-4 rounded-full hover:opacity-90 transition-opacity"
@@ -130,69 +151,93 @@ const page = () => {
                 >
                   Find recipe
                 </button>
-                {searchTerm && recipes?.length === 0 && (
-                  <div className="mt-10 flex flex-col gap-2">
-                    <p className="font-medium">Results</p>
-                    <p className="text-sm text-[#57605E]">
-                      {recipes?.length} recipes found
-                    </p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="mt-8">
-                <div className="flex flex-col gap-5">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-[#57605E]">Recently searched</p>
-                    <button className="text-[#227B6F] underline font-semibold text-sm hover:opacity-90 transition-opacity">
-                      Clear
-                    </button>
-                  </div>
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3">
-                      <Clock size={20} color="#9CA5A3" strokeWidth={2} />
-                      <p className="font-medium">Ginger-lemon shot</p>
-                    </div>
-                    <div className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3">
-                      <Clock size={20} color="#9CA5A3" strokeWidth={2} />
-                      <p className="font-medium">Ginger-lemon shot</p>
-                    </div>
-                    <div className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3">
-                      <Clock size={20} color="#9CA5A3" strokeWidth={2} />
-                      <p className="font-medium">Ginger-lemon shot</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-14 flex flex-col gap-5">
-                  <p className="text-sm text-[#57605E]">You may like</p>
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3">
-                      <GlassWater size={20} color="#9CA5A3" strokeWidth={2} />
-                      <p className="font-medium">
-                        Morning green resilience bowl
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3">
-                      <GlassWater size={20} color="#9CA5A3" strokeWidth={2} />
-                      <p className="font-medium">
-                        Morning green resilience bowl
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3">
-                      <GlassWater size={20} color="#9CA5A3" strokeWidth={2} />
-                      <p className="font-medium">
-                        Morning green resilience bowl
-                      </p>
-                    </div>
-                  </div>
-                </div>
               </div>
             )}
+
+            {searchState === "empty" && (
+              <div className="flex flex-col gap-2 mt-2">
+                <p className="font-medium">Results</p>
+                <p className="text-sm text-[#57605E]">
+                  {recipes?.length} recipes found
+                </p>
+              </div>
+            )}
+
+            <div className="mt-8">
+              {searchState === "idle" &&
+                searchTerm.length === 0 &&
+                recents.length > 0 && (
+                  <>
+                    <div className="flex flex-col gap-5">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-[#57605E]">
+                          Recently searched
+                        </p>
+                        <button
+                          className="text-[#227B6F] underline font-semibold text-sm hover:opacity-90 transition-opacity"
+                          onClick={clearRecents}
+                        >
+                          Clear
+                        </button>
+                      </div>
+                      <div className="flex flex-col gap-3">
+                        {recents.map((term) => (
+                          <button
+                            key={term}
+                            className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3"
+                            onClick={() => {
+                              setSearchTerm(term);
+                            }}
+                          >
+                            <Clock size={20} color="#9CA5A3" strokeWidth={2} />
+                            <p className="font-medium">{term}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="mt-14 flex flex-col gap-5">
+                      <p className="text-sm text-[#57605E]">You may like</p>
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3">
+                          <GlassWater
+                            size={20}
+                            color="#9CA5A3"
+                            strokeWidth={2}
+                          />
+                          <p className="font-medium">
+                            Morning green resilience bowl
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3">
+                          <GlassWater
+                            size={20}
+                            color="#9CA5A3"
+                            strokeWidth={2}
+                          />
+                          <p className="font-medium">
+                            Morning green resilience bowl
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3">
+                          <GlassWater
+                            size={20}
+                            color="#9CA5A3"
+                            strokeWidth={2}
+                          />
+                          <p className="font-medium">
+                            Morning green resilience bowl
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+            </div>
           </>
         )}
 
-        {step === 2 && (
+        {searchState === "results" && (
           <>
             <div className="mt-8 flex flex-col gap-24">
               <div className="flex flex-col gap-5">
