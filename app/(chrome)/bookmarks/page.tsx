@@ -176,7 +176,7 @@ function EmptyBookmarks() {
         <Bookmark color="#FFFFFF" className="w-7 h-7 text-muted-foreground" />
       </div>
       <p className="text-base font-semibold text-foreground mb-1">
-        No bookmarks yet
+        No saved recipes yet
       </p>
       <p className="text-sm text-muted-foreground mb-6">
         Tap the bookmark icon on any recipe to save it here.
