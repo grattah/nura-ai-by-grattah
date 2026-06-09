@@ -14,7 +14,9 @@ export async function fetchClientSecretForPlan(
       : process.env.STRIPE_PRICE_ID;
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const session = await stripe.checkout.sessions.create({
     ui_mode: "embedded_page",
