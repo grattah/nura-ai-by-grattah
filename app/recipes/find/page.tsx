@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Search,
   X,
@@ -12,9 +12,36 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
+const recipes = [
+  { id: "b1fe27ea-a018-4238-be1a-8504a90efe2b", title: "Morning green resilience bowl" },
+  { id: "4d1fe0fd-831a-44c1-9a55-b75e6c93babb", title: "Morning green resilience bowl" },
+  { id: "b6f7912d-83ed-4f43-a102-0c97f2ece073", title: "Morning green resilience bowl" },
+];
+
 const page = () => {
   const [searchTerm, setSearchTerm] = React.useState("");
-  const [step, setStep] = React.useState(2);
+  const [step, setStep] = React.useState(1);
+  const [pendingRecipe, setPendingRecipe] = React.useState<string | null>(null);
+  const [isPending, startTransition] = React.useTransition();
+
+  const router = useRouter();
+
+  const handleRecipeClick = (id: string, title: string) => {
+    setPendingRecipe(title);
+    setSearchTerm(title);
+    startTransition(() => {
+      router.push(`/recipes/${id}`);
+    });
+  };
+
+  if( searchTerm.length > 0 && step === 1) {
+    setStep(2);
+  };
+
+  // Show the full-screen loading state while navigation is in progress
+  if (isPending && pendingRecipe) {
+    return <RecipeLoadingScreen recipeName={pendingRecipe} />;
+  }
 
   return (
     <div className="bg-background">
@@ -170,27 +197,16 @@ const page = () => {
                   </p>
                 </div>
                 <div className="flex flex-col gap-3">
-                  <Link
-                    href="/recipes/b1fe27ea-a018-4238-be1a-8504a90efe2b"
-                    className="flex items-center gap-3 p-3 rounded-md hover:bg-[#E8E6DC]"
-                  >
-                    <GlassWater size={20} color="#9CA5A3" strokeWidth={2} />
-                    <p className="font-medium">Morning green resilience bowl</p>
-                  </Link>
-                  <Link
-                    href="/recipes/b1fe27ea-a018-4238-be1a-8504a90efe2b"
-                    className="flex items-center gap-3 p-3 rounded-md hover:bg-[#E8E6DC]"
-                  >
-                    <GlassWater size={20} color="#9CA5A3" strokeWidth={2} />
-                    <p className="font-medium">Morning green resilience bowl</p>
-                  </Link>
-                  <Link
-                    href="/recipes/b1fe27ea-a018-4238-be1a-8504a90efe2b"
-                    className="flex items-center gap-3 p-3 rounded-md hover:bg-[#E8E6DC]"
-                  >
-                    <GlassWater size={20} color="#9CA5A3" strokeWidth={2} />
-                    <p className="font-medium">Morning green resilience bowl</p>
-                  </Link>
+                  {recipes.map((recipe) => (
+                    <button
+                      key={recipe.id}
+                      onClick={() => handleRecipeClick(recipe.id, recipe.title)}
+                      className="flex items-center gap-3 p-3 rounded-md hover:bg-[#E8E6DC] text-left transition-colors"
+                    >
+                      <GlassWater size={20} color="#9CA5A3" strokeWidth={2} />
+                      <p className="font-medium flex-1">{recipe.title}</p>
+                    </button>
+                  ))}
                 </div>
               </div>
               <button
@@ -209,5 +225,69 @@ const page = () => {
     </div>
   );
 };
+
+function RecipeLoadingScreen({ recipeName }: { recipeName: string }) {
+  return (
+    <div className="bg-background min-h-screen">
+      <main className="px-4 pt-6">
+        <p className="font-semibold text-xl">Find recipe</p>
+
+        <div className="mt-8">
+          <div className="relative">
+            <div className="absolute top-3.75 left-3">
+              <Search color="#82A198" size={16} />
+            </div>
+            <input
+              type="text"
+              value={recipeName}
+              readOnly
+              className="w-full bg-[#FFFFFF] py-3 pl-9 pr-3 rounded-lg border border-[#E6ECEA] text-sm text-[#1A1A1A] focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <div className="mt-16 flex flex-col items-center text-center gap-6">
+          <div className="relative w-24 h-24 flex items-center justify-center">
+            <svg
+              className="absolute inset-0 animate-spin"
+              viewBox="0 0 100 100"
+              style={{ animationDuration: "1.5s" }}
+            >
+              <circle
+                cx="50"
+                cy="50"
+                r="45"
+                fill="none"
+                stroke="#227B6F"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeDasharray="100 283"
+              />
+            </svg>
+            <div className="w-20 h-20 rounded-full bg-linear-to-b from-[#F3EBD3] to-[#F8F5EE] flex items-center justify-center">
+              <Sparkles size={28} color="#227B6F" strokeWidth={2} />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <h2 className="text-xl font-semibold text-[#333333]">
+              Fetching your recipe...
+            </h2>
+            <p className="text-sm text-[#57605E] max-w-xs">
+              Please hold on while we find the best answer for you
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-12 rounded-full bg-[#E8E6DC] px-5 py-3 flex items-center justify-center gap-2">
+          <span className="text-lg">💡</span>
+          <p className="text-sm text-[#57605E] font-medium">
+            Tip: This may take a few seconds
+          </p>
+        </div>
+      </main>
+    </div>
+  );
+}
 
 export default page;
