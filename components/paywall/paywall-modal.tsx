@@ -40,34 +40,41 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden" showCloseButton={false}>
+      <DialogContent
+        className="sm:max-w-md p-0 gap-0 overflow-hidden"
+        showCloseButton={false}
+      >
         <div className="p-6 space-y-5">
-          <DialogHeader className="flex flex-col items-center justify-center text-center space-y-3">
-            <div className="p-3 rounded-full bg-[#227B6F] w-min">
+          <DialogHeader className="flex flex-col items-center justify-center text-center space-y-5 gap-0">
+            <div className="p-3 rounded-full bg-mint-green w-min mb-5">
               <LockKeyhole size={20} color="#FFFFFF" />
             </div>
-            <DialogTitle className="text-xl font-semibold text-foreground">
-              A premium remedy
-            </DialogTitle>
-            <p className="text-[#57605E]">
-              Unlock the full method, ingredients and gain full access to all
-              Nuko’s recipes
-            </p>
+            <div className="space-y-3">
+              <DialogTitle className="text-2xl font-semibold text-black mb-3">
+                A premium remedy
+              </DialogTitle>
+              <p className="text-subtle">
+                Unlock the full method, ingredients and gain full access to all
+                Nuko’s recipes
+              </p>
+            </div>
           </DialogHeader>
 
-          <ul className="rounded-xl bg-[#F2F3F3] p-4 space-y-3">
+          <ul className="rounded-2xl bg-grey-c100 py-4 px-3 space-y-3">
             {benefits.map((item) => (
               <li key={item.title} className="flex items-center gap-3">
                 <Check
                   size={16}
-                  className="text-[#227B6F] shrink-0 mt-0.5"
-                  strokeWidth={1}
+                  className="text-mint-green shrink-0 mt-0.5"
+                  strokeWidth={1.5}
                 />
                 <div className="flex flex-col gap-1">
-                  <p className="font-semibold text-[#1A1A1A] text-sm">
+                  <p className="font-semibold text-base-text text-sm leading-5">
                     {item.title}
                   </p>
-                  <p className="text-sm text-[#57605E]">{item.subtitle}</p>
+                  <p className="text-sm text-subtle font-medium">
+                    {item.subtitle}
+                  </p>
                 </div>
               </li>
             ))}
@@ -76,7 +83,9 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
           <div className="rounded-xl bg-[#F2F3F3] p-4">
             <p className="text-sm font-medium text-[#57605E]">Monthly</p>
             <p className="mt-1">
-              <span className="text-xl font-semibold text-[#1A1A1A]">£7.99</span>
+              <span className="text-xl font-semibold text-[#1A1A1A]">
+                £7.99
+              </span>
               <span className="text-sm text-[#57605E]"> / month</span>
             </p>
           </div>
@@ -97,7 +106,8 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
               className="block text-xs text-[#57605E]"
               onClick={() => onOpenChange(false)}
             >
-              Have an account? <span className="font-semibold text-[#227B6F]">Sign in</span>
+              Have an account?{" "}
+              <span className="font-semibold text-[#227B6F]">Sign in</span>
             </Link>
           </div>
         </div>
