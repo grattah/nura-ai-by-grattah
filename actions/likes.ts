@@ -1,3 +1,4 @@
+// actions/like.ts
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
@@ -5,9 +6,9 @@ import { revalidatePath } from "next/cache";
 
 const DEDUPE_WINDOW_MS = 60 * 60 * 1000;
 
-export async function toggleBookmark(
+export async function toggleLike(
   recipeId: string
-): Promise<{ bookmarked: boolean; error?: string }> {
+): Promise<{ liked: boolean; error?: string }> {
   const supabase = await createClient();
 
   const {
@@ -15,43 +16,48 @@ export async function toggleBookmark(
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { bookmarked: false, error: "not_authenticated" };
+    return { liked: false, error: "not_authenticated" };
   }
 
-  // Check if bookmark already exists
+  // Check if the like already exists
   const { data: existing, error: selectError } = await supabase
-    .from("bookmarks")
+    .from("recipe_likes")
     .select("id")
     .eq("user_id", user.id)
     .eq("recipe_id", recipeId)
     .maybeSingle();
 
   if (selectError) {
-    return { bookmarked: false, error: "select_failed" };
+    return { liked: false, error: "select_failed" };
   }
 
   if (existing) {
-    // Remove bookmark
+    // Unlike
     const { error: deleteError } = await supabase
-      .from("bookmarks")
+      .from("recipe_likes")
       .delete()
       .eq("id", existing.id);
 
     if (deleteError) {
-      return { bookmarked: true, error: "delete_failed" };
+      return { liked: true, error: "delete_failed" };
     }
 
-    revalidatePath("/bookmarks");
     revalidatePath(`/recipes/${recipeId}`);
-    return { bookmarked: false };
+    revalidatePath("/recipes/popular");
+    return { liked: false };
   } else {
-    // Add bookmark
+    // Like
     const { error: insertError } = await supabase
-      .from("bookmarks")
+      .from("recipe_likes")
       .insert({ user_id: user.id, recipe_id: recipeId });
 
     if (insertError) {
-      return { bookmarked: false, error: "insert_failed" };
+      // Could be a unique violation if user double-clicked rapidly
+      if (insertError.code === "23505") {
+        // Already liked, treat as success
+        return { liked: true };
+      }
+      return { liked: false, error: "insert_failed" };
     }
 
     const cutoff = new Date(Date.now() - DEDUPE_WINDOW_MS).toISOString();
@@ -61,7 +67,7 @@ export async function toggleBookmark(
       .select("id")
       .eq("user_id", user.id)
       .eq("recipe_id", recipeId)
-      .eq("action", "bookmarked")
+      .eq("action", "liked")
       .gte("created_at", cutoff)
       .maybeSingle();
 
@@ -71,7 +77,7 @@ export async function toggleBookmark(
         .insert({
           user_id: user.id,
           recipe_id: recipeId,
-          action: "bookmarked",
+          action: "liked",
         });
 
       if (activityError) {
@@ -79,14 +85,14 @@ export async function toggleBookmark(
       }
     }
 
-    revalidatePath("/bookmarks");
     revalidatePath(`/recipes/${recipeId}`);
-    revalidatePath("/community");
-    return { bookmarked: true };
+    revalidatePath("/recipes/popular");
+	revalidatePath("/community");
+    return { liked: true };
   }
 }
 
-export async function isBookmarked(recipeId: string): Promise<boolean> {
+export async function isLiked(recipeId: string): Promise<boolean> {
   const supabase = await createClient();
 
   const {
@@ -96,7 +102,7 @@ export async function isBookmarked(recipeId: string): Promise<boolean> {
   if (!user) return false;
 
   const { data } = await supabase
-    .from("bookmarks")
+    .from("recipe_likes")
     .select("id")
     .eq("user_id", user.id)
     .eq("recipe_id", recipeId)

@@ -103,12 +103,23 @@ const page = () => {
   }
 
   const recipeSearch = async () => {
-    const { data, error } = await supabase
-      .from("recipes")
-      .select("*")
-      .or(
-        `title.ilike.%${searchTerm}%,short_description.ilike.%${searchTerm}%`
+    const words = searchTerm.trim().split(/\s+/).filter(Boolean);
+
+    if (words.length === 0) {
+      setRecipes([]);
+      setSearchState("empty");
+      return;
+    }
+
+    let query = supabase.from("recipes").select("*");
+
+    for (const word of words) {
+      query = query.or(
+        `title.ilike.%${word}%,short_description.ilike.%${word}%`
       );
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.log(error);
@@ -250,11 +261,9 @@ const page = () => {
                         <p className="text-sm text-[#57605E]">You may like</p>
                         <div className="flex flex-col gap-3">
                           {suggestedRecipes.map((recipe) => (
-                            <button
+                            <Link
                               key={recipe.id}
-                              onClick={() =>
-                                handleRecipeClick(recipe.id, recipe.title)
-                              }
+                              href={`/recipes/${recipe.id}`}
                               className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3 text-left w-full"
                             >
                               <GlassWater
@@ -262,8 +271,8 @@ const page = () => {
                                 color="#9CA5A3"
                                 strokeWidth={2}
                               />
-                              <p className="font-medium text-base">{recipe.title}</p>
-                            </button>
+                              <p className="font-medium">{recipe.title}</p>
+                            </Link>
                           ))}
                         </div>
                       </div>
