@@ -271,7 +271,7 @@ const page = () => {
                                 color="#9CA5A3"
                                 strokeWidth={2}
                               />
-                              <p className="font-medium">{recipe.title}</p>
+                              <p className="font-medium text-base">{recipe.title}</p>
                             </Link>
                           ))}
                         </div>

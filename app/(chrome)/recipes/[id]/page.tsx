@@ -198,7 +198,7 @@ export default async function RecipeDetailPage({
                   isAuthenticated={!!user}
                 />
               </div>
-              <p className="font-medium text-xs">
+              <p className="font-medium text-sm">
                 {recipe.likes} people found this helpful
               </p>
             </div>
