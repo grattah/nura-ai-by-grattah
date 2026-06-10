@@ -76,9 +76,6 @@ function truncateText(text: string, maxWords = 6): string {
   return words.slice(0, maxWords).join(" ") + "...";
 }
 
-const text =
-  "This is a very long description that contains more than twenty words and should be truncated when displayed in the recent activity feed.";
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function BookmarksPage() {
@@ -94,7 +91,7 @@ export default async function BookmarksPage() {
     <div className="min-h-screen bg-background">
       {/* Sub-header */}
       <div className="px-4 pt-5 pb-4">
-        <h1 className="text-xl font-bold text-foreground">Saved Recipes</h1>
+        <h1 className="text-2xl font-bold text-foreground">Saved Recipes</h1>
       </div>
 
       <main className="px-4 pb-10">

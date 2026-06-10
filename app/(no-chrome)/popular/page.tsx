@@ -71,11 +71,11 @@ const page = async () => {
               </div>
               {recipe.image_url && (
                 <Link href={`/recipes/${recipe.id}`}>
-                  <div className="overflow-hidden rounded-lg">
+                  <div className="overflow-hidden rounded-2xl">
                     <Image
                       src={recipe.image_url}
                       alt={recipe.title}
-                      className="w-full h-0 object-cover transition-transform duration-300 hover:scale-110"
+                      className="w-full h-[167] object-cover transition-transform duration-300 hover:scale-110"
                       width={100}
                       height={200}
                     />
@@ -85,13 +85,13 @@ const page = async () => {
 
               <Link
                 href={`/recipes/${recipe.id}`}
-                className="text-[#727E7A] text-[12px]"
+                className="text-[#727E7A] text-xs font-redHatDisplay font-medium"
               >
                 INDIGESTION
               </Link>
               <Link
                 href={`/recipes/${recipe.id}`}
-                className="text-[#111312] font-medium"
+                className="text-[#111312] font-medium font-josefin"
               >
                 {recipe.title}
               </Link>

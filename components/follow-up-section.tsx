@@ -136,7 +136,7 @@ interface QuestionsListProps {
 
 function QuestionsList({ questions, loading, onSelect }: QuestionsListProps) {
   return (
-    <Card className="border-0 rounded-3xl shadow-none overflow-hidden bg-[#FFFFFF]">
+    <Card className="border-0 rounded-2xl shadow-none overflow-hidden bg-[#FFFFFF]">
       <CardContent className="p-0">
         {loading
           ? Array.from({ length: 4 }).map((_, i) => (
@@ -297,7 +297,7 @@ interface ChatInputProps {
 
 function ChatInput({ input, isLoading, onChange, onSend }: ChatInputProps) {
   return (
-    <Card className="border-0 rounded-3xl shadow-none bg-[#FFFFFF]">
+    <Card className="border-0 rounded-2xl shadow-none bg-[#FFFFFF]">
       <CardContent className="px-4">
         <p className="text-sm font-semibold mb-2 text-[#1B1D1D]">
           Ask a follow-up question

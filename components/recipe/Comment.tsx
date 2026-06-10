@@ -39,12 +39,12 @@ export default function Comment({
   return (
     <section className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-[#111312]">
+        <h2 className="text-base font-bold text-[#111312]">
           Comments ({total})
         </h2>
         <Link
           href={seeAllHref}
-          className="text-[#227B6F] underline font-semibold"
+          className="text-[#227B6F] underline font-semibold text-base"
         >
           See all
         </Link>
@@ -63,28 +63,28 @@ export default function Comment({
           </div>
 
           <div className="flex flex-col gap-2 flex-1 min-w-0">
-            <p className="font-semibold text-[#1B1D1D]">
+            <p className="font-semibold text-[#1B1D1D] text-base">
               @{latestComment.username}
             </p>
-            <p className="text-[#57605E] leading-relaxed">
+            <p className="text-[#57605E] leading-relaxed text-base">
               {latestComment.content}
             </p>
 
             <div className="flex items-center gap-8 mt-2">
-              <span className="text-xs text-[#727E7A] font-medium">
+              <span className="text-sm text-[#727E7A] font-medium">
                 {latestComment.timestamp}
               </span>
 
               <button
                 onClick={() => onReply(latestComment.id)}
-                className="text-xs text-[#727E7A] font-medium hover:text-[#1A1A1A] transition-colors"
+                className="text-sm text-[#727E7A] font-medium hover:text-[#1A1A1A] transition-colors"
               >
                 Reply
               </button>
 
               <button
                 onClick={() => onLike(latestComment.id)}
-                className="flex items-center gap-1.5 text-xs text-[#57605E] hover:text-[#1A1A1A] transition-colors"
+                className="flex items-center gap-1.5 text-sm text-[#57605E] hover:text-[#1A1A1A] transition-colors"
                 aria-label={`Like comment. Currently ${latestComment.likes} likes`}
               >
                 <Heart
@@ -103,7 +103,7 @@ export default function Comment({
 
         <button
           onClick={() => onReply(latestComment.id)}
-          className="w-full text-left rounded-full bg-[#E8E6DC] px-5 py-4 text-[#57605E] hover:bg-[#D8D6CC] transition-colors text-xs"
+          className="w-full text-left rounded-full bg-[#E8E6DC] px-5 py-4 text-[#57605E] hover:bg-[#D8D6CC] transition-colors text-sm"
         >
           Add a Comment...
         </button>

@@ -164,7 +164,7 @@ const page = () => {
   return (
     <div className="bg-background">
       <main className="px-4 pt-6">
-        <p className="font-semibold text-xl">Find recipe</p>
+        <p className="font-semibold text-2xl">Find recipe</p>
 
         <div className="mt-8">
           <div className="relative">
@@ -176,7 +176,7 @@ const page = () => {
               value={searchTerm}
               onChange={(e) => handleSearchTermChange(e.target.value)}
               type="text"
-              className="w-full bg-[#FFFFFF] py-3 pl-9 pr-3 rounded-lg border border-[#E6ECEA] text-sm placeholder:text-[#9CA5A3] focus:ring-2 focus:ring-ring outline-none"
+              className="w-full bg-[#FFFFFF] py-3 pl-9 pr-3 rounded-xl border border-[#E6ECEA] text-base placeholder:text-[#9CA5A3] focus:ring-2 focus:ring-ring outline-none"
               placeholder="Search recipe..."
             />
             {searchTerm.length > 0 && (
@@ -239,7 +239,7 @@ const page = () => {
                             }}
                           >
                             <Clock size={20} color="#9CA5A3" strokeWidth={2} />
-                            <p className="font-medium">{term}</p>
+                            <p className="font-medium text-base">{term}</p>
                           </button>
                         ))}
                       </div>
@@ -262,7 +262,7 @@ const page = () => {
                                 color="#9CA5A3"
                                 strokeWidth={2}
                               />
-                              <p className="font-medium">{recipe.title}</p>
+                              <p className="font-medium text-base">{recipe.title}</p>
                             </button>
                           ))}
                         </div>
