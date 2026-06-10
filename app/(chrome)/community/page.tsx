@@ -60,7 +60,8 @@ const recentActivities = [
   },
 ];
 
-const page = () => {
+const page = async () => {
+
   return (
     <div className="bg-background">
       <main className="px-4 pt-2">
