@@ -23,22 +23,33 @@ export function UpdatePasswordForm({
   const passwordsMatch = password === confirmPassword && password.length > 0;
   const canSubmit = isPasswordValid(password) && passwordsMatch;
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
+  const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     const supabase = createClient();
     setIsLoading(true);
     setError(null);
 
     try {
-      const { error } = await supabase.auth.updateUser({ password });
+      const { error } = await supabase.auth.updateUser({
+        password,
+        data: { has_password: true },
+      });
       if (error) throw error;
-      // Update this route to redirect to an authenticated route. The user already has an active session.
-      router.push("/");
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      // Password changed — sign out of the recovery session and have the
+      // user log back in with their new password.
+      await supabase.auth.signOut();
+      router.push(
+        `/log-back-in?email=${encodeURIComponent(user?.email ?? "")}`,
+      );
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setIsLoading(false);
-      router.push("/auth/login");
     }
   };
 
@@ -58,19 +69,22 @@ export function UpdatePasswordForm({
       </div>
       <div>
         <div className="text-center flex flex-col items-center space-y-2">
-          <div className="p-3 rounded-full bg-[#227B6F] w-min">
+          <div className="p-3 rounded-full bg-mint-green w-min">
             <LockKeyhole color="#FFFFFF" size={24} />
           </div>
-          <p className="text-xl">Reset Your Password</p>
-          <p className="text-muted-foreground text-sm">
-            Create your new secure password
-          </p>
+          <p className="text-xl text-base-text font-semibold">Reset password</p>
+          <p className="text-subtle text-sm">Create your new secure password</p>
         </div>
         <div className="mt-6">
-          <form onSubmit={handleForgotPassword}>
+          <form onSubmit={handleUpdatePassword}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
-                <label htmlFor="password" className="text-[#57605E] text-sm font-medium">Enter new password</label>
+                <label
+                  htmlFor="password"
+                  className="text-subtle text-sm font-medium"
+                >
+                  Enter new password
+                </label>
                 <div className="relative">
                   <LockKeyhole
                     size={20}
@@ -84,7 +98,7 @@ export function UpdatePasswordForm({
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-4 rounded-lg bg-[#FFFFFF] text-foreground placeholder:text-muted-foreground border focus:ring-2 focus:ring-ring outline-none"
+                    className="w-full pl-10 pr-4 py-4 rounded-lg bg-white text-foreground placeholder:text-muted-foreground border outline-none"
                   />
                   <button
                     type="button"
@@ -101,7 +115,12 @@ export function UpdatePasswordForm({
               </div>
 
               <div className="grid gap-2">
-                <label htmlFor="confirm-password" className="text-[#57605E] text-sm font-medium">Re-enter new password</label>
+                <label
+                  htmlFor="confirm-password"
+                  className="text-subtle text-sm font-medium"
+                >
+                  Re-enter new password
+                </label>
                 <div className="relative">
                   <LockKeyhole
                     size={20}
@@ -115,7 +134,7 @@ export function UpdatePasswordForm({
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-4 rounded-lg bg-[#FFFFFF] text-foreground placeholder:text-muted-foreground border focus:ring-2 focus:ring-ring outline-none"
+                    className="w-full pl-10 pr-4 py-4 rounded-lg bg-white text-foreground placeholder:text-muted-foreground border outline-none"
                   />
                   <button
                     type="button"
@@ -134,7 +153,7 @@ export function UpdatePasswordForm({
               <PasswordRequirements password={password} />
               <button
                 type="submit"
-                className="w-full flex items-center justify-center bg-[#227B6F] text-[#FFFFFF] py-4 rounded-full font-medium border border-border hover:opacity-90 transition-opacity disabled:opacity-40"
+                className="w-full flex items-center justify-center bg-mint-green text-[#FFFFFF] py-4 rounded-full font-medium border border-border hover:opacity-90 transition-opacity disabled:opacity-40"
                 disabled={!password || isLoading || !canSubmit}
               >
                 {isLoading ? "Reseting..." : "Reset"}

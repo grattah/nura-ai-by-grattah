@@ -34,7 +34,10 @@ export async function GET(request: NextRequest) {
     });
 
     if (!error) {
-      redirect(next);
+      // Password recovery must always land on the reset-password form,
+      // regardless of what `next` resolved to (Supabase falls back to the
+      // Site URL for `next` if the requested redirect isn't allow-listed).
+      redirect(type === "recovery" ? "/auth/update-password" : next);
     } else {
       console.error("[confirm route] OTP Verification failed:", error.message);
       redirect(`/auth/error?error=${encodeURIComponent(error.message)}`);

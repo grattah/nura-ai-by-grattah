@@ -1,41 +1,123 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, Mail, KeyRound, CreditCard } from "lucide-react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
+import {
+  ArrowLeft,
+  X,
+  Mail,
+  KeyRound,
+  BookOpen,
+  Sparkles,
+  Bookmark,
+  Bell,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { initiateCheckout } from "@/actions/checkout";
-import { fetchClientSecret } from "@/actions/stripe";
+import { fetchClientSecretForPlan } from "@/actions/stripe";
 import { CheckoutEmbed } from "@/components/checkout-embed";
 import { NuraLogo } from "@/components/nura-logo";
 
-type Step = "email" | "otp" | "payment";
+type Plan = "annual" | "monthly";
+type Step = "plan" | "email" | "otp" | "payment";
 
 interface CheckoutFlowProps {
   user: { id: string; email: string } | null;
 }
 
+const PLANS: {
+  id: Plan;
+  label: string;
+  price: string;
+  description: string;
+  badge: string | null;
+}[] = [
+  {
+    id: "annual",
+    label: "Annual",
+    price: "£79",
+    description: "Save £16.9, billed yearly.",
+    badge: "BEST VALUE",
+  },
+  {
+    id: "monthly",
+    label: "Monthly",
+    price: "£7.99",
+    description: "Billed monthly.",
+    badge: null,
+  },
+];
+
+const FEATURES = [
+  {
+    icon: BookOpen,
+    title: "The full premium library",
+    subtitle: "10,000+ curated carefully by experts.",
+  },
+  {
+    icon: Sparkles,
+    title: "Personalized nutrient guidance",
+    subtitle: "Tailored to you and your concerns",
+  },
+  {
+    icon: Bookmark,
+    title: "Keep your remedies closed",
+    subtitle: "Save your remedies for whenever you need them",
+  },
+  {
+    icon: Bell,
+    title: "Smart reminders",
+    subtitle: "Gentle nudges for your routines",
+  },
+];
+
+const PLAN_LABELS: Record<
+  Plan,
+  { name: string; price: string; description: string }
+> = {
+  annual: {
+    name: "Nuko+ (Annual)",
+    price: "£79",
+    description: "Save £16.9, billed yearly.",
+  },
+  monthly: {
+    name: "Nuko+ (Monthly)",
+    price: "£7.99",
+    description: "Billed monthly.",
+  },
+};
+
 export function CheckoutFlow({ user }: CheckoutFlowProps) {
-  const [step, setStep] = useState<Step>(user ? "payment" : "email");
+  const router = useRouter();
+  const [step, setStep] = useState<Step>("plan");
+  const [selectedPlan, setSelectedPlan] = useState<Plan>("annual");
   const [email, setEmail] = useState(user?.email ?? "");
   const [otpCode, setOtpCode] = useState("");
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Authenticated users: fetch Stripe session on mount ──────────────────
+  // ── Payment step: fetch a Stripe session for the selected plan ──────────
   useEffect(() => {
-    if (user && !clientSecret) {
-      fetchClientSecret()
+    if (step === "payment" && !clientSecret) {
+      fetchClientSecretForPlan(selectedPlan)
         .then((secret) => {
           if (secret) setClientSecret(secret);
           else setError("Failed to start payment. Please try again.");
         })
         .catch(() => setError("Failed to start payment. Please try again."));
     }
-  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Step 1: email submit ────────────────────────────────────────────────
+  // ── Step: plan selection ─────────────────────────────────────────────────
+  const handleContinueFromPlan = () => {
+    setError(null);
+    setStep(user ? "payment" : "email");
+  };
+
+  // ── Step: email submit (guests only) ─────────────────────────────────────
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
@@ -43,7 +125,6 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
     setError(null);
 
     try {
-      // Create user + Stripe session server-side
       const result = await initiateCheckout(email);
 
       if ("error" in result) {
@@ -51,9 +132,6 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
         return;
       }
 
-      setClientSecret(result.clientSecret);
-
-      // Send OTP to the resolved email
       const supabase = createClient();
       const { error: otpError } = await supabase.auth.signInWithOtp({
         email,
@@ -73,7 +151,7 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
     }
   };
 
-  // ── Step 2: OTP verify ──────────────────────────────────────────────────
+  // ── Step: OTP verify (guests only) ───────────────────────────────────────
   const handleOtpVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     if (otpCode.length < 6) return;
@@ -113,65 +191,174 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
     setIsLoading(false);
   };
 
-  // ─────────────────────────────────────────────────────────────────────────
+  const handlePaymentBack = () => {
+    setError(null);
+    setClientSecret(null);
+    setStep(user ? "plan" : "otp");
+  };
+
+  const planInfo = PLAN_LABELS[selectedPlan];
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 pt-6">
-        {step !== "email" && !user ? (
-          <button
-            onClick={() => {
-              setStep(step === "otp" ? "email" : "otp");
-              setError(null);
-            }}
-            className="flex items-center gap-1 px-3 py-2 rounded-full text-sm font-medium text-foreground hover:opacity-70 transition-opacity"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </button>
-        ) : (
-          <div />
-        )}
-        <Link
-          href="/"
-          className="flex items-center gap-1 px-4 py-2 bg-card rounded-full text-sm font-medium text-foreground hover:opacity-80 transition-opacity"
-        >
-          Cancel
-        </Link>
-      </div>
-
-      {/* Step indicator (guest flow only) */}
-      {!user && (
-        <div className="flex items-center justify-center gap-2 py-2">
-          {(["email", "otp", "payment"] as Step[]).map((s, i) => (
-            <div key={s} className="flex items-center gap-2">
-              <div
-                className={`w-2 h-2 rounded-full transition-colors ${
-                  s === step
-                    ? "bg-foreground"
-                    : ["email", "otp", "payment"].indexOf(s) <
-                        ["email", "otp", "payment"].indexOf(step)
-                      ? "bg-foreground/40"
-                      : "bg-muted-foreground/25"
-                }`}
+    <div className="min-h-dvh bg-background pb-10">
+      {/* ── Step: plan selection ── */}
+      {step === "plan" && (
+        <>
+          <div className="flex items-center justify-between px-4 pt-5 pb-6">
+            <Link href="/" className="flex items-center gap-1">
+              <Image
+                src="/logo-outlined.svg"
+                alt="Nuko Logo"
+                width={32}
+                height={32}
               />
-              {i < 2 && <div className="w-6 h-px bg-muted-foreground/20" />}
+              <span className="text-lg font-semibold text-brown tracking-tight">
+                Nuko
+              </span>
+            </Link>
+            <button
+              onClick={() => router.push("/")}
+              className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
+              aria-label="Close"
+            >
+              <X className="size-5 text-foreground" />
+            </button>
+          </div>
+
+          <div className="px-4 space-y-6">
+            <h1 className="text-3xl font-semibold text-foreground leading-tight">
+              Your natural path,
+              <br />
+              <span className="italic" style={{ color: "var(--mint-green)" }}>
+                fully unlocked!
+              </span>
+            </h1>
+
+            {/* Feature list */}
+            <div className="space-y-3 mb-14">
+              {FEATURES.map((f) => {
+                const Icon = f.icon;
+                return (
+                  <div key={f.title} className="flex items-center gap-3">
+                    <div className="size-10 shrink-0 rounded-lg bg-mint-green/10 flex items-center justify-center">
+                      <Icon
+                        className="size-5"
+                        style={{ color: "var(--mint-green)" }}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-base-text">
+                        {f.title}
+                      </p>
+                      <p className="text-xs text-subtle font-medium">
+                        {f.subtitle}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          ))}
-        </div>
+
+            {/* Plan options */}
+            <div className="space-y-3 pt-2">
+              {PLANS.map((plan) => {
+                const isSelected = selectedPlan === plan.id;
+                return (
+                  <div className="relative" key={plan.id}>
+                    {plan.badge && (
+                      <span
+                        className="text-xs font-semibold px-3 z-0 py-1 pb-3.5 rounded-t-md text-white absolute -top-5 left-0"
+                        style={{ backgroundColor: "var(--mint-green)" }}
+                      >
+                        {plan.badge}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPlan(plan.id)}
+                      className={`w-full z-10 relative text-left rounded-2xl p-4 border-2 bg-card transition-all ${
+                        isSelected ? "border-mint-green" : "border-border"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                              isSelected ? "border-mint-green" : "border-border"
+                            }`}
+                          >
+                            {isSelected && (
+                              <div className="w-2.5 h-2.5 rounded-full bg-mint-green" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-base font-semibold text-foreground">
+                              {plan.label}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {plan.description}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0 flex flex-col">
+                          <span className="text-2xl font-bold text-foreground">
+                            {plan.price}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            / month
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Continue */}
+            <div className="space-y-2 pt-2">
+              <button
+                type="button"
+                onClick={handleContinueFromPlan}
+                className="w-full flex items-center justify-center py-4 rounded-full text-white font-semibold text-base hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: "var(--mint-green)" }}
+              >
+                Continue
+              </button>
+              <p className="text-center text-xs text-muted-foreground">
+                🔒 Secure checkout • Cancel anytime
+              </p>
+            </div>
+          </div>
+        </>
       )}
 
-      <div className="flex-1 flex flex-col items-center justify-start px-6 pt-6 pb-12">
-        {/* Logo */}
-        <div className="mb-8">
-          <NuraLogo size="lg" variant="full" />
-        </div>
+      {/* ── Step: email (guests only) ── */}
+      {step === "email" && (
+        <>
+          <div className="flex items-center justify-between px-4 pt-5 pb-4">
+            <button
+              onClick={() => setStep("plan")}
+              className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
+              aria-label="Back"
+            >
+              <ArrowLeft className="size-5 text-foreground" />
+            </button>
+            <button
+              onClick={() => router.push("/")}
+              className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
+              aria-label="Close"
+            >
+              <X className="size-5 text-foreground" />
+            </button>
+          </div>
 
-        <div className="w-full max-w-sm space-y-4">
-          {/* ── Step 1: Email ── */}
-          {step === "email" && (
-            <>
+          <div className="flex flex-col items-center px-6 pt-6">
+            <div className="mb-8">
+              <NuraLogo size="lg" variant="full" />
+            </div>
+
+            <div className="w-full max-w-sm space-y-4">
               <div className="text-center space-y-1 mb-6">
                 <div className="flex justify-center mb-4">
                   <div className="w-14 h-14 rounded-full bg-card flex items-center justify-center">
@@ -207,27 +394,54 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
                 <button
                   type="submit"
                   disabled={!email || isLoading}
-                  className="w-full flex items-center justify-center bg-nura-cream text-nura-forest py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+                  className="w-full flex items-center justify-center text-white py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+                  style={{ backgroundColor: "var(--mint-green)" }}
                 >
-                  {isLoading ? "Setting up..." : "Continue to payment →"}
+                  {isLoading ? "Sending code..." : "Continue →"}
                 </button>
               </form>
 
               <p className="text-center text-xs text-muted-foreground pt-2">
                 Already have an account?{" "}
-                <Link
-                  href="/auth/login"
+                <button
+                  type="button"
+                  onClick={() => router.push("/auth/login")}
                   className="text-foreground hover:underline"
                 >
                   Sign in →
-                </Link>
+                </button>
               </p>
-            </>
-          )}
+            </div>
+          </div>
+        </>
+      )}
 
-          {/* ── Step 2: OTP ── */}
-          {step === "otp" && (
-            <>
+      {/* ── Step: OTP (guests only) ── */}
+      {step === "otp" && (
+        <>
+          <div className="flex items-center justify-between px-4 pt-5 pb-4">
+            <button
+              onClick={() => setStep("email")}
+              className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
+              aria-label="Back"
+            >
+              <ArrowLeft className="size-5 text-foreground" />
+            </button>
+            <button
+              onClick={() => router.push("/")}
+              className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
+              aria-label="Close"
+            >
+              <X className="size-5 text-foreground" />
+            </button>
+          </div>
+
+          <div className="flex flex-col items-center px-6 pt-6">
+            <div className="mb-8">
+              <NuraLogo size="lg" variant="full" />
+            </div>
+
+            <div className="w-full max-w-sm space-y-4">
               <div className="text-center space-y-1 mb-6">
                 <div className="flex justify-center mb-4">
                   <div className="w-14 h-14 rounded-full bg-card flex items-center justify-center">
@@ -266,7 +480,8 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
                 <button
                   type="submit"
                   disabled={otpCode.length < 8 || isLoading}
-                  className="w-full flex items-center justify-center bg-nura-cream text-nura-forest py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+                  className="w-full flex items-center justify-center text-white py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+                  style={{ backgroundColor: "var(--mint-green)" }}
                 >
                   {isLoading ? "Verifying..." : "Verify & continue →"}
                 </button>
@@ -280,32 +495,75 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
                   Resend code
                 </button>
               </form>
-            </>
-          )}
+            </div>
+          </div>
+        </>
+      )}
 
-          {/* ── Step 3: Payment ── */}
-          {step === "payment" && (
-            <>
-              {clientSecret ? (
-                <CheckoutEmbed clientSecret={clientSecret} />
-              ) : (
-                <div className="flex flex-col items-center gap-3 py-12">
-                  <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-                  <p className="text-sm text-muted-foreground">
-                    Preparing payment...
-                  </p>
-                </div>
-              )}
+      {/* ── Step: payment ── */}
+      {step === "payment" && (
+        <>
+          <div className="flex items-center justify-between px-4 pt-5 pb-4 mb-7">
+            <button
+              onClick={handlePaymentBack}
+              className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
+              aria-label="Back"
+            >
+              <ArrowLeft className="size-5 text-foreground" />
+            </button>
+            <div className="text-center">
+              <p className="text-lg font-semibold text-foreground">
+                Continue payment
+              </p>
+              <p className="text-sm text-muted-foreground">Welcome back</p>
+            </div>
+            <button
+              onClick={() => router.push("/")}
+              className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
+              aria-label="Close"
+            >
+              <X className="size-5 text-foreground" />
+            </button>
+          </div>
 
-              {error && (
-                <p className="text-sm text-destructive text-center mt-4">
-                  {error}
+          <div className="px-4 space-y-4">
+            {/* Plan summary */}
+            <div
+              className="flex items-center justify-between px-4 py-3 rounded-2xl border"
+              style={{
+                borderColor: "var(--mint-green)",
+                backgroundColor: "#E6F4EC",
+              }}
+            >
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  {planInfo.name}
                 </p>
-              )}
-            </>
-          )}
-        </div>
-      </div>
+                <p className="text-xs text-muted-foreground">
+                  {planInfo.description}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-xl font-bold text-foreground">
+                  {planInfo.price}
+                </p>
+                <p className="text-xs text-muted-foreground">/ month</p>
+              </div>
+            </div>
+
+            {/* Stripe checkout */}
+            {error ? (
+              <p className="text-sm text-red-500 text-center">{error}</p>
+            ) : !clientSecret ? (
+              <div className="flex items-center justify-center py-20">
+                <div className="w-8 h-8 rounded-full border-2 border-muted-foreground border-t-transparent animate-spin" />
+              </div>
+            ) : (
+              <CheckoutEmbed clientSecret={clientSecret} />
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

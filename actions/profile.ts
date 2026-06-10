@@ -43,7 +43,13 @@ export async function updatePassword(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated." };
 
-  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  const { error } = await supabase.auth.updateUser({
+    password: newPassword,
+    data: {
+      has_password: true,
+      password_updated_at: new Date().toISOString(),
+    },
+  });
   if (error) return { error: error.message };
 
   return { success: true };

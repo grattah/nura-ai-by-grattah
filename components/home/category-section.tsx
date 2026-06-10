@@ -1,8 +1,15 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { Lock } from "lucide-react";
 import Leaf from "../vectors/leaf";
 import Shield from "../vectors/shield";
 import Lightning from "../vectors/lightning";
+import { PaywallModal } from "../paywall/paywall-modal";
+import Heart from "../vectors/heart";
+import Beauty from "../vectors/beauty";
+import Recovery from "../vectors/recovery";
 
 const CATEGORIES = [
   {
@@ -23,6 +30,24 @@ const CATEGORIES = [
     href: "/categories/energy",
     iconBg: "#F8BD001F",
   },
+  {
+    label: "Recovery",
+    icon: <Recovery />,
+    href: "/categories/recovery",
+    iconBg: "#2C4FFF1F",
+  },
+  {
+    label: "Beauty",
+    icon: <Beauty />,
+    href: "/categories/beauty",
+    iconBg: "#9F31771F",
+  },
+  {
+    label: "Heart",
+    icon: <Heart />,
+    href: "/categories/heart",
+    iconBg: "#EA43351F",
+  },
 ];
 
 interface UpgradeBannerProps {
@@ -30,20 +55,32 @@ interface UpgradeBannerProps {
 }
 
 export function CategorySection({ hasAccess }: UpgradeBannerProps) {
+  const [modalOpen, setModalOpen] = useState(false);
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl leading-none font-semibold text-grey-c950">
           Category
         </h2>
-        <Link
-          href="/categories"
-          className="flex items-center gap-1 text-base text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4"
-        >
-          See all {!hasAccess && <Lock className="w-3 h-3" />}
-        </Link>
+        {hasAccess ? (
+          <Link
+            href="/categories"
+            className="flex items-center gap-1 text-base text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4"
+          >
+            See all
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setModalOpen(true)}
+            className="flex items-center gap-1 text-base text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4"
+          >
+            See all <Lock className="w-3 h-3" />
+          </button>
+        )}
       </div>
-      <div className="flex gap-2 w-full">
+      <div className="grid grid-cols-3 gap-2 w-full">
         {CATEGORIES.map((cat) => (
           <Link
             key={cat.label}
@@ -60,6 +97,8 @@ export function CategorySection({ hasAccess }: UpgradeBannerProps) {
           </Link>
         ))}
       </div>
+
+      <PaywallModal open={modalOpen} onOpenChange={setModalOpen} />
     </div>
   );
 }
