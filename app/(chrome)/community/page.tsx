@@ -2,6 +2,8 @@ import React from "react";
 import Image from "next/image";
 
 import profile from "@/public/profile.png";
+import { createClient } from "@/lib/supabase/server";
+import { formatRelativeTime } from "@/lib/format-time";
 
 const recentActivities = [
   {
@@ -61,6 +63,32 @@ const recentActivities = [
 ];
 
 const page = async () => {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("activities")
+    .select(
+      `
+    id,
+    action,
+    created_at,
+    profiles (
+      id,
+      username,
+      avatar_url
+    ),
+    recipes (
+      id,
+      title,
+      image_url
+    )
+  `
+    )
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error("Failed to load community");
+  }
 
   return (
     <div className="bg-background">
@@ -71,29 +99,35 @@ const page = async () => {
           <p className="font-semibold">Recent activity</p>
 
           <div className="flex flex-col gap-5">
-            {recentActivities.map((item) => (
+            {data?.map((item) => (
               <div key={item.id} className="flex gap-6">
                 <div className="flex gap-4">
                   <Image
-                    src={item.avatar}
-                    alt={item.username}
+                    src={item.profiles.avatar_url || profile}
+                    alt={item.profiles.username}
                     className="rounded-full w-12 h-12"
+                    width={12}
+                    height={12}
                   />
                   <div className="flex flex-col gap-2.5">
                     <p className="text-[#57605E]">
                       <span className="font-semibold text-[#1B1D1D]">
-                        {item.username}
+                        {item.profiles.username}
                       </span>{" "}
-                      {item.action} {item.item}
+                      {item.action} {item.recipes?.title}
                     </p>
-                    <p className="text-[#57605E] text-sm">{item.time}</p>
+                    <p className="text-[#57605E] text-sm">
+                      {formatRelativeTime(item.created_at)} ago
+                    </p>
                   </div>
                 </div>
-                {item.image && (
+                {item.recipes?.image_url && (
                   <Image
-                    src={item.image}
+                    src={item.recipes.image_url}
                     alt="photo"
-                    className="rounded-lg w-14"
+                    className="rounded-md w-20"
+                    width={10}
+                    height={10}
                   />
                 )}
               </div>

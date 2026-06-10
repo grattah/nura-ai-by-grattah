@@ -12,7 +12,7 @@ const _josefinText = Josefin_Sans({ subsets: ["latin"] });
 const _redHatDisplay = Red_Hat_Display({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Nura",
+  title: "Nuko",
   description: "Health and Wellness Companion",
   generator: "v0.app",
   appleWebApp: {
