@@ -116,7 +116,7 @@ export default function CategoryDetailPage() {
       {/* Header */}
       <div className="flex items-center px-4 pt-5 pb-4 gap-3">
         <button
-          onClick={() => router.push("/categories")}
+          onClick={() => router.back()}
           className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center shrink-0 hover:opacity-75 transition-opacity"
           aria-label="Back"
         >

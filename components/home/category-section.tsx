@@ -8,24 +8,28 @@ const CATEGORIES = [
   {
     label: "Detox",
     icon: <Leaf />,
-    href: "/recipes?category=detox",
+    href: "/categories/detox",
     iconBg: "#319F431F",
   },
   {
     label: "Immunity",
     icon: <Shield />,
-    href: "/recipes?category=immunity",
+    href: "/categories/immunity",
     iconBg: "#0D88F81F",
   },
   {
     label: "Energy",
     icon: <Lightning />,
-    href: "/recipes?category=energy",
+    href: "/categories/energy",
     iconBg: "#F8BD001F",
   },
 ];
 
-export function CategorySection() {
+interface UpgradeBannerProps {
+  hasAccess: boolean;
+}
+
+export function CategorySection({ hasAccess }: UpgradeBannerProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
@@ -36,7 +40,7 @@ export function CategorySection() {
           href="/categories"
           className="flex items-center gap-1 text-base text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4"
         >
-          See all <Lock className="w-3 h-3" />
+          See all {!hasAccess && <Lock className="w-3 h-3" />}
         </Link>
       </div>
       <div className="flex gap-2 w-full">

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Eye, EyeOff, LockKeyhole, Mail, User } from "lucide-react";
@@ -167,16 +168,13 @@ export default function SetupProfilePage() {
         <DialogContent className="sm:max-w-sm p-8 text-center space-y-4 [&>button]:hidden">
           {/* Confetti check */}
           <div className="flex justify-center">
-            <div className="relative w-20 h-20">
-              <div
-                className="w-20 h-20 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: "#22C55E" }}
-              >
-                <span className="text-3xl text-white">✓</span>
-              </div>
-              <span className="absolute -top-2 -right-1 text-lg">✨</span>
-              <span className="absolute -top-1 left-0 text-lg">🎉</span>
-            </div>
+            <Image
+              src="/success.svg"
+              alt="success-icon"
+              width={200}
+              height={201}
+              className="shrink-0 object-contain"
+            />
           </div>
           <div>
             <h2 className="text-xl font-bold text-foreground">
