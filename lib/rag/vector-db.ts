@@ -76,7 +76,7 @@ export function createSupabaseVectorDB(): VectorDB {
         title: v.metadata.title,
         source_url: v.metadata.source_url,
         content: v.metadata.text,
-        embedding: v.values,
+        embedding: JSON.stringify(v.values),
       }));
 
       const { error } = await supabase
@@ -88,7 +88,7 @@ export function createSupabaseVectorDB(): VectorDB {
 
     async query({ vector, contextId, topK = 6, minScore = 0.72 }) {
       const { data, error } = await supabase.rpc("match_embeddings", {
-        query_embedding: vector,
+        query_embedding: JSON.stringify(vector),
         match_context_id: contextId,
         match_count: topK,
         min_score: minScore,
