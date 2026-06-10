@@ -36,7 +36,7 @@ const AccordionSection = ({
       {/* 1 — Ingredients */}
       <AccordionItem
         value="ingredients"
-        className="border-0 rounded-lg overflow-hidden bg-[#FFFFFF]"
+        className="border-0 rounded-xl overflow-hidden bg-[#FFFFFF]"
       >
         <AccordionTrigger className="px-5 py-4 hover:no-underline min-h-14">
           <div className="flex items-center justify-between flex-1">
@@ -74,7 +74,7 @@ const AccordionSection = ({
       {/* 2 — How to make it */}
       <AccordionItem
         value="how-to"
-        className="border-0 rounded-lg overflow-hidden bg-[#FFFFFF]"
+        className="border-0 rounded-xl overflow-hidden bg-[#FFFFFF]"
       >
         <AccordionTrigger className="px-5 py-4 hover:no-underline min-h-14">
           <div className="flex items-center justify-between flex-1">
@@ -111,7 +111,7 @@ const AccordionSection = ({
       {/* 3 — Why it works */}
       <AccordionItem
         value="why"
-        className="border-0 rounded-lg overflow-hidden bg-[#FFFFFF]"
+        className="border-0 rounded-xl overflow-hidden bg-[#FFFFFF]"
       >
         <AccordionTrigger className="px-5 py-4 hover:no-underline min-h-14">
           <div className="flex items-center justify-between flex-1">
@@ -138,7 +138,7 @@ const AccordionSection = ({
       {/* 4 — Inside Tip */}
       <AccordionItem
         value="tip"
-        className="border-0 rounded-lg overflow-hidden bg-[#EEF4FB]"
+        className="border-0 rounded-xl overflow-hidden bg-[#EEF4FB]"
       >
         <AccordionTrigger className="px-5 py-4 hover:no-underline min-h-14">
           <div className="flex items-center justify-between flex-1">

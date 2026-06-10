@@ -103,12 +103,23 @@ const page = () => {
   }
 
   const recipeSearch = async () => {
-    const { data, error } = await supabase
-      .from("recipes")
-      .select("*")
-      .or(
-        `title.ilike.%${searchTerm}%,short_description.ilike.%${searchTerm}%`
+    const words = searchTerm.trim().split(/\s+/).filter(Boolean);
+
+    if (words.length === 0) {
+      setRecipes([]);
+      setSearchState("empty");
+      return;
+    }
+
+    let query = supabase.from("recipes").select("*");
+
+    for (const word of words) {
+      query = query.or(
+        `title.ilike.%${word}%,short_description.ilike.%${word}%`
       );
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.log(error);
@@ -164,7 +175,7 @@ const page = () => {
   return (
     <div className="bg-background">
       <main className="px-4 pt-6">
-        <p className="font-semibold text-xl">Find recipe</p>
+        <p className="font-semibold text-2xl text-[#111312]">Find recipe</p>
 
         <div className="mt-8">
           <div className="relative">
@@ -176,7 +187,7 @@ const page = () => {
               value={searchTerm}
               onChange={(e) => handleSearchTermChange(e.target.value)}
               type="text"
-              className="w-full bg-[#FFFFFF] py-3 pl-9 pr-3 rounded-lg border border-[#E6ECEA] text-sm placeholder:text-[#9CA5A3] focus:ring-2 focus:ring-ring outline-none"
+              className="w-full bg-[#FFFFFF] py-3 pl-9 pr-3 rounded-xl border border-[#E6ECEA] text-base placeholder:text-[#9CA5A3] focus:ring-2 focus:ring-ring outline-none"
               placeholder="Search recipe..."
             />
             {searchTerm.length > 0 && (
@@ -250,11 +261,9 @@ const page = () => {
                         <p className="text-sm text-[#57605E]">You may like</p>
                         <div className="flex flex-col gap-3">
                           {suggestedRecipes.map((recipe) => (
-                            <button
+                            <Link
                               key={recipe.id}
-                              onClick={() =>
-                                handleRecipeClick(recipe.id, recipe.title)
-                              }
+                              href={`/recipes/${recipe.id}`}
                               className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3 text-left w-full"
                             >
                               <GlassWater
@@ -263,7 +272,7 @@ const page = () => {
                                 strokeWidth={2}
                               />
                               <p className="font-medium">{recipe.title}</p>
-                            </button>
+                            </Link>
                           ))}
                         </div>
                       </div>

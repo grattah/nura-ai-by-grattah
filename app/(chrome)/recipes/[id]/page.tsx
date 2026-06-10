@@ -16,6 +16,9 @@ import BackButton from "@/components/back-button";
 import { DetoxCard } from "@/components/recipe/DetoxCard";
 import Comment from "@/components/recipe/Comment";
 import AccordionSection from "@/components/recipe/AccordionSection";
+import LikeButton from "@/components/recipe/LikeButton";
+import { logRecipeView } from "@/actions/activity";
+import { isLiked } from "@/actions/likes";
 
 interface CommentData {
   id: string;
@@ -89,12 +92,19 @@ export default async function RecipeDetailPage({
 
   if (!recipe) return notFound();
 
+  logRecipeView(recipe.id);
+
   const [
     bookmarked,
+    liked,
     {
       data: { user },
     },
-  ] = await Promise.all([isBookmarked(recipe.id), supabase.auth.getUser()]);
+  ] = await Promise.all([
+    isBookmarked(recipe.id),
+    isLiked(recipe.id),
+    supabase.auth.getUser(),
+  ]);
 
   const ingredients =
     (recipe.ingredients as Array<{ emoji: string; label: string }>) ?? [];
@@ -132,7 +142,7 @@ export default async function RecipeDetailPage({
 
         <main className="pb-6">
           {/* Hero image — LCP element, load eagerly */}
-          <div className="mx-4 rounded-3xl overflow-hidden bg-muted mb-8 relative aspect-video">
+          <div className="mx-4 rounded-4xl overflow-hidden bg-muted mb-8 relative aspect-video">
             {heroImageUrl && (
               <Image
                 src={heroImageUrl}
@@ -151,7 +161,7 @@ export default async function RecipeDetailPage({
             <h1 className="text-2xl font-bold text-foreground mb-1.5 leading-tight">
               {recipe.title}
             </h1>
-            <p className="text-base text-muted-foreground leading-relaxed">
+            <p className="text-base font-medium text-[#57605E] leading-relaxed">
               {recipe.short_description}
             </p>
           </div>
@@ -181,13 +191,15 @@ export default async function RecipeDetailPage({
 
             <div className="flex justify-between items-center mt-8">
               <div className="flex items-center gap-2">
-                <p className="text-[#727E7A] text-xs">Was this helpful?</p>
-                <button className="p-2 rounded-full bg-[#E8E6DC]">
-                  <Heart size={16} color="#227B6F" strokeWidth={1.5} />
-                </button>
+                <p className="text-[#727E7A] text-sm">Was this helpful?</p>
+                <LikeButton
+                  recipeId={recipe.id}
+                  initialLiked={liked}
+                  isAuthenticated={!!user}
+                />
               </div>
-              <p className="font-medium text-xs">
-                1.6k people found this helpful
+              <p className="font-medium text-sm">
+                {recipe.likes} people found this helpful
               </p>
             </div>
 
