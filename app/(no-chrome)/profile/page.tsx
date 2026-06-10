@@ -12,6 +12,7 @@ import {
   LockKeyhole,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { formatRelativeTime } from "@/lib/utils";
 import { updateDisplayName, updatePassword } from "@/actions/profile";
 import { AvatarUpload } from "@/components/profile/avatar-upload";
 import {
@@ -26,6 +27,7 @@ interface ProfileUser {
   fullName: string;
   avatarUrl: string | null;
   avatarLetter: string;
+  passwordUpdatedAt: string | null;
 }
 
 export default function ProfilePage() {
@@ -71,6 +73,7 @@ export default function ProfilePage() {
         fullName: name,
         avatarUrl: u.user_metadata?.avatar_url ?? null,
         avatarLetter: (name || u.email || "N").charAt(0).toUpperCase(),
+        passwordUpdatedAt: u.user_metadata?.password_updated_at ?? null,
       });
       setFullName(name);
     });
@@ -113,7 +116,7 @@ export default function ProfilePage() {
 
     // Supabase invalidates the session after password change
     await supabase.auth.signOut();
-    router.push("/log-back-in");
+    router.push(`/log-back-in?email=${encodeURIComponent(user?.email ?? "")}`);
   };
 
   if (!user) {
@@ -127,10 +130,10 @@ export default function ProfilePage() {
   return (
     <div className="min-h-dvh bg-background pb-10">
       {/* Header */}
-      <div className="flex items-center px-4 pt-5 pb-11">
+      <div className="flex items-center px-4 pt-5 pb-11 relative">
         <button
           onClick={() => router.back()}
-          className="size-10 shrink-0 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
+          className="size-10 absolute left-4 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
           aria-label="Back"
         >
           <ArrowLeft className="size-5 text-foreground" />
@@ -221,11 +224,13 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="text-left">
-                  <p className="text-base font-medium text-foreground">
+                  <p className="text-base font-medium text-base-text">
                     Change password
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    Last change 3 months ago
+                  <p className="text-xs text-subtle">
+                    {user.passwordUpdatedAt
+                      ? `Last changed ${formatRelativeTime(user.passwordUpdatedAt)}`
+                      : "Not changed yet"}
                   </p>
                 </div>
               </div>

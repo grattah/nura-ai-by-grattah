@@ -1,4 +1,4 @@
-import { createServiceRoleClient } from "@/lib/supabase/server";
+import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 const MAX_ATTEMPTS = 10;
@@ -8,20 +8,23 @@ function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function POST(req: Request) {
-  const { userId } = await req.json();
+export async function POST() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!userId) {
-    return NextResponse.json({ success: false }, { status: 400 });
+  if (!user) {
+    return NextResponse.json({ success: false }, { status: 401 });
   }
 
-  const supabase = createServiceRoleClient();
+  const adminSupabase = createServiceRoleClient();
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    const { data } = await supabase
+    const { data } = await adminSupabase
       .from("subscriptions")
       .select("status, expires_at")
-      .eq("user_id", userId)
+      .eq("user_id", user.id)
       .eq("status", "active")
       .maybeSingle();
 
@@ -38,7 +41,7 @@ export async function POST(req: Request) {
   // Webhook hasn't fired yet — the user will still land on home and
   // useAccess() will re-check on mount once the session is established.
   console.warn(
-    `[api/access] Subscription not found after ${MAX_ATTEMPTS} attempts for user ${userId}`,
+    `[api/access] Subscription not found after ${MAX_ATTEMPTS} attempts for user ${user.id}`,
   );
   return NextResponse.json({ success: false });
 }

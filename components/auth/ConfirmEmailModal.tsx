@@ -53,10 +53,12 @@ export function ConfirmEmailModal({
           </p>
         </div>
 
-        <div className="mt-6 rounded-xl bg-[#F5F3EC] p-4 flex items-start gap-3">
+        <div className="mt-6 rounded-xl bg-grey-c100 p-4 flex items-start gap-3">
           <Mail size={20} className="text-[#227B6F] mt-0.5 shrink-0" />
           <div className="flex flex-col">
-            <p className="font-medium text-[#1A1A1A] break-all text-xs">{email}</p>
+            <p className="font-medium text-[#1A1A1A] break-all text-xs">
+              {email}
+            </p>
             <p className="text-xs text-[#57605E] mt-1">
               We will be sending a recovery link here
             </p>

@@ -213,6 +213,35 @@ function PersonalizedSearchContent() {
             </div>
           </div>
 
+          {/* Why this works */}
+          {result.whyItWorks.length > 0 && (
+            <section>
+              <div className="space-y-3 mb-3">
+                <h2 className="text-lg font-semibold text-foreground">
+                  Why these suggestions?
+                </h2>
+                <p className="text-subtle leading-snug">
+                  These recipes contain ingredients that work together to
+                  support your body:
+                </p>
+              </div>
+              <div className="space-y-3">
+                {result.whyItWorks.map((point, i) => (
+                  <div key={i} className="flex gap-3 items-start">
+                    <CheckCircle2
+                      className="size-4.5 shrink-0 mt-1"
+                      style={{ color: "var(--mint-green)" }}
+                      strokeWidth={2}
+                    />
+                    <p className="text-base text-subtle leading-snug">
+                      {point}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
           {/* Drinks to try */}
           {result.drinksToTry.length > 0 && (
             <section>
@@ -274,35 +303,6 @@ function PersonalizedSearchContent() {
                         {item.description}
                       </p>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Why this works */}
-          {result.whyItWorks.length > 0 && (
-            <section>
-              <div className="space-y-3 mb-3">
-                <h2 className="text-lg font-semibold text-foreground">
-                  Why these suggestions?
-                </h2>
-                <p className="text-subtle leading-snug">
-                  These recipes contain ingredients that work together to
-                  support your body:
-                </p>
-              </div>
-              <div className="space-y-3">
-                {result.whyItWorks.map((point, i) => (
-                  <div key={i} className="flex gap-3 items-start">
-                    <CheckCircle2
-                      className="size-4.5 shrink-0 mt-1"
-                      style={{ color: "var(--mint-green)" }}
-                      strokeWidth={2}
-                    />
-                    <p className="text-base text-subtle leading-snug">
-                      {point}
-                    </p>
                   </div>
                 ))}
               </div>

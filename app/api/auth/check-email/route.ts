@@ -60,11 +60,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ exists: false, hasPassword: false });
     }
 
-    // An "email" identity means the user signed up with email+password
-    const identities: { provider: string }[] = Array.isArray(data.identities)
-      ? data.identities
-      : [];
-    const hasPassword = identities.some((i) => i.provider === "email");
+    // Identities don't reliably tell us whether a password is set — OTP-based
+    // sign-in also creates an "email" identity. Instead, `has_password` is
+    // explicitly stamped onto user_metadata whenever a password is created
+    // or changed (see actions/profile.ts, auth-form.tsx, update-password-form.tsx).
+    const hasPassword = data.user_metadata?.has_password === true;
 
     return NextResponse.json({ exists: true, hasPassword });
   } catch {

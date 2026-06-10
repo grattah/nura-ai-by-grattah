@@ -30,10 +30,10 @@ export default async function ManageSubscriptionPage() {
   return (
     <div className="min-h-dvh bg-background pb-10">
       {/* Header */}
-      <div className="flex items-center px-4 pt-5 pb-10">
+      <div className="flex items-center px-4 pt-5 pb-10 relative">
         <Link
           href="/account"
-          className="size-10 shrink-0 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
+          className="size-10 absolute left-4 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
           aria-label="Back"
         >
           <ArrowLeft className="size-5 text-foreground" />

@@ -11,7 +11,7 @@ import {
   checkPasswordStrength,
   isPasswordValid,
 } from "@/components/profile/password-requirements";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 export default function SetupProfilePage() {
   const router = useRouter();
@@ -69,10 +69,10 @@ export default function SetupProfilePage() {
     <>
       <div className="min-h-dvh bg-background pb-10">
         {/* Header */}
-        <div className="flex items-center px-4 pt-5 pb-11">
+        <div className="flex items-center px-4 pt-5 pb-11 relative">
           <button
             onClick={() => router.back()}
-            className="size-10 shrink-0 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
+            className="size-10 absolute left-4 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
             aria-label="Back"
           >
             <ArrowLeft className="size-5 text-foreground" />
@@ -177,9 +177,9 @@ export default function SetupProfilePage() {
             />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-foreground">
+            <DialogTitle className="text-xl font-bold text-foreground">
               Set up completed!
-            </h2>
+            </DialogTitle>
             <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
               Your account is now fully set up. You can upload your profile
               picture now if you wish.

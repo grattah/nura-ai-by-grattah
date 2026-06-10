@@ -17,7 +17,7 @@ export default async function ReturnPage({
   if (session.status === "open") redirect("/");
 
   if (session.status === "complete") {
-    return <ReturnClient userId={session.client_reference_id ?? ""} />;
+    return <ReturnClient />;
   }
 
   redirect("/");

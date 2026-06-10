@@ -22,7 +22,7 @@ async function sendWelcomeEmail(email: string, token: string) {
   const { data: linkData } = await adminSupabase.auth.admin.generateLink({
     type: "magiclink",
     email,
-    options: { redirectTo: `${origin}/auth/callback?next=/` },
+    options: { redirectTo: `${appUrl}/auth/callback?next=/` },
   });
 
   // TODO: swap in Resend / Postmark
@@ -35,7 +35,7 @@ async function sendWelcomeEmail(email: string, token: string) {
   // })
 
   console.log(
-    `[webhook] Welcome email sent for ${email}, with magic link: ${linkData.properties?.action_link}`,
+    `[webhook] Welcome email sent for ${email}, with magic link: ${linkData?.properties?.action_link}`,
   );
 }
 

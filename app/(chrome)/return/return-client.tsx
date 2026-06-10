@@ -3,15 +3,11 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-export function ReturnClient({ userId }: { userId: string }) {
+export function ReturnClient() {
   const router = useRouter();
 
   useEffect(() => {
-    fetch("/api/access", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId }),
-    })
+    fetch("/api/access", { method: "POST" })
       .then((r) => r.json())
       .then(({ success }) => {
         console.log("Account activation result:", success);

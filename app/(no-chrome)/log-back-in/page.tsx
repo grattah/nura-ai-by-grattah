@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, Eye, EyeOff, Mail } from "lucide-react";
+import { Suspense, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft, Eye, EyeOff, LockKeyhole, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
-export default function LogBackInPage() {
+function LogBackInContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,16 +17,21 @@ export default function LogBackInPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Try to get email from a cookie/storage, or leave blank
+    const emailFromQuery = searchParams.get("email");
+    if (emailFromQuery) {
+      setEmail(emailFromQuery);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user.email) setEmail(session.user.email);
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
-    if (!password.trim() || isPending) return;
+    if (!email.trim() || !password.trim() || isPending) return;
     setIsPending(true);
     setError(null);
 
@@ -47,33 +53,44 @@ export default function LogBackInPage() {
   return (
     <div className="min-h-dvh bg-background pb-10">
       {/* Header */}
-      <div className="flex flex-col items-center px-4 pt-5 pb-8">
-        <div className="w-full flex items-center mb-4">
-          <button
-            onClick={() => router.back()}
-            className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
-            aria-label="Back"
-          >
-            <ArrowLeft className="size-5 text-foreground" />
-          </button>
+      <div className="flex items-center px-4 pt-5 pb-8 relative">
+        <button
+          onClick={() => router.back()}
+          className="size-10 absolute left-4 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
+          aria-label="Back"
+        >
+          <ArrowLeft className="size-5 text-base-text" />
+        </button>
+
+        <div className="flex-1 min-w-0 text-center">
+          <h1 className="text-xl font-semibold text-base-text">Log back in</h1>
+          <p className="text-sm text-subtle mt-1">
+            Enter your new details to log in
+          </p>
         </div>
-        <h1 className="text-xl font-semibold text-foreground">Log back in</h1>
-        <p className="text-sm text-muted-foreground mt-1">Enter your new details to log in</p>
       </div>
 
       <form onSubmit={handleSubmit} className="px-4 space-y-4">
         <div className="space-y-1.5">
-          <label className="text-sm text-muted-foreground">Your email address</label>
+          <label className="text-sm text-muted-foreground">
+            Your email address
+          </label>
           <div className="flex items-center gap-3 bg-card rounded-2xl px-4 h-13 border border-border">
             <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
-            <span className="text-base text-foreground flex-1">{email}</span>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="flex-1 bg-transparent text-base text-foreground outline-none"
+            />
           </div>
         </div>
 
         <div className="space-y-1.5">
           <label className="text-sm text-muted-foreground">Password</label>
           <div className="flex items-center gap-3 bg-card rounded-2xl px-4 h-13 border border-border">
-            <span className="text-muted-foreground shrink-0">🔒</span>
+            <LockKeyhole className="w-4 h-4 text-subtle shrink-0" />
             <input
               type={showPw ? "text" : "password"}
               value={password}
@@ -81,8 +98,16 @@ export default function LogBackInPage() {
               placeholder="••••••••••"
               className="flex-1 bg-transparent text-base text-foreground outline-none"
             />
-            <button type="button" onClick={() => setShowPw((v) => !v)} className="text-muted-foreground shrink-0">
-              {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            <button
+              type="button"
+              onClick={() => setShowPw((v) => !v)}
+              className="text-muted-foreground shrink-0"
+            >
+              {showPw ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
             </button>
           </div>
           <Link
@@ -98,7 +123,7 @@ export default function LogBackInPage() {
 
         <button
           type="submit"
-          disabled={!password.trim() || isPending}
+          disabled={!email.trim() || !password.trim() || isPending}
           className="w-full py-4 rounded-full text-white font-semibold text-base disabled:opacity-50 mt-2"
           style={{ backgroundColor: "var(--mint-green)" }}
         >
@@ -106,5 +131,13 @@ export default function LogBackInPage() {
         </button>
       </form>
     </div>
+  );
+}
+
+export default function LogBackInPage() {
+  return (
+    <Suspense fallback={<div className="min-h-dvh bg-background" />}>
+      <LogBackInContent />
+    </Suspense>
   );
 }
