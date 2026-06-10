@@ -13,6 +13,7 @@ interface BookmarkButtonProps {
   isAuthenticated: boolean;
   text: string;
   addText: string;
+  popularStyle: string;
 }
 
 export function BookmarkButton({
@@ -21,12 +22,14 @@ export function BookmarkButton({
   isAuthenticated,
   text,
   addText,
+  popularStyle,
 }: BookmarkButtonProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [bookmarked, setBookmarked] = useState(initialBookmarked);
   const [isPending, startTransition] = useTransition();
   const showText = addText === "show";
+  const popular = popularStyle === "yes";
 
   const handleToggle = () => {
     if (!isAuthenticated) {
@@ -65,15 +68,19 @@ export function BookmarkButton({
     <button
       onClick={handleToggle}
       disabled={isPending}
-      className={`rounded-full text-[#57605E] hover:opacity-70 transition-opacity disabled:opacity-50 flex items-center ${
-        showText ? "border border-[#C4CAC8] bg-inherit px-4 py-3" : "bg-[#E8E6DC] p-3"
-      }`}
+      className={cn(
+        "flex items-center rounded-full transition-all hover:opacity-90 disabled:opacity-50",
+        !showText && !popular && "bg-[#E8E6DC] p-3 text-[#57605E]",
+        showText &&
+          "border border-[#C4CAC8] bg-transparent px-4 py-3 text-[#57605E]",
+        popular && "bg-white p-2"
+      )}
       aria-label={bookmarked ? "Remove bookmark" : "Bookmark recipe"}
     >
       <Bookmark
         strokeWidth={2.5}
         size={16}
-        className={cn("transition-all", bookmarked && "fill-foreground")}
+        className={cn("transition-all", bookmarked && "fill-foreground", popular && "text-[#227B6F]")}
       />
       {showText && (
         <span className="ml-2 font-medium text-xs text-[#727E7A]">{text}</span>

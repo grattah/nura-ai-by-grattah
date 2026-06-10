@@ -6,7 +6,7 @@ export default function FindRecipePage() {
     <div className="min-h-dvh bg-background px-4 pt-5">
       <div className="flex items-center gap-3 mb-8">
         <Link
-          href="/categories"
+          href="/recipes/find"
           className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
           aria-label="Back"
         >
