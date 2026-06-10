@@ -10,7 +10,7 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] });
 const _redHatText = Red_Hat_Text({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Nura",
+  title: "Nuko",
   description: "Health and Wellness Companion",
   generator: "v0.app",
   appleWebApp: {

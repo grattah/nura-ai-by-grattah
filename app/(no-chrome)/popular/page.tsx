@@ -75,7 +75,7 @@ const page = async () => {
                     <Image
                       src={recipe.image_url}
                       alt={recipe.title}
-                      className="w-full h-0 object-cover transition-transform duration-300 hover:scale-110"
+                      className="w-full h-30 object-cover transition-transform duration-300 hover:scale-110"
                       width={100}
                       height={200}
                     />
