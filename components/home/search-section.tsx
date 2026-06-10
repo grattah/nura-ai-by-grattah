@@ -165,7 +165,7 @@ export function SearchSection() {
           <p className="text-xs font-medium text-subtle uppercase tracking-wider mb-3">
             Common Concerns
           </p>
-          <div className="flex flex-wrap gap-2 mx-3">
+          <div className="flex flex-wrap gap-2">
             {COMMON_CONCERNS.map((concern) => (
               <button
                 key={concern}

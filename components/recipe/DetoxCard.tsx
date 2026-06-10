@@ -7,14 +7,14 @@ interface DetoxCardProps {
 
 export function DetoxCard({ detoxPercent, hydrationPercent }: DetoxCardProps) {
   // Ring geometry
-  const size = 100;
-  const strokeWidth = 10;
+  const size = 82;
+  const strokeWidth = 7;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (detoxPercent / 100) * circumference;
 
   return (
-    <div className="rounded-2xl bg-white p-5 flex items-center gap-5">
+    <div className="rounded-3xl bg-white p-4 flex items-center gap-4">
       <div className="relative shrink-0" style={{ width: size, height: size }}>
         <svg
           width={size}
@@ -50,13 +50,16 @@ export function DetoxCard({ detoxPercent, hydrationPercent }: DetoxCardProps) {
         </div>
       </div>
 
-      <div>
-        <p className="text-lg font-semibold text-[#1A1A1A]">
+      <div className="flex-1 space-y-2">
+        <p className="text-base text-black font-semibold">
+          {" "}
           This recipe contains{" "}
-          <span className="text-[#227B6F] font-semibold">
+        </p>
+        <p className="text-base">
+          <span className="text-mint-green font-semibold">
             {detoxPercent}% detoxification support,
           </span>{" "}
-          <span className="text-[#57605E]">
+          <span className="text-subtle">
             and {hydrationPercent}% hydration.
           </span>
         </p>

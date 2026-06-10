@@ -108,7 +108,7 @@ export default async function HomePage() {
         />
 
         {/* Categories */}
-        <CategorySection />
+        <CategorySection hasAccess={hasAccess} />
 
         {/* Upgrade / Pending banner */}
         <UpgradeBanner hasAccess={hasAccess} />

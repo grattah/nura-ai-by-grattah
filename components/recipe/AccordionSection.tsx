@@ -39,18 +39,20 @@ const AccordionSection = ({
         className="border-0 rounded-lg overflow-hidden bg-[#FFFFFF]"
       >
         <AccordionTrigger className="px-5 py-4 hover:no-underline min-h-14">
-          <div className="flex items-center gap-2.5">
-            <Image src={iconIngredients} alt="ingredients icon" />
-            <span className="text-base font-medium text-black/80">
-              Ingredients
-            </span>
-          </div>
+          <div className="flex items-center justify-between flex-1">
+            <div className="flex items-center gap-2.5">
+              <Image src={iconIngredients} alt="ingredients icon" />
+              <span className="text-base font-medium text-black/80">
+                Ingredients
+              </span>
+            </div>
 
-          {hasAccess ? (
-            <LockKeyholeOpen size={20} color="#9CA5A3" className="ml-auto" />
-          ) : (
-            <LockKeyhole size={20} color="#9CA5A3" className="ml-auto" />
-          )}
+            {hasAccess ? (
+              <LockKeyholeOpen size={20} color="#9CA5A3" className="ml-auto" />
+            ) : (
+              <LockKeyhole size={20} color="#9CA5A3" className="ml-auto" />
+            )}
+          </div>
         </AccordionTrigger>
         <AccordionContent className="px-4 pb-4 pt-0">
           <div className="space-y-2">
@@ -75,17 +77,19 @@ const AccordionSection = ({
         className="border-0 rounded-lg overflow-hidden bg-[#FFFFFF]"
       >
         <AccordionTrigger className="px-5 py-4 hover:no-underline min-h-14">
-          <div className="flex items-center gap-2.5">
-            <Image src={iconHTMI} alt="HTMI icon" />
-            <span className="text-base font-medium text-foreground">
-              How to make it
-            </span>
+          <div className="flex items-center justify-between flex-1">
+            <div className="flex items-center gap-2.5">
+              <Image src={iconHTMI} alt="HTMI icon" />
+              <span className="text-base font-medium text-foreground">
+                How to make it
+              </span>
+            </div>
+            {hasAccess ? (
+              <LockKeyholeOpen size={20} color="#9CA5A3" className="ml-auto" />
+            ) : (
+              <LockKeyhole size={20} color="#9CA5A3" className="ml-auto" />
+            )}
           </div>
-          {hasAccess ? (
-            <LockKeyholeOpen size={20} color="#9CA5A3" className="ml-auto" />
-          ) : (
-            <LockKeyhole size={20} color="#9CA5A3" className="ml-auto" />
-          )}
         </AccordionTrigger>
         <AccordionContent className="px-5 pb-5 pt-0">
           <ol className="space-y-3 bg-[#F2F6F5] p-4 rounded-lg">
@@ -110,17 +114,19 @@ const AccordionSection = ({
         className="border-0 rounded-lg overflow-hidden bg-[#FFFFFF]"
       >
         <AccordionTrigger className="px-5 py-4 hover:no-underline min-h-14">
-          <div className="flex items-center gap-2.5">
-            <Image src={iconWIW} alt="HTMI icon" />
-            <span className="text-base font-medium text-foreground">
-              Why it works
-            </span>
+          <div className="flex items-center justify-between flex-1">
+            <div className="flex items-center gap-2.5">
+              <Image src={iconWIW} alt="HTMI icon" />
+              <span className="text-base font-medium text-foreground">
+                Why it works
+              </span>
+            </div>
+            {hasAccess ? (
+              <LockKeyholeOpen size={20} color="#9CA5A3" className="ml-auto" />
+            ) : (
+              <LockKeyhole size={20} color="#9CA5A3" className="ml-auto" />
+            )}
           </div>
-          {hasAccess ? (
-            <LockKeyholeOpen size={20} color="#9CA5A3" className="ml-auto" />
-          ) : (
-            <LockKeyhole size={20} color="#9CA5A3" className="ml-auto" />
-          )}
         </AccordionTrigger>
         <AccordionContent className="px-5 pb-5 pt-0">
           <p className="text-base text-[#57605E] leading-relaxed bg-[#F2F6F5] p-4 rounded-lg">
@@ -135,19 +141,21 @@ const AccordionSection = ({
         className="border-0 rounded-lg overflow-hidden bg-[#EEF4FB]"
       >
         <AccordionTrigger className="px-5 py-4 hover:no-underline min-h-14">
-          <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0">
-              <FaInfoCircle fill="#1558EA" size={16} />
+          <div className="flex items-center justify-between flex-1">
+            <div className="flex items-center gap-2.5">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0">
+                <FaInfoCircle fill="#1558EA" size={16} />
+              </div>
+              <span className="text-base font-medium text-[#1B1D1D]">
+                Inside Tip
+              </span>
             </div>
-            <span className="text-base font-medium text-[#1B1D1D]">
-              Inside Tip
-            </span>
+            {hasAccess ? (
+              <LockKeyholeOpen size={20} color="#9CA5A3" className="ml-auto" />
+            ) : (
+              <LockKeyhole size={20} color="#9CA5A3" className="ml-auto" />
+            )}
           </div>
-          {hasAccess ? (
-            <LockKeyholeOpen size={20} color="#9CA5A3" className="ml-auto" />
-          ) : (
-            <LockKeyhole size={20} color="#9CA5A3" className="ml-auto" />
-          )}
         </AccordionTrigger>
         <AccordionContent className="px-5 pb-5 pt-0">
           <p className="text-base text-muted-foreground leading-relaxed">
