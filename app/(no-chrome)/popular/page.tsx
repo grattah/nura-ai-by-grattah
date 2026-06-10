@@ -6,6 +6,7 @@ import { ArrowLeft, MoveRight, Heart, Bookmark } from "lucide-react";
 import { BookmarkButton } from "@/components/bookmark-button";
 import { createClient } from "@/lib/supabase/client";
 import { isBookmarked } from "@/actions/bookmark";
+import { truncateText } from "@/lib/truncate-text";
 
 const page = async () => {
   const supabase = createClient();
@@ -71,11 +72,11 @@ const page = async () => {
               </div>
               {recipe.image_url && (
                 <Link href={`/recipes/${recipe.id}`}>
-                  <div className="overflow-hidden rounded-lg">
+                  <div className="overflow-hidden rounded-2xl">
                     <Image
                       src={recipe.image_url}
                       alt={recipe.title}
-                      className="w-full h-30 object-cover transition-transform duration-300 hover:scale-110"
+                      className="w-full h-[167] object-cover transition-transform duration-300 hover:scale-110"
                       width={100}
                       height={200}
                     />
@@ -85,15 +86,15 @@ const page = async () => {
 
               <Link
                 href={`/recipes/${recipe.id}`}
-                className="text-[#727E7A] text-[12px]"
+                className="text-[#727E7A] text-xs font-medium font-redHatDisplay"
               >
                 INDIGESTION
               </Link>
               <Link
                 href={`/recipes/${recipe.id}`}
-                className="text-[#111312] font-medium"
+                className="text-[#111312] font-medium font-josefin"
               >
-                {recipe.title}
+                {truncateText(recipe.title, 3)}
               </Link>
             </div>
           ))}

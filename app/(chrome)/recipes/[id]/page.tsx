@@ -142,7 +142,7 @@ export default async function RecipeDetailPage({
 
         <main className="pb-6">
           {/* Hero image — LCP element, load eagerly */}
-          <div className="mx-4 rounded-3xl overflow-hidden bg-muted mb-8 relative aspect-video">
+          <div className="mx-4 rounded-4xl overflow-hidden bg-muted mb-8 relative aspect-video">
             {heroImageUrl && (
               <Image
                 src={heroImageUrl}
@@ -161,7 +161,7 @@ export default async function RecipeDetailPage({
             <h1 className="text-2xl font-bold text-foreground mb-1.5 leading-tight">
               {recipe.title}
             </h1>
-            <p className="text-base text-muted-foreground leading-relaxed">
+            <p className="text-base font-medium text-[#57605E] leading-relaxed">
               {recipe.short_description}
             </p>
           </div>
@@ -191,14 +191,14 @@ export default async function RecipeDetailPage({
 
             <div className="flex justify-between items-center mt-8">
               <div className="flex items-center gap-2">
-                <p className="text-[#727E7A] text-xs">Was this helpful?</p>
+                <p className="text-[#727E7A] text-sm">Was this helpful?</p>
                 <LikeButton
                   recipeId={recipe.id}
                   initialLiked={liked}
                   isAuthenticated={!!user}
                 />
               </div>
-              <p className="font-medium text-xs">
+              <p className="font-medium text-sm">
                 {recipe.likes} people found this helpful
               </p>
             </div>

@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 
-import image from "@/public/web-app-manifest-512x512.png";
+import { truncateText } from "@/lib/truncate-text";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -66,19 +66,6 @@ async function getBookmarks(): Promise<BookmarkedRecipe[]> {
     }));
 }
 
-function truncateText(text: string, maxWords = 6): string {
-  const words = text.trim().split(/\s+/);
-
-  if (words.length <= maxWords) {
-    return text;
-  }
-
-  return words.slice(0, maxWords).join(" ") + "...";
-}
-
-const text =
-  "This is a very long description that contains more than twenty words and should be truncated when displayed in the recent activity feed.";
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function BookmarksPage() {
@@ -94,7 +81,7 @@ export default async function BookmarksPage() {
     <div className="min-h-screen bg-background">
       {/* Sub-header */}
       <div className="px-4 pt-5 pb-4">
-        <h1 className="text-xl font-bold text-foreground">Saved Recipes</h1>
+        <h1 className="text-2xl font-semibold text-[#111312]">Saved Recipes</h1>
       </div>
 
       <main className="px-4 pb-10">
@@ -145,16 +132,16 @@ function BookmarkCard({ bookmark }: { bookmark: BookmarkedRecipe }) {
                 <p className="text-base font-medium text-foreground leading-snug">
                   {bookmark.title}
                 </p>
-                <p className="text-sm">{truncateText(bookmark.description)}</p>
+                <p className="text-sm text-[#57605E]">{truncateText(bookmark.description)}</p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1">
                   <Clock size={16} color="#9CA5A3" />
-                  <p className="text-[#57605E] text-sm">{bookmark.bookmarked_at}</p>
+                  <p className="text-[#57605E] text-sm font-medium">{bookmark.bookmarked_at}</p>
                 </div>
                 <div className="flex items-center gap-1">
                   <FaHeart size={16} color="#227B6F" />
-                  <p className="text-[#227B6F] text-sm">{bookmark.likes}</p>
+                  <p className="text-[#227B6F] text-sm font-medium">{bookmark.likes}</p>
                 </div>
               </div>
             </div>

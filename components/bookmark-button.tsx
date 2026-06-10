@@ -83,7 +83,7 @@ export function BookmarkButton({
         className={cn("transition-all", bookmarked && "fill-foreground", popular && "text-[#227B6F]")}
       />
       {showText && (
-        <span className="ml-2 font-medium text-xs text-[#727E7A]">{text}</span>
+        <span className="ml-2 font-medium text-sm text-[#727E7A]">{text}</span>
       )}
     </button>
   );
