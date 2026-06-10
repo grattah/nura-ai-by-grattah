@@ -193,7 +193,7 @@ export default function CategoryDetailPage() {
       {/* Find a recipe CTA */}
       <div className="px-4 mt-4">
         <Link
-          href="/find-recipe"
+          href="/recipes/find"
           className="w-full flex items-center justify-center gap-2.5 py-4 rounded-full border border-mint-green text-mint-green text-base font-semibold hover:opacity-80 transition-opacity"
         >
           Find a recipe <ArrowRight className="size-5 text-mint-green" />
