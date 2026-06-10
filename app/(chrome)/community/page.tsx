@@ -36,10 +36,10 @@ const page = async () => {
   return (
     <div className="bg-background">
       <main className="px-4 pt-2">
-        <p className="text-xl font-semibold">Community</p>
+        <p className="text-2xl font-semibold text-[#111312]">Community</p>
 
         <div className="mt-12 flex flex-col gap-4">
-          <p className="font-semibold">Recent activity</p>
+          <p className="font-semibold text-base">Recent activity</p>
 
           <div className="flex flex-col gap-5">
             {data?.map((item) => (
@@ -68,7 +68,7 @@ const page = async () => {
                   <Image
                     src={item.recipes.image_url}
                     alt="photo"
-                    className="rounded-md w-20"
+                    className="rounded-lg w-[62]"
                     width={10}
                     height={10}
                   />
