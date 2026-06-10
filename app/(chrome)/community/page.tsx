@@ -103,8 +103,8 @@ const page = async () => {
               <div key={item.id} className="flex gap-6">
                 <div className="flex gap-4">
                   <Image
-                    src={item.profiles.avatar_url || profile}
-                    alt={item.profiles.username}
+                    src={item.profiles?.avatar_url || profile}
+                    alt={item.profiles?.username || "unknown user"}
                     className="rounded-full w-12 h-12"
                     width={12}
                     height={12}
@@ -112,7 +112,7 @@ const page = async () => {
                   <div className="flex flex-col gap-2.5">
                     <p className="text-[#57605E]">
                       <span className="font-semibold text-[#1B1D1D]">
-                        {item.profiles.username}
+                        {item.profiles?.username || "unknown user"}
                       </span>{" "}
                       {item.action} {item.recipes?.title}
                     </p>
