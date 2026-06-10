@@ -5,63 +5,6 @@ import profile from "@/public/profile.png";
 import { createClient } from "@/lib/supabase/server";
 import { formatRelativeTime } from "@/lib/format-time";
 
-const recentActivities = [
-  {
-    id: 1,
-    username: "oasis-i5lhl8fdfnn",
-    action: "searched",
-    item: "AH Bio Stievige crackers",
-    time: "5m ago",
-    avatar: profile,
-    image: profile,
-  },
-  {
-    id: 2,
-    username: "wellness-jane",
-    action: "saved",
-    item: "Warm ginger-lemon shot",
-    time: "12m ago",
-    avatar: profile,
-    image: null,
-  },
-  {
-    id: 3,
-    username: "fitlife-max",
-    action: "viewed",
-    item: "Turmeric immunity booster",
-    time: "20m ago",
-    avatar: profile,
-    image: profile,
-  },
-  {
-    id: 4,
-    username: "healthy-kitchen",
-    action: "liked",
-    item: "Berry yogurt smoothie",
-    time: "32m ago",
-    avatar: profile,
-    image: null,
-  },
-  {
-    id: 5,
-    username: "green-eats",
-    action: "searched",
-    item: "Organic oat crackers",
-    time: "1h ago",
-    avatar: profile,
-    image: profile,
-  },
-  {
-    id: 6,
-    username: "nature-nourish",
-    action: "commented on",
-    item: "Apple cider detox drink",
-    time: "2h ago",
-    avatar: profile,
-    image: null,
-  },
-];
-
 const page = async () => {
   const supabase = await createClient();
 
