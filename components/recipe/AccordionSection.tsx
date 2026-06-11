@@ -31,6 +31,14 @@ const AccordionSection = ({
 }: AccordionSectionProps) => {
   const { hasAccess, isLoading } = useAccess();
 
+  const lockIcon = isLoading ? null : hasAccess ? (
+    <LockKeyholeOpen size={20} color="#9CA5A3" className="ml-auto" />
+  ) : (
+    <LockKeyhole size={20} color="#9CA5A3" className="ml-auto" />
+  );
+
+  console.log(hasAccess, isLoading);
+
   return (
     <Accordion type="multiple" defaultValue={[]} className="space-y-3">
       {/* 1 — Ingredients */}
@@ -47,11 +55,7 @@ const AccordionSection = ({
               </span>
             </div>
 
-            {hasAccess ? (
-              <LockKeyholeOpen size={20} color="#9CA5A3" className="ml-auto" />
-            ) : (
-              <LockKeyhole size={20} color="#9CA5A3" className="ml-auto" />
-            )}
+            {lockIcon}
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-4 pb-4 pt-0">
@@ -84,11 +88,7 @@ const AccordionSection = ({
                 How to make it
               </span>
             </div>
-            {hasAccess ? (
-              <LockKeyholeOpen size={20} color="#9CA5A3" className="ml-auto" />
-            ) : (
-              <LockKeyhole size={20} color="#9CA5A3" className="ml-auto" />
-            )}
+            {lockIcon}
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-5 pb-5 pt-0">
@@ -121,11 +121,7 @@ const AccordionSection = ({
                 Why it works
               </span>
             </div>
-            {hasAccess ? (
-              <LockKeyholeOpen size={20} color="#9CA5A3" className="ml-auto" />
-            ) : (
-              <LockKeyhole size={20} color="#9CA5A3" className="ml-auto" />
-            )}
+            {lockIcon}
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-5 pb-5 pt-0">
@@ -150,11 +146,7 @@ const AccordionSection = ({
                 Inside Tip
               </span>
             </div>
-            {hasAccess ? (
-              <LockKeyholeOpen size={20} color="#9CA5A3" className="ml-auto" />
-            ) : (
-              <LockKeyhole size={20} color="#9CA5A3" className="ml-auto" />
-            )}
+            {lockIcon}
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-5 pb-5 pt-0">

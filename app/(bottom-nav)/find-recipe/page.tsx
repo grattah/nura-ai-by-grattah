@@ -16,20 +16,10 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { useRecentSearches } from "@/hooks/use-recent-searches";
 
-const mockRecipes = [
-  {
-    id: "b1fe27ea-a018-4238-be1a-8504a90efe2b",
-    title: "Morning green resilience bowl",
-  },
-  {
-    id: "4d1fe0fd-831a-44c1-9a55-b75e6c93babb",
-    title: "Morning green resilience bowl",
-  },
-  {
-    id: "b6f7912d-83ed-4f43-a102-0c97f2ece073",
-    title: "Morning green resilience bowl",
-  },
-];
+interface RecipeSuggestion {
+  id: string;
+  title: string;
+}
 
 interface Recipe {
   created_at: string;
@@ -69,6 +59,16 @@ const page = () => {
   const [searchState, setSearchState] = React.useState<SearchState>("idle");
   const [pendingRecipe, setPendingRecipe] = React.useState<string | null>(null);
   const [isPending, startTransition] = React.useTransition();
+  const [aiSuggestions, setAiSuggestions] = React.useState<RecipeSuggestion[]>(
+    [],
+  );
+  const [aiSuggestionsLoading, setAiSuggestionsLoading] = React.useState(false);
+  const [aiSuggestionsError, setAiSuggestionsError] = React.useState<
+    string | null
+  >(null);
+  const suggestionsCache = React.useRef<Map<string, RecipeSuggestion[]>>(
+    new Map(),
+  );
 
   const { recents, add: addRecent, clear: clearRecents } = useRecentSearches();
 
@@ -136,6 +136,40 @@ const page = () => {
     });
   };
 
+  const handleGetSuggestions = async () => {
+    setSearchState("suggestions");
+    setAiSuggestionsError(null);
+
+    const cacheKey = searchTerm.trim().toLowerCase();
+    const cached = suggestionsCache.current.get(cacheKey);
+    if (cached) {
+      setAiSuggestions(cached);
+      return;
+    }
+
+    setAiSuggestionsLoading(true);
+
+    try {
+      const res = await fetch("/api/recipes/suggestions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: searchTerm }),
+      });
+
+      if (!res.ok) throw new Error("Failed to fetch suggestions");
+
+      const data = await res.json();
+      const suggestions: RecipeSuggestion[] = data.suggestions ?? [];
+      suggestionsCache.current.set(cacheKey, suggestions);
+      setAiSuggestions(suggestions);
+    } catch (error) {
+      console.error("Failed to get suggestions:", error);
+      setAiSuggestionsError("Couldn't load suggestions. Please try again.");
+    } finally {
+      setAiSuggestionsLoading(false);
+    }
+  };
+
   const recipeSearch = async () => {
     const words = searchTerm.trim().split(/\s+/).filter(Boolean);
 
@@ -149,7 +183,7 @@ const page = () => {
 
     for (const word of words) {
       query = query.or(
-        `title.ilike.%${word}%,short_description.ilike.%${word}%`
+        `title.ilike.%${word}%,short_description.ilike.%${word}%`,
       );
     }
 
@@ -171,7 +205,45 @@ const page = () => {
     }
   };
 
-  
+  React.useEffect(() => {
+    if (recents.length === 0) {
+      setSuggestedRecipes([]);
+      return;
+    }
+
+    const fetchSuggestions = async () => {
+      // Build an OR filter across all recent search terms.
+      // Each term searches both title and short_description.
+      const orFilter = recents
+        .flatMap((term) => [
+          `title.ilike.%${term}%`,
+          `short_description.ilike.%${term}%`,
+        ])
+        .join(",");
+
+      const { data, error } = await supabase
+        .from("recipes")
+        .select("*")
+        .or(orFilter)
+        .limit(10);
+
+      if (error) {
+        console.error("Failed to fetch suggestions:", error);
+        return;
+      }
+
+      // Shuffle and take 3 so the user sees variety each visit
+      const shuffled = (data ?? []).sort(() => Math.random() - 0.5);
+      setSuggestedRecipes(shuffled.slice(0, 3));
+    };
+
+    fetchSuggestions();
+  }, [recents]);
+
+  // Show the full-screen loading state while navigation is in progress
+  if (isPending && pendingRecipe) {
+    return <RecipeLoadingScreen recipeName={pendingRecipe} />;
+  }
 
   return (
     <div className="bg-background">
@@ -188,7 +260,7 @@ const page = () => {
               value={searchTerm}
               onChange={(e) => handleSearchTermChange(e.target.value)}
               type="text"
-              className="w-full bg-[#FFFFFF] py-3 pl-9 pr-3 rounded-xl border border-[#E6ECEA] text-base placeholder:text-[#9CA5A3] focus:ring-2 focus:ring-ring outline-none"
+              className="w-full bg-white py-3 pl-9 pr-3 rounded-[12px] border border-[#E6ECEA] text-base placeholder:text-[#9CA5A3] focus:ring-1 focus:ring-mint-green outline-none"
               placeholder="Search recipe..."
             />
             {searchTerm.length > 0 && (
@@ -216,11 +288,22 @@ const page = () => {
             )}
 
             {searchState === "empty" && (
-              <div className="flex flex-col gap-2 mt-2">
-                <p className="font-medium">Results</p>
-                <p className="text-sm text-[#57605E]">
-                  {recipes?.length} recipes found
-                </p>
+              <div className="flex flex-col gap-5 mt-2">
+                <div className="flex flex-col gap-2">
+                  <p className="font-medium">Results</p>
+                  <p className="text-sm text-[#57605E]">
+                    {recipes?.length} recipes found
+                  </p>
+                </div>
+                <button
+                  className="border border-[#227B6F] w-full py-4 flex items-center justify-center gap-3 rounded-full"
+                  onClick={handleGetSuggestions}
+                >
+                  <Sparkles color="#227B6F" size={20} strokeWidth={2} />
+                  <span className="text-mint-green font-medium text-base">
+                    Get suggestions
+                  </span>
+                </button>
               </div>
             )}
 
@@ -290,7 +373,7 @@ const page = () => {
               <div className="flex flex-col gap-5">
                 <div className="flex flex-col gap-2">
                   <p className="font-medium">Results</p>
-                  <p className="text-sm text-[#57605E]">
+                  <p className="text-sm text-subtle">
                     {recipes?.length} recipes found
                   </p>
                 </div>
@@ -312,10 +395,10 @@ const page = () => {
               </div>
               <button
                 className="border border-[#227B6F] w-full py-4 flex items-center justify-center gap-3 rounded-full"
-                onClick={() => setSearchState("suggestions")}
+                onClick={handleGetSuggestions}
               >
                 <Sparkles color="#227B6F" size={20} strokeWidth={2} />
-                <span className="text-[#227B6F] font-medium">
+                <span className="text-mint-green font-medium text-base">
                   Get more suggestions
                 </span>
               </button>
@@ -329,29 +412,49 @@ const page = () => {
               <div className="flex flex-col gap-5">
                 <div className="flex flex-col gap-2">
                   <p className="font-medium">More recipes for you</p>
-                  <p className="text-sm text-[#57605E]">
-                    Here are more recipes we found
+                  <p className="text-sm text-subtle">
+                    {aiSuggestionsLoading
+                      ? "Finding recipes that match your search..."
+                      : "Here are more recipes we found"}
                   </p>
                 </div>
-                <div className="flex flex-col gap-3">
-                  {mockRecipes.map((recipe) => (
-                    <button
-                      key={recipe.id}
-                      onClick={() => handleRecipeClick(recipe.id, recipe.title)}
-                      className="flex items-center gap-3 p-3 rounded-md hover:bg-[#E8E6DC] text-left transition-colors"
-                    >
-                      <GlassWater size={20} color="#9CA5A3" strokeWidth={2} />
-                      <p className="font-medium flex-1">{recipe.title}</p>
-                    </button>
-                  ))}
-                </div>
+                {aiSuggestionsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="w-6 h-6 rounded-full border-2 border-mint-green border-t-transparent animate-spin" />
+                  </div>
+                ) : aiSuggestionsError ? (
+                  <p className="text-sm text-red-500">{aiSuggestionsError}</p>
+                ) : aiSuggestions.length === 0 ? (
+                  <p className="text-sm text-[#57605E]">
+                    No suggestions found. Try a different search.
+                  </p>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {aiSuggestions.map((recipe) => (
+                      <button
+                        key={recipe.id}
+                        onClick={() =>
+                          handleRecipeClick(recipe.id, recipe.title)
+                        }
+                        className="flex items-center gap-3 p-3 rounded-md hover:bg-[#E8E6DC] text-left transition-colors"
+                      >
+                        <GlassWater size={20} color="#9CA5A3" strokeWidth={2} />
+                        <p className="font-medium flex-1">{recipe.title}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <button
-                className="border border-[#227B6F] w-full py-4 flex items-center justify-center gap-3 rounded-full"
-                onClick={() => setSearchState("results")}
+                className="border border-mint-green w-full py-4 flex items-center justify-center gap-3 rounded-full"
+                onClick={() =>
+                  setSearchState(
+                    recipes && recipes.length > 0 ? "results" : "empty",
+                  )
+                }
               >
                 <ArrowLeft color="#227B6F" size={20} strokeWidth={2} />
-                <span className="text-[#227B6F] font-medium">
+                <span className="text-mint-green font-medium">
                   Back to results
                 </span>
               </button>
@@ -378,7 +481,7 @@ function RecipeLoadingScreen({ recipeName }: { recipeName: string }) {
               type="text"
               value={recipeName}
               readOnly
-              className="w-full bg-[#FFFFFF] py-3 pl-9 pr-3 rounded-lg border border-[#E6ECEA] text-sm text-[#1A1A1A] focus:outline-none"
+              className="w-full bg-white py-3 pl-9 pr-3 rounded-lg border border-[#E6ECEA] text-sm text-[#1A1A1A] focus:outline-none"
             />
           </div>
         </div>

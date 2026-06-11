@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { label: "Home", href: "/", icon: IoMdHome },
-  { label: "Find recipe", href: "/recipes/find", icon: Search },
+  { label: "Find recipe", href: "/find-recipe", icon: Search },
   { label: "Community", href: "/community", icon: Users },
   { label: "Saved", href: "/bookmarks", icon: Bookmark },
 ] as const;

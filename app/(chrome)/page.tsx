@@ -5,6 +5,7 @@ import { RecipeCardNew } from "@/components/home/recipe-card-new";
 import { WellnessTipCard } from "@/components/home/wellness-tip-card";
 import { CategorySection } from "@/components/home/category-section";
 import { UpgradeBanner } from "@/components/home/upgrade-banner";
+import { isBookmarked } from "@/actions/bookmark";
 
 type RecipeWithTags = {
   id: string;
@@ -39,8 +40,8 @@ export default async function HomePage() {
   ]);
 
   // Check subscription status server-side
-  let hasAccess = process.env.NEXT_PUBLIC_DEV_BYPASS_PAYWALL === "true";
-  if (!hasAccess && user) {
+  let hasAccess = false;
+  if (user) {
     const { data: sub } = await supabase
       .from("subscriptions")
       .select("status, expires_at")
@@ -52,6 +53,11 @@ export default async function HomePage() {
   }
 
   const recipes = (rawRecipes ?? []) as unknown as RecipeWithTags[];
+  const popularRecipes = recipes.slice(0, 5);
+
+  const bookmarkStatuses = await Promise.all(
+    popularRecipes.map((recipe) => isBookmarked(recipe.id)),
+  );
 
   return (
     <div className="bg-background">
@@ -81,7 +87,7 @@ export default async function HomePage() {
 
           <div className="">
             <div className="flex gap-x-5 overflow-x-auto hide-scrollbar snap-x snap-mandatory">
-              {recipes.slice(0, 5).map((recipe, i) => {
+              {popularRecipes.map((recipe, i) => {
                 const firstTag = recipe.recipe_tags?.[0]?.tags?.name;
                 return (
                   <div key={recipe.id} className="shrink-0 w-50 snap-start">
@@ -92,6 +98,7 @@ export default async function HomePage() {
                       category={firstTag}
                       href={`/recipes/${recipe.id}`}
                       priority={i < 2}
+                      initialBookmarked={bookmarkStatuses[i]}
                     />
                   </div>
                 );

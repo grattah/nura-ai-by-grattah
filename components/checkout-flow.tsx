@@ -14,6 +14,7 @@ import {
   Bookmark,
   Bell,
 } from "lucide-react";
+import FilledLock from "@/components/vectors/filled-lock";
 import { createClient } from "@/lib/supabase/client";
 import { initiateCheckout } from "@/actions/checkout";
 import { fetchClientSecretForPlan } from "@/actions/stripe";
@@ -33,6 +34,7 @@ const PLANS: {
   price: string;
   description: string;
   badge: string | null;
+  per: string;
 }[] = [
   {
     id: "annual",
@@ -40,6 +42,7 @@ const PLANS: {
     price: "£79",
     description: "Save £16.9, billed yearly.",
     badge: "BEST VALUE",
+    per: "/ year",
   },
   {
     id: "monthly",
@@ -47,6 +50,7 @@ const PLANS: {
     price: "£7.99",
     description: "Billed monthly.",
     badge: null,
+    per: "/ month",
   },
 ];
 
@@ -305,7 +309,7 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
                             {plan.price}
                           </span>
                           <span className="text-sm text-muted-foreground">
-                            / month
+                            {plan.per}
                           </span>
                         </div>
                       </div>
@@ -325,9 +329,9 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
               >
                 Continue
               </button>
-              <p className="text-center text-xs text-muted-foreground">
-                🔒 Secure checkout • Cancel anytime
-              </p>
+              <div className="flex items-center justify-center text-sm text-subtle gap-2">
+                <FilledLock /> <span>Secure checkout • Cancel anytime</span>
+              </div>
             </div>
           </div>
         </>

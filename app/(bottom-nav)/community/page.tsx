@@ -25,7 +25,7 @@ const page = async () => {
       title,
       image_url
     )
-  `
+  `,
     )
     .order("created_at", { ascending: false });
 
@@ -35,15 +35,17 @@ const page = async () => {
 
   return (
     <div className="bg-background">
-      <main className="px-4 pt-2">
-        <p className="text-2xl font-semibold text-[#111312]">Community</p>
+      <main>
+        <div className="px-8 py-4.75 mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A]">
+          <p className="text-2xl font-semibold text-[#111312]">Community</p>
+        </div>
 
-        <div className="mt-12 flex flex-col gap-4">
+        <div className="flex flex-col gap-4 px-4">
           <p className="font-semibold text-base">Recent activity</p>
 
           <div className="flex flex-col gap-5">
             {data?.map((item) => (
-              <div key={item.id} className="flex gap-6">
+              <div key={item.id} className="flex items-stretch gap-6 w-full">
                 <div className="flex gap-4 flex-1">
                   <Image
                     src={item.profiles?.avatar_url || profile}
@@ -53,7 +55,7 @@ const page = async () => {
                     className="rounded-full object-cover w-12 h-12 shrink-0"
                   />
                   <div className="flex flex-col gap-2.5">
-                    <p className="text-[#57605E]">
+                    <p className="text-subtle">
                       <span className="font-semibold text-[#1B1D1D]">
                         {item.profiles?.username || "unknown user"}
                       </span>{" "}
@@ -65,15 +67,13 @@ const page = async () => {
                   </div>
                 </div>
                 {item.recipes?.image_url && (
-                  <div className="shrink-0 rounded-lg w-15.5">
-                    <Image
-                      src={item.recipes.image_url}
-                      alt={item.recipes.title || "recipe photo"}
-                      width={62}
-                      height={62}
-                      className="rounded-lg object-cover w-15.5 h-15.5"
-                    />
-                  </div>
+                  <Image
+                    src={item.recipes.image_url}
+                    alt="photo"
+                    className="rounded-lg object-cover w-15.5 h-auto max-h-20 shrink-0"
+                    width={62}
+                    height={80}
+                  />
                 )}
               </div>
             ))}

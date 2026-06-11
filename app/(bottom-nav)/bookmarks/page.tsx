@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import Image from "next/image";
 
 import { truncateText } from "@/lib/truncate-text";
-import { formatRelativeTime } from "@/lib/utils";
+import { formatRelativeTime } from "@/lib/format-time";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -46,7 +46,7 @@ async function getBookmarks(): Promise<BookmarkedRecipe[]> {
         image_url,
         preview_ingredients
       )
-    `
+    `,
     )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
@@ -82,7 +82,7 @@ export default async function BookmarksPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Sub-header */}
-      <div className="px-4 pt-5 pb-4">
+      <div className="px-8 py-4.75 mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A]">
         <h1 className="text-2xl font-semibold text-[#111312]">Saved Recipes</h1>
       </div>
 
@@ -123,7 +123,7 @@ function BookmarkCard({ bookmark }: { bookmark: BookmarkedRecipe }) {
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <Bookmark className="w-6 h-6 text-muted-foreground" />
+                  <Bookmark className="size-6 text-muted-foreground" />
                 </div>
               )}
             </div>
@@ -134,22 +134,28 @@ function BookmarkCard({ bookmark }: { bookmark: BookmarkedRecipe }) {
                 <p className="text-base font-medium text-foreground leading-snug">
                   {bookmark.title}
                 </p>
-                <p className="text-sm text-[#57605E]">{truncateText(bookmark.description)}</p>
+                <p className="text-sm text-[#57605E]">
+                  {truncateText(bookmark.description)}
+                </p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1">
                   <Clock size={16} color="#9CA5A3" />
-                  <p className="text-[#57605E] text-sm font-medium">{formatRelativeTime(bookmark.bookmarked_at)}</p>
+                  <p className="text-[#57605E] text-sm font-medium">
+                    {formatRelativeTime(bookmark.bookmarked_at)}
+                  </p>
                 </div>
                 <div className="flex items-center gap-1">
                   <FaHeart size={16} color="#227B6F" />
-                  <p className="text-[#227B6F] text-sm font-medium">{bookmark.likes}</p>
+                  <p className="text-[#227B6F] text-sm font-medium">
+                    {bookmark.likes}
+                  </p>
                 </div>
               </div>
             </div>
 
-            <div className="p-3 rounded-full bg-[#E3E8DF] h-min">
-              <FaBookmark color="#227B6F" size={20} />
+            <div className="size-10 flex items-center justify-center rounded-full bg-[#E3E8DF] shrink-0 ml-auto">
+              <FaBookmark color="#227B6F" size={20} className="w-3 h-5" />
             </div>
           </div>
         </div>

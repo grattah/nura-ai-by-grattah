@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Info } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { format } from "date-fns";
+import FilledLock from "@/components/vectors/filled-lock";
 
 const PLAN_CONFIG = {
   annual: {
@@ -118,9 +119,9 @@ function ReviewOrderContent() {
           >
             Pay {config.price}
           </button>
-          <p className="text-center text-xs text-muted-foreground">
-            🔒 Secure checkout • Cancel anytime
-          </p>
+          <div className="flex items-center justify-center text-sm text-subtle gap-2">
+            <FilledLock /> <span>Secure checkout • Cancel anytime</span>
+          </div>
         </div>
       </div>
     </div>
