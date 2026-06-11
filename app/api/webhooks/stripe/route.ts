@@ -6,15 +6,17 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
-// The webhook-event dedup table isn't in the generated Database types yet
-// (no DB access to regenerate here), so give it a minimal local type and a
-// dedicated service-role client. Service-role bypasses RLS by design.
 type WebhookEventsSchema = {
   __InternalSupabase: { PostgrestVersion: "14.4" };
   public: {
     Tables: {
       stripe_webhook_events: {
-        Row: { id: string; type: string; created: string; processed_at: string };
+        Row: {
+          id: string;
+          type: string;
+          created: string;
+          processed_at: string;
+        };
         Insert: {
           id: string;
           type: string;
@@ -40,11 +42,7 @@ function createEventsClient() {
   );
 }
 
-// Turn a Stripe subscription's current period end (unix seconds) into an ISO
-// timestamp. This is the source of truth for entitlement expiry — never a
-// hardcoded "+1 year" (audit finding C2).
 function periodEndToIso(sub: Stripe.Subscription): string | null {
-  // Stripe API v22 exposes current_period_end on the subscription item.
   const end = sub.items?.data?.[0]?.current_period_end;
   return end ? new Date(end * 1000).toISOString() : null;
 }
@@ -53,9 +51,6 @@ async function sendWelcomeEmail(email: string) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
   const adminSupabase = createServiceRoleClient();
 
-  // Generate a magic link to include in the email as backup.
-  // SECURITY (audit finding H5): the action_link is a login credential and must
-  // never be logged. It is handed straight to the email provider.
   const { data: linkData } = await adminSupabase.auth.admin.generateLink({
     type: "magiclink",
     email,
@@ -106,7 +101,6 @@ export async function POST(req: Request) {
 
   const events = createEventsClient();
 
-  // ── 4. Idempotency: skip events we've already processed (audit M2) ─────────
   const { error: dedupError } = await events
     .from("stripe_webhook_events")
     .insert({
@@ -138,11 +132,15 @@ export async function POST(req: Request) {
         break;
       }
       case "customer.subscription.deleted": {
-        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+        await handleSubscriptionDeleted(
+          event.data.object as Stripe.Subscription,
+        );
         break;
       }
       case "customer.subscription.updated": {
-        await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
+        await handleSubscriptionUpdated(
+          event.data.object as Stripe.Subscription,
+        );
         break;
       }
       default:
@@ -150,7 +148,7 @@ export async function POST(req: Request) {
     }
   } catch (err) {
     // Return 500 so Stripe retries. Also remove the dedup row so the retry is
-    // actually reprocessed rather than being swallowed as a duplicate.
+
     await events.from("stripe_webhook_events").delete().eq("id", event.id);
     const message = err instanceof Error ? err.message : "Handler error";
     console.error(`[webhook] Handler error for ${event.type}: ${message}`);
@@ -214,18 +212,17 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
 
   // Map Stripe status → our status. Keep expiry in sync with the real period end.
   let status: "active" | "suspended" | null = null;
-  if (sub.status === "past_due" || sub.status === "unpaid") status = "suspended";
+  if (sub.status === "past_due" || sub.status === "unpaid")
+    status = "suspended";
   else if (sub.status === "active") status = "active";
 
   if (!status) {
-    console.log(`[webhook] Subscription ${sub.id} status ${sub.status} — no change`);
+    console.log(
+      `[webhook] Subscription ${sub.id} status ${sub.status} — no change`,
+    );
     return;
   }
 
-  // Ordering guard (audit M2): never resurrect a subscription that has already
-  // been cancelled in our DB. Stripe can deliver a stale "updated(active)" after
-  // a "deleted". A cancelled row stays cancelled unless Stripe reports the sub as
-  // active AND it has a future period end.
   const { data: existing } = await supabase
     .from("subscriptions")
     .select("status")
@@ -236,7 +233,9 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
     const end = periodEndToIso(sub);
     const stillValid = !!end && new Date(end) > new Date();
     if (!stillValid) {
-      console.log(`[webhook] Ignoring stale active update for cancelled ${sub.id}`);
+      console.log(
+        `[webhook] Ignoring stale active update for cancelled ${sub.id}`,
+      );
       return;
     }
   }
