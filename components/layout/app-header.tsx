@@ -41,17 +41,17 @@ export function AppHeader({ user }: AppHeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-background px-4 py-3">
+    <header className="sticky top-0 z-40 bg-background/20 backdrop-blur-lg px-4 py-3">
       <div className="flex items-center justify-between h-10">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-1">
+        <Link href="/" className="flex items-center gap-1 py-2 px-2.5 bg-white/20 backdrop-blur-[1px] border border-white/20 hover:bg-white/30 rounded-full">
           <Image
-            src="/logo-outlined.svg"
+            src="/logo-outlined-nobg-dark.svg"
             alt="Nuko Logo"
-            width={32}
-            height={32}
+            width={20}
+            height={20}
           />
-          <span className="text-lg font-semibold text-brown tracking-tight">
+          <span className="text-xl font-semibold text-brown tracking-tight">
             Nuko
           </span>
         </Link>
@@ -80,7 +80,7 @@ export function AppHeader({ user }: AppHeaderProps) {
         ) : (
           <Link
             href="/auth/login"
-            className="text-base font-semibold text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4"
+            className="text-base font-semibold text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4 py-2 px-4 bg-white/20 backdrop-blur-[1px] border border-white/20 hover:bg-white/30 rounded-full"
           >
             Sign in
           </Link>

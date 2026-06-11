@@ -24,8 +24,7 @@ export function BottomNav() {
   return (
     <nav className="sticky bottom-2 z-40 w-[93%] mx-auto pb-safe">
       <div
-        className="mx-0 flex items-center justify-around px-2 h-16 rounded-xl"
-        style={{ backgroundColor: "#227B6F" }}
+        className="mx-0 flex items-center p-1.5 rounded-full bg-background/20 backdrop-blur-lg overflow-hidden"
       >
         {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
           const active = isActive(href);
@@ -33,21 +32,23 @@ export function BottomNav() {
             <Link
               key={href}
               href={href}
-              className="flex flex-col items-center justify-center gap-2 min-w-16 min-h-11 px-2 py-1 rounded-xl transition-all duration-150 active:scale-95"
+              className={cn("flex-1 flex flex-col items-center gap-1 py-2 rounded-full transition-all duration-150 active:scale-95",
+                active ? "bg-neutral-400/50 backdrop-blur-[1px]" : ""
+              )}
               aria-label={label}
             >
               <Icon
                 className={cn(
                   "w-5 h-5 transition-all duration-150",
-                  active ? "text-white" : "text-white/45",
+                  active ? "text-[#0A4A41]" : "text-[#57605E]",
                 )}
                 strokeWidth={active ? 2.5 : 1.75}
                 size={20}
               />
               <span
                 className={cn(
-                  "text-[11px] font-medium leading-none transition-colors duration-150",
-                  active ? "text-white" : "text-white/45",
+                  "text-[12px] font-medium leading-none transition-colors duration-150",
+                  active ? "text-[#0A4A41]" : "text-[#57605E]",
                 )}
               >
                 {label}
