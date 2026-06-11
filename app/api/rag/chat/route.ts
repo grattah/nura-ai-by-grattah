@@ -14,8 +14,15 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { type NextRequest } from "next/server";
 import { retrieve, formatContext } from "@/lib/rag";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 export const maxDuration = 30;
+
+// Caps on client-controlled values that get injected into the prompt / search
+// (audit M1) — bound cost and prompt-injection surface.
+const MAX_MESSAGES = 20;
+const MAX_DOMAINS = 10;
+const MAX_TITLE_LEN = 200;
 
 interface ChatRequestBody {
   messages: UIMessage[];
@@ -86,6 +93,19 @@ TONE AND STYLE:
 }
 
 export async function POST(req: NextRequest) {
+  // Curb LLM cost-abuse (audit M1): 20 messages / minute / IP.
+  const { success } = await rateLimit(
+    `rag-chat:${getClientIp(req.headers)}`,
+    20,
+    60_000,
+  );
+  if (!success) {
+    return new Response(JSON.stringify({ error: "Too many requests." }), {
+      status: 429,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const {
       messages,
@@ -96,11 +116,20 @@ export async function POST(req: NextRequest) {
       description,
     }: ChatRequestBody = await req.json();
 
-    const lastMessage = messages[messages.length - 1];
+    // Clamp client-controlled inputs before they reach the model / web search.
+    const safeMessages = Array.isArray(messages)
+      ? messages.slice(-MAX_MESSAGES)
+      : [];
+    const safeTitle = String(title ?? "").slice(0, MAX_TITLE_LEN);
+    const safeDomains = (Array.isArray(allowedDomains) ? allowedDomains : [])
+      .filter((d): d is string => typeof d === "string")
+      .slice(0, MAX_DOMAINS);
+
+    const lastMessage = safeMessages[safeMessages.length - 1];
     const userQuestion =
-      lastMessage.parts?.find((p) => p.type === "text")?.text ?? "";
+      lastMessage?.parts?.find((p) => p.type === "text")?.text ?? "";
     const typeLabel = contextType === "recipe" ? "recipe" : "health guide";
-    const domainList = allowedDomains.map((d) => `site:${d}`).join(" OR ");
+    const domainList = safeDomains.map((d) => `site:${d}`).join(" OR ");
 
     const { chunks, hasGoodResults } = await retrieve(
       userQuestion,
@@ -115,11 +144,11 @@ export async function POST(req: NextRequest) {
         model: anthropic("claude-sonnet-4-6"),
         system: buildSystemPrompt(
           typeLabel,
-          title,
+          safeTitle,
           formatContext(chunks),
           domainList,
         ),
-        messages: convertToModelMessages(messages),
+        messages: convertToModelMessages(safeMessages),
       });
 
       return result.toUIMessageStreamResponse();
@@ -130,12 +159,12 @@ export async function POST(req: NextRequest) {
       model: anthropic("claude-sonnet-4-6"),
       system: buildSystemPrompt(
         typeLabel,
-        title,
+        safeTitle,
         null,
         domainList,
         description,
       ),
-      messages: convertToModelMessages(messages),
+      messages: convertToModelMessages(safeMessages),
 
       providerOptions: {
         anthropic: {
@@ -145,7 +174,7 @@ export async function POST(req: NextRequest) {
 
       tools: {
         webSearch: tool({
-          description: `Search for health and wellness information about the ${typeLabel} "${title}".
+          description: `Search for health and wellness information about the ${typeLabel} "${safeTitle}".
 Use site: filters for trusted sources. Start with the preferred domains (${domainList}),
 then broaden to authoritative sources like site:nhs.uk, site:nih.gov, site:pubmed.ncbi.nlm.nih.gov
 if the preferred domains return no useful results.`,

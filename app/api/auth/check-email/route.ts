@@ -1,27 +1,66 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/server";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
-const attempts = new Map<string, { count: number; resetAt: number }>();
+interface EmailStatus {
+  exists: boolean;
+  hasPassword: boolean;
+}
 
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const record = attempts.get(ip);
-  if (!record || now > record.resetAt) {
-    attempts.set(ip, { count: 1, resetAt: now + 60_000 });
-    return false;
+// Primary path: a SECURITY DEFINER function (see
+// supabase/migrations/*_check_email_status_fn.sql) does an indexed O(1) lookup
+// on auth.users without exposing the auth schema. Returns null if the function
+// isn't deployed yet so the caller can fall back.
+async function lookupViaRpc(
+  admin: ReturnType<typeof createServiceRoleClient>,
+  email: string,
+): Promise<EmailStatus | null> {
+  // The function lives in the (exposed) public schema; the typed client doesn't
+  // know it, so call through an untyped view of rpc().
+  const { data, error } = await (
+    admin.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => Promise<{
+      data: { account_exists: boolean; has_password: boolean }[] | null;
+      error: { code?: string } | null;
+    }>
+  )("check_email_status", { p_email: email });
+
+  if (error) return null; // function missing / not migrated yet → fall back
+  const row = data?.[0];
+  if (!row) return { exists: false, hasPassword: false };
+  return { exists: true, hasPassword: row.has_password === true };
+}
+
+// Fallback path: page through ALL users (admin.listUsers defaults to the first
+// page only — audit finding H2). Correct but O(n); used only until the RPC
+// migration is applied.
+async function lookupViaListUsers(
+  admin: ReturnType<typeof createServiceRoleClient>,
+  email: string,
+): Promise<EmailStatus> {
+  const perPage = 1000;
+  for (let page = 1; ; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
+    if (error) throw new Error(error.message);
+    const match = data.users.find((u) => u.email?.toLowerCase() === email);
+    if (match) {
+      return {
+        exists: true,
+        hasPassword: match.user_metadata?.has_password === true,
+      };
+    }
+    if (data.users.length < perPage) return { exists: false, hasPassword: false };
   }
-  if (record.count >= 5) return true;
-  record.count++;
-  return false;
 }
 
 export async function POST(req: NextRequest) {
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    req.headers.get("x-real-ip") ??
-    "unknown";
+  const ip = getClientIp(req.headers);
 
-  if (isRateLimited(ip)) {
+  // Durable, cross-instance limit (audit H1/H3): 5 lookups / minute / IP.
+  const { success } = await rateLimit(`check-email:${ip}`, 5, 60_000);
+  if (!success) {
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },
       { status: 429 },
@@ -30,47 +69,23 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const email = body?.email;
-
   if (!email || typeof email !== "string") {
     return NextResponse.json({ error: "Invalid email" }, { status: 400 });
   }
+  const normalized = email.toLowerCase();
 
-  // Query auth schema directly — O(1) vs listUsers() O(n)
-  const authClient = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { db: { schema: "auth" } },
-  );
+  const admin = createServiceRoleClient();
 
   try {
     await new Promise((r) => setTimeout(r, 200)); // timing-attack mitigation
 
-    // const { data } = await authClient
-    //   .from("users")
-    //   .select("id, identities")
-    //   .eq("email", email.toLowerCase())
-    //   .maybeSingle();
+    const status =
+      (await lookupViaRpc(admin, normalized)) ??
+      (await lookupViaListUsers(admin, normalized));
 
-    const { data: users } = await authClient.auth.admin.listUsers();
-    const data = users.users.find(
-      (user) => user.email?.toLocaleLowerCase() === email.toLowerCase(),
-    );
-
-    if (!data) {
-      return NextResponse.json({ exists: false, hasPassword: false });
-    }
-
-    // Identities don't reliably tell us whether a password is set — OTP-based
-    // sign-in also creates an "email" identity. Instead, `has_password` is
-    // explicitly stamped onto user_metadata whenever a password is created
-    // or changed (see actions/profile.ts, auth-form.tsx, update-password-form.tsx).
-    const hasPassword = data.user_metadata?.has_password === true;
-
-    return NextResponse.json({ exists: true, hasPassword });
-  } catch {
-    return NextResponse.json(
-      { error: "Something went wrong" },
-      { status: 500 },
-    );
+    return NextResponse.json(status);
+  } catch (err) {
+    console.error("[check-email]", err);
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 export interface QuestionsRequestBody {
   contextId: string;
@@ -10,6 +11,16 @@ export interface QuestionsRequestBody {
 }
 
 export async function POST(req: NextRequest) {
+  // Curb LLM cost-abuse (audit M1): 20 generations / minute / IP.
+  const { success } = await rateLimit(
+    `rag-questions:${getClientIp(req.headers)}`,
+    20,
+    60_000,
+  );
+  if (!success) {
+    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+  }
+
   try {
     const { contextType, title, description }: QuestionsRequestBody =
       await req.json();
