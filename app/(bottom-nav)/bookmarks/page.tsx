@@ -41,6 +41,7 @@ async function getBookmarks(): Promise<BookmarkedRecipe[]> {
       recipes (
         id,
         title,
+        likes,
         short_description,
         image_url,
         preview_ingredients
@@ -111,7 +112,7 @@ function BookmarkCard({ bookmark }: { bookmark: BookmarkedRecipe }) {
         <div className="p-0">
           <div className="flex gap-4">
             {/* Thumbnail */}
-            <div className="w-20 h-20 rounded-2xl bg-muted shrink-0 overflow-hidden">
+            <div className="w-20 h-20 rounded-2xl bg-muted shrink-0 overflow-hidden aspect-square">
               {bookmark.image_url ? (
                 <Image
                   src={bookmark.image_url}
@@ -128,7 +129,7 @@ function BookmarkCard({ bookmark }: { bookmark: BookmarkedRecipe }) {
             </div>
 
             {/* Content */}
-            <div className="min-w-0 flex flex-col gap-3">
+            <div className="min-w-0 flex flex-col gap-1.5">
               <div className="flex flex-col gap-2">
                 <p className="text-base font-medium text-foreground leading-snug">
                   {bookmark.title}

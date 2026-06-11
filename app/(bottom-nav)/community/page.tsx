@@ -50,9 +50,9 @@ const page = async () => {
                   <Image
                     src={item.profiles?.avatar_url || profile}
                     alt={item.profiles?.username || "unknown user"}
-                    className="rounded-full w-12 h-12"
-                    width={12}
-                    height={12}
+                    width={48}
+                    height={48}
+                    className="rounded-full object-cover w-12 h-12 shrink-0"
                   />
                   <div className="flex flex-col gap-2.5">
                     <p className="text-subtle">

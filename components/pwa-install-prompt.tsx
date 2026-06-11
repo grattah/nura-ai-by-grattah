@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { X, Share, Plus, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { NuraLeafIcon } from "@/components/nura-logo";
+import logo from "@/public/icon-light.png";
 
 const STORAGE_KEY = "nura_pwa_prompt_dismissed";
 const DISMISS_TTL_DAYS = 30;
@@ -115,7 +116,7 @@ export function PWAInstallPrompt() {
       {/* Bottom sheet */}
       <div
         role="dialog"
-        aria-label="Install Nura app"
+        aria-label="Install Nuko app"
         className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-3xl px-5 pt-5 pb-10 shadow-2xl border-t border-border animate-in slide-in-from-bottom duration-300"
       >
         {/* Drag handle */}
@@ -124,10 +125,16 @@ export function PWAInstallPrompt() {
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <NuraLeafIcon size="sm" />
+            <Image
+              src={logo}
+              alt="logo"
+              width={62}
+              height={62}
+              className="w-15.5 h-15.5"
+            />
             <div>
               <p className="text-base font-bold text-foreground leading-tight">
-                Install Nura
+                Install Nuko
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Add to your home screen for the best experience
