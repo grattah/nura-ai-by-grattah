@@ -1,10 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-
-// The route module pulls in the Supabase server client (next/headers); stub it
-// so importing the file doesn't blow up. We only test the pure sanitizeNext.
-vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
-
-import { sanitizeNext } from "@/app/(no-chrome)/auth/callback/route";
+import { describe, it, expect } from "vitest";
+import { sanitizeNext } from "@/lib/safe-redirect";
 
 const ORIGIN = "https://app.test";
 
