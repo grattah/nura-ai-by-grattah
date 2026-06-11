@@ -74,6 +74,45 @@ const page = () => {
 
   const router = useRouter();
 
+  React.useEffect(() => {
+    if (recents.length === 0) {
+      setSuggestedRecipes([]);
+      return;
+    }
+
+    const fetchSuggestions = async () => {
+      // Build an OR filter across all recent search terms.
+      // Each term searches both title and short_description.
+      const orFilter = recents
+        .flatMap((term) => [
+          `title.ilike.%${term}%`,
+          `short_description.ilike.%${term}%`,
+        ])
+        .join(",");
+
+      const { data, error } = await supabase
+        .from("recipes")
+        .select("*")
+        .or(orFilter)
+        .limit(10);
+
+      if (error) {
+        console.error("Failed to fetch suggestions:", error);
+        return;
+      }
+
+      // Shuffle and take 3 so the user sees variety each visit
+      const shuffled = (data ?? []).sort(() => Math.random() - 0.5);
+      setSuggestedRecipes(shuffled.slice(0, 3));
+    };
+
+    fetchSuggestions();
+  }, [recents]);
+
+  if (isPending && pendingRecipe) {
+    return <RecipeLoadingScreen recipeName={pendingRecipe} />;
+  }
+
   const handleSearchTermChange = (value: string) => {
     setSearchTerm(value);
     // Any new typing resets us to idle. Previous results are no longer relevant.
@@ -96,11 +135,6 @@ const page = () => {
       router.push(`/recipes/${id}`);
     });
   };
-
-  // Show the full-screen loading state while navigation is in progress
-  if (isPending && pendingRecipe) {
-    return <RecipeLoadingScreen recipeName={pendingRecipe} />;
-  }
 
   const recipeSearch = async () => {
     const words = searchTerm.trim().split(/\s+/).filter(Boolean);
@@ -137,40 +171,7 @@ const page = () => {
     }
   };
 
-  React.useEffect(() => {
-    if (recents.length === 0) {
-      setSuggestedRecipes([]);
-      return;
-    }
-
-    const fetchSuggestions = async () => {
-      // Build an OR filter across all recent search terms.
-      // Each term searches both title and short_description.
-      const orFilter = recents
-        .flatMap((term) => [
-          `title.ilike.%${term}%`,
-          `short_description.ilike.%${term}%`,
-        ])
-        .join(",");
-
-      const { data, error } = await supabase
-        .from("recipes")
-        .select("*")
-        .or(orFilter)
-        .limit(10);
-
-      if (error) {
-        console.error("Failed to fetch suggestions:", error);
-        return;
-      }
-
-      // Shuffle and take 3 so the user sees variety each visit
-      const shuffled = (data ?? []).sort(() => Math.random() - 0.5);
-      setSuggestedRecipes(shuffled.slice(0, 3));
-    };
-
-    fetchSuggestions();
-  }, [recents]);
+  
 
   return (
     <div className="bg-background">
