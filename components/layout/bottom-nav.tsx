@@ -24,7 +24,7 @@ export function BottomNav() {
   return (
     <nav className="sticky bottom-2 z-40 w-[93%] mx-auto pb-safe">
       <div
-        className="mx-0 flex items-center justify-between p-1 rounded-full bg-background/20 backdrop-blur-lg"
+        className="mx-0 flex items-center p-1.5 rounded-full bg-background/20 backdrop-blur-lg overflow-hidden"
       >
         {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
           const active = isActive(href);
@@ -32,7 +32,7 @@ export function BottomNav() {
             <Link
               key={href}
               href={href}
-              className={cn("flex flex-col items-center gap-1 py-2 px-4 rounded-full transition-all duration-150 active:scale-95",
+              className={cn("flex-1 flex flex-col items-center gap-1 py-2 rounded-full transition-all duration-150 active:scale-95",
                 active ? "bg-neutral-400/50 backdrop-blur-[1px]" : ""
               )}
               aria-label={label}
