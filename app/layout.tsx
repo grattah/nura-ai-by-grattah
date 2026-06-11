@@ -1,5 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Red_Hat_Text, Josefin_Sans, Red_Hat_Display } from "next/font/google";
+import {
+  Geist,
+  Geist_Mono,
+  Red_Hat_Text,
+  Josefin_Sans,
+  Red_Hat_Display,
+} from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
