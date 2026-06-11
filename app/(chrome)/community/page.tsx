@@ -44,13 +44,13 @@ const page = async () => {
           <div className="flex flex-col gap-5">
             {data?.map((item) => (
               <div key={item.id} className="flex gap-6">
-                <div className="flex gap-4">
+                <div className="flex gap-4 flex-1">
                   <Image
                     src={item.profiles?.avatar_url || profile}
                     alt={item.profiles?.username || "unknown user"}
-                    className="rounded-full w-12 h-12"
-                    width={12}
-                    height={12}
+                    width={48}
+                    height={48}
+                    className="rounded-full object-cover w-12 h-12 shrink-0"
                   />
                   <div className="flex flex-col gap-2.5">
                     <p className="text-[#57605E]">
@@ -65,13 +65,15 @@ const page = async () => {
                   </div>
                 </div>
                 {item.recipes?.image_url && (
-                  <Image
-                    src={item.recipes.image_url}
-                    alt="photo"
-                    className="rounded-lg w-[62]"
-                    width={10}
-                    height={10}
-                  />
+                  <div className="shrink-0 rounded-lg w-15.5">
+                    <Image
+                      src={item.recipes.image_url}
+                      alt={item.recipes.title || "recipe photo"}
+                      width={62}
+                      height={62}
+                      className="rounded-lg object-cover w-15.5 h-15.5"
+                    />
+                  </div>
                 )}
               </div>
             ))}

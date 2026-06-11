@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import Image from "next/image";
 
 import { truncateText } from "@/lib/truncate-text";
+import { formatRelativeTime } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -40,6 +41,7 @@ async function getBookmarks(): Promise<BookmarkedRecipe[]> {
       recipes (
         id,
         title,
+        likes,
         short_description,
         image_url,
         preview_ingredients
@@ -110,7 +112,7 @@ function BookmarkCard({ bookmark }: { bookmark: BookmarkedRecipe }) {
         <div className="p-0">
           <div className="flex gap-4">
             {/* Thumbnail */}
-            <div className="w-20 h-20 rounded-2xl bg-muted shrink-0 overflow-hidden">
+            <div className="w-20 h-20 rounded-2xl bg-muted shrink-0 overflow-hidden aspect-square">
               {bookmark.image_url ? (
                 <Image
                   src={bookmark.image_url}
@@ -127,7 +129,7 @@ function BookmarkCard({ bookmark }: { bookmark: BookmarkedRecipe }) {
             </div>
 
             {/* Content */}
-            <div className="min-w-0 flex flex-col gap-3">
+            <div className="min-w-0 flex flex-col gap-1.5">
               <div className="flex flex-col gap-2">
                 <p className="text-base font-medium text-foreground leading-snug">
                   {bookmark.title}
@@ -137,7 +139,7 @@ function BookmarkCard({ bookmark }: { bookmark: BookmarkedRecipe }) {
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1">
                   <Clock size={16} color="#9CA5A3" />
-                  <p className="text-[#57605E] text-sm font-medium">{bookmark.bookmarked_at}</p>
+                  <p className="text-[#57605E] text-sm font-medium">{formatRelativeTime(bookmark.bookmarked_at)}</p>
                 </div>
                 <div className="flex items-center gap-1">
                   <FaHeart size={16} color="#227B6F" />
