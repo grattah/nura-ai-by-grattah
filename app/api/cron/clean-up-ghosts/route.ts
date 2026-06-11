@@ -11,18 +11,40 @@ export async function GET(req: Request) {
   const supabase = createServiceRoleClient();
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-  // Find users created via checkout who have no subscription
-  const { data: ghosts } = await supabase.auth.admin.listUsers();
-  const toDelete = ghosts.users.filter(
-    (u) =>
-      u.created_at < cutoff &&
-      u.user_metadata?.onboarding_source === "checkout" &&
-      !u.email_confirmed_at,
-  );
+  // Page through ALL users — listUsers() defaults to the first page only, so
+  // ghosts beyond ~50 users were never cleaned (audit finding H2).
+  const perPage = 1000;
+  let page = 1;
+  let deleted = 0;
 
-  for (const ghost of toDelete) {
-    await supabase.auth.admin.deleteUser(ghost.id);
+  for (;;) {
+    const { data, error } = await supabase.auth.admin.listUsers({
+      page,
+      perPage,
+    });
+    if (error) {
+      console.error("[clean-up-ghosts] listUsers failed:", error.message);
+      break;
+    }
+
+    const users = data.users;
+    if (users.length === 0) break;
+
+    const toDelete = users.filter(
+      (u) =>
+        u.created_at < cutoff &&
+        u.user_metadata?.onboarding_source === "checkout" &&
+        !u.email_confirmed_at,
+    );
+
+    for (const ghost of toDelete) {
+      await supabase.auth.admin.deleteUser(ghost.id);
+      deleted++;
+    }
+
+    if (users.length < perPage) break;
+    page++;
   }
 
-  return Response.json({ deleted: toDelete.length });
+  return Response.json({ deleted });
 }

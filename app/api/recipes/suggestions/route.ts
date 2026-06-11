@@ -3,6 +3,7 @@ import { generateObject } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 export const maxDuration = 30;
 
@@ -42,6 +43,16 @@ function getCachedSuggestions(key: string): Suggestions | null {
 }
 
 export async function POST(req: NextRequest) {
+  // Curb LLM cost-abuse (audit M1): 20 generations / minute / IP.
+  const { success } = await rateLimit(
+    `recipe-suggestions:${getClientIp(req.headers)}`,
+    20,
+    60_000,
+  );
+  if (!success) {
+    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+  }
+
   let query: string;
   try {
     ({ query } = await req.json());
@@ -49,8 +60,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  if (!query?.trim()) {
-    return NextResponse.json({ error: "Query is required" }, { status: 400 });
+  if (!query?.trim() || query.length > 200) {
+    return NextResponse.json(
+      { error: "Query is required (max 200 chars)" },
+      { status: 400 },
+    );
   }
 
   const normalizedQuery = query.trim().toLowerCase();

@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
 import { headers } from "next/headers";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 /**
  * Called from the guest checkout flow before OTP is sent.
@@ -16,7 +17,16 @@ import { headers } from "next/headers";
 export async function initiateCheckout(
   email: string,
 ): Promise<{ clientSecret: string; userId: string } | { error: string }> {
-  const origin = (await headers()).get("origin") ?? "";
+  const hdrs = await headers();
+  const origin = hdrs.get("origin") ?? "";
+
+  // Rate-limit unauthenticated, arbitrary-email account creation (audit H4):
+  // 5 attempts / minute / IP curbs mass account-squatting and table pollution.
+  const ip = getClientIp(hdrs);
+  const { success } = await rateLimit(`initiate-checkout:${ip}`, 5, 60_000);
+  if (!success) {
+    return { error: "Too many attempts. Please wait a minute and try again." };
+  }
 
   // ── 1. Find or create the Supabase user ──────────────────────────────────
   const authClient = createClient(

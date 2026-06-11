@@ -48,18 +48,20 @@ export type PersonalizedSearchResult = z.infer<typeof PersonalizedSearchSchema>;
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
+  // Use getUser() (revalidates with the auth server) rather than getSession()
+  // for server-side authorization (audit M3).
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { data: sub } = await supabase
     .from("subscriptions")
     .select("status, expires_at")
-    .eq("user_id", session.user.id)
+    .eq("user_id", user.id)
     .eq("status", "active")
     .maybeSingle();
 
