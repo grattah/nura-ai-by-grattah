@@ -5,14 +5,10 @@ import { createClient } from "@/lib/supabase/client";
 
 export function useAccess() {
   const [hasAccess, setHasAccess] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (process.env.NEXT_PUBLIC_DEV_BYPASS_PAYWALL === "true") {
-      setHasAccess(true);
-      setIsLoading(false);
-      return;
-    }
     const supabase = createClient();
 
     async function check() {
@@ -21,10 +17,13 @@ export function useAccess() {
       } = await supabase.auth.getSession();
 
       if (!session) {
+        setIsAuthenticated(false);
         setHasAccess(false);
         setIsLoading(false);
         return;
       }
+
+      setIsAuthenticated(true);
 
       const { data } = await supabase
         .from("subscriptions")
@@ -47,5 +46,5 @@ export function useAccess() {
     return () => subscription.unsubscribe();
   }, []);
 
-  return { hasAccess, isLoading };
+  return { hasAccess, isAuthenticated, isLoading };
 }

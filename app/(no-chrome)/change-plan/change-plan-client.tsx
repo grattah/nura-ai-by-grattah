@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Check } from "lucide-react";
 import Link from "next/link";
+import FilledLock from "@/components/vectors/filled-lock";
 
 const PLANS = [
   {
@@ -150,9 +151,9 @@ export function ChangePlanClient() {
           >
             Continue
           </Link>
-          <p className="text-center text-xs text-muted-foreground">
-            🔒 Secure checkout • Cancel anytime
-          </p>
+          <div className="flex items-center justify-center text-sm text-subtle gap-2">
+            <FilledLock /> <span>Secure checkout • Cancel anytime</span>
+          </div>
         </div>
       </div>
     </div>

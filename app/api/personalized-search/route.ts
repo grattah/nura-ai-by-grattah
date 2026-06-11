@@ -47,34 +47,30 @@ const PersonalizedSearchSchema = z.object({
 export type PersonalizedSearchResult = z.infer<typeof PersonalizedSearchSchema>;
 
 export async function POST(req: NextRequest) {
-  const devBypass = process.env.NEXT_PUBLIC_DEV_BYPASS_PAYWALL === "true";
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  if (!devBypass) {
-    const supabase = await createClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const { data: sub } = await supabase
+    .from("subscriptions")
+    .select("status, expires_at")
+    .eq("user_id", session.user.id)
+    .eq("status", "active")
+    .maybeSingle();
 
-    const { data: sub } = await supabase
-      .from("subscriptions")
-      .select("status, expires_at")
-      .eq("user_id", session.user.id)
-      .eq("status", "active")
-      .maybeSingle();
+  const hasAccess =
+    !!sub && (!sub.expires_at || new Date(sub.expires_at) > new Date());
 
-    const hasAccess =
-      !!sub && (!sub.expires_at || new Date(sub.expires_at) > new Date());
-
-    if (!hasAccess) {
-      return NextResponse.json(
-        { error: "Subscription required" },
-        { status: 403 },
-      );
-    }
+  if (!hasAccess) {
+    return NextResponse.json(
+      { error: "Subscription required" },
+      { status: 403 },
+    );
   }
 
   let query: string;
