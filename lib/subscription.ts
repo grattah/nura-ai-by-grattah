@@ -20,10 +20,21 @@ export async function getActiveSubscription(
   return data ?? null;
 }
 
-export function activeSubscriptionMessage(
+/**
+ * Returns a user-facing message if `requestedPlan` should be blocked given an
+ * existing active subscription, or `null` if the change is allowed.
+ *
+ * Allowed: monthly -> annual (upgrade), even mid-cycle.
+ * Blocked: resubscribing to the same plan, and annual -> monthly (downgrade)
+ * while the annual plan is still active.
+ */
+export function blockedSubscriptionMessage(
   active: ActiveSubscription,
   requestedPlan: "annual" | "monthly",
-): string {
+): string | null {
+  const isUpgrade = active.plan === "monthly" && requestedPlan === "annual";
+  if (isUpgrade) return null;
+
   const expiry = active.expires_at
     ? format(new Date(active.expires_at), "MMMM d, yyyy")
     : "your current period ends";
