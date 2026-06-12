@@ -50,46 +50,48 @@ export default function CommentsSection({
   const [replyingTo, setReplyingTo] = React.useState<ReplyTarget | null>(null);
 
   return (
-    <>
-      <div className="mt-7.75 px-4 flex flex-col gap-4">
-        {comments.map((comment) => (
-          <CommentCard
-            recipeId={recipeId}
-            key={comment.id}
-            comment={comment}
-            replies={comment.replies ?? []}
-            isAuthenticated={isAuthenticated}
-            onStartReply={(parentId, username) =>
-              setReplyingTo({ parentId, username })
-            }
-          />
-        ))}
+    <div className="flex flex-col min-h-[calc(100vh-200px)] bg-white">
+      <div className="flex-1">
+        <div className="mt-7.75 px-4 flex flex-col gap-4 ">
+          {comments.map((comment) => (
+            <CommentCard
+              recipeId={recipeId}
+              key={comment.id}
+              comment={comment}
+              replies={comment.replies ?? []}
+              isAuthenticated={isAuthenticated}
+              onStartReply={(parentId, username) =>
+                setReplyingTo({ parentId, username })
+              }
+            />
+          ))}
+        </div>
+
+        {(hasMore || limit > 5) && (
+          <div className="px-4 mt-8 flex flex-col gap-3">
+            {hasMore && (
+              <Link
+                href={`?recipeId=${recipeId}&limit=200`}
+                scroll={false}
+                className="block w-full text-center border border-[#C4CAC8] rounded-full py-4 text-[#227B6F] font-semibold text-sm hover:bg-[#C4CAC8]/5 transition-colors"
+              >
+                Load more comments
+              </Link>
+            )}
+
+            {limit > 5 && (
+              <Link
+                href={`?recipeId=${recipeId}`}
+                className="block w-full text-center border border-[#C4CAC8] rounded-full py-4 text-[#227B6F] font-semibold text-sm hover:bg-[#C4CAC8]/5 transition-colors"
+              >
+                Hide comments
+              </Link>
+            )}
+          </div>
+        )}
       </div>
 
-      {(hasMore || limit > 5) && (
-        <div className="px-4 mt-8 flex flex-col gap-3">
-          {hasMore && (
-            <Link
-              href={`?recipeId=${recipeId}&limit=200`}
-              scroll={false}
-              className="block w-full text-center border border-[#C4CAC8] rounded-full py-4 text-[#227B6F] font-semibold text-sm hover:bg-[#C4CAC8]/5 transition-colors"
-            >
-              Load more comments
-            </Link>
-          )}
-
-          {limit > 5 && (
-            <Link
-              href={`?recipeId=${recipeId}`}
-              className="block w-full text-center border border-[#C4CAC8] rounded-full py-4 text-[#227B6F] font-semibold text-sm hover:bg-[#C4CAC8]/5 transition-colors"
-            >
-              Hide comments
-            </Link>
-          )}
-        </div>
-      )}
-
-      <div className="px-4 mt-10 sticky bottom-2 bg-background pt-4 flex gap-2">
+      <div className="px-4 mt-10 sticky bottom-2 bg-white/30 backdrop-blur-sm pt-4 flex gap-2">
         {userAvatar && (
           <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0">
             <Image
@@ -108,6 +110,6 @@ export default function CommentsSection({
           onCancelReply={() => setReplyingTo(null)}
         />
       </div>
-    </>
+    </div>
   );
 }

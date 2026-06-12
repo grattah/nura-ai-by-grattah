@@ -68,15 +68,10 @@ const page = async ({ searchParams }: PageProps) => {
   const hasMore = (totalCount ?? 0) > (comments?.length ?? 0);
 
   return (
-    <div className="bg-background pb-2">
+    <div className="bg-background">
       <main>
         <div className="flex items-center justify-between px-4 py-3.25 relative">
-          <Link
-            href={`/recipes/${recipe.id}`}
-            className="rounded-full bg-[#E8E6DC] p-3 absolute left-6"
-          >
-            <ArrowLeft size={16} color="#1B1D1D" />
-          </Link>
+          <BackButton className="rounded-full bg-[#E8E6DC] p-3 absolute left-6" />
           <div className="flex flex-col gap-1 items-center w-full">
             <p className="font-semibold text-xl">Comments</p>
             <p className="font-medium text-[#57605E] text-sm">{recipe.title}</p>
@@ -94,7 +89,7 @@ const page = async ({ searchParams }: PageProps) => {
           />
         </div>
 
-        <div className="px-4 mt-6">
+        <div className="px-4 pt-6 bg-[#FFFFFF]">
           <div className="flex items-center justify-between">
             <p className="text-xl font-semibold text-base-text">
               All comments({totalCount})

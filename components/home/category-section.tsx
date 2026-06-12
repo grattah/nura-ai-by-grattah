@@ -68,7 +68,7 @@ export function CategorySection({ hasAccess }: UpgradeBannerProps) {
         {hasAccess ? (
           <Link
             href="/categories"
-            className="flex items-center gap-1 text-base text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4"
+            className="flex items-center gap-1 text-base text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4 font-semibold"
           >
             See all
           </Link>

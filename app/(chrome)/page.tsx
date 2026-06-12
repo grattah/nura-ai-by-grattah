@@ -79,7 +79,7 @@ export default async function HomePage() {
             </h2>
             <Link
               href="/popular"
-              className="text-base text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4"
+              className="text-base font-semibold text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4"
             >
               See all
             </Link>

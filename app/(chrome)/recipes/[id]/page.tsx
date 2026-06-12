@@ -123,6 +123,7 @@ export default async function RecipeDetailPage({
   `,
       )
       .eq("recipe_id", recipe.id)
+      .is("parent_id", null)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
@@ -247,7 +248,7 @@ export default async function RecipeDetailPage({
                 />
               </div>
               <p className="font-medium text-sm">
-                {recipe.likes} people found this helpful
+                {recipe.likes ?? 0} {(recipe.likes ?? 0) > 1 ? "people" : "person"} found this helpful
               </p>
             </div>
 
