@@ -113,9 +113,9 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
   useEffect(() => {
     if (step === "payment" && !clientSecret) {
       fetchClientSecretForPlan(selectedPlan)
-        .then((secret) => {
-          if (secret) setClientSecret(secret);
-          else setError("Failed to start payment. Please try again.");
+        .then((result) => {
+          if ("error" in result) setError(result.error);
+          else setClientSecret(result.clientSecret);
         })
         .catch(() => setError("Failed to start payment. Please try again."));
     }

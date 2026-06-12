@@ -22,7 +22,10 @@ function ContinuePaymentContent() {
 
   useEffect(() => {
     fetchClientSecretForPlan(plan)
-      .then((secret) => { if (secret) setClientSecret(secret); })
+      .then((result) => {
+        if ("error" in result) setError(result.error);
+        else setClientSecret(result.clientSecret);
+      })
       .catch(() => setError("Failed to load checkout. Please try again."));
   }, [plan]);
 
