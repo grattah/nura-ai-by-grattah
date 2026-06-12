@@ -10,7 +10,8 @@ export function ReturnClient() {
     fetch("/api/access", { method: "POST" })
       .then((r) => r.json())
       .then(({ success }) => {
-        console.log("Account activation result:", success);
+        return;
+        // console.log("Account activation result:", success);
       })
       .finally(() => {
         router.replace("/");

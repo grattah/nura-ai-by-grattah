@@ -13,7 +13,7 @@ interface AppHeaderProps {
 
 export function AppHeader({ user }: AppHeaderProps) {
   return (
-    <header className="sticky top-0 z-40 px-4 py-3 backdrop-blur-xs bg-white/10">
+    <header className="sticky top-0 z-40 px-4 py-3">
       <div className="flex items-center justify-between h-10">
         {/* Logo */}
         <Link

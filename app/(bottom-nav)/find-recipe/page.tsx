@@ -190,7 +190,7 @@ const page = () => {
     const { data, error } = await query;
 
     if (error) {
-      console.log(error);
+      // console.log(error);
       setSearchState("idle");
       return;
     }
@@ -251,7 +251,7 @@ const page = () => {
         <div className="px-8 py-4.75 mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A]">
           <p className="text-2xl font-semibold text-[#111312]">Find a recipe</p>
         </div>
-        <div className="mt-4 px-4">
+        <div className="mt-4 px-6">
           <div className="relative">
             <button className="absolute top-3.75 left-3">
               <Search color="#82A198" size={16} />
@@ -278,9 +278,9 @@ const page = () => {
         {step === 1 && (
           <>
             {searchState === "idle" && searchTerm.length > 0 && (
-              <div className="mt-5">
+              <div className="mt-5 px-6">
                 <button
-                  className="w-full bg-[#227B6F] text-[#FFFFFF] flex justify-center py-4 rounded-full hover:opacity-90 transition-opacity"
+                  className="w-full bg-mint-green text-[#FFFFFF] flex justify-center py-4 rounded-full hover:opacity-90 transition-opacity"
                   onClick={recipeSearch}
                 >
                   Find recipe
@@ -289,7 +289,7 @@ const page = () => {
             )}
 
             {searchState === "empty" && (
-              <div className="flex flex-col gap-5 mt-2">
+              <div className="flex flex-col gap-5 mt-2 px-6">
                 <div className="flex flex-col gap-2">
                   <p className="font-medium">Results</p>
                   <p className="text-sm text-[#57605E]">
@@ -313,7 +313,7 @@ const page = () => {
                 searchTerm.length === 0 &&
                 recents.length > 0 && (
                   <>
-                    <div className="flex flex-col gap-5">
+                    <div className="flex flex-col gap-5 px-6">
                       <div className="flex items-center justify-between">
                         <p className="text-sm text-[#57605E]">
                           Recently searched
@@ -342,7 +342,7 @@ const page = () => {
                     </div>
 
                     {suggestedRecipes.length > 0 && (
-                      <div className="mt-14 flex flex-col gap-5">
+                      <div className="mt-14 flex flex-col gap-5 px-6">
                         <p className="text-sm text-[#57605E]">You may like</p>
                         <div className="flex flex-col gap-3">
                           {suggestedRecipes.map((recipe) => (
@@ -370,7 +370,7 @@ const page = () => {
 
         {searchState === "results" && (
           <>
-            <div className="mt-8 flex flex-col gap-24">
+            <div className="mt-8 flex flex-col gap-24 px-6">
               <div className="flex flex-col gap-5">
                 <div className="flex flex-col gap-2">
                   <p className="font-medium">Results</p>

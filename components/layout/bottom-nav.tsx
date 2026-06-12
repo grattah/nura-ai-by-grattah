@@ -44,7 +44,7 @@ export function BottomNav() {
                 strokeWidth={active ? 2.3 : 1.67}
                 size={16}
               />
-              {/* <span
+              <span
                 className={cn(
                   "text-sm leading-none transition-colors duration-150 text-nowrap",
                   active
@@ -53,7 +53,7 @@ export function BottomNav() {
                 )}
               >
                 {label}
-              </span> */}
+              </span>
             </Link>
           );
         })}

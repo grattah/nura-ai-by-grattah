@@ -124,8 +124,8 @@ export function PWAInstallPrompt() {
 
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-1 rounded-full bg-mint-green">
+          <div className="flex items-center gap-3 p-2">
+            <div className="rounded-full bg-mint-green size-9 grid place-items-center">
               <Image
                 src={logo}
                 alt="logo"
@@ -143,6 +143,7 @@ export function PWAInstallPrompt() {
               </p>
             </div>
           </div>
+
           <Button
             variant="ghost"
             size="icon"
