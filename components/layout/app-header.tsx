@@ -3,6 +3,7 @@ import Image from "next/image";
 interface AppHeaderUser {
   name: string;
   email?: string;
+  avatar: string;
   avatarLetter: string;
 }
 
@@ -36,11 +37,21 @@ export function AppHeader({ user }: AppHeaderProps) {
             {/* Avatar — navigates to /account */}
             <Link
               href="/account"
-              className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-[#D4C48A] hover:opacity-80 transition-opacity"
+              className="size-9 rounded-full flex items-center justify-center text-sm font-bold text-[#D4C48A] hover:opacity-80 transition-opacity"
               style={{ backgroundColor: "#5C6B3A" }}
               aria-label="Account"
             >
-              {user.avatarLetter}
+              {user?.avatar ? (
+                <Image
+                  alt="avatar"
+                  src={user?.avatar}
+                  width={36}
+                  height={36}
+                  className="object-cover size-9 rounded-full"
+                />
+              ) : (
+                user.avatarLetter
+              )}
             </Link>
           </div>
         ) : (
