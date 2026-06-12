@@ -41,11 +41,14 @@ const CommentCard = ({
   const avatarSrc = comment.profiles?.avatar_url || profile;
   const username = comment.profiles?.username ?? "unknown";
 
-  const [showReplies, setShowReplies] = React.useState(false);
+  const INITIAL_REPLY_COUNT = 2;
 
-  function toggleShowReplies() {
-    setShowReplies(!showReplies);
-  }
+  const [visibleReplyCount, setVisibleReplyCount] = React.useState(0);
+
+  const showReplies = visibleReplyCount > 0;
+  const visibleReplies = replies.slice(0, visibleReplyCount);
+  const hasMoreReplies = visibleReplyCount < replies.length;
+  const isShowingAll = visibleReplyCount >= replies.length;
 
   return (
     <div>
@@ -72,7 +75,9 @@ const CommentCard = ({
             </span>
 
             <button
-              onClick={toggleShowReplies}
+              onClick={() =>
+                setVisibleReplyCount(showReplies ? 0 : INITIAL_REPLY_COUNT)
+              }
               className="text-sm text-[#727E7A] font-medium hover:text-[#1A1A1A] transition-colors"
             >
               {showReplies
@@ -95,8 +100,8 @@ const CommentCard = ({
       {showReplies && (
         <div className="bg-[#F2F3F3] rounded-lg w-[83%] p-5 ml-auto mt-3">
           <div className="flex flex-col gap-3">
-            {replies &&
-              replies.map((reply) => (
+            {visibleReplies &&
+              visibleReplies.map((reply) => (
                 <div key={reply.id} className="flex items-start gap-3">
                   <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0">
                     <Image
@@ -133,9 +138,18 @@ const CommentCard = ({
                 </div>
               ))}
           </div>
-          <p className="text-sm text-mint-green font-semibold mt-5">
-            Load more replies
-          </p>
+          {replies.length > INITIAL_REPLY_COUNT && (
+            <button
+              onClick={() =>
+                setVisibleReplyCount(
+                  isShowingAll ? INITIAL_REPLY_COUNT : replies.length
+                )
+              }
+              className="text-sm text-mint-green font-semibold mt-5"
+            >
+              {isShowingAll ? "Hide replies" : "Load more replies"}
+            </button>
+          )}
           <button
             onClick={() => onStartReply(comment.id, username)}
             className="border border-[#C4CAC8] rounded-full w-full py-4 text-mint-green text-sm font-semibold mt-5"
