@@ -88,7 +88,7 @@ export function CategorySection({ hasAccess }: UpgradeBannerProps) {
             className="flex justify-center items-center w-full gap-2 p-3 rounded-lg bg-badge text-sm font-medium text-foreground border border-badge-border hover:opacity-80 transition-opacity active:scale-95"
           >
             <span
-              className="text-sm leading-none -tracking-[2%] inline-flex items-center justify-center size-7 rounded-full"
+              className="text-sm shrink-0 leading-none -tracking-[2%] inline-flex items-center justify-center size-7 rounded-full"
               style={{ backgroundColor: cat.iconBg }}
             >
               {cat.icon}
