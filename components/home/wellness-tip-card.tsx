@@ -17,7 +17,7 @@ export function WellnessTipCard({
         <div className="flex items-center gap-1 mb-4">
           <Image
             src="/logo-filled.svg"
-            alt="Nura Logo"
+            alt="Nuko Logo"
             width={21}
             height={20}
             className="shrink-0"

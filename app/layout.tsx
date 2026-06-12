@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Nura",
+    title: "Nuko",
   },
   icons: {
     icon: [
