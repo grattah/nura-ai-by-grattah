@@ -143,8 +143,6 @@ export default async function RecipeDetailPage({
       }
     : null;
 
-  console.log(latestCommentWithLike);
-
   const ingredients =
     (recipe.ingredients as Array<{ emoji: string; label: string }>) ?? [];
 

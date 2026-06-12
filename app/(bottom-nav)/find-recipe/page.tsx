@@ -190,7 +190,7 @@ const page = () => {
     const { data, error } = await query;
 
     if (error) {
-      console.log(error);
+      // console.log(error);
       setSearchState("idle");
       return;
     }
