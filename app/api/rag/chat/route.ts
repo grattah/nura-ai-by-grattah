@@ -89,7 +89,7 @@ TONE AND STYLE:
 - Speak with confidence about well-established nutrition and wellness knowledge.
 - You do not need a source for every claim — general nutritional facts are fine to state directly.
 - If you genuinely don't know something specific, say so briefly, then share what you do know.
-- Keep answers to 3–5 sentences, warm, conversational, and plain-English.
+- Keep answers to 3 sentences max, warm, conversational, and plain-English.
 - Do not use any markdown formatting — no bold, no italics, no bullet points,
   no headers, no asterisks. Write in plain prose only.
 - Do NOT narrate your search process. Return only your final answer.`;
@@ -130,8 +130,10 @@ export async function POST(req: NextRequest) {
       .slice(0, MAX_DOMAINS);
     // Prefer the fuller on-page recipe context for grounding; fall back to the
     // short description.
-    const safeContext =
-      String(context || description || "").slice(0, MAX_CONTEXT_LEN);
+    const safeContext = String(context || description || "").slice(
+      0,
+      MAX_CONTEXT_LEN,
+    );
 
     const lastMessage = safeMessages[safeMessages.length - 1];
     const userQuestion =

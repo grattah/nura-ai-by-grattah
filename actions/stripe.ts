@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { headers } from "next/headers";
 import {
   getActiveSubscription,
-  activeSubscriptionMessage,
+  blockedSubscriptionMessage,
 } from "@/lib/subscription";
 
 export async function fetchClientSecretForPlan(
@@ -25,7 +25,8 @@ export async function fetchClientSecretForPlan(
   if (user?.id) {
     const active = await getActiveSubscription(supabase, user.id);
     if (active) {
-      return { error: activeSubscriptionMessage(active, plan) };
+      const blocked = blockedSubscriptionMessage(active, plan);
+      if (blocked) return { error: blocked };
     }
   }
 

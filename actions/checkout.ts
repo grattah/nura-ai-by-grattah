@@ -7,7 +7,7 @@ import { headers } from "next/headers";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import {
   getActiveSubscription,
-  activeSubscriptionMessage,
+  blockedSubscriptionMessage,
 } from "@/lib/subscription";
 
 /**
@@ -69,7 +69,8 @@ export async function initiateCheckout(
   // ── 2. Block if the user already has an active subscription ──────────────
   const active = await getActiveSubscription(adminSupabase, userId);
   if (active) {
-    return { error: activeSubscriptionMessage(active, "annual") };
+    const blocked = blockedSubscriptionMessage(active, "annual");
+    if (blocked) return { error: blocked };
   }
 
   // ── 3. Create Stripe session with user ID as the anchor ──────────────────

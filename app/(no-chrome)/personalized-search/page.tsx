@@ -102,6 +102,20 @@ function PersonalizedSearchContent() {
     }
   }, []);
 
+  // Render a cached result instantly, independent of the access check —
+  // no need to wait on the (potentially slow) subscription lookup just to
+  // show data we already have on this device.
+  useEffect(() => {
+    if (!query) return;
+    try {
+      const cached = localStorage.getItem(normalizeKey(query));
+      if (cached) {
+        setResult(JSON.parse(cached));
+        setLoading(false);
+      }
+    } catch {}
+  }, [query]);
+
   useEffect(() => {
     if (accessLoading) return;
     if (!hasAccess) {
@@ -115,7 +129,7 @@ function PersonalizedSearchContent() {
     fetchResult(query);
   }, [query, hasAccess, accessLoading, router, fetchResult]);
 
-  if (accessLoading || (loading && !result)) return <SearchSkeleton />;
+  if (!result && (accessLoading || loading)) return <SearchSkeleton />;
 
   if (error) {
     return (
