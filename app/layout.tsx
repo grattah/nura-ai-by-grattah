@@ -21,11 +21,11 @@ const _redHatDisplay = Red_Hat_Display({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Nuko",
   description: "Health and Wellness Companion",
-  generator: "v0.app",
+  generator: "Devs",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Nura",
+    title: "Nuko",
   },
   icons: {
     icon: [
