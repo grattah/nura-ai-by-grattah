@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { X, Share, Plus, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import logo from "@/public/icon-light.png";
+import logo from "@/public/logo-outlined-nobg.svg";
 
 const STORAGE_KEY = "nura_pwa_prompt_dismissed";
 const DISMISS_TTL_DAYS = 30;
@@ -124,13 +124,13 @@ export function PWAInstallPrompt() {
 
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 p-2 rounded-full bg-mint-green">
             <Image
               src={logo}
               alt="logo"
-              width={62}
-              height={62}
-              className="w-15.5 h-15.5"
+              width={20}
+              height={20}
+              className="w-5 h-5"
             />
             <div>
               <p className="text-base font-bold text-foreground leading-tight">
