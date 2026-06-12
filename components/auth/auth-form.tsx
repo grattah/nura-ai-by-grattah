@@ -54,7 +54,10 @@ function clearPendingOtp() {
 function isRateLimited(err: unknown): boolean {
   if (!err || typeof err !== "object") return false;
   const e = err as { status?: number; code?: string };
-  return e.status === 429 || (typeof e.code === "string" && e.code.includes("rate_limit"));
+  return (
+    e.status === 429 ||
+    (typeof e.code === "string" && e.code.includes("rate_limit"))
+  );
 }
 
 export function NuraAuthForm({ className }: NuraAuthFormProps) {
@@ -200,10 +203,31 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     router.refresh();
   };
 
+  // ─── OTP Form submit ──────────────────────────────────────────────────────
+
+  const handleOtpFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    // Read directly from the DOM to bypass React's asynchronous state delays
+    const formData = new FormData(e.currentTarget);
+    const rawOtp = formData.get("otp") as string;
+    const finalCode = (rawOtp || otpCode).replace(/\D/g, "").slice(0, 8);
+
+    if (finalCode.length === 8) {
+      if (step === "signup-otp") {
+        handleSignupOtpVerify(finalCode);
+      } else {
+        handleOtpVerify(finalCode);
+      }
+    }
+  };
+
   // ─── OTP verification ──────────────────────────────────────────────────────
 
-  const handleOtpVerify = async () => {
-    if (!otpCode.trim()) return;
+  const handleOtpVerify = async (codeToVerify?: string) => {
+    const token = codeToVerify || otpCode.trim();
+    if (!token) return;
+
     setIsLoading(true);
     setError(null);
 
@@ -212,7 +236,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     try {
       const { error: verifyError } = await supabase.auth.verifyOtp({
         email,
-        token: otpCode.trim(),
+        token,
         type: "email",
       });
 
@@ -243,8 +267,10 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   };
 
   // New user verifying their email before creating a profile
-  const handleSignupOtpVerify = async () => {
-    if (!otpCode.trim()) return;
+  const handleSignupOtpVerify = async (codeToVerify?: string) => {
+    const token = codeToVerify || otpCode.trim();
+    if (!token) return;
+
     setIsLoading(true);
     setError(null);
 
@@ -253,7 +279,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     try {
       const { error: verifyError } = await supabase.auth.verifyOtp({
         email,
-        token: otpCode.trim(),
+        token,
         type: "email",
       });
 
@@ -379,9 +405,9 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   useEffect(() => {
     if (otpCode.length === 8) {
       if (step === "signup-otp") {
-        handleSignupOtpVerify();
+        handleSignupOtpVerify(otpCode);
       } else {
-        handleOtpVerify();
+        handleOtpVerify(otpCode);
       }
     }
   }, [otpCode]);
@@ -613,14 +639,10 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
           {/* ── OTP step (login or signup) ── */}
           {isOtpStep && (
-            <form
-              onSubmit={
-                step === "signup-otp" ? handleSignupOtpVerify : handleOtpVerify
-              }
-              className="space-y-3"
-            >
+            <form onSubmit={handleOtpFormSubmit} className="space-y-3">
               {/* Icon */}
               <input
+                name="otp"
                 type="text"
                 inputMode="numeric"
                 placeholder="Enter code here"
