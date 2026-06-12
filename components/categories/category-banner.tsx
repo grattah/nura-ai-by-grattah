@@ -20,7 +20,9 @@ export function CategoryBanner({ name, config }: CategoryBannerProps) {
           height={48}
           className="object-contain"
         />
-        <p className="text-lg font-semibold text-base-text">{name}</p>
+        <p className="text-lg font-semibold text-base-text capitalize">
+          {name}
+        </p>
       </div>
       <div className="shrink-0 overflow-hidden">
         <Image

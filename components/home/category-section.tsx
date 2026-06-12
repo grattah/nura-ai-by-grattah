@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Lock } from "lucide-react";
 import Leaf from "../vectors/leaf";
@@ -56,6 +57,7 @@ interface UpgradeBannerProps {
 
 export function CategorySection({ hasAccess }: UpgradeBannerProps) {
   const [modalOpen, setModalOpen] = useState(false);
+  const router = useRouter();
 
   return (
     <div className="space-y-2">
@@ -82,9 +84,11 @@ export function CategorySection({ hasAccess }: UpgradeBannerProps) {
       </div>
       <div className="grid grid-cols-3 gap-2 w-full">
         {CATEGORIES.map((cat) => (
-          <Link
+          <button
             key={cat.label}
-            href={cat.href}
+            onClick={
+              hasAccess ? () => router.push(cat.href) : () => setModalOpen(true)
+            }
             className="flex justify-center items-center w-full gap-2 p-3 rounded-lg bg-badge text-sm font-medium text-foreground border border-badge-border hover:opacity-80 transition-opacity active:scale-95"
           >
             <span
@@ -94,7 +98,7 @@ export function CategorySection({ hasAccess }: UpgradeBannerProps) {
               {cat.icon}
             </span>
             {cat.label}
-          </Link>
+          </button>
         ))}
       </div>
 
