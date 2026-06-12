@@ -20,6 +20,14 @@ import AccordionSection from "@/components/recipe/AccordionSection";
 import LikeButton from "@/components/recipe/LikeButton";
 import { logRecipeView } from "@/actions/activity";
 import { isLiked } from "@/actions/likes";
+import type { Database } from "@/lib/database.types";
+import type { SupportScore } from "@/lib/wellness-score";
+
+// support_scores isn't in the generated types yet; recipe_tags is a join.
+type RecipeRecord = Database["public"]["Tables"]["recipes"]["Row"] & {
+  support_scores: SupportScore[] | null;
+  recipe_tags: { tags: { name: string; slug: string } | null }[] | null;
+};
 
 interface CommentData {
   id: string;
@@ -48,11 +56,11 @@ const getRecipe = cache(async (id: string) => {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("recipes")
-    .select("*, follow_up_questions")
+    .select("*, recipe_tags(tags(name, slug))")
     .eq("id", id)
     .single();
   if (error || !data) return null;
-  return data;
+  return data as unknown as RecipeRecord;
 });
 
 export async function generateMetadata({
@@ -117,6 +125,12 @@ export default async function RecipeDetailPage({
     ? getCloudinaryUrl(recipe.image_url, { width: 900, height: 506 })
     : undefined;
 
+  // The recipe's assigned wellness supports (its tags) for the DetoxCard.
+  const assignedSupports = (recipe.recipe_tags ?? [])
+    .map((rt) => rt.tags)
+    .filter((t): t is { name: string; slug: string } => !!t)
+    .map((t) => ({ name: t.name, slug: t.slug }));
+
   return (
     <PaywallGate>
       <div className="min-h-screen bg-background">
@@ -168,7 +182,11 @@ export default async function RecipeDetailPage({
           </div>
 
           <div className="px-4 mb-8">
-            <DetoxCard detoxPercent={91} hydrationPercent={2} />
+            <DetoxCard
+              recipeId={recipe.id}
+              supports={assignedSupports}
+              initialScores={recipe.support_scores}
+            />
           </div>
 
           {/* Accordion sections */}
