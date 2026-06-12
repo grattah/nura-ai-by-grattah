@@ -23,36 +23,37 @@ export function BottomNav() {
 
   return (
     <nav className="sticky bottom-2 z-40 w-[93%] mx-auto pb-safe">
-      <div
-        className="mx-0 flex items-center p-1.5 rounded-full bg-background/20 backdrop-blur-lg overflow-hidden"
-      >
+      <div className="mx-0 flex items-center p-1 rounded-full overflow-hidden liquid-glass border-2 backdrop-blur-xs">
         {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
           const active = isActive(href);
           return (
             <Link
               key={href}
               href={href}
-              className={cn("flex-1 flex flex-col items-center gap-1 py-2 rounded-full transition-all duration-150 active:scale-95",
-                active ? "bg-neutral-400/50 backdrop-blur-[1px]" : ""
+              className={cn(
+                "w-full flex flex-col items-center gap-0.5 py-2 px-3 rounded-full transition-all duration-150 active:scale-95",
+                active ? "bg-black/12" : "",
               )}
               aria-label={label}
             >
               <Icon
                 className={cn(
-                  "w-5 h-5 transition-all duration-150",
-                  active ? "text-[#0A4A41]" : "text-[#57605E]",
+                  "size-4 transition-all duration-150",
+                  active ? "text-[#0A4A41]" : "text-subtle",
                 )}
-                strokeWidth={active ? 2.5 : 1.75}
-                size={20}
+                strokeWidth={active ? 2.3 : 1.67}
+                size={16}
               />
-              <span
+              {/* <span
                 className={cn(
-                  "text-[12px] font-medium leading-none transition-colors duration-150",
-                  active ? "text-[#0A4A41]" : "text-[#57605E]",
+                  "text-sm leading-none transition-colors duration-150 text-nowrap",
+                  active
+                    ? "text-[#0A4A41] font-semibold"
+                    : "text-subtle font-medium",
                 )}
               >
                 {label}
-              </span>
+              </span> */}
             </Link>
           );
         })}

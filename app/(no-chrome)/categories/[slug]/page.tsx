@@ -139,7 +139,7 @@ export default function CategoryDetailPage() {
         <CategoryBanner name={displayName} config={config} />
 
         {/* Filter tabs */}
-        <div className="flex gap-2 overflow-x-auto hide-scrollbar px-4 pb-1">
+        {/* <div className="flex gap-2 overflow-x-auto hide-scrollbar px-4 pb-1">
           <TabPill
             label="All"
             active={activeTab === "all"}
@@ -155,7 +155,7 @@ export default function CategoryDetailPage() {
                 onClick={() => setActiveTab(t.slug)}
               />
             ))}
-        </div>
+        </div> */}
 
         {/* Recipe grid */}
         {isLoading ? (

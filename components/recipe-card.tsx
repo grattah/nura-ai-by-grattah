@@ -17,7 +17,7 @@ export function RecipeCard({
   return (
     <Link href={`/recipes/${recipe.id}`}>
       <div className="border-0 space-y-3 hover:opacity-90 active:scale-[0.97] transition-all duration-150">
-        <div className="w-full bg-grey-c950 relative rounded-2xl overflow-hidden aspect-square">
+        <div className="w-full bg-grey-c100 relative rounded-2xl overflow-hidden aspect-square">
           {imageUrl && (
             <Image
               src={imageUrl}

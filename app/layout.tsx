@@ -1,9 +1,16 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Red_Hat_Text, Josefin_Sans, Red_Hat_Display } from "next/font/google";
+import {
+  Geist,
+  Geist_Mono,
+  Red_Hat_Text,
+  Josefin_Sans,
+  Red_Hat_Display,
+} from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { MobileGate } from "@/components/mobile-gate";
+import { ChatCacheCleaner } from "@/components/chat-cache-cleaner";
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
@@ -72,6 +79,7 @@ export default function RootLayout({
         >
           <MobileGate>{children}</MobileGate>
         </ThemeProvider>
+        <ChatCacheCleaner />
         <Analytics />
       </body>
     </html>

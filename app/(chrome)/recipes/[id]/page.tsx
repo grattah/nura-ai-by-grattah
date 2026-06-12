@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { Heart } from "lucide-react";
 
 import { FollowUpSection } from "@/components/follow-up-section";
+import { buildRecipeContext } from "@/lib/recipe-context";
 import { PaywallGate } from "@/components/paywall/paywall-gate";
 import { ShareButton } from "@/components/share-button";
 import { createClient } from "@/lib/supabase/server";
@@ -19,6 +20,14 @@ import AccordionSection from "@/components/recipe/AccordionSection";
 import LikeButton from "@/components/recipe/LikeButton";
 import { logRecipeView } from "@/actions/activity";
 import { isLiked } from "@/actions/likes";
+import type { Database } from "@/lib/database.types";
+import type { SupportScore } from "@/lib/wellness-score";
+
+// support_scores isn't in the generated types yet; recipe_tags is a join.
+type RecipeRecord = Database["public"]["Tables"]["recipes"]["Row"] & {
+  support_scores: SupportScore[] | null;
+  recipe_tags: { tags: { name: string; slug: string } | null }[] | null;
+};
 
 interface Comment {
   id: string;
@@ -41,11 +50,11 @@ const getRecipe = cache(async (id: string) => {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("recipes")
-    .select("*, follow_up_questions")
+    .select("*, recipe_tags(tags(name, slug))")
     .eq("id", id)
     .single();
   if (error || !data) return null;
-  return data;
+  return data as unknown as RecipeRecord;
 });
 
 export async function generateMetadata({
@@ -111,7 +120,7 @@ export default async function RecipeDetailPage({
     likes,
     profiles (id, username, avatar_url),
     comment_likes!comment_id (user_id)
-  `
+  `,
       )
       .eq("recipe_id", recipe.id)
       .order("created_at", { ascending: false })
@@ -125,14 +134,16 @@ export default async function RecipeDetailPage({
   ]);
 
   const latestCommentWithLike = latestComment
-  ? {
-      ...latestComment,
-      hasLiked:
-        latestComment.comment_likes?.some(
-          (like: { user_id: string }) => like.user_id === user?.id
-        ) ?? false,
-    }
-  : null;
+    ? {
+        ...latestComment,
+        hasLiked:
+          latestComment.comment_likes?.some(
+            (like: { user_id: string }) => like.user_id === user?.id,
+          ) ?? false,
+      }
+    : null;
+
+  console.log(latestCommentWithLike);
 
   const ingredients =
     (recipe.ingredients as Array<{ emoji: string; label: string }>) ?? [];
@@ -143,6 +154,12 @@ export default async function RecipeDetailPage({
   const heroImageUrl = recipe.image_url
     ? getCloudinaryUrl(recipe.image_url, { width: 900, height: 506 })
     : undefined;
+
+  // The recipe's assigned wellness supports (its tags) for the DetoxCard.
+  const assignedSupports = (recipe.recipe_tags ?? [])
+    .map((rt) => rt.tags)
+    .filter((t): t is { name: string; slug: string } => !!t)
+    .map((t) => ({ name: t.name, slug: t.slug }));
 
   return (
     <PaywallGate>
@@ -195,7 +212,11 @@ export default async function RecipeDetailPage({
           </div>
 
           <div className="px-4 mb-8">
-            <DetoxCard detoxPercent={91} hydrationPercent={2} />
+            <DetoxCard
+              recipeId={recipe.id}
+              supports={assignedSupports}
+              initialScores={recipe.support_scores}
+            />
           </div>
 
           {/* Accordion sections */}
@@ -213,6 +234,7 @@ export default async function RecipeDetailPage({
                 contextType="recipe"
                 title={recipe.title}
                 description={recipe.short_description}
+                context={buildRecipeContext(recipe)}
                 savedQuestions={recipe.follow_up_questions}
               />
             </div>

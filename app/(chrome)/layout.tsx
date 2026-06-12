@@ -13,6 +13,8 @@ export default async function ChromeLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
+  const avatarUrl = user?.user_metadata?.avatar_url ?? "";
+
   const headerUser = user
     ? {
         name:
@@ -21,6 +23,7 @@ export default async function ChromeLayout({
           user.email?.split("@")[0] ||
           "You",
         email: user.email,
+        avatar: avatarUrl,
         avatarLetter: (
           user.user_metadata?.full_name ||
           user.user_metadata?.name ||

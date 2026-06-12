@@ -48,7 +48,7 @@ export default function Comment({
         </h2>
         <Link
           href={seeAllHref}
-          className="text-[#227B6F] underline font-semibold"
+          className="text-mint-green underline font-semibold"
         >
           See all
         </Link>
