@@ -47,7 +47,7 @@ const page = async ({ searchParams }: PageProps) => {
       profiles (id, username, avatar_url)
     )
   `,
-        { count: "exact" }
+        { count: "exact" },
       )
       .eq("recipe_id", recipeId)
       .is("parent_id", null)
@@ -67,17 +67,17 @@ const page = async ({ searchParams }: PageProps) => {
 
   return (
     <div className="bg-background pb-2">
-      <main className="pt-3">
-        <div className="flex items-center justify-between px-4">
-          <BackButton className="rounded-full bg-[#E8E6DC] p-3" />
-          <div className="flex flex-col gap-1 items-center">
+      <main>
+        <div className="flex items-center justify-between px-4 py-3.25 relative">
+          <BackButton className="rounded-full bg-[#E8E6DC] p-3 absolute left-6" />
+          <div className="flex flex-col gap-1 items-center w-full">
             <p className="font-semibold text-xl">Comments</p>
             <p className="font-medium text-[#57605E] text-sm">{recipe.title}</p>
           </div>
           <div />
         </div>
 
-        <div className="w-full h-22 relative overflow-hidden mt-12">
+        <div className="w-full h-22 relative overflow-hidden">
           <Image
             src={recipe.image_url || ""}
             alt={recipe.title}
@@ -87,27 +87,29 @@ const page = async ({ searchParams }: PageProps) => {
           />
         </div>
 
-        <div className="px-4 mt-5">
+        <div className="px-4 mt-6">
           <div className="flex items-center justify-between">
-            <p className="text-xl font-semibold text-[#1B1D1D]">
+            <p className="text-xl font-semibold text-base-text">
               All comments({totalCount})
             </p>
             <button className="flex gap-2 items-center">
               <BsSliders color="#227B6F" size={14} />
-              <span className="text-[#1B1D1D] text-sm font-medium">Newest</span>
+              <span className="text-base-text text-sm font-medium">Newest</span>
             </button>
           </div>
         </div>
 
         <CommentsSection
           comments={(comments ?? []).map((comment) => ({
-			...comment,
-			hasLiked: hasLikedComment(comment),
-			replies: (comment.replies ? [comment.replies].flat() : []).map((reply: any) => ({
-			  ...reply,
-			  hasLiked: hasLikedComment(reply),
-			})),
-		  }))}
+            ...comment,
+            hasLiked: hasLikedComment(comment),
+            replies: (comment.replies ? [comment.replies].flat() : []).map(
+              (reply: any) => ({
+                ...reply,
+                hasLiked: hasLikedComment(reply),
+              }),
+            ),
+          }))}
           recipeId={recipeId}
           userAvatar={user?.user_metadata?.avatar_url || profile}
           userEmail={user?.email}

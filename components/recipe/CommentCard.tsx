@@ -63,14 +63,14 @@ const CommentCard = ({
           />
         </div>
 
-        <div className="flex flex-col gap-1 flex-1 min-w-0">
-          <p className="font-semibold text-[#1B1D1D] font-redHatDisplay lowercase">
+        <div className="flex flex-col space-y-1 flex-1 min-w-0">
+          <p className="font-semibold text-base-text font-redHatDisplay lowercase">
             @{username}
           </p>
-          <p className="text-[#57605E] leading-relaxed">{comment.content}</p>
+          <p className="text-subtle leading-relaxed">{comment.content}</p>
 
-          <div className="flex items-center gap-8 mt-2">
-            <span className="text-sm text-[#727E7A] font-medium">
+          <div className="flex items-center gap-x-8 mt-1.5">
+            <span className="text-sm text-subtle font-medium">
               {formatRelativeTime(comment.created_at)}
             </span>
 
@@ -142,7 +142,7 @@ const CommentCard = ({
             <button
               onClick={() =>
                 setVisibleReplyCount(
-                  isShowingAll ? INITIAL_REPLY_COUNT : replies.length
+                  isShowingAll ? INITIAL_REPLY_COUNT : replies.length,
                 )
               }
               className="text-sm text-mint-green font-semibold mt-5"

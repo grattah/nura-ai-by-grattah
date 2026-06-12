@@ -51,7 +51,7 @@ export default function CommentsSection({
 
   return (
     <>
-      <div className="mt-8 px-4 flex flex-col gap-4">
+      <div className="mt-7.75 px-4 flex flex-col gap-4">
         {comments.map((comment) => (
           <CommentCard
             recipeId={recipeId}
@@ -95,6 +95,8 @@ export default function CommentsSection({
             <Image
               src={userAvatar || profile}
               alt={userEmail ?? "user avatar"}
+              width={48}
+              height={48}
               className="object-cover w-full h-full"
             />
           </div>

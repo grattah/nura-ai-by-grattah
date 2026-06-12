@@ -120,7 +120,7 @@ export default async function RecipeDetailPage({
     likes,
     profiles (id, username, avatar_url),
     comment_likes!comment_id (user_id)
-  `
+  `,
       )
       .eq("recipe_id", recipe.id)
       .order("created_at", { ascending: false })
@@ -134,14 +134,16 @@ export default async function RecipeDetailPage({
   ]);
 
   const latestCommentWithLike = latestComment
-  ? {
-      ...latestComment,
-      hasLiked:
-        latestComment.comment_likes?.some(
-          (like: { user_id: string }) => like.user_id === user?.id
-        ) ?? false,
-    }
-  : null;
+    ? {
+        ...latestComment,
+        hasLiked:
+          latestComment.comment_likes?.some(
+            (like: { user_id: string }) => like.user_id === user?.id,
+          ) ?? false,
+      }
+    : null;
+
+  console.log(latestCommentWithLike);
 
   const ingredients =
     (recipe.ingredients as Array<{ emoji: string; label: string }>) ?? [];
