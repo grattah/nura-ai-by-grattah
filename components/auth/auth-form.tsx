@@ -18,12 +18,43 @@ import { cn } from "@/lib/utils";
 
 import loader from "@/public/loader.png";
 
-// "login-otp" → user exists but has no password (OAuth / checkout-created)
-// "signup-otp" → new user verifying their email before creating a profile
 type AuthStep = "email" | "login" | "login-otp" | "signup-otp" | "signup";
 
 interface NuraAuthFormProps {
   className?: string;
+}
+
+// Remember an in-progress OTP step so a refresh or browser-back restores the
+// code-entry screen instead of dropping the user on the email step — which would
+// force a redundant re-send and hit Supabase's 60s OTP cooldown.
+const OTP_PENDING_KEY = "nura-auth-pending";
+const OTP_PENDING_TTL = 15 * 60 * 1000; // OTPs are valid for ~1h; 15m is a safe window.
+
+type OtpStep = "signup-otp" | "login-otp";
+
+function savePendingOtp(email: string, step: OtpStep) {
+  try {
+    sessionStorage.setItem(
+      OTP_PENDING_KEY,
+      JSON.stringify({ email, step, ts: Date.now() }),
+    );
+  } catch {
+    /* sessionStorage unavailable — non-critical */
+  }
+}
+
+function clearPendingOtp() {
+  try {
+    sessionStorage.removeItem(OTP_PENDING_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+function isRateLimited(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const e = err as { status?: number; code?: string };
+  return e.status === 429 || (typeof e.code === "string" && e.code.includes("rate_limit"));
 }
 
 export function NuraAuthForm({ className }: NuraAuthFormProps) {
@@ -38,6 +69,28 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const router = useRouter();
+
+  // Restore an in-progress OTP screen after a refresh / browser-back so the user
+  // can enter the code they were already sent (no re-send, no cooldown error).
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(OTP_PENDING_KEY);
+      if (!raw) return;
+      const { email: e, step: s, ts } = JSON.parse(raw);
+      if (
+        e &&
+        (s === "signup-otp" || s === "login-otp") &&
+        Date.now() - ts < OTP_PENDING_TTL
+      ) {
+        setEmail(e);
+        setStep(s);
+      } else {
+        clearPendingOtp();
+      }
+    } catch {
+      /* ignore malformed state */
+    }
+  }, []);
 
   // ─── Step 1: resolve email ─────────────────────────────────────────────────
 
@@ -74,10 +127,15 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         });
 
         if (otpError) {
-          setError("Failed to send verification code. Please try again.");
+          setError(
+            isRateLimited(otpError)
+              ? "Please wait a minute before requesting another code."
+              : "Failed to send verification code. Please try again.",
+          );
           return;
         }
 
+        savePendingOtp(email, "signup-otp");
         setStep("signup-otp");
         return;
       }
@@ -94,10 +152,21 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       });
 
       if (otpError) {
+        // A cooldown almost always means a code from a prior attempt is already
+        // in their inbox — let them enter it instead of dead-ending here.
+        if (isRateLimited(otpError)) {
+          savePendingOtp(email, "login-otp");
+          setStep("login-otp");
+          setError(
+            "You already have a code in your inbox — enter it below, or wait a minute to resend.",
+          );
+          return;
+        }
         setError("Failed to send sign-in code. Please try again.");
         return;
       }
 
+      savePendingOtp(email, "login-otp");
       setStep("login-otp");
     } catch {
       setError("Network error. Please check your connection.");
@@ -107,8 +176,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   };
 
   // ─── Shared post-auth redirect ─────────────────────────────────────────────
-  // Mirrors the OAuth callback: send subscribed users onward, everyone else
-  // to checkout, instead of always landing on "/".
 
   const redirectAfterAuth = async (
     supabase: ReturnType<typeof createClient>,
@@ -154,6 +221,19 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         return;
       }
 
+      clearPendingOtp();
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const needsSetup =
+        user?.user_metadata?.has_password !== true &&
+        !user?.user_metadata?.full_name;
+      if (needsSetup) {
+        setStep("signup");
+        return;
+      }
+
       await redirectAfterAuth(supabase);
     } catch {
       setError("Verification failed. Please try again.");
@@ -182,6 +262,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         return;
       }
 
+      clearPendingOtp();
       setStep("signup");
     } catch {
       setError("Verification failed. Please try again.");
@@ -194,10 +275,17 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     setIsLoading(true);
     setError(null);
     const supabase = createClient();
-    await supabase.auth.signInWithOtp({
+    const { error: otpError } = await supabase.auth.signInWithOtp({
       email,
       options: { shouldCreateUser: step === "signup-otp" },
     });
+    if (otpError) {
+      setError(
+        isRateLimited(otpError)
+          ? "Please wait a minute before requesting another code."
+          : "Couldn't resend the code. Please try again.",
+      );
+    }
     setIsLoading(false);
     setOtpCode("");
   };
@@ -231,8 +319,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
   // ─── Sign up ───────────────────────────────────────────────────────────────
 
-  // The user already has a session at this point (established by the
-  // signup-otp verification), so this just sets their password and name.
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -261,8 +347,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     }
   };
 
-  // "Do this later" — profile setup is skippable; the account already
-  // exists and is verified, so just continue where they left off.
   const handleSkipProfile = async () => {
     const supabase = createClient();
     await redirectAfterAuth(supabase);
@@ -305,6 +389,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   // ─── Helpers ───────────────────────────────────────────────────────────────
 
   const goBack = () => {
+    clearPendingOtp();
     setStep("email");
     setPassword("");
     setConfirmPassword("");
