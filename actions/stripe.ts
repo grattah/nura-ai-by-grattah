@@ -3,10 +3,14 @@
 import { stripe } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
 import { headers } from "next/headers";
+import {
+  getActiveSubscription,
+  activeSubscriptionMessage,
+} from "@/lib/subscription";
 
 export async function fetchClientSecretForPlan(
   plan: "annual" | "monthly" = "annual",
-) {
+): Promise<{ clientSecret: string } | { error: string }> {
   const origin = (await headers()).get("origin");
   const priceId =
     plan === "monthly"
@@ -18,6 +22,13 @@ export async function fetchClientSecretForPlan(
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (user?.id) {
+    const active = await getActiveSubscription(supabase, user.id);
+    if (active) {
+      return { error: activeSubscriptionMessage(active, plan) };
+    }
+  }
+
   const session = await stripe.checkout.sessions.create({
     ui_mode: "embedded_page",
     line_items: [{ price: priceId, quantity: 1 }],
@@ -28,7 +39,11 @@ export async function fetchClientSecretForPlan(
     ...(user?.email ? { customer_email: user.email } : {}),
   });
 
-  return session.client_secret;
+  if (!session.client_secret) {
+    return { error: "Failed to start payment. Please try again." };
+  }
+
+  return { clientSecret: session.client_secret };
 }
 
 export async function fetchClientSecret() {

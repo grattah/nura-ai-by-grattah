@@ -5,6 +5,10 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
 import { headers } from "next/headers";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import {
+  getActiveSubscription,
+  activeSubscriptionMessage,
+} from "@/lib/subscription";
 
 /**
  * Called from the guest checkout flow before OTP is sent.
@@ -35,6 +39,8 @@ export async function initiateCheckout(
     { db: { schema: "auth" } },
   );
 
+  const adminSupabase = createServiceRoleClient();
+
   let userId: string;
 
   const { data: existingUser } = await authClient
@@ -46,7 +52,6 @@ export async function initiateCheckout(
   if (existingUser) {
     userId = existingUser.id;
   } else {
-    const adminSupabase = createServiceRoleClient();
     const { data, error } = await adminSupabase.auth.admin.createUser({
       email: email.toLowerCase(),
       email_confirm: false,
@@ -61,7 +66,13 @@ export async function initiateCheckout(
     userId = data.user.id;
   }
 
-  // ── 2. Create Stripe session with user ID as the anchor ──────────────────
+  // ── 2. Block if the user already has an active subscription ──────────────
+  const active = await getActiveSubscription(adminSupabase, userId);
+  if (active) {
+    return { error: activeSubscriptionMessage(active, "annual") };
+  }
+
+  // ── 3. Create Stripe session with user ID as the anchor ──────────────────
   try {
     const session = await stripe.checkout.sessions.create({
       ui_mode: "embedded_page",
