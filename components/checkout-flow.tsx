@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -103,6 +103,12 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // OTP tokens are single-use; guard against verifyOtp being fired twice for
+  // the same code (e.g. autofill auto-submit racing a manual tap), which
+  // would otherwise surface a stray "Invalid or expired code" error on the
+  // payment step — and that step renders the error *instead of* the embed.
+  const verifyInFlightRef = useRef(false);
+
   // ── Payment step: fetch a Stripe session for the selected plan ──────────
   useEffect(() => {
     if (step === "payment" && !clientSecret) {
@@ -159,6 +165,8 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
   const handleOtpVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     if (otpCode.length < 6) return;
+    if (verifyInFlightRef.current) return;
+    verifyInFlightRef.current = true;
     setIsLoading(true);
     setError(null);
 
@@ -181,6 +189,7 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
       setError("Verification failed. Please try again.");
     } finally {
       setIsLoading(false);
+      verifyInFlightRef.current = false;
     }
   };
 

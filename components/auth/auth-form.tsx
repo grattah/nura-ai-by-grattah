@@ -60,6 +60,19 @@ function isRateLimited(err: unknown): boolean {
   );
 }
 
+// Shown in place of a button's label while its action is in flight.
+function ButtonLoader() {
+  return (
+    <Image
+      src={loader}
+      alt=""
+      width={20}
+      height={20}
+      className="animate-spin"
+    />
+  );
+}
+
 export function NuraAuthForm({ className }: NuraAuthFormProps) {
   const [step, setStep] = useState<AuthStep>("email");
   const [email, setEmail] = useState("");
@@ -105,6 +118,12 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
   const handleEmailContinue = async () => {
     if (!email) return;
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -122,7 +141,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         return;
       }
       if (!res.ok) {
-        setError("Something went wrong. Please try again.");
+        setError("We couldn't check that email. Please try again.");
         return;
       }
 
@@ -139,7 +158,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
           setError(
             isRateLimited(otpError)
               ? "Please wait a minute before requesting another code."
-              : "Failed to send verification code. Please try again.",
+              : "We couldn't send a verification code to this email. Please try again.",
           );
           return;
         }
@@ -171,7 +190,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
           );
           return;
         }
-        setError("Failed to send sign-in code. Please try again.");
+        setError("We couldn't send a sign-in code to this email. Please try again.");
         return;
       }
 
@@ -268,7 +287,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
       await redirectAfterAuth(supabase);
     } catch {
-      setError("Verification failed. Please try again.");
+      setError("Something went wrong while verifying your code. Please try again.");
     } finally {
       setIsLoading(false);
       verifyInFlightRef.current = false;
@@ -302,7 +321,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       clearPendingOtp();
       setStep("signup");
     } catch {
-      setError("Verification failed. Please try again.");
+      setError("Something went wrong while verifying your code. Please try again.");
     } finally {
       setIsLoading(false);
       verifyInFlightRef.current = false;
@@ -348,7 +367,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         err instanceof Error &&
           err.message.includes("Invalid login credentials")
           ? "Incorrect password. Please try again."
-          : "Sign in failed. Please try again.",
+          : "Something went wrong while signing you in. Please try again.",
       );
     } finally {
       setIsLoading(false);
@@ -379,7 +398,11 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
       await redirectAfterAuth(supabase);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Account creation failed.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "We couldn't save your profile. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -508,10 +531,19 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 <button
                   onClick={handleGoogleSignIn}
                   disabled={isGoogleLoading}
-                  className="w-full flex items-center justify-center gap-3 bg-[#E8E6DC] text-nura-forest py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                  className={cn(
+                    "w-full flex items-center justify-center gap-3 bg-[#E8E6DC] text-nura-forest py-4 rounded-full font-medium hover:opacity-90 transition-opacity",
+                    isGoogleLoading ? "opacity-50" : "disabled:opacity-50",
+                  )}
                 >
-                  <GoogleIcon />
-                  {isGoogleLoading ? "Connecting..." : "Continue with Google"}
+                  {isGoogleLoading ? (
+                    <ButtonLoader />
+                  ) : (
+                    <>
+                      <GoogleIcon />
+                      Continue with Google
+                    </>
+                  )}
                 </button>
               </div>
 
@@ -536,7 +568,10 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                       type="email"
                       placeholder="name@email.com"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (error) setError(null);
+                      }}
                       onKeyDown={(e) =>
                         e.key === "Enter" && handleEmailContinue()
                       }
@@ -549,9 +584,12 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 <button
                   onClick={handleEmailContinue}
                   disabled={!email || isLoading}
-                  className="w-full flex items-center justify-center bg-mint-green text-white py-4 rounded-full font-medium border border-border hover:opacity-90 transition-opacity disabled:opacity-40"
+                  className={cn(
+                    "w-full flex items-center justify-center bg-mint-green text-white py-4 rounded-full font-medium border border-border hover:opacity-90 transition-opacity",
+                    isLoading ? "opacity-50" : "disabled:opacity-40",
+                  )}
                 >
-                  {isLoading ? "Checking..." : "Continue"}
+                  {isLoading ? <ButtonLoader /> : "Continue"}
                 </button>
 
                 {error && (
@@ -590,7 +628,10 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (error) setError(null);
+                    }}
                     autoComplete="current-password"
                     autoFocus
                     required
@@ -624,9 +665,12 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 <button
                   type="submit"
                   disabled={isLoading || !password}
-                  className="w-full flex items-center justify-center bg-mint-green text-white py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+                  className={cn(
+                    "w-full flex items-center justify-center bg-mint-green text-white py-4 rounded-full font-medium hover:opacity-90 transition-opacity",
+                    isLoading ? "opacity-50" : "disabled:opacity-40",
+                  )}
                 >
-                  {isLoading ? "Signing in..." : "Sign in"}
+                  {isLoading ? <ButtonLoader /> : "Sign in"}
                 </button>
               </form>
 
@@ -640,10 +684,19 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 <button
                   onClick={handleGoogleSignIn}
                   disabled={isGoogleLoading}
-                  className="w-full flex items-center justify-center gap-3 bg-[#E8E6DC] text-nura-forest py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                  className={cn(
+                    "w-full flex items-center justify-center gap-3 bg-[#E8E6DC] text-nura-forest py-4 rounded-full font-medium hover:opacity-90 transition-opacity",
+                    isGoogleLoading ? "opacity-50" : "disabled:opacity-50",
+                  )}
                 >
-                  <GoogleIcon />
-                  {isGoogleLoading ? "Connecting..." : "Continue with Google"}
+                  {isGoogleLoading ? (
+                    <ButtonLoader />
+                  ) : (
+                    <>
+                      <GoogleIcon />
+                      Continue with Google
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -659,9 +712,10 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 inputMode="numeric"
                 placeholder="Enter code here"
                 value={otpCode}
-                onChange={(e) =>
-                  setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 8))
-                }
+                onChange={(e) => {
+                  setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 8));
+                  if (error) setError(null);
+                }}
                 autoFocus
                 autoComplete="one-time-code"
                 className="w-full px-4 py-4 rounded-lg bg-white text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] outline-none text-center text-xl tracking-widest"
@@ -729,7 +783,10 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (error) setError(null);
+                    }}
                     autoComplete="new-password"
                     required
                     className="w-full pl-10 pr-4 py-4 rounded-lg bg-[#FFFFFF] text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
@@ -763,7 +820,10 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                   type="text"
                   placeholder="Full name"
                   value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  onChange={(e) => {
+                    setFullName(e.target.value);
+                    if (error) setError(null);
+                  }}
                   autoComplete="name"
                   autoFocus
                   required
@@ -779,9 +839,12 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 <button
                   type="submit"
                   disabled={isLoading || !fullName || !password}
-                  className="w-full flex items-center justify-center bg-[#227B6F] text-[#FFFFFF] py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+                  className={cn(
+                    "w-full flex items-center justify-center bg-[#227B6F] text-[#FFFFFF] py-4 rounded-full font-medium hover:opacity-90 transition-opacity",
+                    isLoading ? "opacity-50" : "disabled:opacity-40",
+                  )}
                 >
-                  {isLoading ? "Creating account..." : "Create profile"}
+                  {isLoading ? <ButtonLoader /> : "Create profile"}
                 </button>
               </form>
               <button
