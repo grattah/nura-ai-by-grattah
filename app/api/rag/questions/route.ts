@@ -8,7 +8,11 @@ export interface QuestionsRequestBody {
   contextType: "recipe" | "guide";
   title: string;
   description: string;
+  // Fuller on-page context (ingredients, method, why it works, inside tip).
+  context?: string;
 }
+
+const MAX_CONTEXT_LEN = 4000;
 
 export async function POST(req: NextRequest) {
   // Curb LLM cost-abuse (audit M1): 20 generations / minute / IP.
@@ -22,11 +26,14 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { contextType, title, description }: QuestionsRequestBody =
+    const { contextType, title, description, context }: QuestionsRequestBody =
       await req.json();
 
     const typeLabel =
       contextType === "recipe" ? "wellness recipe" : "health guide";
+
+    // Prefer the richer on-page context; fall back to the short description.
+    const details = (context ?? description ?? "").slice(0, MAX_CONTEXT_LEN);
 
     const { text } = await generateText({
       model: anthropic("claude-sonnet-4-6"),
@@ -35,11 +42,12 @@ export async function POST(req: NextRequest) {
     after reading a ${typeLabel}.
 
     Rules:
-    - Questions must be directly relevant to the specific content provided.
+    - Questions must be directly relevant to the specific content provided,
+      drawing on its ingredients, method, and benefits where available.
     - Write each as a full sentence ending with a question mark.
     - Keep each question under 80 characters so it fits on a mobile screen.
     - Output ONLY a valid JSON array of 4 strings. No preamble, no markdown fences.`,
-      prompt: `Title: ${title}\nDescription: ${description}`,
+      prompt: `Title: ${title}\n${details}`,
     });
 
     const clean = text.replace(/```json|```/g, "").trim();

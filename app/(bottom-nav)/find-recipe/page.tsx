@@ -247,10 +247,11 @@ const page = () => {
 
   return (
     <div className="bg-background">
-      <main className="px-4 pt-6">
-        <p className="font-semibold text-2xl text-[#111312]">Find recipe</p>
-
-        <div className="mt-8">
+      <main className="">
+        <div className="px-8 py-4.75 mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A]">
+          <p className="text-2xl font-semibold text-[#111312]">Find a recipe</p>
+        </div>
+        <div className="mt-4 px-4">
           <div className="relative">
             <button className="absolute top-3.75 left-3">
               <Search color="#82A198" size={16} />

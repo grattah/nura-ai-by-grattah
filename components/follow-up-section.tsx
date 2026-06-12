@@ -9,12 +9,15 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { stripMarkdown } from "@/lib/strip-markdown";
+import { loadChat, saveChat } from "@/lib/chat-cache";
 
 interface FollowUpSectionProps {
   contextId: string;
   contextType: "recipe" | "guide";
   title: string;
   description: string;
+  /** Fuller on-page context (ingredients, method, why it works, inside tip). */
+  context?: string;
   allowedDomains?: string[];
   savedQuestions?: string[] | null;
 }
@@ -24,6 +27,7 @@ export function FollowUpSection({
   contextType,
   title,
   description,
+  context,
   allowedDomains = ["healthline.com", "webmd.com", "nhs.uk", "mayoclinic.org"],
   savedQuestions,
 }: FollowUpSectionProps) {
@@ -37,7 +41,7 @@ export function FollowUpSection({
 
   const [input, setInput] = useState("");
 
-  const { messages, sendMessage, status } = useChat({
+  const { messages, sendMessage, status, setMessages } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/rag/chat",
       body: {
@@ -47,11 +51,24 @@ export function FollowUpSection({
         title,
         allowedDomains,
         description,
+        context,
       },
     }),
   });
 
   const isLoading = status === "submitted" || status === "streaming";
+
+  // Restore any persisted conversation for this recipe on mount / id change.
+  useEffect(() => {
+    const cached = loadChat(contextId);
+    if (cached) setMessages(cached);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contextId]);
+
+  // Persist completed turns so the chat survives navigation (cleared on logout).
+  useEffect(() => {
+    if (status === "ready") saveChat(contextId, messages);
+  }, [status, messages, contextId]);
 
   useEffect(() => {
     if (savedQuestions?.length) return;
@@ -62,7 +79,7 @@ export function FollowUpSection({
     fetch("/api/rag/questions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contextId, contextType, title, description }),
+      body: JSON.stringify({ contextId, contextType, title, description, context }),
     })
       .then((r) => r.json())
       .then(({ questions: aiQs }) => {

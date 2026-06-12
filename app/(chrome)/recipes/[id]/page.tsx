@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { Heart } from "lucide-react";
 
 import { FollowUpSection } from "@/components/follow-up-section";
+import { buildRecipeContext } from "@/lib/recipe-context";
 import { PaywallGate } from "@/components/paywall/paywall-gate";
 import { ShareButton } from "@/components/share-button";
 import { createClient } from "@/lib/supabase/server";
@@ -185,6 +186,7 @@ export default async function RecipeDetailPage({
                 contextType="recipe"
                 title={recipe.title}
                 description={recipe.short_description}
+                context={buildRecipeContext(recipe)}
                 savedQuestions={recipe.follow_up_questions}
               />
             </div>

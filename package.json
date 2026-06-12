@@ -9,7 +9,8 @@
     "start": "next start",
     "generate-types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > lib/database.types.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "vectorise": "node --env-file=.env.local scripts/vectorise.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.0",

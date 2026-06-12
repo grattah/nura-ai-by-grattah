@@ -23,6 +23,7 @@ export const maxDuration = 30;
 const MAX_MESSAGES = 20;
 const MAX_DOMAINS = 10;
 const MAX_TITLE_LEN = 200;
+const MAX_CONTEXT_LEN = 4000;
 
 interface ChatRequestBody {
   messages: UIMessage[];
@@ -31,6 +32,8 @@ interface ChatRequestBody {
   title: string;
   allowedDomains: string[];
   description: string;
+  // Fuller on-page context (ingredients, method, why it works, inside tip).
+  context?: string;
 }
 
 function buildSystemPrompt(
@@ -114,6 +117,7 @@ export async function POST(req: NextRequest) {
       title,
       allowedDomains,
       description,
+      context,
     }: ChatRequestBody = await req.json();
 
     // Clamp client-controlled inputs before they reach the model / web search.
@@ -124,6 +128,10 @@ export async function POST(req: NextRequest) {
     const safeDomains = (Array.isArray(allowedDomains) ? allowedDomains : [])
       .filter((d): d is string => typeof d === "string")
       .slice(0, MAX_DOMAINS);
+    // Prefer the fuller on-page recipe context for grounding; fall back to the
+    // short description.
+    const safeContext =
+      String(context || description || "").slice(0, MAX_CONTEXT_LEN);
 
     const lastMessage = safeMessages[safeMessages.length - 1];
     const userQuestion =
@@ -162,7 +170,7 @@ export async function POST(req: NextRequest) {
         safeTitle,
         null,
         domainList,
-        description,
+        safeContext,
       ),
       messages: convertToModelMessages(safeMessages),
 

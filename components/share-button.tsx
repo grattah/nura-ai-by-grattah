@@ -5,13 +5,11 @@ import {
   Share,
   Copy,
   Check,
-  X,
   Facebook,
   Twitter,
   MessageCircle,
   Mail,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -86,7 +84,7 @@ export function ShareButton({
       label: "Share on Twitter",
       action: () => {
         const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-          shareText
+          shareText,
         )}&url=${encodeURIComponent(recipeUrl)}`;
         window.open(url, "_blank", "width=550,height=420");
       },
@@ -96,7 +94,7 @@ export function ShareButton({
       label: "Share on Facebook",
       action: () => {
         const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-          recipeUrl
+          recipeUrl,
         )}`;
         window.open(url, "_blank", "width=550,height=450,noopener,noreferrer");
       },
@@ -106,7 +104,7 @@ export function ShareButton({
       label: "Share on WhatsApp",
       action: () => {
         const url = `https://wa.me/?text=${encodeURIComponent(
-          shareText + " " + recipeUrl
+          shareText + " " + recipeUrl,
         )}`;
         window.open(url, "_blank");
       },
@@ -116,7 +114,7 @@ export function ShareButton({
       label: "Share via Email",
       action: () => {
         const url = `mailto:?subject=${encodeURIComponent(
-          recipeTitle
+          recipeTitle,
         )}&body=${encodeURIComponent(shareText + "\n" + recipeUrl)}`;
         window.location.href = url;
       },
@@ -127,8 +125,10 @@ export function ShareButton({
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={` rounded-full hover:opacity-70 transition-opacity flex items-center ${
-          showText ? "border border-[#C4CAC8] bg-inherit px-4 py-3" : "bg-[#E8E6DC] p-3"
+        className={`rounded-full hover:opacity-70 transition-opacity flex items-center ${
+          showText
+            ? "border border-[#C4CAC8] bg-inherit px-4 py-3"
+            : "bg-[#E8E6DC] p-3"
         }`}
         aria-label="Share recipe"
       >
@@ -141,7 +141,7 @@ export function ShareButton({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-12 bg-card border border-border rounded-2xl shadow-lg z-50 min-w-56 overflow-hidden">
+        <div className="absolute left-0 top-13 bg-card border border-border rounded-2xl shadow-lg z-50 min-w-56 overflow-hidden">
           <div className="p-3 space-y-1">
             {shareOptions.map((option) => {
               const Icon = option.icon;
@@ -156,7 +156,7 @@ export function ShareButton({
                     "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm transition-colors",
                     isActive
                       ? "bg-foreground/10 text-foreground"
-                      : "hover:bg-foreground/5 text-foreground/80 hover:text-foreground"
+                      : "hover:bg-foreground/5 text-foreground/80 hover:text-foreground",
                   )}
                 >
                   {isActive && option.label === "Copy Link" ? (
