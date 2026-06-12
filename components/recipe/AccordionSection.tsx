@@ -37,8 +37,6 @@ const AccordionSection = ({
     <LockKeyhole size={20} color="#9CA5A3" className="ml-auto" />
   );
 
-  console.log(hasAccess, isLoading);
-
   return (
     <Accordion type="multiple" defaultValue={[]} className="space-y-3">
       {/* 1 — Ingredients */}

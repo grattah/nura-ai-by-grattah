@@ -1,41 +1,45 @@
 "use client";
 
+import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Heart } from "lucide-react";
 
+import CommentForm from "./CommentForm";
+import { formatRelativeTime } from "@/lib/utils";
+import profile from "@/public/profile.png";
+import CommentLikeButton from "./CommentLikeButton";
+
 interface Comment {
   id: string;
-  username: string;
-  avatarUrl: string;
-  content: string;
-  timestamp: string;
+  hasLiked: boolean;
   likes: number;
-  hasLiked?: boolean;
+  profiles: Profile;
+  content: string;
+  created_at: string;
+}
+
+interface Profile {
+  id: string;
+  username: string | null;
+  avatar_url: string | null;
 }
 
 interface CommentsSectionProps {
-  total: number;
-  latestComment: Comment;
+  total: number | undefined;
+  latestComment: Comment | null;
   seeAllHref?: string;
+  recipeId: string;
+  isAuthenticated: boolean;
 }
 
 export default function Comment({
   total,
   latestComment,
   seeAllHref = "#",
+  recipeId,
+  isAuthenticated,
 }: CommentsSectionProps) {
-
-  function onReply(id: string) {
-    // Placeholder for reply action
-    console.log(`Reply to comment ${id}`);
-  }
-
-  function onLike(id: string) {
-	// Placeholder for like action
-	console.log(`Like comment ${id}`);
-  } 
-
   return (
     <section className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -51,62 +55,46 @@ export default function Comment({
       </div>
 
       <div className="rounded-2xl bg-[#FFFFFF] p-5 flex flex-col gap-5">
-        <div className="flex items-start gap-3">
-          <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0">
-            <Image
-              src={latestComment.avatarUrl}
-              alt={`${latestComment.username}'s avatar`}
-              fill
-              className="object-cover"
-              sizes="48px"
-            />
-          </div>
-
-          <div className="flex flex-col gap-2 flex-1 min-w-0">
-            <p className="font-semibold text-[#1B1D1D] font-redHatDisplay">
-              @{latestComment.username}
-            </p>
-            <p className="text-[#57605E] leading-relaxed">
-              {latestComment.content}
-            </p>
-
-            <div className="flex items-center gap-8 mt-2">
-              <span className="text-sm text-[#727E7A] font-medium">
-                {latestComment.timestamp}
-              </span>
-
-              <button
-                onClick={() => onReply(latestComment.id)}
-                className="text-sm text-[#727E7A] font-medium hover:text-[#1A1A1A] transition-colors"
-              >
-                Reply
-              </button>
-
-              <button
-                onClick={() => onLike(latestComment.id)}
-                className="flex items-center gap-1.5 text-sm text-[#57605E] hover:text-[#1A1A1A] transition-colors"
-                aria-label={`Like comment. Currently ${latestComment.likes} likes`}
-              >
-                <Heart
-                  size={18}
-                  className={
-                    latestComment.hasLiked
-                      ? "fill-[#E11D48] text-[#E11D48]"
-                      : ""
-                  }
+        {latestComment && (
+          <div className="flex items-start gap-3">
+            <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0">
+              {latestComment && (
+                <Image
+                  src={latestComment.profiles.avatar_url || profile}
+                  alt={`${latestComment.profiles.username}'s avatar`}
+                  fill
+                  className="object-cover"
+                  sizes="48px"
                 />
-                <span>{latestComment.likes}</span>
-              </button>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1 flex-1 min-w-0">
+              <p className="font-semibold text-[#1B1D1D] font-redHatDisplay lowercase">
+                @{latestComment?.profiles?.username || "unknown"}
+              </p>
+              <p className="text-[#57605E] leading-relaxed">
+                {latestComment?.content || ""}
+              </p>
+
+              <div className="flex items-center gap-8 mt-2">
+                <span className="text-sm text-[#727E7A] font-medium">
+                  {latestComment &&
+                    formatRelativeTime(latestComment.created_at)}
+                </span>
+
+                <CommentLikeButton
+                  commentId={latestComment?.id || ""}
+                  recipeId={recipeId}
+                  initialLiked={latestComment?.hasLiked ?? false}
+                  initialCount={latestComment?.likes ?? 0}
+                  isAuthenticated={isAuthenticated}
+                />
+              </div>
             </div>
           </div>
-        </div>
-
-        <button
-          onClick={() => onReply(latestComment.id)}
-          className="w-full text-left rounded-full bg-[#E8E6DC] px-5 py-4 text-[#57605E] hover:bg-[#D8D6CC] transition-colors text-sm"
-        >
-          Add a Comment...
-        </button>
+        )}
+        <CommentForm recipeId={recipeId} />
       </div>
     </section>
   );

@@ -20,26 +20,20 @@ import LikeButton from "@/components/recipe/LikeButton";
 import { logRecipeView } from "@/actions/activity";
 import { isLiked } from "@/actions/likes";
 
-interface CommentData {
+interface Comment {
   id: string;
-  username: string;
-  avatarUrl: string;
+  profiles: Profile;
   content: string;
-  timestamp: string;
+  created_At: string;
   likes: number;
   hasLiked?: boolean;
 }
 
-const mockComment: CommentData = {
-  id: "comment-1",
-  username: "gut.healer",
-  avatarUrl: "/assets/avatars/gut-healer.jpg",
-  content:
-    "This juice reduced my bloating in just 2 days! I feel so light and fresh. 🌿",
-  timestamp: "2d ago",
-  likes: 24,
-  hasLiked: false,
-};
+interface Profile {
+  id: string;
+  username: string;
+  avatar_url: string;
+}
 
 // React cache deduplicates this fetch — generateMetadata and the page
 // both call getRecipe(id) but Supabase is only queried once per request
@@ -100,11 +94,45 @@ export default async function RecipeDetailPage({
     {
       data: { user },
     },
+    { data: latestComment },
+
+    { data: totalComments },
   ] = await Promise.all([
     isBookmarked(recipe.id),
     isLiked(recipe.id),
     supabase.auth.getUser(),
+    supabase
+      .from("comments")
+      .select(
+        `
+    id,
+    content,
+    created_at,
+    likes,
+    profiles (id, username, avatar_url),
+    comment_likes!comment_id (user_id)
+  `
+      )
+      .eq("recipe_id", recipe.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("comments")
+      .select("*")
+      .eq("recipe_id", recipe.id)
+      .is("parent_id", null),
   ]);
+
+  const latestCommentWithLike = latestComment
+  ? {
+      ...latestComment,
+      hasLiked:
+        latestComment.comment_likes?.some(
+          (like: { user_id: string }) => like.user_id === user?.id
+        ) ?? false,
+    }
+  : null;
 
   const ingredients =
     (recipe.ingredients as Array<{ emoji: string; label: string }>) ?? [];
@@ -222,9 +250,11 @@ export default async function RecipeDetailPage({
 
             <div className="mt-8">
               <Comment
-                total={12}
-                latestComment={mockComment}
-                seeAllHref="/recipes/ashwagandha-moon-milk/comments"
+                total={totalComments?.length}
+                latestComment={latestCommentWithLike}
+                seeAllHref={`/comments?recipeId=${recipe.id}&limit=5`}
+                recipeId={recipe.id}
+                isAuthenticated={!!user}
               />
             </div>
           </div>
