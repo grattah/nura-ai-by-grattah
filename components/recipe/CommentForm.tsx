@@ -61,7 +61,7 @@ const CommentForm = ({
             name="comment"
             placeholder={placeholder}
             disabled={isPending}
-            className="bg-[#FFFFFF] px-5 py-4 text-[#57605E] text-sm rounded-full w-full outline-0 disabled:opacity-50"
+            className="bg-[#FFFFFF] pl-5 pr-14 py-4 text-[#57605E] text-sm rounded-full w-full outline-0 disabled:opacity-50"
           />
           <button
             type="submit"
