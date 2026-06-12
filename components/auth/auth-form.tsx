@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -72,6 +72,12 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const router = useRouter();
+
+  // OTP autofill can trigger verification twice (the otpCode effect and the
+  // form's onSubmit both fire for the same code). OTP tokens are single-use,
+  // so the loser of that race gets "invalid or expired" — guard against
+  // running verifyOtp more than once per code.
+  const verifyInFlightRef = useRef(false);
 
   // Restore an in-progress OTP screen after a refresh / browser-back so the user
   // can enter the code they were already sent (no re-send, no cooldown error).
@@ -227,6 +233,8 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   const handleOtpVerify = async (codeToVerify?: string) => {
     const token = codeToVerify || otpCode.trim();
     if (!token) return;
+    if (verifyInFlightRef.current) return;
+    verifyInFlightRef.current = true;
 
     setIsLoading(true);
     setError(null);
@@ -263,6 +271,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       setError("Verification failed. Please try again.");
     } finally {
       setIsLoading(false);
+      verifyInFlightRef.current = false;
     }
   };
 
@@ -270,6 +279,8 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   const handleSignupOtpVerify = async (codeToVerify?: string) => {
     const token = codeToVerify || otpCode.trim();
     if (!token) return;
+    if (verifyInFlightRef.current) return;
+    verifyInFlightRef.current = true;
 
     setIsLoading(true);
     setError(null);
@@ -294,6 +305,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       setError("Verification failed. Please try again.");
     } finally {
       setIsLoading(false);
+      verifyInFlightRef.current = false;
     }
   };
 
