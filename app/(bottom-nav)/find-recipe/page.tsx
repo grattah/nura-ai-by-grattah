@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import {
   Search,
@@ -37,8 +38,10 @@ interface Recipe {
 const page = () => {
   type SearchState = "idle" | "searching" | "results" | "empty" | "suggestions";
 
+  const searchParams = useSearchParams();
+  const query = searchParams.get("q");
   const supabase = createClient();
-  const [searchTerm, setSearchTerm] = React.useState("");
+  const [searchTerm, setSearchTerm] = React.useState(query || "");
   const [recipes, setRecipes] = React.useState<
     | {
         created_at: string;
