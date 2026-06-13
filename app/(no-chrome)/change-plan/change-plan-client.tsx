@@ -36,23 +36,22 @@ export function ChangePlanClient() {
   const [selected, setSelected] = useState<"annual" | "monthly">("annual");
 
   return (
-    <div className="min-h-dvh bg-background pb-10">
+    <div className="min-h-dvh pb-10 bg-white">
       {/* Header */}
-      <div className="flex items-center px-6 pt-5 pb-10 relative">
-        <button
-          onClick={() => router.back()}
-          className="size-10 absolute left-4 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
-          aria-label="Back"
-        >
-          <ArrowLeft className="size-5 text-foreground" />
-        </button>
+      <div className="px-6 pb-4.75 bg-background mb-4.75">
+        <div className="flex items-center pt-5 pb-10 relative">
+          <button
+            onClick={() => router.back()}
+            className="size-10 shrink-0 absolute left-0 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
+            aria-label="Back"
+          >
+            <ArrowLeft className="size-5 text-foreground" />
+          </button>
 
-        <h1 className="flex-1 text-xl font-semibold text-base-text text-center">
-          Change plan
-        </h1>
-      </div>
-
-      <div className="px-6 space-y-5">
+          <h1 className="flex-1 text-xl font-semibold text-base-text text-center">
+            Change plan
+          </h1>
+        </div>
         <div>
           <p className="text-xl font-semibold text-base-text leading-snug">
             Change your Subscription Plan
@@ -61,9 +60,11 @@ export function ChangePlanClient() {
             You won&apos;t be charged until your current one expires
           </p>
         </div>
+      </div>
 
+      <div className="px-6 space-y-8 bg-white">
         {/* Plan options */}
-        <div className="space-y-3 mt-9">
+        <div className="space-y-6 mt-12 mb-10">
           {PLANS.map((plan) => {
             const isSelected = selected === plan.id;
             return (
@@ -81,8 +82,8 @@ export function ChangePlanClient() {
                   onClick={() => setSelected(plan.id)}
                   className={`w-full z-10 relative text-left rounded-2xl p-4 border-2 transition-all ${
                     isSelected
-                      ? "border-mint-green bg-card"
-                      : "border-border bg-card"
+                      ? "border-mint-green bg-white"
+                      : "border-grey-c300 bg-grey-c100"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -124,19 +125,19 @@ export function ChangePlanClient() {
         </div>
 
         {/* Features */}
-        <div className="bg-grey-c100 rounded-2xl p-4 space-y-3">
+        <div className="bg-grey-c100 rounded-2xl p-4 space-y-4">
           {FEATURES.map((f) => (
-            <div key={f.title} className="flex items-start gap-3">
+            <div key={f.title} className="flex items-center gap-3">
               <Check
-                className="w-4 h-4 shrink-0 mt-0.5"
+                className="size-4 shrink-0"
                 style={{ color: "var(--mint-green)" }}
                 strokeWidth={2.5}
               />
-              <div>
-                <p className="text-sm font-semibold text-foreground">
+              <div className="space-y-0.5">
+                <p className="text-sm font-semibold text-base-text">
                   {f.title}
                 </p>
-                <p className="text-xs text-muted-foreground">{f.subtitle}</p>
+                <p className="text-sm text-subtle">{f.subtitle}</p>
               </div>
             </div>
           ))}

@@ -190,7 +190,9 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
           );
           return;
         }
-        setError("We couldn't send a sign-in code to this email. Please try again.");
+        setError(
+          "We couldn't send a sign-in code to this email. Please try again.",
+        );
         return;
       }
 
@@ -287,7 +289,9 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
       await redirectAfterAuth(supabase);
     } catch {
-      setError("Something went wrong while verifying your code. Please try again.");
+      setError(
+        "Something went wrong while verifying your code. Please try again.",
+      );
     } finally {
       setIsLoading(false);
       verifyInFlightRef.current = false;
@@ -321,7 +325,9 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       clearPendingOtp();
       setStep("signup");
     } catch {
-      setError("Something went wrong while verifying your code. Please try again.");
+      setError(
+        "Something went wrong while verifying your code. Please try again.",
+      );
     } finally {
       setIsLoading(false);
       verifyInFlightRef.current = false;
@@ -576,7 +582,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                         e.key === "Enter" && handleEmailContinue()
                       }
                       autoComplete="email"
-                      className="w-full pl-10 pr-4 py-4 rounded-lg bg-white text-base-text placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
+                      className="w-full pl-10 pr-4 py-4 rounded-sm bg-white text-base-text placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
                     />
                   </div>
                 </div>
@@ -609,7 +615,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                   <p className="text-subtle text-sm font-medium">
                     Your email address
                   </p>
-                  <div className="w-full px-4 py-4 rounded-lg bg-muted text-sm flex gap-2 items-center">
+                  <div className="w-full px-4 py-4 rounded-sm bg-muted text-sm flex gap-2 items-center">
                     <Mail size={20} color="#57605E" />
                     <p>{email}</p>
                   </div>
@@ -635,7 +641,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                     autoComplete="current-password"
                     autoFocus
                     required
-                    className="w-full pl-10 pr-4 py-4 rounded-lg bg-white text-base-text placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
+                    className="w-full pl-10 pr-4 py-4 rounded-sm bg-white text-base-text placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
                   />
                   <button
                     type="button"
@@ -718,7 +724,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 }}
                 autoFocus
                 autoComplete="one-time-code"
-                className="w-full px-4 py-4 rounded-lg bg-white text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] outline-none text-center text-xl tracking-widest"
+                className="w-full px-4 py-4 rounded-sm bg-white text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] outline-none text-center text-xl tracking-widest"
               />
 
               {isLoading && (
@@ -761,7 +767,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                   <p className="text-[#57605E] text-sm font-medium">
                     Your email address
                   </p>
-                  <div className="w-full px-4 py-4 rounded-lg bg-muted text-sm flex gap-2 items-center">
+                  <div className="w-full px-4 py-4 rounded-sm bg-muted text-sm flex gap-2 items-center">
                     <Mail size={20} color="#57605E" />
                     <p>{email}</p>
                   </div>
@@ -789,7 +795,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                     }}
                     autoComplete="new-password"
                     required
-                    className="w-full pl-10 pr-4 py-4 rounded-lg bg-[#FFFFFF] text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
+                    className="w-full pl-10 pr-4 py-4 rounded-sm bg-[#FFFFFF] text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
                   />
                   <button
                     type="button"
@@ -827,7 +833,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                   autoComplete="name"
                   autoFocus
                   required
-                  className="w-full px-4 py-4 rounded-lg bg-[#FFFFFF] text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
+                  className="w-full px-4 py-4 rounded-sm bg-[#FFFFFF] text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
                 />
 
                 {error && (

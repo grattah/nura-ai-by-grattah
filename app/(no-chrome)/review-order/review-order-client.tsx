@@ -55,7 +55,7 @@ function ReviewOrderContent() {
       <div className="flex items-center px-6 pt-5 pb-10 relative">
         <button
           onClick={() => router.back()}
-          className="size-10 absolute left-4 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
+          className="size-10 shrink-0 absolute left-4 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
           aria-label="Back"
         >
           <ArrowLeft className="size-5 text-foreground" />
@@ -66,9 +66,9 @@ function ReviewOrderContent() {
         </h1>
       </div>
 
-      <div className="px-6 space-y-4">
+      <div className="px-6 space-y-6">
         {/* Order summary */}
-        <div className="bg-[#E8E6DC] rounded-3xl px-4 py-6 space-y-3 border border-border">
+        <div className="bg-[#E8E6DC] rounded-3xl px-4 py-6 space-y-5.5 border border-border">
           <p className="text-base font-semibold text-foreground">
             Order summary
           </p>
@@ -90,7 +90,7 @@ function ReviewOrderContent() {
               </p>
             </div>
           </div>
-          <p className="text-sm text-subtle">Cancel anytime</p>
+          <p className="text-sm text-subtle -mt-4">Cancel anytime</p>
         </div>
 
         {/* Deferred billing note (only if existing subscription) */}

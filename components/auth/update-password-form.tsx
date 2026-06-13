@@ -98,7 +98,7 @@ export function UpdatePasswordForm({
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-4 rounded-lg bg-white text-foreground placeholder:text-muted-foreground border outline-none"
+                    className="w-full pl-10 pr-4 py-4 rounded-sm bg-white text-foreground placeholder:text-muted-foreground border outline-none"
                   />
                   <button
                     type="button"
@@ -134,7 +134,7 @@ export function UpdatePasswordForm({
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-4 rounded-lg bg-white text-foreground placeholder:text-muted-foreground border outline-none"
+                    className="w-full pl-10 pr-4 py-4 rounded-sm bg-white text-foreground placeholder:text-muted-foreground border outline-none"
                   />
                   <button
                     type="button"

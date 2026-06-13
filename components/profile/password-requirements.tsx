@@ -36,7 +36,7 @@ interface PasswordRequirementsProps {
 
 export function PasswordRequirements({ strength }: PasswordRequirementsProps) {
   return (
-    <div className="bg-[#E8E6DC] rounded-[12px] p-3 space-y-3">
+    <div className="bg-grey-c100 rounded-[12px] p-3 space-y-3">
       <p className="text-sm font-medium text-base-text">
         Password needs at least:
       </p>
