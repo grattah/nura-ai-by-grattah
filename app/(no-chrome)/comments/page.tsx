@@ -7,6 +7,8 @@ import { createClient } from "@/lib/supabase/server";
 import profile from "@/public/profile.png";
 import BackButton from "@/components/back-button";
 import CommentsSection from "@/components/recipe/CommentsSection";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 interface PageProps {
   searchParams: Promise<{ recipeId?: string; limit?: string }>;
@@ -47,7 +49,7 @@ const page = async ({ searchParams }: PageProps) => {
       profiles (id, username, avatar_url)
     )
   `,
-        { count: "exact" },
+        { count: "exact" }
       )
       .eq("recipe_id", recipeId)
       .is("parent_id", null)
@@ -66,7 +68,7 @@ const page = async ({ searchParams }: PageProps) => {
   const hasMore = (totalCount ?? 0) > (comments?.length ?? 0);
 
   return (
-    <div className="bg-background pb-2">
+    <div className="bg-background">
       <main>
         <div className="flex items-center justify-between px-4 py-3.25 relative">
           <BackButton className="rounded-full bg-[#E8E6DC] p-3 absolute left-6" />
@@ -87,7 +89,7 @@ const page = async ({ searchParams }: PageProps) => {
           />
         </div>
 
-        <div className="px-4 mt-6">
+        <div className="px-4 pt-6 bg-[#FFFFFF]">
           <div className="flex items-center justify-between">
             <p className="text-xl font-semibold text-base-text">
               All comments({totalCount})
@@ -107,7 +109,7 @@ const page = async ({ searchParams }: PageProps) => {
               (reply: any) => ({
                 ...reply,
                 hasLiked: hasLikedComment(reply),
-              }),
+              })
             ),
           }))}
           recipeId={recipeId}

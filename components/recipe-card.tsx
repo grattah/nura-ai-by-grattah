@@ -30,7 +30,7 @@ export function RecipeCard({
           )}
         </div>
 
-        <p className="text-base font-medium text-grey-c950 mb-2 leading-snug truncate">
+        <p className="text-base font-medium text-grey-c950 mb-2 leading-snug truncate font-josefin">
           {recipe.title}
         </p>
       </div>

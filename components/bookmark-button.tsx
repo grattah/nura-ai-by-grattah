@@ -80,7 +80,7 @@ export function BookmarkButton({
       <Bookmark
         strokeWidth={2.5}
         size={16}
-        className={cn("transition-all", bookmarked && "fill-foreground", popular && "text-[#227B6F]")}
+        className={cn("transition-all", bookmarked && "fill-[#227B6F] text-[#227B6F]", popular && "text-[#227B6F]")}
       />
       {showText && (
         <span className="ml-2 font-medium text-sm text-[#727E7A]">{text}</span>

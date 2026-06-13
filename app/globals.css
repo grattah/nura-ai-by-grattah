@@ -9,7 +9,7 @@
 /* Nura Health & Wellness Theme */
 :root {
   /* Light mode — warm cream/parchment palette (Figma) */
-  --background: oklch(0.955 0.012 82); /* warm parchment */
+  --background: oklch(95.72% 0.012 96.42); /* warm parchment */
   --foreground: oklch(0.175 0.038 148); /* deep forest green */
   --card: oklch(0.985 0.006 82); /* near-white card surface */
   --card-foreground: oklch(0.175 0.038 148);
@@ -50,7 +50,7 @@
   --orange-25: oklch(0.9427 0.0271 56.76);
   --brown: oklch(0.3962 0.0221 58.94);
 
-  --grey-c100: oklch(0.9634 0.0011 197.14);
+  --grey-c100: oklch(96.34% 0.001 197.14);
   --grey-c300: oklch(0.8337 0.0071 174.34);
   --grey-c500: oklch(0.5819 0.0154 173.79);
   --grey-c700: oklch(0.387 0.0098 176.81);

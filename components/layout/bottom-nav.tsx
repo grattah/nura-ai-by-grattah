@@ -2,15 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IoMdHome } from "react-icons/io";
-import { Search, Users, Bookmark } from "lucide-react";
+import { HiMiniHome } from "react-icons/hi2";
+import { FaBookmark } from "react-icons/fa";
+import { Home, Search, Users, Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { label: "Home", href: "/", icon: IoMdHome },
-  { label: "Find recipe", href: "/find-recipe", icon: Search },
-  { label: "Community", href: "/community", icon: Users },
-  { label: "Saved", href: "/bookmarks", icon: Bookmark },
+  { label: "Home", href: "/", icon: Home, activeIcon: HiMiniHome },
+  { label: "Find recipe", href: "/find-recipe", icon: Search, activeIcon: Search },
+  { label: "Community", href: "/community", icon: Users, activeIcon: Users },
+  { label: "Saved", href: "/bookmarks", icon: Bookmark, activeIcon: FaBookmark },
 ] as const;
 
 export function BottomNav() {
@@ -24,8 +25,10 @@ export function BottomNav() {
   return (
     <nav className="sticky bottom-2 z-40 w-[93%] mx-auto pb-safe">
       <div className="mx-0 flex items-center p-1 rounded-full overflow-hidden liquid-glass border-2 backdrop-blur-xs">
-        {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
+        {NAV_ITEMS.map(({ label, href, icon: Icon, activeIcon: ActiveIcon }) => {
           const active = isActive(href);
+          const IconComponent = active ? ActiveIcon : Icon;
+
           return (
             <Link
               key={href}
@@ -36,7 +39,7 @@ export function BottomNav() {
               )}
               aria-label={label}
             >
-              <Icon
+              <IconComponent
                 className={cn(
                   "size-4 transition-all duration-150",
                   active ? "text-[#0A4A41]" : "text-subtle",
