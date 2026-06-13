@@ -10,6 +10,7 @@ import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { MobileGate } from "@/components/mobile-gate";
+import { AccessProvider } from "@/components/providers/access-provider";
 import { ChatCacheCleaner } from "@/components/chat-cache-cleaner";
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -77,7 +78,9 @@ export default function RootLayout({
           forcedTheme="light"
           disableTransitionOnChange
         >
-          <MobileGate>{children}</MobileGate>
+          <MobileGate>
+            <AccessProvider>{children}</AccessProvider>
+          </MobileGate>
         </ThemeProvider>
         <ChatCacheCleaner />
         <Analytics />

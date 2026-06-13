@@ -1,11 +1,16 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { unstable_cache } from "next/cache";
+import {
+  createClient,
+  createServiceRoleClient,
+  getCachedUser,
+} from "@/lib/supabase/server";
 import { SearchSection } from "@/components/home/search-section";
 import { RecipeCardNew } from "@/components/home/recipe-card-new";
 import { WellnessTipCard } from "@/components/home/wellness-tip-card";
 import { CategorySection } from "@/components/home/category-section";
 import { UpgradeBanner } from "@/components/home/upgrade-banner";
-import { isBookmarked } from "@/actions/bookmark";
+import { getBookmarkedIds } from "@/actions/bookmark";
 
 type RecipeWithTags = {
   id: string;
@@ -22,42 +27,51 @@ const WELLNESS_TIP = {
   imageUrl: undefined as string | undefined,
 };
 
-export default async function HomePage() {
-  const supabase = await createClient();
+const getPopularRecipes = unstable_cache(
+  async () => {
+    // Service-role client: this query is shared/non-personalized (no RLS
+    // user context needed), and `unstable_cache` can't call `cookies()`
+    // (which the cookie-based client needs) inside its scope.
+    const supabase = createServiceRoleClient();
+    return supabase
+      .from("recipes")
+      .select("id, title, image_url, recipe_tags(tags(name, slug))")
+      .order("display_order", { ascending: true })
+      .limit(10);
+  },
+  ["home-popular-recipes"],
+  { revalidate: 300 },
+);
 
+export default async function HomePage() {
   const [
     {
       data: { user },
     },
     { data: rawRecipes },
-  ] = await Promise.all([
-    supabase.auth.getUser(),
-    supabase
-      .from("recipes")
-      .select("id, title, image_url, recipe_tags(tags(name, slug))")
-      .order("display_order", { ascending: true })
-      .limit(10),
-  ]);
-
-  // Check subscription status server-side
-  let hasAccess = false;
-  if (user) {
-    const { data: sub } = await supabase
-      .from("subscriptions")
-      .select("status, expires_at")
-      .eq("user_id", user.id)
-      .eq("status", "active")
-      .maybeSingle();
-    hasAccess =
-      !!sub && (!sub.expires_at || new Date(sub.expires_at) > new Date());
-  }
+  ] = await Promise.all([getCachedUser(), getPopularRecipes()]);
 
   const recipes = (rawRecipes ?? []) as unknown as RecipeWithTags[];
   const popularRecipes = recipes.slice(0, 5);
 
-  const bookmarkStatuses = await Promise.all(
-    popularRecipes.map((recipe) => isBookmarked(recipe.id)),
-  );
+  // Check subscription status server-side
+  let hasAccess = false;
+  const bookmarkedIds = new Set<string>();
+  if (user) {
+    const supabase = await createClient();
+    const [{ data: sub }, ids] = await Promise.all([
+      supabase
+        .from("subscriptions")
+        .select("status, expires_at")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .maybeSingle(),
+      getBookmarkedIds(popularRecipes.map((r) => r.id)),
+    ]);
+    hasAccess =
+      !!sub && (!sub.expires_at || new Date(sub.expires_at) > new Date());
+    ids.forEach((id) => bookmarkedIds.add(id));
+  }
 
   return (
     <div className="bg-background">
@@ -98,7 +112,7 @@ export default async function HomePage() {
                       category={firstTag}
                       href={`/recipes/${recipe.id}`}
                       priority={i < 2}
-                      initialBookmarked={bookmarkStatuses[i]}
+                      initialBookmarked={bookmarkedIds.has(recipe.id)}
                     />
                   </div>
                 );
