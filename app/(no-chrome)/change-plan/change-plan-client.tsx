@@ -38,7 +38,7 @@ export function ChangePlanClient() {
   return (
     <div className="min-h-dvh bg-background pb-10">
       {/* Header */}
-      <div className="flex items-center px-4 pt-5 pb-10 relative">
+      <div className="flex items-center px-6 pt-5 pb-10 relative">
         <button
           onClick={() => router.back()}
           className="size-10 absolute left-4 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
@@ -52,7 +52,7 @@ export function ChangePlanClient() {
         </h1>
       </div>
 
-      <div className="px-4 space-y-5">
+      <div className="px-6 space-y-5">
         <div>
           <p className="text-xl font-semibold text-base-text leading-snug">
             Change your Subscription Plan

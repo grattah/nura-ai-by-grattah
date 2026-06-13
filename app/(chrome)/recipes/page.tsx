@@ -181,7 +181,7 @@ export default function AllRecipesPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 pt-5 pb-3 sticky top-0 bg-background/80 backdrop-blur-md z-10">
+      <header className="flex items-center justify-between px-6 pt-5 pb-3 sticky top-0 bg-background/80 backdrop-blur-md z-10">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" asChild className="p-0 h-11 w-11">
             <Link href="/">
@@ -206,7 +206,7 @@ export default function AllRecipesPage() {
       </header>
 
       {/* Top Pills Bar */}
-      <div className="px-4 mb-4 overflow-hidden">
+      <div className="px-6 mb-4 overflow-hidden">
         <FilterPills
           pills={tags}
           active={committedTag}
@@ -215,7 +215,7 @@ export default function AllRecipesPage() {
       </div>
       {/* Active search query badge */}
       {committedSearch && (
-        <div className="px-4 mb-3 flex items-center gap-2">
+        <div className="px-6 mb-3 flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Search:</span>
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-card text-foreground">
             "{committedSearch}"
@@ -236,7 +236,7 @@ export default function AllRecipesPage() {
       )}
 
       {/* Recipe Grid */}
-      <main className="px-4 pb-12">
+      <main className="px-6 pb-12">
         {isLoading ? (
           <div className="grid grid-cols-2 gap-4 animate-pulse">
             {[...Array(8)].map((_, i) => (

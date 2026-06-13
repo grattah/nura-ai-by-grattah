@@ -11,6 +11,7 @@ import { WellnessTipCard } from "@/components/home/wellness-tip-card";
 import { CategorySection } from "@/components/home/category-section";
 import { UpgradeBanner } from "@/components/home/upgrade-banner";
 import { getBookmarkedIds } from "@/actions/bookmark";
+import { withTiming } from "@/lib/perf";
 
 type RecipeWithTags = {
   id: string;
@@ -49,7 +50,10 @@ export default async function HomePage() {
       data: { user },
     },
     { data: rawRecipes },
-  ] = await Promise.all([getCachedUser(), getPopularRecipes()]);
+  ] = await Promise.all([
+    withTiming("home:getCachedUser", () => getCachedUser()),
+    withTiming("home:getPopularRecipes", () => getPopularRecipes()),
+  ]);
 
   const recipes = (rawRecipes ?? []) as unknown as RecipeWithTags[];
   const popularRecipes = recipes.slice(0, 5);
@@ -60,13 +64,17 @@ export default async function HomePage() {
   if (user) {
     const supabase = await createClient();
     const [{ data: sub }, ids] = await Promise.all([
-      supabase
-        .from("subscriptions")
-        .select("status, expires_at")
-        .eq("user_id", user.id)
-        .eq("status", "active")
-        .maybeSingle(),
-      getBookmarkedIds(popularRecipes.map((r) => r.id)),
+      withTiming("home:subscription", async () =>
+        supabase
+          .from("subscriptions")
+          .select("status, expires_at")
+          .eq("user_id", user.id)
+          .eq("status", "active")
+          .maybeSingle(),
+      ),
+      withTiming("home:getBookmarkedIds", () =>
+        getBookmarkedIds(popularRecipes.map((r) => r.id)),
+      ),
     ]);
     hasAccess =
       !!sub && (!sub.expires_at || new Date(sub.expires_at) > new Date());

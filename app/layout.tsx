@@ -12,6 +12,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { MobileGate } from "@/components/mobile-gate";
 import { AccessProvider } from "@/components/providers/access-provider";
 import { ChatCacheCleaner } from "@/components/chat-cache-cleaner";
+import { PerfProfiler } from "@/components/dev/perf-profiler";
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
@@ -84,6 +85,7 @@ export default function RootLayout({
         </ThemeProvider>
         <ChatCacheCleaner />
         <Analytics />
+        {process.env.NODE_ENV === "development" && <PerfProfiler />}
       </body>
     </html>
   );

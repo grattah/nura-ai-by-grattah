@@ -7,6 +7,7 @@ import Image from "next/image";
 
 import { truncateText } from "@/lib/truncate-text";
 import { formatRelativeTime } from "@/lib/format-time";
+import { withTiming } from "@/lib/perf";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -72,12 +73,16 @@ async function getBookmarks(): Promise<BookmarkedRecipe[]> {
 
 export default async function BookmarksPage() {
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.getClaims();
+  const { data, error } = await withTiming("bookmarks:getClaims", async () =>
+    supabase.auth.getClaims(),
+  );
   if (error || !data?.claims) {
     redirect("/auth/login");
   }
 
-  const bookmarks = await getBookmarks();
+  const bookmarks = await withTiming("bookmarks:getBookmarks", () =>
+    getBookmarks(),
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -86,7 +91,7 @@ export default async function BookmarksPage() {
         <h1 className="text-2xl font-semibold text-[#111312]">Saved Recipes</h1>
       </div>
 
-      <main className="px-4 pb-10">
+      <main className="px-6 pb-10">
         {bookmarks.length > 0 ? (
           <div className="grid gap-4">
             {bookmarks.map((b) => (

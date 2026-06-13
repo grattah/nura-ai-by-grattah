@@ -52,7 +52,7 @@ function ReviewOrderContent() {
   return (
     <div className="min-h-dvh bg-background pb-10">
       {/* Header */}
-      <div className="flex items-center px-4 pt-5 pb-10 relative">
+      <div className="flex items-center px-6 pt-5 pb-10 relative">
         <button
           onClick={() => router.back()}
           className="size-10 absolute left-4 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
@@ -66,7 +66,7 @@ function ReviewOrderContent() {
         </h1>
       </div>
 
-      <div className="px-4 space-y-4">
+      <div className="px-6 space-y-4">
         {/* Order summary */}
         <div className="bg-[#E8E6DC] rounded-3xl px-4 py-6 space-y-3 border border-border">
           <p className="text-base font-semibold text-foreground">

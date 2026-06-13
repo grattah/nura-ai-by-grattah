@@ -65,7 +65,7 @@ const page = () => {
   const [pendingRecipe, setPendingRecipe] = React.useState<string | null>(null);
   const [isPending, startTransition] = React.useTransition();
   const [aiSuggestions, setAiSuggestions] = React.useState<RecipeSuggestion[]>(
-    []
+    [],
   );
   const [aiSuggestionsLoading, setAiSuggestionsLoading] = React.useState(false);
   const [aiSuggestionsError, setAiSuggestionsError] = React.useState<
@@ -73,7 +73,7 @@ const page = () => {
   >(null);
   const [showSuggestions, setShowSuggestions] = React.useState(false);
   const suggestionsCache = React.useRef<Map<string, RecipeSuggestion[]>>(
-    new Map()
+    new Map(),
   );
 
   const { recents, add: addRecent, clear: clearRecents } = useRecentSearches();
@@ -369,7 +369,7 @@ const page = () => {
 
         {showSuggestions && (
           <>
-            <div className="mt-8 flex flex-col gap-24 px-4">
+            <div className="mt-8 flex flex-col gap-24 px-6">
               <div className="flex flex-col gap-5">
                 <div className="flex flex-col gap-2">
                   <p className="font-medium">More recipes for you</p>
@@ -428,7 +428,7 @@ const page = () => {
 function RecipeLoadingScreen({ recipeName }: { recipeName: string }) {
   return (
     <div className="bg-background min-h-screen">
-      <main className="px-4 pt-6">
+      <main className="px-6 pt-6">
         <p className="font-semibold text-xl">Find recipe</p>
 
         <div className="mt-8">

@@ -6,9 +6,20 @@ import { ArrowLeft, X } from "lucide-react";
 import { CheckoutEmbed } from "@/components/checkout-embed";
 import { fetchClientSecretForPlan } from "@/actions/stripe";
 
-const PLAN_LABELS: Record<string, { name: string; price: string; description: string }> = {
-  annual: { name: "Nuko+ (Annual)", price: "£79", description: "Save £16.9, billed yearly." },
-  monthly: { name: "Nuko+ (Monthly)", price: "£7.99", description: "Billed monthly." },
+const PLAN_LABELS: Record<
+  string,
+  { name: string; price: string; description: string }
+> = {
+  annual: {
+    name: "Nuko+ (Annual)",
+    price: "£79",
+    description: "Save £16.9, billed yearly.",
+  },
+  monthly: {
+    name: "Nuko+ (Monthly)",
+    price: "£7.99",
+    description: "Billed monthly.",
+  },
 };
 
 function ContinuePaymentContent() {
@@ -32,7 +43,7 @@ function ContinuePaymentContent() {
   return (
     <div className="min-h-dvh bg-background pb-10">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-5 pb-4">
+      <div className="flex items-center justify-between px-6 pt-5 pb-4">
         <button
           onClick={() => router.back()}
           className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
@@ -41,7 +52,9 @@ function ContinuePaymentContent() {
           <ArrowLeft className="size-5 text-foreground" />
         </button>
         <div className="text-center">
-          <p className="text-lg font-semibold text-foreground">Continue payment</p>
+          <p className="text-lg font-semibold text-foreground">
+            Continue payment
+          </p>
           <p className="text-sm text-muted-foreground">Welcome back</p>
         </div>
         <button
@@ -53,18 +66,27 @@ function ContinuePaymentContent() {
         </button>
       </div>
 
-      <div className="px-4 space-y-4">
+      <div className="px-6 space-y-4">
         {/* Plan summary */}
         <div
           className="flex items-center justify-between px-4 py-3 rounded-2xl border"
-          style={{ borderColor: "var(--mint-green)", backgroundColor: "#E6F4EC" }}
+          style={{
+            borderColor: "var(--mint-green)",
+            backgroundColor: "#E6F4EC",
+          }}
         >
           <div>
-            <p className="text-sm font-semibold text-foreground">{planInfo.name}</p>
-            <p className="text-xs text-muted-foreground">{planInfo.description}</p>
+            <p className="text-sm font-semibold text-foreground">
+              {planInfo.name}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {planInfo.description}
+            </p>
           </div>
           <div className="text-right">
-            <p className="text-xl font-bold text-foreground">{planInfo.price}</p>
+            <p className="text-xl font-bold text-foreground">
+              {planInfo.price}
+            </p>
             <p className="text-xs text-muted-foreground">/ month</p>
           </div>
         </div>

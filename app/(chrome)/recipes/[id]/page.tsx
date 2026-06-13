@@ -164,7 +164,7 @@ export default async function RecipeDetailPage({
     <PaywallGate>
       <div className="min-h-screen bg-background">
         {/* Sub-header */}
-        <div className="flex items-center justify-between px-4 pt-5 pb-3">
+        <div className="flex items-center justify-between px-6 pt-5 pb-3">
           <BackButton className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
           <div className="flex items-center gap-2">
             <ShareButton
@@ -186,7 +186,7 @@ export default async function RecipeDetailPage({
 
         <main className="pb-6">
           {/* Hero image — LCP element, load eagerly */}
-          <div className="mx-4 rounded-4xl overflow-hidden bg-muted mb-8 relative aspect-video">
+          <div className="mx-6 rounded-4xl overflow-hidden bg-muted mb-8 relative aspect-video">
             {heroImageUrl && (
               <Image
                 src={heroImageUrl}
@@ -201,7 +201,7 @@ export default async function RecipeDetailPage({
           </div>
 
           {/* Title + description */}
-          <div className="px-4 mb-8">
+          <div className="px-6 mb-8">
             <h1 className="text-2xl font-bold text-foreground mb-1.5 leading-tight">
               {recipe.title}
             </h1>
@@ -210,7 +210,7 @@ export default async function RecipeDetailPage({
             </p>
           </div>
 
-          <div className="px-4 mb-8">
+          <div className="px-6 mb-8">
             <DetoxCard
               recipeId={recipe.id}
               supports={assignedSupports}
@@ -219,7 +219,7 @@ export default async function RecipeDetailPage({
           </div>
 
           {/* Accordion sections */}
-          <div className="px-4 space-y-3">
+          <div className="px-6 space-y-3">
             <AccordionSection
               recipe={recipe}
               ingredients={ingredients}
@@ -248,7 +248,9 @@ export default async function RecipeDetailPage({
                 />
               </div>
               <p className="font-medium text-sm">
-                {recipe.likes ?? 0} {(recipe.likes ?? 0) > 1 ? "people" : "person"} found this helpful
+                {recipe.likes ?? 0}{" "}
+                {(recipe.likes ?? 0) > 1 ? "people" : "person"} found this
+                helpful
               </p>
             </div>
 
