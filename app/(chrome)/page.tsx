@@ -30,9 +30,6 @@ const WELLNESS_TIP = {
 
 const getPopularRecipes = unstable_cache(
   async () => {
-    // Service-role client: this query is shared/non-personalized (no RLS
-    // user context needed), and `unstable_cache` can't call `cookies()`
-    // (which the cookie-based client needs) inside its scope.
     const supabase = createServiceRoleClient();
     return supabase
       .from("recipes")
@@ -83,7 +80,7 @@ export default async function HomePage() {
 
   return (
     <div className="bg-background">
-      <main className="px-4 pt-2 space-y-6">
+      <main className="px-6 pt-2 space-y-6">
         {/* Hero */}
         <section className="space-y-4">
           <h1 className="text-[1.75rem] font-semibold text-grey-c950 leading-snug">

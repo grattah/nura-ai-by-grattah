@@ -205,9 +205,9 @@ export default function CategoryDetailPage() {
   const displayName = slug?.replace(/-/g, " ") ?? "";
 
   return (
-    <div className="bg-background pb-24">
+    <div className="bg-white pb-24 min-h-svh">
       {/* Header */}
-      <div className="flex items-center px-6 pt-5 pb-4 gap-3">
+      <div className="flex items-center px-6 pt-5 pb-4 gap-3 bg-background">
         <button
           onClick={() => router.back()}
           className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center shrink-0 hover:opacity-75 transition-opacity"

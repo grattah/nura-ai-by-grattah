@@ -122,7 +122,7 @@ export default function ProfilePage() {
   if (!user) {
     return (
       <div className="min-h-dvh bg-background flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-2 border-muted-foreground border-t-transparent animate-spin" />
+        <div className="w-8 h-8 rounded-full border-2 border-subtle border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -136,7 +136,7 @@ export default function ProfilePage() {
           className="size-10 absolute left-4 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
           aria-label="Back"
         >
-          <ArrowLeft className="size-5 text-foreground" />
+          <ArrowLeft className="size-5 text-base-text" />
         </button>
 
         <div className="flex-1 min-w-0 text-center">
@@ -167,7 +167,7 @@ export default function ProfilePage() {
           </p>
 
           {/* Full name */}
-          <div className="bg-card rounded-2xl px-4 h-14 flex items-center border border-border gap-3">
+          <div className="bg-card rounded-sm px-4 h-14 flex items-center border border-[#E2E4E4] gap-3">
             <input
               type="text"
               value={fullName}
@@ -176,7 +176,7 @@ export default function ProfilePage() {
                 setNameSaved(false);
               }}
               onBlur={handleNameSave}
-              className="flex-1 bg-transparent text-base text-foreground outline-none"
+              className="flex-1 bg-transparent text-base text-base-text outline-none"
               placeholder="Full name"
             />
             {nameSaved && (
@@ -186,13 +186,13 @@ export default function ProfilePage() {
               />
             )}
             {namePending && (
-              <div className="w-4 h-4 rounded-full border-2 border-muted-foreground border-t-transparent animate-spin shrink-0" />
+              <div className="w-4 h-4 rounded-full border-2 border-subtle border-t-transparent animate-spin shrink-0" />
             )}
           </div>
 
           {/* Email (read-only) */}
-          <div className="bg-card rounded-2xl px-4 h-14 flex items-center border border-border gap-3">
-            <span className="flex-1 text-base text-foreground">
+          <div className="bg-card rounded-sm px-4 h-14 flex items-center border border-[#E2E4E4] gap-3">
+            <span className="flex-1 text-base text-base-text">
               {user.email}
             </span>
             <CheckCircle2
@@ -212,14 +212,14 @@ export default function ProfilePage() {
           </p>
 
           {/* Change password collapsible */}
-          <div className="bg-card rounded-2xl border border-border overflow-hidden">
+          <div className="bg-white rounded-2xl px-4 divide-y border border-[#E3E1D880] overflow-hidden">
             <button
               type="button"
               onClick={() => setPasswordOpen((v) => !v)}
-              className="w-full flex items-center justify-between px-4 py-4"
+              className="w-full flex items-center justify-between py-4"
             >
               <div className="flex items-center gap-3">
-                <div className="shrink-0 rounded-lg p-2 bg-[#F3F1E8]">
+                <div className="shrink-0 rounded-sm p-2 bg-[#F3F1E8]">
                   <LockKeyhole className="size-5 text-grey-c500" />
                 </div>
 
@@ -235,23 +235,23 @@ export default function ProfilePage() {
                 </div>
               </div>
               {passwordOpen ? (
-                <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                <ChevronUp className="w-4 h-4 text-subtle" />
               ) : (
-                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                <ChevronDown className="w-4 h-4 text-subtle" />
               )}
             </button>
 
             {passwordOpen && (
               <form
                 onSubmit={handlePasswordUpdate}
-                className="px-4 pb-4 space-y-3 border-t border-border pt-4"
+                className="pb-4 space-y-3 pt-4"
               >
                 {/* Current password */}
                 <div className="space-y-1">
-                  <label className="text-sm text-muted-foreground">
+                  <label className="text-sm text-subtle">
                     Current password
                   </label>
-                  <div className="flex items-center gap-3 bg-white rounded-[12px] px-4 h-12 border border-border">
+                  <div className="flex items-center gap-3 bg-white rounded-sm px-4 h-12 border border-[#E2E4E4]">
                     <LockKeyhole className="size-4 text-subtle" />
                     <input
                       type={showCurrent ? "text" : "password"}
@@ -262,7 +262,7 @@ export default function ProfilePage() {
                     <button
                       type="button"
                       onClick={() => setShowCurrent((v) => !v)}
-                      className="text-muted-foreground"
+                      className="text-subtle"
                     >
                       {showCurrent ? (
                         <EyeOff className="w-4 h-4" />
@@ -275,10 +275,8 @@ export default function ProfilePage() {
 
                 {/* New password */}
                 <div className="space-y-1">
-                  <label className="text-sm text-muted-foreground">
-                    New password
-                  </label>
-                  <div className="flex items-center gap-3 bg-white rounded-[12px] px-4 h-12 border border-border">
+                  <label className="text-sm text-subtle">New password</label>
+                  <div className="flex items-center gap-3 bg-white rounded-sm px-4 h-12 border border-[#E2E4E4]">
                     <LockKeyhole className="size-4 text-subtle" />
                     <input
                       type={showNew ? "text" : "password"}
@@ -289,7 +287,7 @@ export default function ProfilePage() {
                     <button
                       type="button"
                       onClick={() => setShowNew((v) => !v)}
-                      className="text-muted-foreground"
+                      className="text-subtle"
                     >
                       {showNew ? (
                         <EyeOff className="w-4 h-4" />
@@ -302,10 +300,10 @@ export default function ProfilePage() {
 
                 {/* Confirm password */}
                 <div className="space-y-1">
-                  <label className="text-sm text-muted-foreground">
+                  <label className="text-sm text-subtle">
                     Re-enter new password
                   </label>
-                  <div className="flex items-center gap-3 rounded-[12px] bg-white px-4 h-12 border border-border">
+                  <div className="flex items-center gap-3 rounded-sm bg-white px-4 h-12 border border-[#E2E4E4]">
                     <LockKeyhole className="size-4 text-subtle" />
                     <input
                       type={showConfirm ? "text" : "password"}
@@ -316,7 +314,7 @@ export default function ProfilePage() {
                     <button
                       type="button"
                       onClick={() => setShowConfirm((v) => !v)}
-                      className="text-muted-foreground"
+                      className="text-subtle"
                     >
                       {showConfirm ? (
                         <EyeOff className="w-4 h-4" />

@@ -75,7 +75,7 @@ function LogBackInContent() {
           <label className="text-sm text-muted-foreground">
             Your email address
           </label>
-          <div className="flex items-center gap-3 bg-card rounded-2xl px-4 h-13 border border-border">
+          <div className="flex items-center gap-3 bg-card rounded-sm px-4 h-13 border border-border">
             <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
             <input
               type="email"
@@ -89,7 +89,7 @@ function LogBackInContent() {
 
         <div className="space-y-1.5">
           <label className="text-sm text-muted-foreground">Password</label>
-          <div className="flex items-center gap-3 bg-card rounded-2xl px-4 h-13 border border-border">
+          <div className="flex items-center gap-3 bg-card rounded-sm px-4 h-13 border border-border">
             <LockKeyhole className="w-4 h-4 text-subtle shrink-0" />
             <input
               type={showPw ? "text" : "password"}
