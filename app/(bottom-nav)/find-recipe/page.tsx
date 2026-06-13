@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import {
   Search,
@@ -24,6 +25,7 @@ interface RecipeSuggestion {
 interface Recipe {
   created_at: string;
   display_order: number;
+  short_description: string | null;
   follow_up_questions: string[] | null;
   how_to_make: any;
   id: string;
@@ -37,8 +39,10 @@ interface Recipe {
 const page = () => {
   type SearchState = "idle" | "searching" | "results" | "empty" | "suggestions";
 
+  const searchParams = useSearchParams();
+  const query = searchParams.get("q");
   const supabase = createClient();
-  const [searchTerm, setSearchTerm] = React.useState("");
+  const [searchTerm, setSearchTerm] = React.useState(query || "");
   const [recipes, setRecipes] = React.useState<
     | {
         created_at: string;
@@ -54,25 +58,45 @@ const page = () => {
       }[]
     | null
   >([]);
+  const [allRecipes, setAllRecipes] = React.useState<Recipe[]>([]);
+  const [isLoadingRecipes, setIsLoadingRecipes] = React.useState(true);
   const [suggestedRecipes, setSuggestedRecipes] = React.useState<Recipe[]>([]);
   const [step, setStep] = React.useState(1);
-  const [searchState, setSearchState] = React.useState<SearchState>("idle");
   const [pendingRecipe, setPendingRecipe] = React.useState<string | null>(null);
   const [isPending, startTransition] = React.useTransition();
   const [aiSuggestions, setAiSuggestions] = React.useState<RecipeSuggestion[]>(
-    [],
+    []
   );
   const [aiSuggestionsLoading, setAiSuggestionsLoading] = React.useState(false);
   const [aiSuggestionsError, setAiSuggestionsError] = React.useState<
     string | null
   >(null);
+  const [showSuggestions, setShowSuggestions] = React.useState(false);
   const suggestionsCache = React.useRef<Map<string, RecipeSuggestion[]>>(
-    new Map(),
+    new Map()
   );
 
   const { recents, add: addRecent, clear: clearRecents } = useRecentSearches();
 
   const router = useRouter();
+
+  React.useEffect(() => {
+    const fetchAllRecipes = async () => {
+      const { data, error } = await supabase
+        .from("recipes")
+        .select("*")
+        .order("title", { ascending: true });
+
+      if (error) {
+        console.error("Failed to fetch recipes:", error);
+      } else {
+        setAllRecipes(data ?? []);
+      }
+      setIsLoadingRecipes(false);
+    };
+
+    fetchAllRecipes();
+  }, []);
 
   React.useEffect(() => {
     if (recents.length === 0) {
@@ -109,23 +133,35 @@ const page = () => {
     fetchSuggestions();
   }, [recents]);
 
-  if (isPending && pendingRecipe) {
-    return <RecipeLoadingScreen recipeName={pendingRecipe} />;
-  }
+  const filteredRecipes = React.useMemo(() => {
+    const words = searchTerm.trim().toLowerCase().split(/\s+/).filter(Boolean);
+
+    if (words.length === 0) return [];
+
+    return allRecipes.filter((recipe) => {
+      const haystack = `${recipe.title} ${
+        recipe.short_description ?? ""
+      }`.toLowerCase();
+      return words.every((word) => haystack.includes(word));
+    });
+  }, [searchTerm, allRecipes]);
+
+  React.useEffect(() => {
+    if (!searchTerm.trim() || filteredRecipes.length === 0) return;
+    const timer = setTimeout(() => addRecent(searchTerm), 1000);
+    return () => clearTimeout(timer);
+  }, [searchTerm, filteredRecipes]);
+
+  const showingResults = !showSuggestions && searchTerm.trim().length > 0;
+  const showingEmpty = showingResults && filteredRecipes.length === 0;
+  const showingIdle = searchTerm.trim().length === 0 && !showSuggestions;
 
   const handleSearchTermChange = (value: string) => {
     setSearchTerm(value);
-    // Any new typing resets us to idle. Previous results are no longer relevant.
-    if (searchState !== "idle") {
-      setSearchState("idle");
-      setRecipes([]);
-    }
   };
 
   const handleClearSearch = () => {
     setSearchTerm("");
-    setRecipes([]);
-    setSearchState("idle");
   };
 
   const handleRecipeClick = (id: string, title: string) => {
@@ -137,7 +173,7 @@ const page = () => {
   };
 
   const handleGetSuggestions = async () => {
-    setSearchState("suggestions");
+    setShowSuggestions(true);
     setAiSuggestionsError(null);
 
     const cacheKey = searchTerm.trim().toLowerCase();
@@ -169,76 +205,6 @@ const page = () => {
       setAiSuggestionsLoading(false);
     }
   };
-
-  const recipeSearch = async () => {
-    const words = searchTerm.trim().split(/\s+/).filter(Boolean);
-
-    if (words.length === 0) {
-      setRecipes([]);
-      setSearchState("empty");
-      return;
-    }
-
-    let query = supabase.from("recipes").select("*");
-
-    for (const word of words) {
-      query = query.or(
-        `title.ilike.%${word}%,short_description.ilike.%${word}%`,
-      );
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      // console.log(error);
-      setSearchState("idle");
-      return;
-    }
-
-    if (!data || data.length === 0) {
-      setRecipes([]);
-      setSearchState("empty");
-    } else {
-      setRecipes(data);
-      setSearchState("results");
-      addRecent(searchTerm);
-    }
-  };
-
-  React.useEffect(() => {
-    if (recents.length === 0) {
-      setSuggestedRecipes([]);
-      return;
-    }
-
-    const fetchSuggestions = async () => {
-      // Build an OR filter across all recent search terms.
-      // Each term searches both title and short_description.
-      const orFilter = recents
-        .flatMap((term) => [
-          `title.ilike.%${term}%`,
-          `short_description.ilike.%${term}%`,
-        ])
-        .join(",");
-
-      const { data, error } = await supabase
-        .from("recipes")
-        .select("*")
-        .or(orFilter)
-        .limit(10);
-
-      if (error) {
-        console.error("Failed to fetch suggestions:", error);
-        return;
-      }
-
-      // Shuffle and take 3 so the user sees variety each visit
-      const shuffled = (data ?? []).sort(() => Math.random() - 0.5);
-      setSuggestedRecipes(shuffled.slice(0, 3));
-    };
-
-    fetchSuggestions();
-  }, [recents]);
 
   // Show the full-screen loading state while navigation is in progress
   if (isPending && pendingRecipe) {
@@ -275,9 +241,8 @@ const page = () => {
           </div>
         </div>
 
-        {step === 1 && (
-          <>
-            {searchState === "idle" && searchTerm.length > 0 && (
+        <>
+          {/* {searchState === "idle" && searchTerm.length > 0 && (
               <div className="mt-5 px-6">
                 <button
                   className="w-full bg-mint-green text-[#FFFFFF] flex justify-center py-4 rounded-full hover:opacity-90 transition-opacity"
@@ -286,100 +251,95 @@ const page = () => {
                   Find recipe
                 </button>
               </div>
-            )}
+            )} */}
 
-            {searchState === "empty" && (
-              <div className="flex flex-col gap-5 mt-2 px-6">
-                <div className="flex flex-col gap-2">
-                  <p className="font-medium">Results</p>
-                  <p className="text-sm text-[#57605E]">
-                    {recipes?.length} recipes found
-                  </p>
-                </div>
-                <button
-                  className="border border-[#227B6F] w-full py-4 flex items-center justify-center gap-3 rounded-full"
-                  onClick={handleGetSuggestions}
-                >
-                  <Sparkles color="#227B6F" size={20} strokeWidth={2} />
-                  <span className="text-mint-green font-medium text-base">
-                    Get suggestions
-                  </span>
-                </button>
+          {showingEmpty && (
+            <div className="flex flex-col gap-5 mt-2 px-6">
+              <div className="flex flex-col gap-2">
+                <p className="font-medium">Results</p>
+                <p className="text-sm text-[#57605E]">
+                  {recipes?.length} recipes found
+                </p>
               </div>
-            )}
-
-            <div className="mt-8">
-              {searchState === "idle" &&
-                searchTerm.length === 0 &&
-                recents.length > 0 && (
-                  <>
-                    <div className="flex flex-col gap-5 px-6">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm text-[#57605E]">
-                          Recently searched
-                        </p>
-                        <button
-                          className="text-[#227B6F] underline font-semibold text-sm hover:opacity-90 transition-opacity"
-                          onClick={clearRecents}
-                        >
-                          Clear
-                        </button>
-                      </div>
-                      <div className="flex flex-col gap-3">
-                        {recents.map((term) => (
-                          <button
-                            key={term}
-                            className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3"
-                            onClick={() => {
-                              setSearchTerm(term);
-                            }}
-                          >
-                            <Clock size={20} color="#9CA5A3" strokeWidth={2} />
-                            <p className="font-medium">{term}</p>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {suggestedRecipes.length > 0 && (
-                      <div className="mt-14 flex flex-col gap-5 px-6">
-                        <p className="text-sm text-[#57605E]">You may like</p>
-                        <div className="flex flex-col gap-3">
-                          {suggestedRecipes.map((recipe) => (
-                            <Link
-                              key={recipe.id}
-                              href={`/recipes/${recipe.id}`}
-                              className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3 text-left w-full"
-                            >
-                              <GlassWater
-                                size={20}
-                                color="#9CA5A3"
-                                strokeWidth={2}
-                              />
-                              <p className="font-medium">{recipe.title}</p>
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
+              <button
+                className="border border-[#227B6F] w-full py-4 flex items-center justify-center gap-3 rounded-full"
+                onClick={handleGetSuggestions}
+              >
+                <Sparkles color="#227B6F" size={20} strokeWidth={2} />
+                <span className="text-mint-green font-medium text-base">
+                  Get suggestions
+                </span>
+              </button>
             </div>
-          </>
-        )}
+          )}
 
-        {searchState === "results" && (
+          <div className="mt-8">
+            {showingIdle && searchTerm.length === 0 && recents.length > 0 && (
+              <>
+                <div className="flex flex-col gap-5 px-6">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-[#57605E]">Recently searched</p>
+                    <button
+                      className="text-[#227B6F] underline font-semibold text-sm hover:opacity-90 transition-opacity"
+                      onClick={clearRecents}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {recents.map((term) => (
+                      <button
+                        key={term}
+                        className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3"
+                        onClick={() => {
+                          setSearchTerm(term);
+                        }}
+                      >
+                        <Clock size={20} color="#9CA5A3" strokeWidth={2} />
+                        <p className="font-medium">{term}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {suggestedRecipes.length > 0 && (
+                  <div className="mt-14 flex flex-col gap-5 px-6">
+                    <p className="text-sm text-[#57605E]">You may like</p>
+                    <div className="flex flex-col gap-3">
+                      {suggestedRecipes.map((recipe) => (
+                        <Link
+                          key={recipe.id}
+                          href={`/recipes/${recipe.id}`}
+                          className="flex items-center gap-3 border-b border-[#E2E4E4] pb-3 text-left w-full"
+                        >
+                          <GlassWater
+                            size={20}
+                            color="#9CA5A3"
+                            strokeWidth={2}
+                          />
+                          <p className="font-medium">{recipe.title}</p>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </>
+
+        {showingResults && (
           <>
             <div className="mt-8 flex flex-col gap-24 px-6">
               <div className="flex flex-col gap-5">
                 <div className="flex flex-col gap-2">
                   <p className="font-medium">Results</p>
                   <p className="text-sm text-subtle">
-                    {recipes?.length} recipes found
+                    {filteredRecipes.length} recipes found
                   </p>
                 </div>
                 <div className="flex flex-col gap-3">
-                  {recipes?.map((recipe) => (
+                  {filteredRecipes.map((recipe) => (
                     <Link
                       key={recipe.id}
                       href={`/recipes/${recipe.id}`}
@@ -407,9 +367,9 @@ const page = () => {
           </>
         )}
 
-        {searchState === "suggestions" && (
+        {showSuggestions && (
           <>
-            <div className="mt-8 flex flex-col gap-24">
+            <div className="mt-8 flex flex-col gap-24 px-4">
               <div className="flex flex-col gap-5">
                 <div className="flex flex-col gap-2">
                   <p className="font-medium">More recipes for you</p>
@@ -448,11 +408,9 @@ const page = () => {
               </div>
               <button
                 className="border border-mint-green w-full py-4 flex items-center justify-center gap-3 rounded-full"
-                onClick={() =>
-                  setSearchState(
-                    recipes && recipes.length > 0 ? "results" : "empty",
-                  )
-                }
+                onClick={() => {
+                  setShowSuggestions(false);
+                }}
               >
                 <ArrowLeft color="#227B6F" size={20} strokeWidth={2} />
                 <span className="text-mint-green font-medium">

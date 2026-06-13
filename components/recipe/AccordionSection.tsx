@@ -9,9 +9,9 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useAccess } from "@/hooks/use-access";
-import iconIngredients from "@/public/ingredients.png";
-import iconHTMI from "@/public/HTMI.png";
-import iconWIW from "@/public/WIW.png";
+import iconIngredients from "@/public/ingredients.svg";
+import iconHTMI from "@/public/HTMI.svg";
+import iconWIW from "@/public/WIW.svg";
 import { FaInfoCircle } from "react-icons/fa";
 import { LockKeyhole, LockKeyholeOpen } from "lucide-react";
 

@@ -93,8 +93,8 @@ export function RecipeCardNew({
             >
               <Bookmark
                 className={cn(
-                  "w-3.5 h-3.5 text-foreground transition-all",
-                  bookmarked && "fill-foreground",
+                  "w-3.5 h-3.5 text-mint-green transition-all",
+                  bookmarked && "fill-mint-green",
                 )}
                 strokeWidth={1.5}
               />
