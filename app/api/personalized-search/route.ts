@@ -10,16 +10,20 @@ const PersonalizedSearchSchema = z.object({
   summary: z
     .string()
     .describe(
-      "2-3 warm sentences acknowledging the concern and briefly previewing what was found",
+      "2 warm sentences acknowledging the concern and briefly previewing what was found",
     ),
   whatToTry: z
     .object({
-      title: z.string().describe(
-        "A short, specific action title starting with a verb, e.g. 'Try peppermint or ginger support'",
-      ),
-      description: z.string().describe(
-        "2 plain sentences explaining the benefit of this specific suggestion, e.g. 'Peppermint may help relax digestive muscles and reduce trapped gas. Ginger may support digestion and help reduce inflammation.'",
-      ),
+      title: z
+        .string()
+        .describe(
+          "A short, specific action title starting with a verb, e.g. 'Try peppermint or ginger support'",
+        ),
+      description: z
+        .string()
+        .describe(
+          "2 plain sentences explaining the benefit of this specific suggestion, e.g. 'Peppermint may help relax digestive muscles and reduce trapped gas. Ginger may support digestion and help reduce inflammation.'",
+        ),
     })
     .describe(
       "The single most impactful, immediately actionable recommendation for this concern — the top-line takeaway a user can act on right now",
@@ -27,7 +31,7 @@ const PersonalizedSearchSchema = z.object({
   whyItWorks: z
     .array(z.string())
     .describe(
-      "3-5 plain-text bullet points explaining the science or reasoning behind the recommendations",
+      "3 plain-text bullet points explaining the science or reasoning behind the recommendations",
     ),
   drinksToTry: z
     .array(z.object({ name: z.string() }))
