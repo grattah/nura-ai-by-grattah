@@ -9,7 +9,7 @@ import { getCategoryConfig } from "@/lib/category-config";
 import { CategoryBanner } from "@/components/categories/category-banner";
 import { RecipesEmptyState } from "@/components/categories/recipes-empty-state";
 import { RecipeCard } from "@/components/recipe-card";
-import type { Recipe, Tag } from "@/lib/types";
+import type { CategoryRecipe, Tag } from "@/lib/types";
 
 function SearchCategoryContent() {
   const router = useRouter();
@@ -19,7 +19,7 @@ function SearchCategoryContent() {
   const supabase = createClient();
 
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Recipe[]>([]);
+  const [results, setResults] = useState<CategoryRecipe[]>([]);
   const [searched, setSearched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [categoryName, setCategoryName] = useState<string>("");
@@ -60,7 +60,9 @@ function SearchCategoryContent() {
 
       let queryBuilder = supabase
         .from("recipes")
-        .select("*, recipe_tags!inner(tags!inner(slug))")
+        .select(
+          "id, title, image_url, display_order, recipe_tags!inner(tags!inner(slug))",
+        )
         .ilike("title", `%${q.trim()}%`)
         .order("display_order", { ascending: true })
         .limit(20);
@@ -70,7 +72,7 @@ function SearchCategoryContent() {
       }
 
       const { data } = await queryBuilder;
-      setResults((data as unknown as Recipe[]) ?? []);
+      setResults((data as unknown as CategoryRecipe[]) ?? []);
       setIsLoading(false);
     },
     [supabase, categorySlug],

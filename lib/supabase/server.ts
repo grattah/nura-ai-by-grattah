@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { createClient as createClientImport } from "@supabase/supabase-js";
 import { Database } from "../database.types";
 
@@ -33,6 +34,15 @@ export async function createClient() {
     },
   );
 }
+/**
+ * `auth.getUser()` memoized per request (React `cache()`), so layouts, pages,
+ * and server actions invoked during the same render only hit Supabase once.
+ */
+export const getCachedUser = cache(async () => {
+  const supabase = await createClient();
+  return supabase.auth.getUser();
+});
+
 export function createServiceRoleClient() {
   return createClientImport<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

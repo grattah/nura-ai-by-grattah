@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Lock } from "lucide-react";
 import Leaf from "../vectors/leaf";
@@ -57,7 +56,6 @@ interface UpgradeBannerProps {
 
 export function CategorySection({ hasAccess }: UpgradeBannerProps) {
   const [modalOpen, setModalOpen] = useState(false);
-  const router = useRouter();
 
   return (
     <div className="space-y-2">
@@ -83,23 +81,37 @@ export function CategorySection({ hasAccess }: UpgradeBannerProps) {
         )}
       </div>
       <div className="grid grid-cols-3 gap-2 w-full">
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat.label}
-            onClick={
-              hasAccess ? () => router.push(cat.href) : () => setModalOpen(true)
-            }
-            className="flex justify-center items-center w-full gap-2 p-3 rounded-lg bg-badge text-sm font-medium text-foreground border border-badge-border hover:opacity-80 transition-opacity active:scale-95"
-          >
-            <span
-              className="text-sm shrink-0 leading-none -tracking-[2%] inline-flex items-center justify-center size-7 rounded-full"
-              style={{ backgroundColor: cat.iconBg }}
+        {CATEGORIES.map((cat) =>
+          hasAccess ? (
+            <Link
+              key={cat.label}
+              href={cat.href}
+              className="flex justify-center items-center w-full gap-2 p-3 rounded-lg bg-badge text-sm font-medium text-foreground border border-badge-border hover:opacity-80 transition-opacity active:scale-95"
             >
-              {cat.icon}
-            </span>
-            {cat.label}
-          </button>
-        ))}
+              <span
+                className="text-sm shrink-0 leading-none -tracking-[2%] inline-flex items-center justify-center size-7 rounded-full"
+                style={{ backgroundColor: cat.iconBg }}
+              >
+                {cat.icon}
+              </span>
+              {cat.label}
+            </Link>
+          ) : (
+            <button
+              key={cat.label}
+              onClick={() => setModalOpen(true)}
+              className="flex justify-center items-center w-full gap-2 p-3 rounded-lg bg-badge text-sm font-medium text-foreground border border-badge-border hover:opacity-80 transition-opacity active:scale-95"
+            >
+              <span
+                className="text-sm shrink-0 leading-none -tracking-[2%] inline-flex items-center justify-center size-7 rounded-full"
+                style={{ backgroundColor: cat.iconBg }}
+              >
+                {cat.icon}
+              </span>
+              {cat.label}
+            </button>
+          ),
+        )}
       </div>
 
       <PaywallModal open={modalOpen} onOpenChange={setModalOpen} />

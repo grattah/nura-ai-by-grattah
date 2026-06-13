@@ -10,7 +10,7 @@ import { CategoryBanner } from "@/components/categories/category-banner";
 import { RecipesEmptyState } from "@/components/categories/recipes-empty-state";
 import { RecipeCard } from "@/components/recipe-card";
 import { cn } from "@/lib/utils";
-import type { Recipe, Tag } from "@/lib/types";
+import type { CategoryRecipe } from "@/lib/types";
 
 const PAGE_SIZE = 8;
 
@@ -22,43 +22,35 @@ export default function CategoryDetailPage() {
 
   const supabase = createClient();
 
-  const [tags, setTags] = useState<Tag[]>([]);
   const [activeTab, setActiveTab] = useState<string>("all");
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [recipes, setRecipes] = useState<CategoryRecipe[]>([]);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [categoryName, setCategoryName] = useState<string>("");
   const sentinelRef = useRef<HTMLDivElement>(null);
-
-  // Fetch all tags once for the tab bar
-  useEffect(() => {
-    supabase
-      .from("tags")
-      .select("id, name, slug, display_order")
-      .order("display_order")
-      .then(({ data }) => {
-        if (data) {
-          setTags(data as Tag[]);
-          const current = data.find((t) => t.slug === slug);
-          if (current) setCategoryName(current.name);
-        }
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug]);
+  // Synchronous lock — the IntersectionObserver can re-fire `loadMore` before
+  // the `isLoadingMore` state update lands, so a ref is needed to block overlap.
+  const fetchingRef = useRef(false);
 
   const fetchRecipes = useCallback(
     async (pageNum: number, tab: string, isInitial: boolean) => {
       const start = pageNum * PAGE_SIZE;
       const end = start + PAGE_SIZE - 1;
 
-      // Always filter by the current category slug
+      // Always filter by the current category slug.
+      // The `id` tiebreaker makes the sort a total order — without it, OFFSET
+      // pagination over the non-unique `display_order` is non-deterministic and
+      // returns overlapping pages (recipes share display_order values), which
+      // makes `hasMore` never settle and the infinite scroll loop forever.
       let query = supabase
         .from("recipes")
-        .select("*, recipe_tags!inner(tags!inner(slug))")
+        .select(
+          "id, title, image_url, display_order, recipe_tags!inner(tags!inner(slug))",
+        )
         .eq("recipe_tags.tags.slug", slug)
         .order("display_order", { ascending: true })
+        .order("id", { ascending: true })
         .range(start, end);
 
       // Secondary tab filter (skip for "all")
@@ -66,11 +58,24 @@ export default function CategoryDetailPage() {
         query = query.eq("recipe_tags.tags.slug", tab);
       }
 
-      const { data } = await query;
-      const rows = (data as unknown as Recipe[]) ?? [];
+      const { data, error } = await query;
+      if (error) {
+        // Stop paginating on error rather than spinning the loader forever.
+        console.error("Failed to load category recipes:", error);
+        setHasMore(false);
+        return [];
+      }
+      const rows = (data as unknown as CategoryRecipe[]) ?? [];
 
-      if (isInitial) setRecipes(rows);
-      else setRecipes((prev) => [...prev, ...rows]);
+      if (isInitial) {
+        setRecipes(rows);
+      } else {
+        // Dedupe by id so a stray duplicate can't produce duplicate React keys.
+        setRecipes((prev) => {
+          const seen = new Set(prev.map((r) => r.id));
+          return [...prev, ...rows.filter((r) => !seen.has(r.id))];
+        });
+      }
 
       setHasMore(rows.length === PAGE_SIZE);
       return rows;
@@ -88,12 +93,17 @@ export default function CategoryDetailPage() {
 
   // Infinite scroll
   const loadMore = useCallback(async () => {
-    if (isLoading || isLoadingMore || !hasMore) return;
+    if (fetchingRef.current || isLoading || isLoadingMore || !hasMore) return;
+    fetchingRef.current = true;
     setIsLoadingMore(true);
-    const next = page + 1;
-    const rows = await fetchRecipes(next, activeTab, false);
-    if (rows.length > 0) setPage(next);
-    setIsLoadingMore(false);
+    try {
+      const next = page + 1;
+      const rows = await fetchRecipes(next, activeTab, false);
+      if (rows.length > 0) setPage(next);
+    } finally {
+      setIsLoadingMore(false);
+      fetchingRef.current = false;
+    }
   }, [isLoading, isLoadingMore, hasMore, page, activeTab, fetchRecipes]);
 
   useEffect(() => {
@@ -109,7 +119,7 @@ export default function CategoryDetailPage() {
     return () => obs.disconnect();
   }, [loadMore]);
 
-  const displayName = categoryName || slug.replace(/-/g, " ");
+  const displayName = slug.replace(/-/g, " ");
 
   return (
     <div className="bg-background pb-24">
@@ -137,25 +147,6 @@ export default function CategoryDetailPage() {
       <div className="space-y-6">
         {/* Category banner */}
         <CategoryBanner name={displayName} config={config} />
-
-        {/* Filter tabs */}
-        {/* <div className="flex gap-2 overflow-x-auto hide-scrollbar px-4 pb-1">
-          <TabPill
-            label="All"
-            active={activeTab === "all"}
-            onClick={() => setActiveTab("all")}
-          />
-          {tags
-            .filter((t) => t.slug !== slug)
-            .map((t) => (
-              <TabPill
-                key={t.id}
-                label={t.name}
-                active={activeTab === t.slug}
-                onClick={() => setActiveTab(t.slug)}
-              />
-            ))}
-        </div> */}
 
         {/* Recipe grid */}
         {isLoading ? (

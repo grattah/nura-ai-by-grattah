@@ -8,7 +8,7 @@ export function RecipeCard({
   recipe,
   priority,
 }: {
-  recipe: Recipe;
+  recipe: Pick<Recipe, "id" | "title" | "image_url">;
   priority?: boolean;
 }) {
   const imageUrl = recipe.image_url

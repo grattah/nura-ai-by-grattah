@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCachedUser } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 const DEDUPE_WINDOW_MS = 60 * 60 * 1000;
@@ -87,14 +87,13 @@ export async function toggleBookmark(
 }
 
 export async function isBookmarked(recipeId: string): Promise<boolean> {
-  const supabase = await createClient();
-
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getCachedUser();
 
   if (!user) return false;
 
+  const supabase = await createClient();
   const { data } = await supabase
     .from("bookmarks")
     .select("id")
@@ -103,4 +102,23 @@ export async function isBookmarked(recipeId: string): Promise<boolean> {
     .maybeSingle();
 
   return !!data;
+}
+
+export async function getBookmarkedIds(
+  recipeIds: string[],
+): Promise<Set<string>> {
+  const {
+    data: { user },
+  } = await getCachedUser();
+
+  if (!user || recipeIds.length === 0) return new Set();
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("bookmarks")
+    .select("recipe_id")
+    .eq("user_id", user.id)
+    .in("recipe_id", recipeIds);
+
+  return new Set((data ?? []).map((b) => b.recipe_id));
 }
