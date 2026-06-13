@@ -31,7 +31,7 @@ const page = async () => {
 
   // Check bookmark status for all recipes in parallel
   const bookmarkStatuses = await Promise.all(
-    (recipes ?? []).map((recipe) => isBookmarked(recipe.id))
+    (recipes ?? []).map((recipe) => isBookmarked(recipe.id)),
   );
 
   // Pair each recipe with its bookmark status
@@ -42,7 +42,7 @@ const page = async () => {
 
   return (
     <div className="bg-background pb-10">
-      <main className="px-4 pt-3 flex flex-col gap-10">
+      <main className="px-6 pt-3 flex flex-col gap-10">
         <div className="flex items-center justify-between">
           <Link href="/" className="rounded-full bg-[#E8E6DC] p-3">
             <ArrowLeft size={20} color="#1B1D1D" strokeWidth={1.5} />

@@ -133,7 +133,7 @@ function PersonalizedSearchContent() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 px-4">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 px-6">
         <p className="text-muted-foreground text-center text-sm">{error}</p>
         <button
           onClick={() => router.back()}
@@ -152,7 +152,7 @@ function PersonalizedSearchContent() {
     <>
       <div className="bg-background pb-8">
         {/* Sub-header */}
-        <div className="px-4 pt-5 pb-4 flex items-center gap-3">
+        <div className="px-6 pt-5 pb-4 flex items-center gap-3">
           <button
             onClick={() => router.back()}
             className="size-10 bg-badge rounded-full flex items-center justify-center shrink-0 hover:opacity-75 transition-opacity"
@@ -171,7 +171,7 @@ function PersonalizedSearchContent() {
           <div className="w-9 shrink-0" aria-hidden />
         </div>
 
-        <div className="px-4 space-y-10">
+        <div className="px-6 space-y-10">
           {/* Query row */}
           <div className="space-y-4">
             <div className="bg-card rounded-2xl p-4 border border-[#E3E1D880] flex items-center justify-between gap-3">
@@ -324,19 +324,22 @@ function PersonalizedSearchContent() {
           )}
 
           {/* Important note */}
-          <div className="bg-success-c100 rounded-2xl border border-[#C4CAC8] p-4 flex items-center justify-between">
-            <div className="flex-1 space-y-2.5">
-              <p className="text-base font-medium text-base-text">
-                Important note
-              </p>
-              <p className="text-sm text-subtle">
+          <div className="bg-success-c100 rounded-2xl border border-[#C4CAC8] p-4 space-y-2.5">
+            <p className="text-base font-medium text-base-text">
+              Important note
+            </p>
+            <div className="flex items-start gap-x-5">
+              <p className="text-sm text-subtle flex-1">
                 This is general wellness guidance, not medical advice. If
                 symptoms persist or worsen, please consult a healthcare
                 professional.
               </p>
-            </div>
-            <div className="shrink-0">
-              <Heart strokeWidth={2.67} className="size-7 text-success-c600" />
+              <div className="shrink-0">
+                <Heart
+                  strokeWidth={2.67}
+                  className="size-7 text-success-c600"
+                />
+              </div>
             </div>
           </div>
 

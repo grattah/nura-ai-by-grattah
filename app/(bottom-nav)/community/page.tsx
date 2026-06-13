@@ -40,7 +40,7 @@ const page = async () => {
           <p className="text-2xl font-semibold text-[#111312]">Community</p>
         </div>
 
-        <div className="flex flex-col gap-4 px-4">
+        <div className="flex flex-col gap-4 px-6">
           <p className="font-semibold text-base">Recent activity</p>
 
           <div className="flex flex-col gap-5">

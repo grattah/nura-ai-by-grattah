@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 
 interface AccessState {
@@ -22,14 +23,16 @@ export function AccessProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const supabase = createClient();
+    let active = true;
 
-    async function check() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
+    async function evaluate(session: Session | null) {
       if (!session) {
-        setState({ hasAccess: false, isAuthenticated: false, isLoading: false });
+        if (active)
+          setState({
+            hasAccess: false,
+            isAuthenticated: false,
+            isLoading: false,
+          });
         return;
       }
 
@@ -40,17 +43,29 @@ export function AccessProvider({ children }: { children: React.ReactNode }) {
         .eq("status", "active")
         .maybeSingle();
 
+      if (!active) return;
       const valid =
         !!data && (!data.expires_at || new Date(data.expires_at) > new Date());
       setState({ hasAccess: valid, isAuthenticated: true, isLoading: false });
     }
 
-    check();
-    // Re-check when auth state changes (sign in/out)
+    // Initial read — a single getSession call.
+    supabase.auth.getSession().then(({ data: { session } }) => evaluate(session));
+
+    // Re-check on auth changes using the session the event already provides
+    // (no extra getSession). Defer out of the callback so we never call Supabase
+    // while it holds its auth lock — doing so can wedge the shared browser
+    // client and make every later query hang until a full page reload.
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => check());
-    return () => subscription.unsubscribe();
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setTimeout(() => evaluate(session), 0);
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   return (

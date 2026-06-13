@@ -46,7 +46,7 @@ export default async function AccountPage() {
   return (
     <div className="min-h-dvh bg-background pb-10">
       {/* Header */}
-      <div className="flex items-center px-4 pt-5 pb-4 gap-3 mb-3.5">
+      <div className="flex items-center px-6 pt-5 pb-4 gap-3 mb-3.5">
         <Link
           href="/"
           className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center shrink-0 hover:opacity-75 transition-opacity"
@@ -60,7 +60,7 @@ export default async function AccountPage() {
         <div className="size-10 shrink-0" aria-hidden />
       </div>
 
-      <div className="px-4 space-y-4">
+      <div className="px-6 space-y-4">
         {/* User card */}
         <div className="bg-card rounded-2xl p-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0 flex-1">

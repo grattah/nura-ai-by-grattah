@@ -69,7 +69,7 @@ export default function SetupProfilePage() {
     <>
       <div className="min-h-dvh bg-background pb-10">
         {/* Header */}
-        <div className="flex items-center px-4 pt-5 pb-11 relative">
+        <div className="flex items-center px-6 pt-5 pb-11 relative">
           <button
             onClick={() => router.back()}
             className="size-10 absolute left-4 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
@@ -88,7 +88,7 @@ export default function SetupProfilePage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-4 space-y-4">
+        <form onSubmit={handleSubmit} className="px-6 space-y-4">
           {/* Email (read-only) */}
           <div className="space-y-1.5">
             <label className="text-sm text-muted-foreground">

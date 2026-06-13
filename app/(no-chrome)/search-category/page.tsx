@@ -89,7 +89,7 @@ function SearchCategoryContent() {
   return (
     <div className="bg-background min-h-dvh pb-24">
       {/* Header — search bar IS the header */}
-      <div className="flex items-center gap-8.75 px-4 pt-5 pb-4">
+      <div className="flex items-center gap-8.75 px-6 pt-5 pb-4">
         <button
           onClick={() => router.push(backHref)}
           className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center shrink-0 hover:opacity-75 transition-opacity"
@@ -119,7 +119,7 @@ function SearchCategoryContent() {
         </div>
       </div>
 
-      <div className="px-4 space-y-4">
+      <div className="px-6 space-y-4">
         {/* Category banner (if context present) */}
         {categorySlug && (
           <CategoryBanner name={categoryName || categorySlug} config={config} />
@@ -154,7 +154,7 @@ function SearchCategoryContent() {
       </div>
 
       {/* Find a recipe CTA — always visible */}
-      <div className="px-4 mt-6">
+      <div className="px-6 mt-6">
         <Link
           href="/find-recipe"
           className="w-full flex items-center justify-center gap-2.5 py-4 rounded-full border border-mint-green text-mint-green text-base font-semibold hover:opacity-80 transition-opacity"
