@@ -16,6 +16,7 @@ import {
 
 import { createClient } from "@/lib/supabase/client";
 import { useRecentSearches } from "@/hooks/use-recent-searches";
+import ModalLoadingScreen from "@/components/recipe/ModalLoadingScreen";
 
 interface RecipeSuggestion {
   id: string;
@@ -61,19 +62,20 @@ const page = () => {
   const [allRecipes, setAllRecipes] = React.useState<Recipe[]>([]);
   const [isLoadingRecipes, setIsLoadingRecipes] = React.useState(true);
   const [suggestedRecipes, setSuggestedRecipes] = React.useState<Recipe[]>([]);
-  const [step, setStep] = React.useState(1);
   const [pendingRecipe, setPendingRecipe] = React.useState<string | null>(null);
   const [isPending, startTransition] = React.useTransition();
   const [aiSuggestions, setAiSuggestions] = React.useState<RecipeSuggestion[]>(
-    [],
+    []
   );
   const [aiSuggestionsLoading, setAiSuggestionsLoading] = React.useState(false);
   const [aiSuggestionsError, setAiSuggestionsError] = React.useState<
     string | null
   >(null);
   const [showSuggestions, setShowSuggestions] = React.useState(false);
+  const [showModalScreenLoader, setShowModalScreenLoader] =
+    React.useState(false);
   const suggestionsCache = React.useRef<Map<string, RecipeSuggestion[]>>(
-    new Map(),
+    new Map()
   );
 
   const { recents, add: addRecent, clear: clearRecents } = useRecentSearches();
@@ -152,8 +154,14 @@ const page = () => {
     return () => clearTimeout(timer);
   }, [searchTerm, filteredRecipes]);
 
-  const showingResults = !showSuggestions && searchTerm.trim().length > 0;
-  const showingEmpty = showingResults && filteredRecipes.length === 0;
+  const showingResults =
+    !showSuggestions &&
+    searchTerm.trim().length > 0 &&
+    filteredRecipes.length > 0;
+  const showingEmpty =
+    !showSuggestions &&
+    searchTerm.trim().length > 0 &&
+    filteredRecipes.length === 0;
   const showingIdle = searchTerm.trim().length === 0 && !showSuggestions;
 
   const handleSearchTermChange = (value: string) => {
@@ -173,6 +181,7 @@ const page = () => {
   };
 
   const handleGetSuggestions = async () => {
+    setShowModalScreenLoader(true);
     setShowSuggestions(true);
     setAiSuggestionsError(null);
 
@@ -198,6 +207,7 @@ const page = () => {
       const suggestions: RecipeSuggestion[] = data.suggestions ?? [];
       suggestionsCache.current.set(cacheKey, suggestions);
       setAiSuggestions(suggestions);
+      setShowModalScreenLoader(false);
     } catch (error) {
       console.error("Failed to get suggestions:", error);
       setAiSuggestionsError("Couldn't load suggestions. Please try again.");
@@ -421,6 +431,9 @@ const page = () => {
           </>
         )}
       </main>
+      {showModalScreenLoader && (
+        <ModalLoadingScreen message="Fetching your recipe..." />
+      )}
     </div>
   );
 };

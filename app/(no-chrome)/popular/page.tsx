@@ -19,7 +19,14 @@ const page = async () => {
   ] = await Promise.all([
     supabase
       .from("recipes")
-      .select("*")
+      .select(
+        `
+        *,
+        recipe_tags (
+          tags (id, name)
+        )
+      `
+      )
       .gt("likes", 100)
       .order("title", { ascending: false }),
     supabase.auth.getUser(),
@@ -31,13 +38,14 @@ const page = async () => {
 
   // Check bookmark status for all recipes in parallel
   const bookmarkStatuses = await Promise.all(
-    (recipes ?? []).map((recipe) => isBookmarked(recipe.id)),
+    (recipes ?? []).map((recipe) => isBookmarked(recipe.id))
   );
 
   // Pair each recipe with its bookmark status
   const recipesWithBookmarks = (recipes ?? []).map((recipe, i) => ({
     ...recipe,
     bookmarked: bookmarkStatuses[i],
+    firstTag: recipe.recipe_tags?.[0]?.tags?.name ?? null,
   }));
 
   return (
@@ -83,13 +91,14 @@ const page = async () => {
                   </div>
                 </Link>
               )}
-
-              <Link
-                href={`/recipes/${recipe.id}`}
-                className="text-[#727E7A] text-xs font-medium font-redHatDisplay"
-              >
-                INDIGESTION
-              </Link>
+              {recipe.firstTag && (
+                <Link
+                  href={`/recipes/${recipe.id}`}
+                  className="text-[#727E7A] text-xs font-medium font-redHatDisplay uppercase"
+                >
+                  {recipe.firstTag}
+                </Link>
+              )}
               <Link
                 href={`/recipes/${recipe.id}`}
                 className="text-[#111312] font-medium font-josefin"
