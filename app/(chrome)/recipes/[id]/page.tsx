@@ -254,7 +254,7 @@ export default async function RecipeDetailPage({
               </p>
             </div>
 
-            <div className="flex justify-between items-center mt-8">
+            <div className="flex gap-4 items-center mt-8">
               <ShareButton
                 recipeId={recipe.id}
                 recipeTitle={recipe.title}
