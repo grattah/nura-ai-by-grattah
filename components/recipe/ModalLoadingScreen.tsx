@@ -23,7 +23,7 @@ export default function ModalLoadingScreen({
           height={32}
           className="animate-spin"
         />
-        <p className="text-sm text-[#1B1D1D] font-medium">{message}</p>
+        <p className="text-sm text-subtle font-medium">{message}</p>
       </div>
     </div>
   );
