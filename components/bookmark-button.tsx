@@ -69,7 +69,7 @@ export function BookmarkButton({
       onClick={handleToggle}
       disabled={isPending}
       className={cn(
-        "flex items-center rounded-full transition-all hover:opacity-90 disabled:opacity-50",
+        "flex items-center rounded-full transition-all hover:opacity-70 disabled:opacity-50",
         !showText && !popular && "bg-[#E8E6DC] p-3 text-[#57605E]",
         showText &&
           "border border-[#C4CAC8] bg-transparent px-3 py-3 text-[#57605E]",

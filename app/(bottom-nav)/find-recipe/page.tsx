@@ -166,10 +166,14 @@ const page = () => {
 
   const handleSearchTermChange = (value: string) => {
     setSearchTerm(value);
+    if (showSuggestions) {
+      setShowSuggestions(false);
+    }
   };
 
   const handleClearSearch = () => {
     setSearchTerm("");
+    setShowSuggestions(false);
   };
 
   const handleRecipeClick = (id: string, title: string) => {
