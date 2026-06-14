@@ -185,7 +185,6 @@ const page = () => {
   };
 
   const handleGetSuggestions = async () => {
-    setShowModalScreenLoader(true);
     setShowSuggestions(true);
     setAiSuggestionsError(null);
 
@@ -196,6 +195,7 @@ const page = () => {
       return;
     }
 
+    setShowModalScreenLoader(true);
     setAiSuggestionsLoading(true);
 
     try {
