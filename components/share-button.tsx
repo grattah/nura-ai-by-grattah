@@ -127,14 +127,14 @@ export function ShareButton({
         onClick={() => setIsOpen(!isOpen)}
         className={`rounded-full hover:opacity-70 transition-opacity flex items-center ${
           showText
-            ? "border border-[#C4CAC8] bg-inherit px-4 py-3"
+            ? "border border-[#C4CAC8] bg-inherit px-3 py-3"
             : "bg-[#E8E6DC] p-3"
         }`}
         aria-label="Share recipe"
       >
         <Share strokeWidth={2.5} size={16} color="#57605E" />
         {showText && (
-          <span className="ml-2 font-medium text-sm text-[#727E7A]">
+          <span className="ml-1 font-medium text-sm text-[#727E7A] text-nowrap">
             {text}
           </span>
         )}
