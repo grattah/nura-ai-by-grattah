@@ -141,7 +141,7 @@ export function ShareButton({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-13 bg-card border border-border rounded-2xl shadow-lg z-50 min-w-56 overflow-hidden">
+        <div className={`absolute ${showText ? "left-0" : "right-0"}  top-13 bg-card border border-border rounded-2xl shadow-lg z-50 min-w-56 overflow-hidden`}>
           <div className="p-3 space-y-1">
             {shareOptions.map((option) => {
               const Icon = option.icon;

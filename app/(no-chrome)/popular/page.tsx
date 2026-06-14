@@ -4,12 +4,13 @@ import Image from "next/image";
 import { ArrowLeft, MoveRight, Heart, Bookmark } from "lucide-react";
 
 import { BookmarkButton } from "@/components/bookmark-button";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/server";
 import { isBookmarked } from "@/actions/bookmark";
 import { truncateText } from "@/lib/truncate-text";
+import { BookmarkProvider } from "@/components/bookmark-provider";
 
 const page = async () => {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const [
     { data: recipes, error },
@@ -69,14 +70,13 @@ const page = async () => {
                     {recipe.likes}
                   </span>
                 </button>
-                <BookmarkButton
+                <BookmarkProvider
                   recipeId={recipe.id}
                   initialBookmarked={recipe.bookmarked}
                   isAuthenticated={!!user}
-                  text=""
-                  addText=""
-                  popularStyle="yes"
-                />
+                >
+                  <BookmarkButton text="" addText="" popularStyle="yes" />
+                </BookmarkProvider>
               </div>
               {recipe.image_url && (
                 <Link href={`/recipes/${recipe.id}`}>
