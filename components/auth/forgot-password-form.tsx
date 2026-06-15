@@ -156,7 +156,7 @@ export function ForgotPasswordForm({
                 {error && <p className="text-sm text-red-500">{error}</p>}
                 <button
                   type="submit"
-                  className="w-full flex items-center justify-center bg-[#227B6F] text-[#FFFFFF] py-4 rounded-full font-medium border border-border hover:opacity-90 transition-opacity disabled:opacity-40"
+                  className="w-full flex items-center justify-center bg-mint-green text-[#FFFFFF] py-4 rounded-full font-medium border border-border hover:opacity-90 transition-opacity disabled:opacity-40"
                   disabled={!email || isLoading}
                 >
                   {isLoading ? "Sending..." : "Continue"}

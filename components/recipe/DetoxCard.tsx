@@ -14,10 +14,11 @@ interface DetoxCardProps {
   initialScores?: SupportScore[] | null;
 }
 
-// Renders the recipe's assigned wellness supports with their AI-computed
-// strength %. Uses cached scores when present, otherwise lazily computes them
-// via /api/recipes/support-scores (fill-once on the server).
-export function DetoxCard({ recipeId, supports, initialScores }: DetoxCardProps) {
+export function DetoxCard({
+  recipeId,
+  supports,
+  initialScores,
+}: DetoxCardProps) {
   const hasInitial = !!initialScores?.length;
   const [scores, setScores] = useState<SupportScore[]>(
     hasInitial ? initialScores! : [],
@@ -101,13 +102,17 @@ export function DetoxCard({ recipeId, supports, initialScores }: DetoxCardProps)
           {loading ? (
             <span className="h-6 w-10 rounded-full bg-muted animate-pulse" />
           ) : (
-            <span className="text-2xl font-semibold text-[#19803F]">{pct}%</span>
+            <span className="text-2xl font-semibold text-[#19803F]">
+              {pct}%
+            </span>
           )}
         </div>
       </div>
 
       <div className="flex-1 space-y-2">
-        <p className="text-base text-black font-semibold">This recipe contains</p>
+        <p className="text-base text-black font-semibold">
+          This recipe contains
+        </p>
         {loading ? (
           <div className="h-4 w-3/4 rounded-full bg-muted animate-pulse" />
         ) : (
@@ -116,9 +121,7 @@ export function DetoxCard({ recipeId, supports, initialScores }: DetoxCardProps)
               <span key={s.slug}>
                 <span
                   className={
-                    i === 0
-                      ? "text-mint-green font-semibold"
-                      : "text-subtle"
+                    i === 0 ? "text-mint-green font-semibold" : "text-subtle"
                   }
                 >
                   {s.score}% {s.support}

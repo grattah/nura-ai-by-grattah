@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
     const { text } = await generateText({
       model: anthropic("claude-sonnet-4-6"),
-      system: `You are a health and wellness assistant for the Nura app.
+      system: `You are a health and wellness assistant for the Nuko app.
     Generate exactly 4 natural follow-up questions a curious user might ask
     after reading a ${typeLabel}.
 

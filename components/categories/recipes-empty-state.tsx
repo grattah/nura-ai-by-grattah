@@ -18,7 +18,7 @@ export function RecipesEmptyState({ query }: RecipesEmptyStateProps) {
       </p>
       <Link
         href="/find-recipe"
-        className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-[var(--mint-green)] text-sm font-semibold"
+        className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-mint-green text-sm font-semibold"
         style={{ color: "var(--mint-green)" }}
       >
         Find a recipe →
