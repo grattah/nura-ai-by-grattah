@@ -95,6 +95,47 @@ export function computeFinal(nutrition: number, ingredient: number): number {
   return Math.max(0, Math.min(100, v));
 }
 
+export interface SupportShare extends SupportScore {
+  /** This support's portion of the recipe's total support, as a whole-number %. */
+  share: number;
+}
+
+/**
+ * Turns the independent 0–100 strength scores into shares of a whole that sum to
+ * exactly 100% (largest-remainder rounding), sorted strongest-first. Used for
+ * display only — the raw `score`s remain the source of truth.
+ */
+export function toShares(scores: SupportScore[]): SupportShare[] {
+  if (scores.length === 0) return [];
+
+  const sorted = [...scores].sort((a, b) => b.score - a.score);
+  const total = sorted.reduce((sum, s) => sum + s.score, 0);
+
+  // All-zero (or single item): split evenly / give 100.
+  if (total <= 0) {
+    const even = Math.floor(100 / sorted.length);
+    return sorted.map((s, i) => ({
+      ...s,
+      share: i === 0 ? 100 - even * (sorted.length - 1) : even,
+    }));
+  }
+
+  const raw = sorted.map((s) => (s.score / total) * 100);
+  const floors = raw.map((r) => Math.floor(r));
+  let remainder = 100 - floors.reduce((a, b) => a + b, 0);
+
+  // Hand out the leftover points to the largest fractional parts.
+  const order = raw
+    .map((r, i) => ({ i, frac: r - Math.floor(r) }))
+    .sort((a, b) => b.frac - a.frac);
+  const shares = [...floors];
+  for (let k = 0; k < order.length && remainder > 0; k++, remainder--) {
+    shares[order[k].i] += 1;
+  }
+
+  return sorted.map((s, i) => ({ ...s, share: shares[i] }));
+}
+
 export async function scoreSupports(
   recipe: ScorableRecipe,
   supports: AssignedSupport[],

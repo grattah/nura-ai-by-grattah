@@ -1,20 +1,17 @@
 import type { Metadata } from "next";
 import { cache } from "react";
-import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
-import { Heart } from "lucide-react";
 
 import { FollowUpSection } from "@/components/follow-up-section";
 import { buildRecipeContext } from "@/lib/recipe-context";
 import { PaywallGate } from "@/components/paywall/paywall-gate";
 import { ShareButton } from "@/components/share-button";
 import { createClient } from "@/lib/supabase/server";
-import { getCloudinaryUrl } from "@/lib/cloudinary";
 import { isBookmarked } from "@/actions/bookmark";
 import { BookmarkButton } from "@/components/bookmark-button";
 import BackButton from "@/components/back-button";
 import { DetoxCard } from "@/components/recipe/DetoxCard";
+import { RecipeHeroImage } from "@/components/recipe/RecipeHeroImage";
 import Comment from "@/components/recipe/Comment";
 import AccordionSection from "@/components/recipe/AccordionSection";
 import LikeButton from "@/components/recipe/LikeButton";
@@ -75,7 +72,7 @@ export async function generateMetadata({
     openGraph: {
       title: recipe.title,
       description: recipe.short_description,
-      images: [{ url: recipe.image_url! }],
+      images: recipe.image_url ? [{ url: recipe.image_url }] : [],
       url,
       type: "article",
     },
@@ -151,10 +148,6 @@ export default async function RecipeDetailPage({
   const howToMake =
     (recipe.how_to_make as Array<{ step: string; instruction: string }>) ?? [];
 
-  const heroImageUrl = recipe.image_url
-    ? getCloudinaryUrl(recipe.image_url, { width: 900, height: 506 })
-    : undefined;
-
   // The recipe's assigned wellness supports (its tags) for the DetoxCard.
   const assignedSupports = (recipe.recipe_tags ?? [])
     .map((rt) => rt.tags)
@@ -184,19 +177,12 @@ export default async function RecipeDetailPage({
           </div>
 
           <main className="pb-6">
-            {/* Hero image — LCP element, load eagerly */}
-            <div className="mx-6 rounded-4xl overflow-hidden bg-muted mb-8 relative aspect-video">
-              {heroImageUrl && (
-                <Image
-                  src={heroImageUrl}
-                  alt={recipe.title}
-                  fill
-                  sizes="calc(100vw - 32px)"
-                  className="object-cover"
-                  priority
-                />
-              )}
-            </div>
+            {/* Hero image — LCP element; fills in async for freshly generated recipes */}
+            <RecipeHeroImage
+              recipeId={recipe.id}
+              title={recipe.title}
+              initialImageUrl={recipe.image_url}
+            />
 
             {/* Title + description */}
             <div className="px-6 mb-8">

@@ -17,6 +17,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { useRecentSearches } from "@/hooks/use-recent-searches";
 import ModalLoadingScreen from "@/components/recipe/ModalLoadingScreen";
+import { WELLNESS_SOURCES } from "@/lib/wellness-sources";
 
 interface RecipeSuggestion {
   id: string;
@@ -42,27 +43,18 @@ const page = () => {
 
   const searchParams = useSearchParams();
   const query = searchParams.get("q");
+  const generateParam = searchParams.get("generate");
+  const concernParam = searchParams.get("concern");
   const supabase = createClient();
-  const [searchTerm, setSearchTerm] = React.useState(query || "");
-  const [recipes, setRecipes] = React.useState<
-    | {
-        created_at: string;
-        display_order: number;
-        follow_up_questions: string[] | null;
-        how_to_make: any;
-        id: string;
-        title: string;
-        image_url: string | null;
-        ingredients: any;
-        inside_tip: string;
-        why_it_works: string;
-      }[]
-    | null
-  >([]);
+  const [searchTerm, setSearchTerm] = React.useState(
+    query || generateParam || "",
+  );
   const [allRecipes, setAllRecipes] = React.useState<Recipe[]>([]);
   const [isLoadingRecipes, setIsLoadingRecipes] = React.useState(true);
   const [suggestedRecipes, setSuggestedRecipes] = React.useState<Recipe[]>([]);
   const [pendingRecipe, setPendingRecipe] = React.useState<string | null>(null);
+  const [generating, setGenerating] = React.useState(false);
+  const [generateError, setGenerateError] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
   const [aiSuggestions, setAiSuggestions] = React.useState<RecipeSuggestion[]>(
     []
@@ -184,6 +176,51 @@ const page = () => {
     });
   };
 
+  // Match an existing recipe or generate one on demand, showing the loading
+  // screen throughout, then land on the recipe detail page.
+  const handleGenerate = React.useCallback(
+    async (name: string, concern?: string) => {
+      const clean = name.trim();
+      if (!clean) return;
+      setPendingRecipe(clean);
+      setGenerateError(false);
+      setGenerating(true);
+      try {
+        const res = await fetch("/api/recipes/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: clean,
+            concern,
+            allowedDomains: WELLNESS_SOURCES,
+          }),
+        });
+        if (!res.ok) throw new Error("generate failed");
+        const data = await res.json();
+        if (!data?.id) throw new Error("no id returned");
+        router.replace(`/recipes/${data.id}`);
+      } catch (err) {
+        console.error("[find-recipe] generate", err);
+        setGenerating(false);
+        setPendingRecipe(null);
+        setGenerateError(true);
+      }
+    },
+    [router],
+  );
+
+  // If we arrived via a "generate this recipe" link, kick it off immediately.
+  // The ref guard makes this fire exactly once (it survives React Strict Mode's
+  // double-invoke), so the same drink isn't generated twice.
+  const autoTriggered = React.useRef(false);
+  React.useEffect(() => {
+    if (autoTriggered.current || !generateParam) return;
+    autoTriggered.current = true;
+    handleGenerate(generateParam, concernParam ?? undefined);
+    // Run once on mount for the incoming param.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleGetSuggestions = async () => {
     setShowSuggestions(true);
     setAiSuggestionsError(null);
@@ -220,8 +257,8 @@ const page = () => {
     }
   };
 
-  // Show the full-screen loading state while navigation is in progress
-  if (isPending && pendingRecipe) {
+  // Show the full-screen loading state while navigating to / generating a recipe
+  if ((isPending || generating) && pendingRecipe) {
     return <RecipeLoadingScreen recipeName={pendingRecipe} />;
   }
 
@@ -272,9 +309,23 @@ const page = () => {
               <div className="flex flex-col gap-2">
                 <p className="font-medium">Results</p>
                 <p className="text-sm text-[#57605E]">
-                  {recipes?.length} recipes found
+                  No recipe found for “{searchTerm.trim()}”.
                 </p>
+                {generateError && (
+                  <p className="text-sm text-red-500">
+                    Couldn&apos;t generate that recipe. Please try again.
+                  </p>
+                )}
               </div>
+              <button
+                className="bg-mint-green text-white w-full py-4 flex items-center justify-center gap-3 rounded-full hover:opacity-90 transition-opacity active:scale-95"
+                onClick={() => handleGenerate(searchTerm, query ?? undefined)}
+              >
+                <Sparkles color="#FFFFFF" size={20} strokeWidth={2} />
+                <span className="font-medium text-base">
+                  Generate this recipe
+                </span>
+              </button>
               <button
                 className="border border-[#227B6F] w-full py-4 flex items-center justify-center gap-3 rounded-full"
                 onClick={handleGetSuggestions}
