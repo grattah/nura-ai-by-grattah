@@ -122,7 +122,7 @@ export function ShareButton({
   ];
 
   return (
-    <div className="relative" ref={menuRef}>
+    <div className="relative w-full" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`rounded-full hover:opacity-70 transition-opacity flex items-center ${
@@ -134,7 +134,7 @@ export function ShareButton({
       >
         <Share strokeWidth={2.5} size={16} color="#57605E" />
         {showText && (
-          <span className="ml-1 font-medium text-sm text-[#727E7A] text-nowrap">
+          <span className="ml-1 font-medium max-[385px]:text-xs text-sm text-[#727E7A] text-nowrap">
             {text}
           </span>
         )}

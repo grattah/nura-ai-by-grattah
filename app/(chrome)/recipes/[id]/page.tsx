@@ -239,37 +239,33 @@ export default async function RecipeDetailPage({
 
               <div className="flex justify-between items-center mt-8">
                 <div className="flex items-center gap-2">
-                  <p className="text-[#727E7A] text-sm">Was this helpful?</p>
+                  <p className="text-[#727E7A] max-[385px]:text-xs text-sm">Was this helpful?</p>
                   <LikeButton
                     recipeId={recipe.id}
                     initialLiked={liked}
                     isAuthenticated={!!user}
                   />
                 </div>
-                <p className="font-medium text-sm">
+                <p className="font-medium max-[385px]:text-xs text-sm">
                   {recipe.likes ?? 0}{" "}
                   {(recipe.likes ?? 0) > 1 ? "people" : "person"} found this
                   helpful
                 </p>
               </div>
 
-              <div className="flex gap-4 items-center mt-8">
-                <div className="flex-1">
-                  <ShareButton
-                    recipeId={recipe.id}
-                    recipeTitle={recipe.title}
-                    text="Send this to a friend"
-                    addText="show"
-                  />
-                </div>
+              <div className="flex gap-4 items-center mt-8 w-full">
+                <ShareButton
+                  recipeId={recipe.id}
+                  recipeTitle={recipe.title}
+                  text="Send this to a friend"
+                  addText="show"
+                />
 
-                <div className="flex-1">
-                  <BookmarkButton
-                    text="Save this recipe"
-                    addText="show"
-                    popularStyle=""
-                  />
-                </div>
+                <BookmarkButton
+                  text="Save this recipe"
+                  addText="show"
+                  popularStyle=""
+                />
               </div>
 
               <div className="mt-8">
