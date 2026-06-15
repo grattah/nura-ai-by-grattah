@@ -48,7 +48,7 @@ export function PasswordRequirements({ password }: PasswordRequirementsProps) {
               <span
                 className={`flex items-center justify-center w-5 h-5 rounded-full shrink-0 transition-colors ${
                   isMet
-                    ? "bg-[#227B6F]"
+                    ? "bg-mint-green"
                     : "border-2 border-[#9CA5A3] bg-transparent"
                 }`}
                 aria-hidden="true"

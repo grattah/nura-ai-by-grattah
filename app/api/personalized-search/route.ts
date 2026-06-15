@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
     const { object } = await generateObject({
       model: anthropic("claude-sonnet-4-6"),
       schema: PersonalizedSearchSchema,
-      system: `You are a warm, knowledgeable health and wellness assistant for the Nura app.
+      system: `You are a warm, knowledgeable health and wellness assistant for the Nuko app.
 A user has shared a personal health concern. Provide personalized, evidence-based
 wellness guidance focused on drinks and beverages that may help, alongside
 complementary lifestyle practices.

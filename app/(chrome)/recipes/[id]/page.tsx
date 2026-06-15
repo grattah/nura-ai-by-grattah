@@ -121,7 +121,7 @@ export default async function RecipeDetailPage({
     likes,
     profiles (id, username, avatar_url),
     comment_likes!comment_id (user_id)
-  `
+  `,
       )
       .eq("recipe_id", recipe.id)
       .is("parent_id", null)
@@ -140,7 +140,7 @@ export default async function RecipeDetailPage({
         ...latestComment,
         hasLiked:
           latestComment.comment_likes?.some(
-            (like: { user_id: string }) => like.user_id === user?.id
+            (like: { user_id: string }) => like.user_id === user?.id,
           ) ?? false,
       }
     : null;
@@ -191,7 +191,6 @@ export default async function RecipeDetailPage({
                   src={heroImageUrl}
                   alt={recipe.title}
                   fill
-                  // Full width minus mx-4 (16px each side)
                   sizes="calc(100vw - 32px)"
                   className="object-cover"
                   priority
@@ -239,7 +238,9 @@ export default async function RecipeDetailPage({
 
               <div className="flex justify-between items-center mt-8">
                 <div className="flex items-center gap-2">
-                  <p className="text-[#727E7A] max-[385px]:text-xs text-sm">Was this helpful?</p>
+                  <p className="text-[#727E7A] max-[385px]:text-xs text-sm">
+                    Was this helpful?
+                  </p>
                   <LikeButton
                     recipeId={recipe.id}
                     initialLiked={liked}

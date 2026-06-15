@@ -795,7 +795,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                     }}
                     autoComplete="new-password"
                     required
-                    className="w-full pl-10 pr-4 py-4 rounded-sm bg-[#FFFFFF] text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
+                    className="w-full pl-10 pr-4 py-4 rounded-sm bg-white text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
                   />
                   <button
                     type="button"
@@ -833,7 +833,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                   autoComplete="name"
                   autoFocus
                   required
-                  className="w-full px-4 py-4 rounded-sm bg-[#FFFFFF] text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
+                  className="w-full px-4 py-4 rounded-sm bg-white text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
                 />
 
                 {error && (
@@ -846,7 +846,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                   type="submit"
                   disabled={isLoading || !fullName || !password}
                   className={cn(
-                    "w-full flex items-center justify-center bg-[#227B6F] text-[#FFFFFF] py-4 rounded-full font-medium hover:opacity-90 transition-opacity",
+                    "w-full flex items-center justify-center bg-[#227B6F] text-white py-4 rounded-full font-medium hover:opacity-90 transition-opacity",
                     isLoading ? "opacity-50" : "disabled:opacity-40",
                   )}
                 >
