@@ -192,7 +192,6 @@ export default async function RecipeDetailPage({
                 src={heroImageUrl}
                 alt={recipe.title}
                 fill
-                // Full width minus mx-4 (16px each side)
                 sizes="calc(100vw - 32px)"
                 className="object-cover"
                 priority
