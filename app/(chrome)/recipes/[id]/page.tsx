@@ -22,6 +22,7 @@ import { logRecipeView } from "@/actions/activity";
 import { isLiked } from "@/actions/likes";
 import type { Database } from "@/lib/database.types";
 import type { SupportScore } from "@/lib/wellness-score";
+import { BookmarkProvider } from "@/components/bookmark-provider";
 
 // support_scores isn't in the generated types yet; recipe_tags is a join.
 type RecipeRecord = Database["public"]["Tables"]["recipes"]["Row"] & {
@@ -162,126 +163,125 @@ export default async function RecipeDetailPage({
 
   return (
     <PaywallGate>
-      <div className="min-h-screen bg-background">
-        {/* Sub-header */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-3">
-          <BackButton className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
-          <div className="flex items-center gap-2">
-            <ShareButton
-              recipeId={recipe.id}
-              recipeTitle={recipe.title}
-              addText=""
-              text=""
-            />
-            <BookmarkButton
-              recipeId={recipe.id}
-              initialBookmarked={bookmarked}
-              isAuthenticated={!!user}
-              text=""
-              addText=""
-              popularStyle=""
-            />
-          </div>
-        </div>
-
-        <main className="pb-6">
-          {/* Hero image — LCP element, load eagerly */}
-          <div className="mx-6 rounded-4xl overflow-hidden bg-muted mb-8 relative aspect-video">
-            {heroImageUrl && (
-              <Image
-                src={heroImageUrl}
-                alt={recipe.title}
-                fill
-                sizes="calc(100vw - 32px)"
-                className="object-cover"
-                priority
-              />
-            )}
-          </div>
-
-          {/* Title + description */}
-          <div className="px-6 mb-8">
-            <h1 className="text-2xl font-bold text-foreground mb-1.5 leading-tight">
-              {recipe.title}
-            </h1>
-            <p className="text-base font-medium text-[#57605E] leading-relaxed">
-              {recipe.short_description}
-            </p>
-          </div>
-
-          <div className="px-6 mb-8">
-            <DetoxCard
-              recipeId={recipe.id}
-              supports={assignedSupports}
-              initialScores={recipe.support_scores}
-            />
-          </div>
-
-          {/* Accordion sections */}
-          <div className="px-6 space-y-3">
-            <AccordionSection
-              recipe={recipe}
-              ingredients={ingredients}
-              howToMake={howToMake}
-            />
-
-            {/* Follow-up questions + RAG chat */}
-            <div className="pt-2">
-              <FollowUpSection
-                contextId={recipe.id}
-                contextType="recipe"
-                title={recipe.title}
-                description={recipe.short_description}
-                context={buildRecipeContext(recipe)}
-                savedQuestions={recipe.follow_up_questions}
-              />
-            </div>
-
-            <div className="flex justify-between items-center mt-8">
-              <div className="flex items-center gap-2">
-                <p className="text-[#727E7A] text-sm">Was this helpful?</p>
-                <LikeButton
-                  recipeId={recipe.id}
-                  initialLiked={liked}
-                  isAuthenticated={!!user}
-                />
-              </div>
-              <p className="font-medium text-sm">
-                {recipe.likes ?? 0}{" "}
-                {(recipe.likes ?? 0) > 1 ? "people" : "person"} found this
-                helpful
-              </p>
-            </div>
-
-            <div className="flex justify-between items-center mt-8">
+      <BookmarkProvider
+        recipeId={recipe.id}
+        initialBookmarked={bookmarked}
+        isAuthenticated={!!user}
+      >
+        <div className="min-h-screen bg-background">
+          {/* Sub-header */}
+          <div className="flex items-center justify-between px-6 pt-5 pb-3">
+            <BackButton className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
+            <div className="flex items-center gap-2">
               <ShareButton
                 recipeId={recipe.id}
                 recipeTitle={recipe.title}
-                text="Send this to a friend"
-                addText="show"
+                addText=""
+                text=""
               />
-              <BookmarkButton
+              <BookmarkButton text="" addText="" popularStyle="" />
+            </div>
+          </div>
+
+          <main className="pb-6">
+            {/* Hero image — LCP element, load eagerly */}
+            <div className="mx-6 rounded-4xl overflow-hidden bg-muted mb-8 relative aspect-video">
+              {heroImageUrl && (
+                <Image
+                  src={heroImageUrl}
+                  alt={recipe.title}
+                  fill
+                  sizes="calc(100vw - 32px)"
+                  className="object-cover"
+                  priority
+                />
+              )}
+            </div>
+
+            {/* Title + description */}
+            <div className="px-6 mb-8">
+              <h1 className="text-2xl font-bold text-foreground mb-1.5 leading-tight">
+                {recipe.title}
+              </h1>
+              <p className="text-base font-medium text-[#57605E] leading-relaxed">
+                {recipe.short_description}
+              </p>
+            </div>
+
+            <div className="px-6 mb-8">
+              <DetoxCard
                 recipeId={recipe.id}
-                initialBookmarked={bookmarked}
-                isAuthenticated={!!user}
-                text="Save this recipe"
-                addText="show"
-                popularStyle=""
+                supports={assignedSupports}
+                initialScores={recipe.support_scores}
               />
             </div>
 
-            <div className="mt-8">
-              <Comment
-                total={totalComments?.length}
-                latestComment={latestCommentWithLike}
-                seeAllHref={`/comments?recipeId=${recipe.id}&limit=5`}
-                recipeId={recipe.id}
-                isAuthenticated={!!user}
+            {/* Accordion sections */}
+            <div className="px-6 space-y-3">
+              <AccordionSection
+                recipe={recipe}
+                ingredients={ingredients}
+                howToMake={howToMake}
               />
+
+              {/* Follow-up questions + RAG chat */}
+              <div className="pt-2">
+                <FollowUpSection
+                  contextId={recipe.id}
+                  contextType="recipe"
+                  title={recipe.title}
+                  description={recipe.short_description}
+                  context={buildRecipeContext(recipe)}
+                  savedQuestions={recipe.follow_up_questions}
+                />
+              </div>
+
+              <div className="flex justify-between items-center mt-8">
+                <div className="flex items-center gap-2">
+                  <p className="text-[#727E7A] max-[385px]:text-xs text-sm">
+                    Was this helpful?
+                  </p>
+                  <LikeButton
+                    recipeId={recipe.id}
+                    initialLiked={liked}
+                    isAuthenticated={!!user}
+                  />
+                </div>
+                <p className="font-medium max-[385px]:text-xs text-sm">
+                  {recipe.likes ?? 0}{" "}
+                  {(recipe.likes ?? 0) > 1 ? "people" : "person"} found this
+                  helpful
+                </p>
+              </div>
+
+              <div className="flex gap-4 items-center mt-8 w-full">
+                <ShareButton
+                  recipeId={recipe.id}
+                  recipeTitle={recipe.title}
+                  text="Send this to a friend"
+                  addText="show"
+                />
+
+                <BookmarkButton
+                  text="Save this recipe"
+                  addText="show"
+                  popularStyle=""
+                />
+              </div>
+
+              <div className="mt-8">
+                <Comment
+                  total={totalComments?.length}
+                  latestComment={latestCommentWithLike}
+                  seeAllHref={`/comments?recipeId=${recipe.id}&limit=5`}
+                  recipeId={recipe.id}
+                  isAuthenticated={!!user}
+                />
+              </div>
             </div>
-          </div>
-        </main>
-      </div>
+          </main>
+        </div>
+      </BookmarkProvider>
     </PaywallGate>
   );
 }

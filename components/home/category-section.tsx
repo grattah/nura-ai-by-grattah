@@ -7,9 +7,9 @@ import Leaf from "../vectors/leaf";
 import Shield from "../vectors/shield";
 import Lightning from "../vectors/lightning";
 import { PaywallModal } from "../paywall/paywall-modal";
-import Heart from "../vectors/heart";
+import Hormones from "../vectors/horomones";
 import Beauty from "../vectors/beauty";
-import Recovery from "../vectors/recovery";
+import GutHealth from "../vectors/gutHealth";
 
 const CATEGORIES = [
   {
@@ -31,9 +31,9 @@ const CATEGORIES = [
     iconBg: "#F8BD001F",
   },
   {
-    label: "Recovery",
-    icon: <Recovery />,
-    href: "/categories/recovery",
+    label: "Gut health",
+    icon: <GutHealth />,
+    href: "/categories/gut-health",
     iconBg: "#2C4FFF1F",
   },
   {
@@ -43,9 +43,9 @@ const CATEGORIES = [
     iconBg: "#9F31771F",
   },
   {
-    label: "Heart",
-    icon: <Heart />,
-    href: "/categories/heart",
+    label: "Hormones",
+    icon: <Hormones />,
+    href: "/categories/hormones",
     iconBg: "#EA43351F",
   },
 ];
@@ -86,15 +86,15 @@ export function CategorySection({ hasAccess }: UpgradeBannerProps) {
             <Link
               key={cat.label}
               href={cat.href}
-              className="flex justify-center items-center w-full gap-2 p-3 rounded-lg bg-badge text-sm font-medium text-foreground border border-badge-border hover:opacity-80 transition-opacity active:scale-95"
+              className="flex justify-center items-center w-full gap-2 p-3 h-12.75 rounded-lg bg-badge text-sm font-medium text-foreground border border-badge-border hover:opacity-80 transition-opacity active:scale-95"
             >
               <span
-                className="text-sm shrink-0 leading-none -tracking-[2%] inline-flex items-center justify-center size-7 rounded-full"
+                className="text-xs shrink-0 leading-none inline-flex items-center justify-center size-7 rounded-full"
                 style={{ backgroundColor: cat.iconBg }}
               >
                 {cat.icon}
               </span>
-              {cat.label}
+              <span className="text-nowrap text-xs">{cat.label}</span>
             </Link>
           ) : (
             <button
@@ -110,7 +110,7 @@ export function CategorySection({ hasAccess }: UpgradeBannerProps) {
               </span>
               {cat.label}
             </button>
-          ),
+          )
         )}
       </div>
 

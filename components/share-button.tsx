@@ -122,26 +122,26 @@ export function ShareButton({
   ];
 
   return (
-    <div className="relative" ref={menuRef}>
+    <div className="relative w-full" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`rounded-full hover:opacity-70 transition-opacity flex items-center ${
           showText
-            ? "border border-[#C4CAC8] bg-inherit px-4 py-3"
+            ? "border border-[#C4CAC8] bg-inherit px-3 py-3"
             : "bg-[#E8E6DC] p-3"
         }`}
         aria-label="Share recipe"
       >
         <Share strokeWidth={2.5} size={16} color="#57605E" />
         {showText && (
-          <span className="ml-2 font-medium text-sm text-[#727E7A]">
+          <span className="ml-1 font-medium max-[385px]:text-xs text-sm text-[#727E7A] text-nowrap">
             {text}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 top-13 bg-card border border-border rounded-2xl shadow-lg z-50 min-w-56 overflow-hidden">
+        <div className={`absolute ${showText ? "left-0" : "right-0"}  top-13 bg-card border border-border rounded-2xl shadow-lg z-50 min-w-56 overflow-hidden`}>
           <div className="p-3 space-y-1">
             {shareOptions.map((option) => {
               const Icon = option.icon;
