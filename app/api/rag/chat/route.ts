@@ -44,7 +44,7 @@ function buildSystemPrompt(
   description?: string,
 ): string {
   if (context) {
-    return `You are a warm, knowledgeable health and wellness assistant for the Nura app.
+    return `You are a warm, knowledgeable health and wellness assistant for the Nuko app.
 You are answering a follow-up question about a specific ${typeLabel} called "${title}".
 
 You have two sources of knowledge to draw from:
@@ -67,7 +67,7 @@ Retrieved context:
 ${context}`;
   }
 
-  return `You are a warm, knowledgeable health and wellness assistant for the Nura app.
+  return `You are a warm, knowledgeable health and wellness assistant for the Nuko app.
 You are answering a follow-up question about a specific ${typeLabel} called "${title}".
 ${description ? `\nContext about this ${typeLabel}:\n${description}\n` : ""}
 You have access to a web search tool, and you also have broad knowledge of nutrition,

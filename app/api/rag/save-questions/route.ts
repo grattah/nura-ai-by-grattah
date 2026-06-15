@@ -2,22 +2,10 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 
-// Cache-population endpoint: the first authenticated viewer of a recipe/guide
-// that has no saved follow-up questions generates them and stores them here.
-//
-// Hardening (audit finding C1): previously this was an UNAUTHENTICATED
-// service-role write that let anyone overwrite `follow_up_questions` on any
-// row. We now (1) require a signed-in user, (2) strictly validate the payload,
-// and (3) only write when the column is still empty — so it can populate the
-// cache once but never overwrite existing content.
-
 const BodySchema = z.object({
   contextId: z.string().uuid(),
   contextType: z.enum(["recipe", "guide"]),
-  questions: z
-    .array(z.string().trim().min(1).max(200))
-    .min(1)
-    .max(8),
+  questions: z.array(z.string().trim().min(1).max(200)).min(1).max(8),
 });
 
 export async function POST(req: NextRequest) {

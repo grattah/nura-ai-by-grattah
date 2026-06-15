@@ -174,7 +174,7 @@ function PersonalizedSearchContent() {
         <div className="px-6 space-y-10">
           {/* Query row */}
           <div className="space-y-4">
-            <div className="bg-card rounded-2xl p-4 border border-[#E3E1D880] flex items-center justify-between gap-3">
+            <div className="bg-white rounded-2xl p-4 border border-[#E3E1D880] flex items-center justify-between gap-3">
               <div className="flex items-center gap-x-3 min-w-0 flex-1">
                 <span className="text-xl shrink-0">🌿</span>
                 <div className="space-y-1">
@@ -196,7 +196,7 @@ function PersonalizedSearchContent() {
             </div>
 
             {/* AI summary */}
-            <div className="bg-card rounded-2xl border-[#E3E1D880] p-4 flex gap-3 items-start">
+            <div className="bg-white rounded-2xl border-[#E3E1D880] p-4 flex gap-3 items-start">
               <div className="size-12 bg-mint-green rounded-full flex items-center justify-center shrink-0">
                 <Image
                   src="/logo-outlined-nobg.svg"
@@ -231,7 +231,7 @@ function PersonalizedSearchContent() {
           {result.whyItWorks.length > 0 && (
             <section>
               <div className="space-y-3 mb-3">
-                <h2 className="text-lg font-semibold text-foreground">
+                <h2 className="text-xl font-medium text-base-text">
                   Why these suggestions?
                 </h2>
                 <p className="text-subtle leading-snug">
@@ -262,7 +262,7 @@ function PersonalizedSearchContent() {
               <h2 className="text-xl font-medium text-base-text mb-3">
                 Recipes that can help 🌿
               </h2>
-              <div className="bg-card rounded-2xl overflow-hidden">
+              <div className="bg-white border border-grey-c100 rounded-2xl overflow-hidden">
                 {result.drinksToTry.map((drink, i) => (
                   <div key={i}>
                     {i > 0 && <div className="h-px bg-black/10 mx-17" />}
@@ -301,7 +301,7 @@ function PersonalizedSearchContent() {
                 {result.tryTheseToo.map((item, i) => (
                   <div
                     key={i}
-                    className="bg-card border border-[#E3E1D880] rounded-2xl p-4 flex gap-3 items-start"
+                    className="bg-white border border-[#E3E1D880] rounded-2xl p-4 flex gap-3 items-start"
                   >
                     <div
                       className="size-12 rounded-full flex items-center justify-center shrink-0 text-2xl"
@@ -344,7 +344,7 @@ function PersonalizedSearchContent() {
           </div>
 
           {/* Feedback */}
-          <div className="bg-card rounded-2xl border border-[#E3E1D880] p-4 space-y-3">
+          <div className="bg-white rounded-2xl border border-[#E3E1D880] p-4 space-y-3">
             <div>
               <p className="text-base font-medium text-base-text">
                 How was this helpful?
