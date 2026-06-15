@@ -40,7 +40,7 @@ export function ConfirmEmailModal({
         </button>
 
         <div className="flex flex-col items-center text-center gap-2">
-          <div className="p-3 rounded-full bg-[#227B6F] mb-2">
+          <div className="p-3 rounded-full bg-mint-green mb-2">
             <ShieldCheck color="#FFFFFF" size={24} />
           </div>
 
@@ -54,7 +54,7 @@ export function ConfirmEmailModal({
         </div>
 
         <div className="mt-6 rounded-xl bg-grey-c100 p-4 flex items-start gap-3">
-          <Mail size={20} className="text-[#227B6F] mt-0.5 shrink-0" />
+          <Mail size={20} className="text-mint-green mt-0.5 shrink-0" />
           <div className="flex flex-col">
             <p className="font-medium text-[#1A1A1A] break-all text-xs">
               {email}
@@ -68,7 +68,7 @@ export function ConfirmEmailModal({
         <button
           onClick={onConfirm}
           disabled={isLoading}
-          className="mt-6 w-full bg-[#227B6F] text-white py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+          className="mt-6 w-full bg-mint-green text-white py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
         >
           {isLoading ? "Sending..." : "Confirm email"}
         </button>
