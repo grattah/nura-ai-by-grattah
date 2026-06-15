@@ -4,13 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { HiMiniHome } from "react-icons/hi2";
 import { FaBookmark } from "react-icons/fa";
+import { CommunityIcon, CommunityIconActive} from "../vectors/community-icon";
 import { Home, Search, Users, Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { label: "Home", href: "/", icon: Home, activeIcon: HiMiniHome },
   { label: "Find recipe", href: "/find-recipe", icon: Search, activeIcon: Search },
-  { label: "Community", href: "/community", icon: Users, activeIcon: Users },
+  { label: "Community", href: "/community", icon: CommunityIcon, activeIcon: CommunityIconActive },
   { label: "Saved", href: "/bookmarks", icon: Bookmark, activeIcon: FaBookmark },
 ] as const;
 
