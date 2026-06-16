@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import {
@@ -17,6 +18,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { useRecentSearches } from "@/hooks/use-recent-searches";
 import ModalLoadingScreen from "@/components/recipe/ModalLoadingScreen";
+import SearchX from "@/components/vectors/SearchX";
 
 interface RecipeSuggestion {
   id: string;
@@ -38,7 +40,6 @@ interface Recipe {
 }
 
 const page = () => {
-  type SearchState = "idle" | "searching" | "results" | "empty" | "suggestions";
 
   const searchParams = useSearchParams();
   const query = searchParams.get("q");
@@ -141,9 +142,7 @@ const page = () => {
     if (words.length === 0) return [];
 
     return allRecipes.filter((recipe) => {
-      const haystack = `${recipe.title} ${
-        recipe.short_description ?? ""
-      }`.toLowerCase();
+      const haystack = `${recipe.title}`.toLowerCase();
       return words.every((word) => haystack.includes(word));
     });
   }, [searchTerm, allRecipes]);
@@ -160,9 +159,12 @@ const page = () => {
     filteredRecipes.length > 0;
   const showingEmpty =
     !showSuggestions &&
+    !isLoadingRecipes &&
     searchTerm.trim().length > 0 &&
     filteredRecipes.length === 0;
   const showingIdle = searchTerm.trim().length === 0 && !showSuggestions;
+  const showingLoading =
+    isLoadingRecipes && searchTerm.trim().length > 0 && !showSuggestions;
 
   const handleSearchTermChange = (value: string) => {
     setSearchTerm(value);
@@ -267,6 +269,8 @@ const page = () => {
               </div>
             )} */}
 
+          {showingLoading && <RecipesSpinner />}
+
           {showingEmpty && (
             <div className="flex flex-col gap-5 mt-2 px-6">
               <div className="flex flex-col gap-2">
@@ -275,15 +279,24 @@ const page = () => {
                   {recipes?.length} recipes found
                 </p>
               </div>
-              <button
-                className="fixed bottom-40 left-6 right-6 z-20 border border-[#227B6F] py-4 flex items-center justify-center gap-3 rounded-full bg-background"
-                onClick={handleGetSuggestions}
-              >
-                <Sparkles color="#227B6F" size={20} strokeWidth={2} />
-                <span className="text-mint-green font-medium text-base">
-                  Get suggestions
-                </span>
-              </button>
+              <div className="flex flex-col gap-6 w-full rounded-3xl bg-white py-[42px] px-[24px]">
+                <div className="flex flex-col gap-4 justify-center items-center">
+                  <SearchX />
+                  <p className="font-medium text-subtle text-center">
+                    No recipe found. Please check your search again or check our
+                    suggestions
+                  </p>
+                </div>
+                <button
+                  className="border border-[#227B6F] py-4 flex items-center justify-center gap-3 rounded-full bg-white w-full"
+                  onClick={handleGetSuggestions}
+                >
+                  <Sparkles color="#227B6F" size={20} strokeWidth={2} />
+                  <span className="text-mint-green font-medium text-base">
+                    Get suggestions
+                  </span>
+                </button>
+              </div>
             </div>
           )}
 
@@ -310,7 +323,7 @@ const page = () => {
                         }}
                       >
                         <Clock size={20} color="#9CA5A3" strokeWidth={2} />
-                        <p className="font-medium">{term}</p>
+                        <p className="font-medium text-left">{term}</p>
                       </button>
                     ))}
                   </div>
@@ -502,6 +515,18 @@ function RecipeLoadingScreen({ recipeName }: { recipeName: string }) {
           </p>
         </div>
       </main>
+    </div>
+  );
+}
+
+function RecipesSpinner() {
+  return (
+    <div
+      className="flex justify-center py-12"
+      role="status"
+      aria-label="Loading recipes"
+    >
+      <div className="w-8 h-8 rounded-full border-2 border-mint-green border-t-transparent animate-spin" />
     </div>
   );
 }

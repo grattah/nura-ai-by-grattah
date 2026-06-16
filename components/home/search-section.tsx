@@ -46,7 +46,7 @@ export function SearchSection() {
       }
       cb();
     },
-    [hasAccess, isLoading],
+    [hasAccess, isLoading]
   );
 
   const handleSubmit = useCallback(() => {
@@ -68,7 +68,7 @@ export function SearchSection() {
     (concern: string) => {
       requireAccess(() => setQuery(concern));
     },
-    [requireAccess],
+    [requireAccess]
   );
 
   const handleMic = useCallback(() => {
@@ -96,7 +96,7 @@ export function SearchSection() {
       recognition.onresult = (e) => {
         const transcript = e.results[0]?.[0]?.transcript ?? "";
         setQuery((prev) =>
-          prev.trim() ? `${prev.trim()} ${transcript}` : transcript,
+          prev.trim() ? `${prev.trim()} ${transcript}` : transcript
         );
       };
 
@@ -153,7 +153,9 @@ export function SearchSection() {
               className="shrink-0"
             >
               <Mic
-                className={`size-4 text-mint-green ${isRecording ? "animate-pulse" : ""}`}
+                className={`size-4 text-mint-green ${
+                  isRecording ? "animate-pulse" : ""
+                }`}
                 strokeWidth={1.75}
               />
             </button>
