@@ -134,7 +134,7 @@ export function ShareButton({
       >
         <Share strokeWidth={2.5} size={16} color="#57605E" />
         {showText && (
-          <span className="ml-1 font-medium max-[385px]:text-xs text-sm text-[#727E7A] text-nowrap">
+          <span className="ml-1 font-medium text-sm max-[385px]:text-xs max-[330px]:text-[10px] text-[#727E7A] text-nowrap">
             {text}
           </span>
         )}

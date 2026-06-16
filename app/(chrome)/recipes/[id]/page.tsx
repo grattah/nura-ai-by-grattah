@@ -238,16 +238,14 @@ export default async function RecipeDetailPage({
 
               <div className="flex justify-between items-center mt-8">
                 <div className="flex items-center gap-2">
-                  <p className="text-[#727E7A] max-[385px]:text-xs text-sm">
-                    Was this helpful?
-                  </p>
+                  <p className="text-[#727E7A] text-sm max-[385px]:text-xs max-[330px]:text-[10px]">Was this helpful?</p>
                   <LikeButton
                     recipeId={recipe.id}
                     initialLiked={liked}
                     isAuthenticated={!!user}
                   />
                 </div>
-                <p className="font-medium max-[385px]:text-xs text-sm">
+                <p className="font-medium text-sm max-[385px]:text-xs max-[330px]:text-[10px]">
                   {recipe.likes ?? 0}{" "}
                   {(recipe.likes ?? 0) > 1 ? "people" : "person"} found this
                   helpful
