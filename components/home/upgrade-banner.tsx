@@ -13,10 +13,10 @@ export function UpgradeBanner({ hasAccess }: UpgradeBannerProps) {
           <Image src="/3davatar.png" alt="3D Avatar" width={64} height={64} />
         </div>
         <div className="flex-1 space-y-2 ml-25">
-          <p className="font-semibold text-base-text text-lg">
+          <p className="font-semibold text-base-text max-[400px]:text-sm text-lg">
             Unlock every recipe
           </p>
-          <p className="text-base text-grey-c700 leading-snug">
+          <p className="max-[400px]:text-xs text-base text-grey-c700 leading-snug">
             Full methods, ingredients, personalized feedbacks, and daily
             reminders. All for{" "}
             <span className="text-base-text font-medium">$7 monthly!</span>
