@@ -1,17 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { createClient } from "@/lib/supabase/client";
 import { getCloudinaryUrl } from "@/lib/cloudinary";
 
-const POLL_INTERVAL_MS = 3000;
-const MAX_ATTEMPTS = 20;
-
 /**
- * Recipe hero image. Generated recipes are created with `image_url = null` and
- * the image is produced asynchronously, so when there's no image yet we poll the
- * row and swap it in once it's ready — no page reload needed.
+ * Recipe hero image. Generated recipes are created with `image_url = null`; the
+ * image is produced lazily on first view by an awaited request to
+ * `/api/recipes/[id]/image` (reliable on serverless, errors observable). The
+ * spinner shows while it generates, then the image swaps in — no page reload.
  */
 export function RecipeHeroImage({
   recipeId,
@@ -23,35 +20,31 @@ export function RecipeHeroImage({
   initialImageUrl: string | null;
 }) {
   const [imageUrl, setImageUrl] = useState<string | null>(initialImageUrl);
+  const [failed, setFailed] = useState(false);
+  const triggered = useRef(false);
 
   useEffect(() => {
-    if (imageUrl) return; // already have one
+    // Fire exactly once per recipe. The `triggered` ref survives React Strict
+    // Mode's dev setup→cleanup→setup, so we must NOT gate the result on a
+    // per-effect "cancelled" flag (the cleanup would discard the only in-flight
+    // request's result). React safely ignores a setState on a truly unmounted
+    // component.
+    if (imageUrl || triggered.current) return;
+    triggered.current = true;
 
-    const supabase = createClient();
-    let attempts = 0;
-    let cancelled = false;
-
-    const timer = setInterval(async () => {
-      attempts += 1;
-      if (cancelled || attempts > MAX_ATTEMPTS) {
-        clearInterval(timer);
-        return;
+    (async () => {
+      try {
+        const res = await fetch(`/api/recipes/${recipeId}/image`, {
+          method: "POST",
+        });
+        if (!res.ok) throw new Error("image request failed");
+        const data = await res.json();
+        if (data?.imageUrl) setImageUrl(data.imageUrl);
+        else setFailed(true);
+      } catch {
+        setFailed(true);
       }
-      const { data } = await supabase
-        .from("recipes")
-        .select("image_url")
-        .eq("id", recipeId)
-        .maybeSingle();
-      if (!cancelled && data?.image_url) {
-        setImageUrl(data.image_url);
-        clearInterval(timer);
-      }
-    }, POLL_INTERVAL_MS);
-
-    return () => {
-      cancelled = true;
-      clearInterval(timer);
-    };
+    })();
   }, [recipeId, imageUrl]);
 
   const src = imageUrl
@@ -69,11 +62,17 @@ export function RecipeHeroImage({
           className="object-cover"
           priority
         />
+      ) : failed ? (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-4xl" aria-hidden>
+            🌿
+          </span>
+        </div>
       ) : (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="flex flex-col items-center gap-2 text-muted-foreground">
             <div className="w-6 h-6 rounded-full border-2 border-mint-green border-t-transparent animate-spin" />
-            <span className="text-xs">Creating image…</span>
+            <span className="text-xs">Loading image…</span>
           </div>
         </div>
       )}

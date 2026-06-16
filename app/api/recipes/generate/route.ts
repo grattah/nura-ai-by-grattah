@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { after } from "next/server";
-import { generateObject, generateText } from "ai";
+import { generateObject } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
-import { google } from "@ai-sdk/google";
 import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { WELLNESS_SOURCES } from "@/lib/wellness-sources";
@@ -226,40 +224,7 @@ ${tagList}`,
     if (tagErr) console.error("[recipes/generate] tags", tagErr);
   }
 
-  after(async () => {
-    try {
-      const result = await generateText({
-        // model: google("gemini-2.5-flash-image"),
-        model: google("gemini-3.1-flash-image-preview"),
-        // model: google("gemini-3-pro-image"),
-        providerOptions: { google: { responseModalities: ["TEXT", "IMAGE"] } },
-        prompt: `Appetizing, photorealistic photo of "${recipe.title}", a wellness drink or dish. Soft natural light, clean neutral background, 45-degree food photography, vibrant and fresh. No text, no watermark.`,
-      });
-      const image = result.files.find((f) => f.mediaType?.startsWith("image/"));
-      if (!image) throw new Error("model returned no image");
-
-      const path = `${recipeId}.png`;
-      const { error: uploadErr } = await admin.storage
-        .from("recipe-images")
-        .upload(path, image.uint8Array, {
-          contentType: image.mediaType ?? "image/png",
-          upsert: true,
-        });
-      if (uploadErr) throw uploadErr;
-
-      const {
-        data: { publicUrl },
-      } = admin.storage.from("recipe-images").getPublicUrl(path);
-
-      await admin
-        .from("recipes")
-        .update({ image_url: publicUrl })
-        .eq("id", recipeId);
-    } catch (err) {
-      // A missing image is non-fatal — the recipe still renders with a placeholder.
-      console.error("[recipes/generate] image", err);
-    }
-  });
-
+  // The hero image is generated lazily on first view of the detail page
+  // (POST /api/recipes/[id]/image) — reliable on serverless, unlike `after()`.
   return NextResponse.json({ id: recipeId, existed: false });
 }
