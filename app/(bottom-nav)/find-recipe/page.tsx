@@ -19,6 +19,7 @@ import { useRecentSearches } from "@/hooks/use-recent-searches";
 import ModalLoadingScreen from "@/components/recipe/ModalLoadingScreen";
 import SearchX from "@/components/vectors/SearchX";
 import { WELLNESS_SOURCES } from "@/lib/wellness-sources";
+import BackButton from "@/components/back-button";
 
 interface RecipeSuggestion {
   id: string;
@@ -40,14 +41,13 @@ interface Recipe {
 }
 
 const page = () => {
-
   const searchParams = useSearchParams();
   const query = searchParams.get("q");
   const generateParam = searchParams.get("generate");
   const concernParam = searchParams.get("concern");
   const supabase = createClient();
   const [searchTerm, setSearchTerm] = React.useState(
-    query || generateParam || "",
+    query || generateParam || ""
   );
   const [allRecipes, setAllRecipes] = React.useState<Recipe[]>([]);
   const [isLoadingRecipes, setIsLoadingRecipes] = React.useState(true);
@@ -57,7 +57,7 @@ const page = () => {
   const [generateError, setGenerateError] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
   const [aiSuggestions, setAiSuggestions] = React.useState<RecipeSuggestion[]>(
-    [],
+    []
   );
   const [aiSuggestionsLoading, setAiSuggestionsLoading] = React.useState(false);
   const [aiSuggestionsError, setAiSuggestionsError] = React.useState<
@@ -67,7 +67,7 @@ const page = () => {
   const [showModalScreenLoader, setShowModalScreenLoader] =
     React.useState(false);
   const suggestionsCache = React.useRef<Map<string, RecipeSuggestion[]>>(
-    new Map(),
+    new Map()
   );
 
   const { recents, add: addRecent, clear: clearRecents } = useRecentSearches();
@@ -207,7 +207,7 @@ const page = () => {
         setGenerateError(true);
       }
     },
-    [router],
+    [router]
   );
 
   // If we arrived via a "generate this recipe" link, kick it off immediately.
@@ -260,7 +260,7 @@ const page = () => {
 
   // Show the full-screen loading state while navigating to / generating a recipe
   if ((isPending || generating) && pendingRecipe) {
-    return <RecipeLoadingScreen recipeName={pendingRecipe} />;
+    return <RecipeLoadingScreen recipeName={pendingRecipe} generateParam={generateParam} />;
   }
 
   return (
@@ -496,13 +496,16 @@ const page = () => {
   );
 };
 
-function RecipeLoadingScreen({ recipeName }: { recipeName: string }) {
+function RecipeLoadingScreen({ recipeName, generateParam }: { recipeName: string, generateParam: string | null }) {
   return (
     <div className="bg-background min-h-screen">
-      <main className="px-6 pt-6">
-        <p className="font-semibold text-xl">Find recipe</p>
+      <main>
+        <div className={`px-8 py-4.75 mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A] ${generateParam && "flex gap-7 items-center"}`}>
+          {generateParam && <BackButton className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />}
+          <p className="text-2xl font-semibold text-[#111312]">Find a recipe</p>
+        </div>
 
-        <div className="mt-8">
+        <div className="mt-8 px-8">
           <div className="relative">
             <div className="absolute top-3.75 left-3">
               <Search color="#82A198" size={16} />
@@ -516,7 +519,7 @@ function RecipeLoadingScreen({ recipeName }: { recipeName: string }) {
           </div>
         </div>
 
-        <div className="mt-16 flex flex-col items-center text-center gap-6">
+        <div className="mt-16 flex flex-col items-center text-center gap-6 px-8">
           <div className="relative w-24 h-24 flex items-center justify-center">
             <svg
               className="absolute inset-0 animate-spin"
@@ -549,11 +552,13 @@ function RecipeLoadingScreen({ recipeName }: { recipeName: string }) {
           </div>
         </div>
 
-        <div className="mt-12 rounded-full bg-[#E8E6DC] px-5 py-3 flex items-center justify-center gap-2">
-          <span className="text-lg">💡</span>
-          <p className="text-sm text-[#57605E] font-medium">
-            Tip: This may take a few seconds
-          </p>
+        <div className="px-8">
+          <div className="mt-12 rounded-full bg-[#E8E6DC] px-5 py-3 flex items-center justify-center gap-2">
+            <span className="text-lg">💡</span>
+            <p className="text-sm text-[#57605E] font-medium">
+              Tip: This may take a few seconds
+            </p>
+          </div>
         </div>
       </main>
     </div>
