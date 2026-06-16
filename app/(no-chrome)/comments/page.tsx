@@ -7,8 +7,6 @@ import { createClient } from "@/lib/supabase/server";
 import profile from "@/public/profile.png";
 import BackButton from "@/components/back-button";
 import CommentsSection from "@/components/recipe/CommentsSection";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 
 interface PageProps {
   searchParams: Promise<{ recipeId?: string; limit?: string }>;
