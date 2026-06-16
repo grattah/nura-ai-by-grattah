@@ -11,6 +11,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { MobileGate } from "@/components/mobile-gate";
 import { AccessProvider } from "@/components/providers/access-provider";
+import { CreditsProvider } from "@/components/providers/credits-provider";
 import { ChatCacheCleaner } from "@/components/chat-cache-cleaner";
 import { PerfProfiler } from "@/components/dev/perf-profiler";
 
@@ -80,7 +81,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <MobileGate>
-            <AccessProvider>{children}</AccessProvider>
+            <AccessProvider>
+              <CreditsProvider>{children}</CreditsProvider>
+            </AccessProvider>
           </MobileGate>
         </ThemeProvider>
         <ChatCacheCleaner />

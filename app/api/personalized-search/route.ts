@@ -3,6 +3,8 @@ import { generateObject } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { spend, refund } from "@/lib/credits-server";
+import { MAX_OUTPUT_TOKENS } from "@/lib/credits";
 
 export const maxDuration = 30;
 
@@ -90,9 +92,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Query is required" }, { status: 400 });
   }
 
+  // Charge a credit for this search (cache hits never reach the route).
+  const charge = await spend(user.id, "search", "personalized-search");
+  if (!charge.ok) {
+    return NextResponse.json(
+      { error: "insufficient_credits", balance: charge.balance },
+      { status: 402 },
+    );
+  }
+
   try {
     const { object } = await generateObject({
       model: anthropic("claude-sonnet-4-6"),
+      maxOutputTokens: MAX_OUTPUT_TOKENS.search,
       schema: PersonalizedSearchSchema,
       system: `You are a warm, knowledgeable health and wellness assistant for the Nuko app.
 A user has shared a personal health concern. Provide personalized, evidence-based
@@ -115,6 +127,7 @@ Provide personalized wellness guidance for this concern.`,
     return NextResponse.json(object);
   } catch (err) {
     console.error("[personalized-search]", err);
+    await refund(user.id, "search"); // generation failed — give the credit back
     return NextResponse.json(
       { error: "Failed to generate response" },
       { status: 500 },

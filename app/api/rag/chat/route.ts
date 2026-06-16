@@ -15,6 +15,16 @@ import { z } from "zod";
 import { type NextRequest } from "next/server";
 import { retrieve, formatContext } from "@/lib/rag";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { createClient } from "@/lib/supabase/server";
+import { spend } from "@/lib/credits-server";
+import { MAX_OUTPUT_TOKENS } from "@/lib/credits";
+
+function jsonError(message: string, status: number, extra?: object) {
+  return new Response(JSON.stringify({ error: message, ...extra }), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+}
 
 export const maxDuration = 30;
 
@@ -109,6 +119,25 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  // Follow-up questions are a metered LLM action: require auth + an active
+  // subscription before doing any work (the credit charge happens once we know
+  // the latest message is a real user question, below).
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return jsonError("Unauthorized", 401);
+
+  const { data: sub } = await supabase
+    .from("subscriptions")
+    .select("status, expires_at")
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+  const hasAccess =
+    !!sub && (!sub.expires_at || new Date(sub.expires_at) > new Date());
+  if (!hasAccess) return jsonError("Subscription required", 403);
+
   try {
     const {
       messages,
@@ -141,6 +170,17 @@ export async function POST(req: NextRequest) {
     const typeLabel = contextType === "recipe" ? "recipe" : "health guide";
     const domainList = safeDomains.map((d) => `site:${d}`).join(" OR ");
 
+    // Charge a credit only for a genuine user-asked question (the last message
+    // is from the user). Streaming refunds aren't attempted, so charge once here.
+    if (lastMessage?.role === "user" && userQuestion.trim()) {
+      const charge = await spend(user.id, "followup", "follow-up");
+      if (!charge.ok) {
+        return jsonError("insufficient_credits", 402, {
+          balance: charge.balance,
+        });
+      }
+    }
+
     const { chunks, hasGoodResults } = await retrieve(
       userQuestion,
       contextId,
@@ -152,6 +192,7 @@ export async function POST(req: NextRequest) {
     if (hasGoodResults) {
       const result = streamText({
         model: anthropic("claude-sonnet-4-6"),
+        maxOutputTokens: MAX_OUTPUT_TOKENS.followup,
         system: buildSystemPrompt(
           typeLabel,
           safeTitle,
@@ -167,6 +208,7 @@ export async function POST(req: NextRequest) {
     // PATH B: Web search fallback
     const result = streamText({
       model: anthropic("claude-sonnet-4-6"),
+      maxOutputTokens: MAX_OUTPUT_TOKENS.followup,
       system: buildSystemPrompt(
         typeLabel,
         safeTitle,

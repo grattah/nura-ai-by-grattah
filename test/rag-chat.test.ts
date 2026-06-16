@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 const h = vi.hoisted(() => ({
   retrieve: vi.fn(),
   streamText: vi.fn(),
+  spend: vi.fn(),
 }));
 
 vi.mock("ai", () => ({
@@ -15,6 +16,28 @@ vi.mock("@ai-sdk/anthropic", () => ({ anthropic: vi.fn(() => "model") }));
 vi.mock("@/lib/rag", () => ({
   retrieve: (...args: unknown[]) => h.retrieve(...args),
   formatContext: () => "ctx",
+}));
+vi.mock("@/lib/credits-server", () => ({
+  spend: (...args: unknown[]) => h.spend(...args),
+}));
+
+// Authenticated subscriber by default — chainable stub for the auth + sub reads.
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: async () => ({
+    auth: {
+      getUser: async () => ({ data: { user: { id: "user-1" } } }),
+    },
+    from: () => {
+      const chain = {
+        select: () => chain,
+        eq: () => chain,
+        maybeSingle: async () => ({
+          data: { status: "active", expires_at: null },
+        }),
+      };
+      return chain;
+    },
+  }),
 }));
 
 import { POST } from "@/app/api/rag/chat/route";
@@ -39,6 +62,7 @@ beforeEach(() => {
   h.streamText.mockReturnValue({
     toUIMessageStreamResponse: () => new Response("stream"),
   });
+  h.spend.mockResolvedValue({ ok: true, balance: 10 });
 });
 
 describe("rag/chat — input clamping (audit M1)", () => {

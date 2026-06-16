@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { stripMarkdown } from "@/lib/strip-markdown";
 import { loadChat, saveChat } from "@/lib/chat-cache";
+import { useCredits } from "@/components/providers/credits-provider";
 
 interface FollowUpSectionProps {
   contextId: string;
@@ -41,9 +42,30 @@ export function FollowUpSection({
 
   const [input, setInput] = useState("");
 
+  const { setBalance, openBuyModal, refresh: refreshCredits } = useCredits();
+
   const { messages, sendMessage, status, setMessages } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/rag/chat",
+      // Each user-asked follow-up spends a credit. Intercept the response to
+      // surface the out-of-credits modal on 402 and refresh the balance after
+      // a successful charge (the spend happens server-side before streaming).
+      fetch: async (input, init) => {
+        const res = await fetch(input as RequestInfo, init);
+        if (res.status === 402) {
+          res
+            .clone()
+            .json()
+            .then((b) => {
+              if (typeof b?.balance === "number") setBalance(b.balance);
+            })
+            .catch(() => {});
+          openBuyModal();
+        } else if (res.ok) {
+          refreshCredits();
+        }
+        return res;
+      },
       body: {
         input,
         contextId,

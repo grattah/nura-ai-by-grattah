@@ -15,6 +15,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { useAccess } from "@/hooks/use-access";
+import { useCredits } from "@/components/providers/credits-provider";
 import { EditSearchSheet } from "@/components/search/edit-search-sheet";
 import type { PersonalizedSearchResult } from "@/app/api/personalized-search/route";
 import Cup from "@/components/vectors/cup";
@@ -83,6 +84,7 @@ function PersonalizedSearchContent() {
   const query = params.get("q") ?? "";
 
   const { hasAccess, isLoading: accessLoading } = useAccess();
+  const { setBalance, openBuyModal, refresh: refreshCredits } = useCredits();
   const [result, setResult] = useState<PersonalizedSearchResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -113,9 +115,17 @@ function PersonalizedSearchContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: q }),
       });
+      if (res.status === 402) {
+        const body = await res.json().catch(() => ({}));
+        if (typeof body.balance === "number") setBalance(body.balance);
+        openBuyModal();
+        setError("You're out of credits. Top up to keep searching.");
+        return;
+      }
       if (!res.ok) throw new Error("Failed");
       const data: PersonalizedSearchResult = await res.json();
       setResult(data);
+      refreshCredits();
       try {
         localStorage.setItem(cacheKey, JSON.stringify(data));
       } catch {}
@@ -124,7 +134,7 @@ function PersonalizedSearchContent() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [setBalance, openBuyModal, refreshCredits]);
 
   // Render a cached result instantly, independent of the access check —
   // no need to wait on the (potentially slow) subscription lookup just to

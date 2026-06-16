@@ -4,6 +4,8 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { WELLNESS_SOURCES } from "@/lib/wellness-sources";
+import { spend, refund } from "@/lib/credits-server";
+import { MAX_OUTPUT_TOKENS } from "@/lib/credits";
 
 export const maxDuration = 60;
 
@@ -136,11 +138,22 @@ export async function POST(req: NextRequest) {
   const { data: tags } = await admin.from("tags").select("id, name, slug");
   const tagList = (tags ?? []).map((t) => `${t.slug} | ${t.name}`).join("\n");
 
+  // Charge now that we're actually generating (reused/matched recipes above are
+  // free). This one charge covers the recipe text AND its lazily-generated image.
+  const charge = await spend(user.id, "generate", cleanName);
+  if (!charge.ok) {
+    return NextResponse.json(
+      { error: "insufficient_credits", balance: charge.balance },
+      { status: 402 },
+    );
+  }
+
   // 2. Generate the recipe content.
   let recipe: z.infer<typeof RecipeSchema>;
   try {
     ({ object: recipe } = await generateObject({
       model: anthropic("claude-sonnet-4-6"),
+      maxOutputTokens: MAX_OUTPUT_TOKENS.generate,
       schema: RecipeSchema,
       system: `You are a culinary wellness expert for the Nuko app. Create one specific,
 safe, evidence-aware wellness drink/recipe. Keep all text plain prose — no markdown,
@@ -159,6 +172,7 @@ ${tagList}`,
     }));
   } catch (err) {
     console.error("[recipes/generate] text", err);
+    await refund(user.id, "generate"); // text generation failed — refund
     return NextResponse.json(
       { error: "Failed to generate recipe" },
       { status: 500 },

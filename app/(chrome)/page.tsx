@@ -10,6 +10,7 @@ import { RecipeCardNew } from "@/components/home/recipe-card-new";
 import { WellnessTipCard } from "@/components/home/wellness-tip-card";
 import { CategorySection } from "@/components/home/category-section";
 import { UpgradeBanner } from "@/components/home/upgrade-banner";
+import { LowCreditsBanner } from "@/components/credits/low-credits-banner";
 import { getBookmarkedIds } from "@/actions/bookmark";
 import { withTiming } from "@/lib/perf";
 
@@ -92,6 +93,9 @@ export default async function HomePage() {
           </h1>
           <SearchSection />
         </section>
+
+        {/* Low-credits warning (subscribers only, self-hides when balance ok) */}
+        <LowCreditsBanner />
 
         {/* Popular Recipes */}
         <section>

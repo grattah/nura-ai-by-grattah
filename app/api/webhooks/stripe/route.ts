@@ -170,6 +170,27 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   const supabase = createServiceRoleClient();
 
+  // One-time credit-bundle purchase (mode:"payment"). Top up the balance via the
+  // add_credits RPC; dedup is already guaranteed by the stripe_webhook_events
+  // insert above, so each event applies the credits exactly once.
+  if (session.metadata?.type === "credits") {
+    const credits = parseInt(session.metadata.credits ?? "0", 10);
+    if (!Number.isFinite(credits) || credits <= 0) {
+      throw new Error(`Invalid credit amount on session ${session.id}`);
+    }
+    const { error } = await supabase.rpc("add_credits" as never, {
+      p_user: userId,
+      p_amount: credits,
+      p_reason: "purchase",
+      p_label: session.metadata.bundleId ?? "bundle",
+    } as never);
+    if (error) {
+      throw new Error(`Failed to add purchased credits: ${error.message}`);
+    }
+    console.log(`[webhook] Added ${credits} credits to ${userId}`);
+    return;
+  }
+
   // Pull the real subscription to read its true period end and plan.
   let expiresAt: string | null = null;
   const subscriptionId = session.subscription as string | null;

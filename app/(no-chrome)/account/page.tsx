@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Crown, HelpCircle, Shield, LogOut } from "lucide-react";
+import { ArrowLeft, Crown, HelpCircle, Shield, LogOut, Zap } from "lucide-react";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { SettingsRow } from "@/components/account/settings-row";
 import { signOut } from "@/actions/auth";
@@ -156,6 +156,13 @@ export default async function AccountPage() {
           <p className="text-base font-semibold text-base-text px-1">
             Settings
           </p>
+          {!isGuest && (
+            <SettingsRow
+              icon={<Zap className="w-4 h-4 text-grey-c500" strokeWidth={2} />}
+              label="Credits"
+              href="/account/credits"
+            />
+          )}
           <SettingsRow
             icon={
               <HelpCircle className="w-4 h-4 text-grey-c500" strokeWidth={2} />
