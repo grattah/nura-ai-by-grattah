@@ -78,6 +78,7 @@ export async function POST(req: NextRequest) {
   const { data: recipes, error } = await supabase
     .from("recipes")
     .select("id, title, short_description")
+    .eq("status" as never, "approved" as never)
     .limit(200);
 
   if (error || !recipes || recipes.length === 0) {

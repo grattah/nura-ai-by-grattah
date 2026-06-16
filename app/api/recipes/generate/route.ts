@@ -125,6 +125,15 @@ export async function POST(req: NextRequest) {
 
   const admin = createServiceRoleClient();
 
+  // Append after existing recipes with a unique order (avoids the old shared 9999).
+  const { data: lastOrder } = await admin
+    .from("recipes")
+    .select("display_order")
+    .order("display_order", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const nextDisplayOrder = (lastOrder?.display_order ?? 0) + 1;
+
   // Ground tag selection to real tags.
   const { data: tags } = await admin.from("tags").select("id, name, slug");
   const tagList = (tags ?? []).map((t) => `${t.slug} | ${t.name}`).join("\n");
@@ -172,7 +181,7 @@ ${tagList}`,
     image_url: null,
     source_url: "",
     likes: 0,
-    display_order: 9999,
+    display_order: nextDisplayOrder,
     is_todays_recipe: false,
     status: "pending",
     created_by: user.id,

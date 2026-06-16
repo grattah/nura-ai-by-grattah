@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://nurai.com";
@@ -10,6 +11,7 @@ interface MobileGateProps {
 }
 
 export function MobileGate({ children }: MobileGateProps) {
+  const pathname = usePathname();
   const [isMobile, setIsMobile] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -19,6 +21,10 @@ export function MobileGate({ children }: MobileGateProps) {
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
   }, []);
+
+  // The admin portal is a desktop back-office — never gate it behind the
+  // mobile-only consumer experience.
+  if (pathname?.startsWith("/admin")) return <>{children}</>;
 
   if (isMobile === null) return null;
   if (isMobile) return <>{children}</>;

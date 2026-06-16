@@ -63,6 +63,7 @@ function SearchCategoryContent() {
         .select(
           "id, title, image_url, display_order, recipe_tags!inner(tags!inner(slug))",
         )
+        .eq("status" as never, "approved" as never)
         .ilike("title", `%${q.trim()}%`)
         .order("display_order", { ascending: true })
         .limit(20);
