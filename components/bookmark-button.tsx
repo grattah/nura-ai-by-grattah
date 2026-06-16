@@ -27,7 +27,7 @@ export function BookmarkButton({
         "flex items-center justify-center rounded-full transition-all hover:opacity-70 disabled:opacity-50 w-full",
         !showText && !popular && "bg-[#E8E6DC] p-3 text-[#57605E]",
         showText &&
-          "border border-[#C4CAC8] bg-transparent px-3 py-3 text-[#57605E]",
+          "border border-[#C4CAC8] bg-transparent p-3 text-[#57605E]",
         popular && "bg-white p-2"
       )}
       aria-label={bookmarked ? "Remove bookmark" : "Bookmark recipe"}
@@ -42,7 +42,7 @@ export function BookmarkButton({
         )}
       />
       {showText && (
-        <span className="ml-1 font-medium max-[385px]:text-xs text-sm text-[#727E7A] text-nowrap">
+        <span className="ml-1 font-medium text-sm max-[385px]:text-xs max-[330px]:text-[10px] text-[#727E7A] text-nowrap">
           {text}
         </span>
       )}

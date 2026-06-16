@@ -57,7 +57,7 @@ const page = () => {
   const [generateError, setGenerateError] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
   const [aiSuggestions, setAiSuggestions] = React.useState<RecipeSuggestion[]>(
-    []
+    [],
   );
   const [aiSuggestionsLoading, setAiSuggestionsLoading] = React.useState(false);
   const [aiSuggestionsError, setAiSuggestionsError] = React.useState<
@@ -67,7 +67,7 @@ const page = () => {
   const [showModalScreenLoader, setShowModalScreenLoader] =
     React.useState(false);
   const suggestionsCache = React.useRef<Map<string, RecipeSuggestion[]>>(
-    new Map()
+    new Map(),
   );
 
   const { recents, add: addRecent, clear: clearRecents } = useRecentSearches();
@@ -327,7 +327,7 @@ const page = () => {
                 </span>
               </button>
               <button
-                className="border border-[#227B6F] w-full py-4 flex items-center justify-center gap-3 rounded-full"
+                className="fixed bottom-40 left-6 right-6 z-20 border border-[#227B6F] py-4 flex items-center justify-center gap-3 rounded-full bg-background"
                 onClick={handleGetSuggestions}
               >
                 <Sparkles color="#227B6F" size={20} strokeWidth={2} />
