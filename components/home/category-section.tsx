@@ -74,7 +74,7 @@ export function CategorySection({ hasAccess }: UpgradeBannerProps) {
           <button
             type="button"
             onClick={() => setModalOpen(true)}
-            className="flex items-center gap-1 text-base text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4"
+            className="flex items-center gap-1 text-base text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4 font-semibold"
           >
             See all <Lock className="w-3 h-3" />
           </button>
@@ -86,21 +86,21 @@ export function CategorySection({ hasAccess }: UpgradeBannerProps) {
             <Link
               key={cat.label}
               href={cat.href}
-              className="flex justify-center items-center w-full gap-2 p-3 h-12.75 rounded-lg bg-badge text-sm font-medium text-foreground border border-badge-border hover:opacity-80 transition-opacity active:scale-95"
+              className="flex justify-center items-center w-full max-[330px]:gap-1 gap-2 p-3 h-12.75 rounded-lg bg-badge text-sm font-medium text-foreground border border-badge-border hover:opacity-80 transition-opacity active:scale-95"
             >
               <span
-                className="text-xs shrink-0 leading-none inline-flex items-center justify-center size-7 rounded-full"
+                className="max-[330px]:text-[10px] text-xs shrink-0 leading-none inline-flex items-center justify-center size-7 rounded-full"
                 style={{ backgroundColor: cat.iconBg }}
               >
                 {cat.icon}
               </span>
-              <span className="text-nowrap text-xs">{cat.label}</span>
+              <span className="text-nowrap max-[330px]:text-[10px] text-xs">{cat.label}</span>
             </Link>
           ) : (
             <button
               key={cat.label}
               onClick={() => setModalOpen(true)}
-              className="flex justify-center items-center w-full gap-2 p-3 rounded-lg bg-badge text-sm font-medium text-foreground border border-badge-border hover:opacity-80 transition-opacity active:scale-95"
+              className="flex justify-center items-center w-full max-[330px]:gap-1 gap-2 p-3 rounded-lg bg-badge text-sm font-medium text-foreground border border-badge-border hover:opacity-80 transition-opacity active:scale-95"
             >
               <span
                 className="text-sm shrink-0 leading-none -tracking-[2%] inline-flex items-center justify-center size-7 rounded-full"
@@ -108,7 +108,7 @@ export function CategorySection({ hasAccess }: UpgradeBannerProps) {
               >
                 {cat.icon}
               </span>
-              {cat.label}
+              <span className="text-nowrap max-[330px]:text-[10px] text-xs">{cat.label}</span>
             </button>
           )
         )}

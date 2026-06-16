@@ -28,6 +28,7 @@ const page = async () => {
         )
       `
       )
+      .eq("status" as never, "approved" as never)
       .gt("likes", 100)
       .order("title", { ascending: false }),
     supabase.auth.getUser(),

@@ -17,6 +17,9 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { useRecentSearches } from "@/hooks/use-recent-searches";
 import ModalLoadingScreen from "@/components/recipe/ModalLoadingScreen";
+import SearchX from "@/components/vectors/SearchX";
+import { WELLNESS_SOURCES } from "@/lib/wellness-sources";
+import BackButton from "@/components/back-button";
 
 interface RecipeSuggestion {
   id: string;
@@ -35,37 +38,27 @@ interface Recipe {
   ingredients: any;
   inside_tip: string;
   why_it_works: string;
+  status: "approved" | "pending";
 }
 
 const page = () => {
-  type SearchState = "idle" | "searching" | "results" | "empty" | "suggestions";
-
   const searchParams = useSearchParams();
   const query = searchParams.get("q");
+  const generateParam = searchParams.get("generate");
+  const concernParam = searchParams.get("concern");
   const supabase = createClient();
-  const [searchTerm, setSearchTerm] = React.useState(query || "");
-  const [recipes, setRecipes] = React.useState<
-    | {
-        created_at: string;
-        display_order: number;
-        follow_up_questions: string[] | null;
-        how_to_make: any;
-        id: string;
-        title: string;
-        image_url: string | null;
-        ingredients: any;
-        inside_tip: string;
-        why_it_works: string;
-      }[]
-    | null
-  >([]);
+  const [searchTerm, setSearchTerm] = React.useState(
+    query || generateParam || "",
+  );
   const [allRecipes, setAllRecipes] = React.useState<Recipe[]>([]);
   const [isLoadingRecipes, setIsLoadingRecipes] = React.useState(true);
   const [suggestedRecipes, setSuggestedRecipes] = React.useState<Recipe[]>([]);
   const [pendingRecipe, setPendingRecipe] = React.useState<string | null>(null);
+  const [generating, setGenerating] = React.useState(false);
+  const [generateError, setGenerateError] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
   const [aiSuggestions, setAiSuggestions] = React.useState<RecipeSuggestion[]>(
-    []
+    [],
   );
   const [aiSuggestionsLoading, setAiSuggestionsLoading] = React.useState(false);
   const [aiSuggestionsError, setAiSuggestionsError] = React.useState<
@@ -75,7 +68,7 @@ const page = () => {
   const [showModalScreenLoader, setShowModalScreenLoader] =
     React.useState(false);
   const suggestionsCache = React.useRef<Map<string, RecipeSuggestion[]>>(
-    new Map()
+    new Map(),
   );
 
   const { recents, add: addRecent, clear: clearRecents } = useRecentSearches();
@@ -87,12 +80,13 @@ const page = () => {
       const { data, error } = await supabase
         .from("recipes")
         .select("*")
+        .eq("status" as never, "approved" as never)
         .order("title", { ascending: true });
 
       if (error) {
         console.error("Failed to fetch recipes:", error);
       } else {
-        setAllRecipes(data ?? []);
+        setAllRecipes((data ?? []) as unknown as Recipe[]);
       }
       setIsLoadingRecipes(false);
     };
@@ -107,8 +101,6 @@ const page = () => {
     }
 
     const fetchSuggestions = async () => {
-      // Build an OR filter across all recent search terms.
-      // Each term searches both title and short_description.
       const orFilter = recents
         .flatMap((term) => [
           `title.ilike.%${term}%`,
@@ -119,6 +111,7 @@ const page = () => {
       const { data, error } = await supabase
         .from("recipes")
         .select("*")
+        .eq("status" as never, "approved" as never)
         .or(orFilter)
         .limit(10);
 
@@ -128,7 +121,9 @@ const page = () => {
       }
 
       // Shuffle and take 3 so the user sees variety each visit
-      const shuffled = (data ?? []).sort(() => Math.random() - 0.5);
+      const shuffled = ((data ?? []) as unknown as Recipe[]).sort(
+        () => Math.random() - 0.5,
+      );
       setSuggestedRecipes(shuffled.slice(0, 3));
     };
 
@@ -141,9 +136,7 @@ const page = () => {
     if (words.length === 0) return [];
 
     return allRecipes.filter((recipe) => {
-      const haystack = `${recipe.title} ${
-        recipe.short_description ?? ""
-      }`.toLowerCase();
+      const haystack = recipe.title.toLowerCase();
       return words.every((word) => haystack.includes(word));
     });
   }, [searchTerm, allRecipes]);
@@ -160,9 +153,12 @@ const page = () => {
     filteredRecipes.length > 0;
   const showingEmpty =
     !showSuggestions &&
+    !isLoadingRecipes &&
     searchTerm.trim().length > 0 &&
     filteredRecipes.length === 0;
   const showingIdle = searchTerm.trim().length === 0 && !showSuggestions;
+  const showingLoading =
+    isLoadingRecipes && searchTerm.trim().length > 0 && !showSuggestions;
 
   const handleSearchTermChange = (value: string) => {
     setSearchTerm(value);
@@ -183,6 +179,45 @@ const page = () => {
       router.push(`/recipes/${id}`);
     });
   };
+
+  const handleGenerate = React.useCallback(
+    async (name: string, concern?: string) => {
+      const clean = name.trim();
+      if (!clean) return;
+      setPendingRecipe(clean);
+      setGenerateError(false);
+      setGenerating(true);
+      try {
+        const res = await fetch("/api/recipes/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: clean,
+            concern,
+            allowedDomains: WELLNESS_SOURCES,
+          }),
+        });
+        if (!res.ok) throw new Error("generate failed");
+        const data = await res.json();
+        if (!data?.id) throw new Error("no id returned");
+        router.replace(`/recipes/${data.id}`);
+      } catch (err) {
+        console.error("[find-recipe] generate", err);
+        setGenerating(false);
+        setPendingRecipe(null);
+        setGenerateError(true);
+      }
+    },
+    [router],
+  );
+
+  const autoTriggered = React.useRef(false);
+  React.useEffect(() => {
+    if (autoTriggered.current || !generateParam) return;
+    autoTriggered.current = true;
+    handleGenerate(generateParam, concernParam ?? undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleGetSuggestions = async () => {
     setShowSuggestions(true);
@@ -220,9 +255,14 @@ const page = () => {
     }
   };
 
-  // Show the full-screen loading state while navigation is in progress
-  if (isPending && pendingRecipe) {
-    return <RecipeLoadingScreen recipeName={pendingRecipe} />;
+  // Show the full-screen loading state while navigating to / generating a recipe
+  if ((isPending || generating) && pendingRecipe) {
+    return (
+      <RecipeLoadingScreen
+        recipeName={pendingRecipe}
+        generateParam={generateParam}
+      />
+    );
   }
 
   return (
@@ -241,7 +281,7 @@ const page = () => {
               value={searchTerm}
               onChange={(e) => handleSearchTermChange(e.target.value)}
               type="text"
-              className="w-full bg-white py-3 pl-9 pr-3 rounded-[12px] border border-[#E6ECEA] text-base placeholder:text-[#9CA5A3] focus:ring-1 focus:ring-mint-green outline-none"
+              className="w-full bg-white py-3 pl-9 max-[350px]:pr-4 pr-3 rounded-[12px] border border-[#E6ECEA] text-base placeholder:text-[#9CA5A3] focus:ring-1 focus:ring-mint-green outline-none"
               placeholder="Search recipe..."
             />
             {searchTerm.length > 0 && (
@@ -267,23 +307,39 @@ const page = () => {
               </div>
             )} */}
 
+          {showingLoading && <RecipesSpinner />}
+
           {showingEmpty && (
             <div className="flex flex-col gap-5 mt-2 px-6">
               <div className="flex flex-col gap-2">
                 <p className="font-medium">Results</p>
                 <p className="text-sm text-[#57605E]">
-                  {recipes?.length} recipes found
+                  No recipe found for “{searchTerm.trim()}”.
                 </p>
+                {generateError && (
+                  <p className="text-sm text-red-500">
+                    Couldn&apos;t generate that recipe. Please try again.
+                  </p>
+                )}
               </div>
-              <button
-                className="border border-[#227B6F] w-full py-4 flex items-center justify-center gap-3 rounded-full"
-                onClick={handleGetSuggestions}
-              >
-                <Sparkles color="#227B6F" size={20} strokeWidth={2} />
-                <span className="text-mint-green font-medium text-base">
-                  Get suggestions
-                </span>
-              </button>
+              <div className="flex flex-col gap-6 w-full rounded-3xl bg-white py-10.5 px-6">
+                <div className="flex flex-col gap-4 justify-center items-center">
+                  <SearchX />
+                  <p className="font-medium text-subtle text-center">
+                    No recipe found. Please check your search again or check our
+                    suggestions
+                  </p>
+                </div>
+                <button
+                  className="border border-[#227B6F] py-4 flex items-center justify-center gap-3 rounded-full bg-white w-full"
+                  onClick={handleGetSuggestions}
+                >
+                  <Sparkles color="#227B6F" size={20} strokeWidth={2} />
+                  <span className="text-mint-green font-medium text-base">
+                    Get suggestions
+                  </span>
+                </button>
+              </div>
             </div>
           )}
 
@@ -310,7 +366,7 @@ const page = () => {
                         }}
                       >
                         <Clock size={20} color="#9CA5A3" strokeWidth={2} />
-                        <p className="font-medium">{term}</p>
+                        <p className="font-medium text-left">{term}</p>
                       </button>
                     ))}
                   </div>
@@ -395,7 +451,7 @@ const page = () => {
                 </div>
                 {aiSuggestionsLoading ? (
                   <div className="flex justify-center py-8">
-                    <div className="w-6 h-6 rounded-full border-2 border-mint-green border-t-transparent animate-spin" />
+                    {/* <div className="w-6 h-6 rounded-full border-2 border-mint-green border-t-transparent animate-spin" /> */}
                   </div>
                 ) : aiSuggestionsError ? (
                   <p className="text-sm text-red-500">{aiSuggestionsError}</p>
@@ -442,13 +498,26 @@ const page = () => {
   );
 };
 
-function RecipeLoadingScreen({ recipeName }: { recipeName: string }) {
+function RecipeLoadingScreen({
+  recipeName,
+  generateParam,
+}: {
+  recipeName: string;
+  generateParam: string | null;
+}) {
   return (
     <div className="bg-background min-h-screen">
-      <main className="px-6 pt-6">
-        <p className="font-semibold text-xl">Find recipe</p>
+      <main>
+        <div
+          className={`px-8 py-4.75 mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A] ${generateParam && "flex gap-7 items-center"}`}
+        >
+          {generateParam && (
+            <BackButton className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
+          )}
+          <p className="text-2xl font-semibold text-[#111312]">Find a recipe</p>
+        </div>
 
-        <div className="mt-8">
+        <div className="mt-8 px-8">
           <div className="relative">
             <div className="absolute top-3.75 left-3">
               <Search color="#82A198" size={16} />
@@ -462,7 +531,7 @@ function RecipeLoadingScreen({ recipeName }: { recipeName: string }) {
           </div>
         </div>
 
-        <div className="mt-16 flex flex-col items-center text-center gap-6">
+        <div className="mt-16 flex flex-col items-center text-center gap-6 px-8">
           <div className="relative w-24 h-24 flex items-center justify-center">
             <svg
               className="absolute inset-0 animate-spin"
@@ -495,13 +564,27 @@ function RecipeLoadingScreen({ recipeName }: { recipeName: string }) {
           </div>
         </div>
 
-        <div className="mt-12 rounded-full bg-[#E8E6DC] px-5 py-3 flex items-center justify-center gap-2">
-          <span className="text-lg">💡</span>
-          <p className="text-sm text-[#57605E] font-medium">
-            Tip: This may take a few seconds
-          </p>
+        <div className="px-8">
+          <div className="mt-12 rounded-full bg-[#E8E6DC] px-5 py-3 flex items-center justify-center gap-2">
+            <span className="text-lg">💡</span>
+            <p className="text-sm text-[#57605E] font-medium">
+              Tip: This may take a few seconds
+            </p>
+          </div>
         </div>
       </main>
+    </div>
+  );
+}
+
+function RecipesSpinner() {
+  return (
+    <div
+      className="flex justify-center py-12"
+      role="status"
+      aria-label="Loading recipes"
+    >
+      <div className="w-8 h-8 rounded-full border-2 border-mint-green border-t-transparent animate-spin" />
     </div>
   );
 }

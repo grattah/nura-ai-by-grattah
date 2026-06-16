@@ -69,8 +69,8 @@ const CommentCard = ({
           </p>
           <p className="text-subtle leading-relaxed">{comment.content}</p>
 
-          <div className="flex items-center gap-x-8 mt-1.5">
-            <span className="text-sm text-subtle font-medium">
+          <div className="flex items-center gap-x-8.5 mt-1.5">
+            <span className="text-sm text-subtle font-medium max-[340px]:text-xs">
               {formatRelativeTime(comment.created_at)}
             </span>
 
@@ -78,7 +78,7 @@ const CommentCard = ({
               onClick={() =>
                 setVisibleReplyCount(showReplies ? 0 : INITIAL_REPLY_COUNT)
               }
-              className="text-sm text-[#727E7A] font-medium hover:text-[#1A1A1A] transition-colors"
+              className="text-sm max-[340px]:text-xs text-[#727E7A] font-medium hover:text-[#1A1A1A] transition-colors"
             >
               {showReplies
                 ? "Hide replies"
@@ -142,7 +142,7 @@ const CommentCard = ({
             <button
               onClick={() =>
                 setVisibleReplyCount(
-                  isShowingAll ? INITIAL_REPLY_COUNT : replies.length,
+                  isShowingAll ? INITIAL_REPLY_COUNT : replies.length
                 )
               }
               className="text-sm text-mint-green font-semibold mt-5"
@@ -151,6 +151,7 @@ const CommentCard = ({
             </button>
           )}
           <button
+            data-reply-trigger
             onClick={() => onStartReply(comment.id, username)}
             className="border border-[#C4CAC8] rounded-full w-full py-4 text-mint-green text-sm font-semibold mt-5"
           >

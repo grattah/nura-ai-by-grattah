@@ -62,6 +62,7 @@ export default function CategoryDetailPage() {
           "id, title, image_url, display_order, recipe_tags!inner(tags!inner(slug))",
         )
         .eq("recipe_tags.tags.slug", slug)
+        .eq("status" as never, "approved" as never)
         .order("display_order", { ascending: true })
         .order("id", { ascending: true })
         .range(start, end)
