@@ -72,7 +72,7 @@ export function RecipeHeroImage({
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="flex flex-col items-center gap-2 text-muted-foreground">
             <div className="w-6 h-6 rounded-full border-2 border-mint-green border-t-transparent animate-spin" />
-            <span className="text-xs">Creating image…</span>
+            <span className="text-xs">Loading image…</span>
           </div>
         </div>
       )}
