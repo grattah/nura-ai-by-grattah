@@ -48,12 +48,12 @@ export default function CommentLikeButton({
     <button
       onClick={handleToggle}
       disabled={isPending}
-      className="flex items-center gap-1.5 text-sm text-[#57605E] hover:text-[#1A1A1A] transition-colors disabled:opacity-50"
+      className="flex items-center gap-1.5 max-[340px]:text-xs text-sm text-[#57605E] hover:text-[#1A1A1A] transition-colors disabled:opacity-50"
       aria-label={liked ? "Unlike comment" : "Like comment"}
     >
       <Heart
         size={18}
-        className={liked ? "fill-[#227B6F] text-[#227B6F]" : ""}
+        className={`${liked ? "fill-[#227B6F] text-[#227B6F]" : ""}`}
       />
       <span>{count}</span>
     </button>

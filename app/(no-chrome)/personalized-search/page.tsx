@@ -12,6 +12,7 @@ import {
   ArrowLeft,
   Heart,
   Info,
+  Sparkles
 } from "lucide-react";
 import { useAccess } from "@/hooks/use-access";
 import { EditSearchSheet } from "@/components/search/edit-search-sheet";
@@ -26,26 +27,49 @@ function normalizeKey(q: string) {
 
 // ─── Skeleton ──────────────────────────────────────────────────────────────────
 
-function SearchSkeleton() {
+function LoadingModal({
+  title = "Preparing your answer...",
+  message = "Please hold on while we find the best answer for you",
+}: {
+  title?: string;
+  message?: string;
+}) {
+
   return (
-    <div className="min-h-screen bg-background px-4 pt-5 pb-8 space-y-5">
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-full bg-muted animate-pulse shrink-0" />
-        <div className="flex-1 text-center space-y-1.5">
-          <div className="h-4 bg-muted rounded-full animate-pulse w-32 mx-auto" />
-          <div className="h-3 bg-muted rounded-full animate-pulse w-20 mx-auto" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-8">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+
+      <div
+        role="status"
+        aria-live="polite"
+        className="relative w-full max-w-sm rounded-3xl bg-white px-8 py-10 flex flex-col items-center text-center gap-6 shadow-xl"
+      >
+        <div className="relative w-24 h-24 flex items-center justify-center">
+          <svg
+            className="absolute inset-0 animate-spin"
+            viewBox="0 0 100 100"
+            style={{ animationDuration: "1.5s" }}
+          >
+            <circle
+              cx="50"
+              cy="50"
+              r="45"
+              fill="none"
+              stroke="#227B6F"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeDasharray="100 283"
+            />
+          </svg>
+          <div className="w-20 h-20 rounded-full bg-linear-to-b from-[#F3EBD3] to-[#F8F5EE] flex items-center justify-center">
+            <Sparkles size={28} color="#227B6F" strokeWidth={2} />
+          </div>
         </div>
-        <div className="w-9 shrink-0" />
-      </div>
-      <div className="h-14 bg-muted rounded-2xl animate-pulse" />
-      <div className="h-24 bg-muted rounded-2xl animate-pulse" />
-      <div className="space-y-2">
-        <div className="h-5 bg-muted rounded-full animate-pulse w-36" />
-        <div className="h-40 bg-muted rounded-2xl animate-pulse" />
-      </div>
-      <div className="space-y-2">
-        <div className="h-5 bg-muted rounded-full animate-pulse w-28" />
-        <div className="h-48 bg-muted rounded-2xl animate-pulse" />
+
+        <div className="flex flex-col gap-2">
+          <h2 className="text-lg font-semibold text-[#333333]">{title}</h2>
+          <p className="text-subtle max-w-xs text-center">{message}</p>
+        </div>
       </div>
     </div>
   );
@@ -129,7 +153,7 @@ function PersonalizedSearchContent() {
     fetchResult(query);
   }, [query, hasAccess, accessLoading, router, fetchResult]);
 
-  if (!result && (accessLoading || loading)) return <SearchSkeleton />;
+  if (!result && (accessLoading || loading)) return <LoadingModal />;
 
   if (error) {
     return (
@@ -356,7 +380,7 @@ function PersonalizedSearchContent() {
             <div className="flex gap-3">
               <button
                 onClick={() => setFeedback("helpful")}
-                className={`flex w-full justify-center items-center gap-2 px-4 py-3 rounded-full border border-grey-c300 text-sm transition-opacity active:scale-95 ${
+                className={`flex w-full justify-center items-center gap-2 px-4 max-[350px]:px-3 py-3 rounded-full border border-grey-c300 text-sm max-[350px]:text-xs transition-opacity active:scale-95 ${
                   feedback === "helpful"
                     ? "border-mint-green text-mint-green font-semibold"
                     : "border-border text-foreground hover:opacity-75"
@@ -367,7 +391,7 @@ function PersonalizedSearchContent() {
               </button>
               <button
                 onClick={() => setFeedback("not_helpful")}
-                className={`flex w-full justify-center items-center gap-2 px-4 py-3 rounded-full border border-grey-c300 text-sm transition-opacity active:scale-95 ${
+                className={`flex w-full justify-center items-center gap-2 px-4 max-[350px]:px-3 py-3 rounded-full border border-grey-c300 text-sm max-[350px]:text-xs transition-opacity active:scale-95 ${
                   feedback === "not_helpful"
                     ? "border-destructive text-destructive font-semibold"
                     : "border-border text-foreground hover:opacity-75"
@@ -393,7 +417,7 @@ function PersonalizedSearchContent() {
 // Suspense boundary required by Next.js for useSearchParams()
 export default function PersonalizedSearchPage() {
   return (
-    <Suspense fallback={<SearchSkeleton />}>
+    <Suspense fallback={<LoadingModal  />}>
       <PersonalizedSearchContent />
     </Suspense>
   );
