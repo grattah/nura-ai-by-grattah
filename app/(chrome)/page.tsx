@@ -34,6 +34,9 @@ const getPopularRecipes = unstable_cache(
     return supabase
       .from("recipes")
       .select("id, title, image_url, recipe_tags(tags(name, slug))")
+      // Service role bypasses RLS, so filter out pending recipes explicitly.
+      // `status` was added in migration 20260615120000 (not in generated types yet).
+      .eq("status" as never, "approved" as never)
       .order("display_order", { ascending: true })
       .limit(10);
   },

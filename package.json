@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "vectorise": "node --env-file=.env.local scripts/vectorise.mjs",
-    "score-supports": "node --env-file=.env.local scripts/score-supports.mjs"
+    "score-supports": "node --env-file=.env.local scripts/score-supports.mjs",
+    "list-models": "node --env-file=.env.local scripts/list-models.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.0",
