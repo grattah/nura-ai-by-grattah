@@ -125,7 +125,7 @@ export function PWAInstallPrompt() {
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3 p-2">
-            <div className="rounded-full bg-mint-green size-9 grid place-items-center">
+            <div className="rounded-full shrink-0 bg-mint-green size-9 grid place-items-center">
               <Image
                 src={logo}
                 alt="logo"

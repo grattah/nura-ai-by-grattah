@@ -69,6 +69,7 @@ export default function AllRecipesPage() {
       recipe_tags!inner(tags!inner(slug))
     `,
         )
+        .eq("status" as never, "approved" as never)
         .order("created_at", { ascending: false })
         .range(start, end);
 

@@ -38,6 +38,7 @@ interface Recipe {
   ingredients: any;
   inside_tip: string;
   why_it_works: string;
+  status: "approved" | "pending";
 }
 
 const page = () => {
@@ -47,7 +48,7 @@ const page = () => {
   const concernParam = searchParams.get("concern");
   const supabase = createClient();
   const [searchTerm, setSearchTerm] = React.useState(
-    query || generateParam || ""
+    query || generateParam || "",
   );
   const [allRecipes, setAllRecipes] = React.useState<Recipe[]>([]);
   const [isLoadingRecipes, setIsLoadingRecipes] = React.useState(true);
@@ -57,7 +58,7 @@ const page = () => {
   const [generateError, setGenerateError] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
   const [aiSuggestions, setAiSuggestions] = React.useState<RecipeSuggestion[]>(
-    []
+    [],
   );
   const [aiSuggestionsLoading, setAiSuggestionsLoading] = React.useState(false);
   const [aiSuggestionsError, setAiSuggestionsError] = React.useState<
@@ -67,7 +68,7 @@ const page = () => {
   const [showModalScreenLoader, setShowModalScreenLoader] =
     React.useState(false);
   const suggestionsCache = React.useRef<Map<string, RecipeSuggestion[]>>(
-    new Map()
+    new Map(),
   );
 
   const { recents, add: addRecent, clear: clearRecents } = useRecentSearches();
@@ -79,12 +80,13 @@ const page = () => {
       const { data, error } = await supabase
         .from("recipes")
         .select("*")
+        .eq("status" as never, "approved" as never)
         .order("title", { ascending: true });
 
       if (error) {
         console.error("Failed to fetch recipes:", error);
       } else {
-        setAllRecipes(data ?? []);
+        setAllRecipes((data ?? []) as unknown as Recipe[]);
       }
       setIsLoadingRecipes(false);
     };
@@ -99,8 +101,6 @@ const page = () => {
     }
 
     const fetchSuggestions = async () => {
-      // Build an OR filter across all recent search terms.
-      // Each term searches both title and short_description.
       const orFilter = recents
         .flatMap((term) => [
           `title.ilike.%${term}%`,
@@ -111,6 +111,7 @@ const page = () => {
       const { data, error } = await supabase
         .from("recipes")
         .select("*")
+        .eq("status" as never, "approved" as never)
         .or(orFilter)
         .limit(10);
 
@@ -120,7 +121,9 @@ const page = () => {
       }
 
       // Shuffle and take 3 so the user sees variety each visit
-      const shuffled = (data ?? []).sort(() => Math.random() - 0.5);
+      const shuffled = ((data ?? []) as unknown as Recipe[]).sort(
+        () => Math.random() - 0.5,
+      );
       setSuggestedRecipes(shuffled.slice(0, 3));
     };
 
@@ -133,7 +136,7 @@ const page = () => {
     if (words.length === 0) return [];
 
     return allRecipes.filter((recipe) => {
-      const haystack = `${recipe.title}`.toLowerCase();
+      const haystack = recipe.title.toLowerCase();
       return words.every((word) => haystack.includes(word));
     });
   }, [searchTerm, allRecipes]);
@@ -177,8 +180,6 @@ const page = () => {
     });
   };
 
-  // Match an existing recipe or generate one on demand, showing the loading
-  // screen throughout, then land on the recipe detail page.
   const handleGenerate = React.useCallback(
     async (name: string, concern?: string) => {
       const clean = name.trim();
@@ -207,18 +208,14 @@ const page = () => {
         setGenerateError(true);
       }
     },
-    [router]
+    [router],
   );
 
-  // If we arrived via a "generate this recipe" link, kick it off immediately.
-  // The ref guard makes this fire exactly once (it survives React Strict Mode's
-  // double-invoke), so the same drink isn't generated twice.
   const autoTriggered = React.useRef(false);
   React.useEffect(() => {
     if (autoTriggered.current || !generateParam) return;
     autoTriggered.current = true;
     handleGenerate(generateParam, concernParam ?? undefined);
-    // Run once on mount for the incoming param.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -260,7 +257,12 @@ const page = () => {
 
   // Show the full-screen loading state while navigating to / generating a recipe
   if ((isPending || generating) && pendingRecipe) {
-    return <RecipeLoadingScreen recipeName={pendingRecipe} generateParam={generateParam} />;
+    return (
+      <RecipeLoadingScreen
+        recipeName={pendingRecipe}
+        generateParam={generateParam}
+      />
+    );
   }
 
   return (
@@ -496,12 +498,22 @@ const page = () => {
   );
 };
 
-function RecipeLoadingScreen({ recipeName, generateParam }: { recipeName: string, generateParam: string | null }) {
+function RecipeLoadingScreen({
+  recipeName,
+  generateParam,
+}: {
+  recipeName: string;
+  generateParam: string | null;
+}) {
   return (
     <div className="bg-background min-h-screen">
       <main>
-        <div className={`px-8 py-4.75 mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A] ${generateParam && "flex gap-7 items-center"}`}>
-          {generateParam && <BackButton className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />}
+        <div
+          className={`px-8 py-4.75 mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A] ${generateParam && "flex gap-7 items-center"}`}
+        >
+          {generateParam && (
+            <BackButton className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
+          )}
           <p className="text-2xl font-semibold text-[#111312]">Find a recipe</p>
         </div>
 
