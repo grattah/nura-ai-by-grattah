@@ -380,7 +380,7 @@ function PersonalizedSearchContent() {
             <div className="flex gap-3">
               <button
                 onClick={() => setFeedback("helpful")}
-                className={`flex w-full justify-center items-center gap-2 px-4 py-3 rounded-full border border-grey-c300 text-sm transition-opacity active:scale-95 ${
+                className={`flex w-full justify-center items-center gap-2 px-4 max-[350px]:px-3 py-3 rounded-full border border-grey-c300 text-sm max-[350px]:text-xs transition-opacity active:scale-95 ${
                   feedback === "helpful"
                     ? "border-mint-green text-mint-green font-semibold"
                     : "border-border text-foreground hover:opacity-75"
@@ -391,7 +391,7 @@ function PersonalizedSearchContent() {
               </button>
               <button
                 onClick={() => setFeedback("not_helpful")}
-                className={`flex w-full justify-center items-center gap-2 px-4 py-3 rounded-full border border-grey-c300 text-sm transition-opacity active:scale-95 ${
+                className={`flex w-full justify-center items-center gap-2 px-4 max-[350px]:px-3 py-3 rounded-full border border-grey-c300 text-sm max-[350px]:text-xs transition-opacity active:scale-95 ${
                   feedback === "not_helpful"
                     ? "border-destructive text-destructive font-semibold"
                     : "border-border text-foreground hover:opacity-75"

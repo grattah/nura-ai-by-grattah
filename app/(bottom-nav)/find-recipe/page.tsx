@@ -243,7 +243,7 @@ const page = () => {
               value={searchTerm}
               onChange={(e) => handleSearchTermChange(e.target.value)}
               type="text"
-              className="w-full bg-white py-3 pl-9 pr-3 rounded-[12px] border border-[#E6ECEA] text-base placeholder:text-[#9CA5A3] focus:ring-1 focus:ring-mint-green outline-none"
+              className="w-full bg-white py-3 pl-9 max-[350px]:pr-4 pr-3 rounded-[12px] border border-[#E6ECEA] text-base placeholder:text-[#9CA5A3] focus:ring-1 focus:ring-mint-green outline-none"
               placeholder="Search recipe..."
             />
             {searchTerm.length > 0 && (
@@ -279,7 +279,7 @@ const page = () => {
                   {recipes?.length} recipes found
                 </p>
               </div>
-              <div className="flex flex-col gap-6 w-full rounded-3xl bg-white py-[42px] px-[24px]">
+              <div className="flex flex-col gap-6 w-full rounded-3xl bg-white py-10.5 px-6">
                 <div className="flex flex-col gap-4 justify-center items-center">
                   <SearchX />
                   <p className="font-medium text-subtle text-center">
@@ -408,7 +408,7 @@ const page = () => {
                 </div>
                 {aiSuggestionsLoading ? (
                   <div className="flex justify-center py-8">
-                    <div className="w-6 h-6 rounded-full border-2 border-mint-green border-t-transparent animate-spin" />
+                    {/* <div className="w-6 h-6 rounded-full border-2 border-mint-green border-t-transparent animate-spin" /> */}
                   </div>
                 ) : aiSuggestionsError ? (
                   <p className="text-sm text-red-500">{aiSuggestionsError}</p>

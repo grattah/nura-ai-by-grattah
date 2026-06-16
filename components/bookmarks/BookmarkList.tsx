@@ -194,23 +194,23 @@ function BookmarkCard({ bookmark }: { bookmark: BookmarkedRecipe }) {
 
             <div className="min-w-0 flex flex-col gap-1.5">
               <div className="flex flex-col gap-2">
-                <p className="text-base font-medium text-foreground leading-snug">
+                <p className="text-base font-medium text-foreground leading-snug max-[350px]:text-sm">
                   {bookmark.title}
                 </p>
-                <p className="text-sm text-[#57605E]">
+                <p className="text-sm text-[#57605E] max-[350px]:text-xs">
                   {truncateText(bookmark.description)}
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1">
                   <Clock size={16} color="#9CA5A3" />
-                  <p className="text-[#57605E] text-sm font-medium">
+                  <p className="text-[#57605E] text-sm font-medium max-[350px]:text-xs">
                     {formatRelativeTime(bookmark.bookmarked_at)}
                   </p>
                 </div>
                 <div className="flex items-center gap-1">
                   <FaHeart size={16} color="#227B6F" />
-                  <p className="text-[#227B6F] text-sm font-medium">
+                  <p className="text-[#227B6F] text-sm font-medium max-[350px]:text-xs">
                     {bookmark.likes}
                   </p>
                 </div>
