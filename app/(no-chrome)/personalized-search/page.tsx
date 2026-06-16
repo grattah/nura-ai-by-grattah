@@ -291,7 +291,7 @@ function PersonalizedSearchContent() {
                   <div key={i}>
                     {i > 0 && <div className="h-px bg-black/10 mx-17" />}
                     <Link
-                      href={`/find-recipe?q=${encodeURIComponent(drink.name)}`}
+                      href={`/find-recipe?generate=${encodeURIComponent(drink.name)}&concern=${encodeURIComponent(query)}`}
                       className="flex items-center justify-between px-4 py-3.5 hover:opacity-75 transition-opacity"
                     >
                       <div className="flex items-center gap-3">
