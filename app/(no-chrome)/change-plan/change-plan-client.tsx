@@ -38,7 +38,7 @@ export function ChangePlanClient() {
   return (
     <div className="min-h-dvh pb-10 bg-white">
       {/* Header */}
-      <div className="px-6 pb-4.75 bg-background mb-4.75">
+      <div className="px-6 max-xs:px-4 pb-4.75 bg-background mb-4.75">
         <div className="flex items-center pt-5 pb-10 relative">
           <button
             onClick={() => router.back()}
@@ -48,21 +48,21 @@ export function ChangePlanClient() {
             <ArrowLeft className="size-5 text-foreground" />
           </button>
 
-          <h1 className="flex-1 text-xl font-semibold text-base-text text-center">
+          <h1 className="flex-1 text-xl max-xs:text-lg font-semibold text-base-text text-center">
             Change plan
           </h1>
         </div>
         <div>
-          <p className="text-xl font-semibold text-base-text leading-snug">
+          <p className="text-xl max-xs:text-lg font-semibold text-base-text leading-snug">
             Change your Subscription Plan
           </p>
-          <p className="text-base text-subtle mt-1.75">
+          <p className="text-base max-xs:text-sm text-subtle mt-1.75">
             You won&apos;t be charged until your current one expires
           </p>
         </div>
       </div>
 
-      <div className="px-6 space-y-8 bg-white">
+      <div className="px-6 max-xs:px-4 space-y-8 bg-white">
         {/* Plan options */}
         <div className="space-y-6 mt-12 mb-10">
           {PLANS.map((plan) => {
@@ -109,7 +109,7 @@ export function ChangePlanClient() {
                       </div>
                     </div>
                     <div className="text-right shrink-0 flex flex-col">
-                      <span className="text-2xl font-bold text-foreground">
+                      <span className="text-2xl max-xs:text-xl font-bold text-foreground">
                         {plan.price}
                       </span>
                       <span className="text-sm text-muted-foreground">
@@ -147,7 +147,7 @@ export function ChangePlanClient() {
         <div className="space-y-2 pt-2">
           <Link
             href={`/review-order?plan=${selected}`}
-            className="w-full flex items-center justify-center py-4 rounded-full text-white font-semibold text-base"
+            className="w-full flex items-center justify-center py-4 max-xs:py-3 rounded-full text-white font-semibold text-base max-xs:text-sm"
             style={{ backgroundColor: "var(--mint-green)" }}
           >
             Continue

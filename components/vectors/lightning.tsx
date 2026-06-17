@@ -1,4 +1,6 @@
-export default function Lightning() {
+import { SVGProps } from "react";
+
+export default function Lightning(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       width="17"
@@ -6,6 +8,7 @@ export default function Lightning() {
       viewBox="0 0 17 17"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      {...props}
     >
       <g clipPath="url(#clip0_2294_2906)">
         <path

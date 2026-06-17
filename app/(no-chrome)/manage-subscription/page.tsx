@@ -30,7 +30,7 @@ export default async function ManageSubscriptionPage() {
   return (
     <div className="min-h-dvh bg-background pb-10">
       {/* Header */}
-      <div className="flex items-center px-6 pt-5 pb-10 relative">
+      <div className="flex items-center px-6 max-xs:px-4 pt-5 pb-10 relative">
         <Link
           href="/account"
           className="size-10 absolute left-4 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
@@ -40,7 +40,7 @@ export default async function ManageSubscriptionPage() {
         </Link>
 
         <div className="flex-1 min-w-0 text-center">
-          <h1 className="text-xl font-semibold text-foreground">
+          <h1 className="text-xl max-xs:text-lg font-semibold text-foreground">
             Manage subscription
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -49,7 +49,7 @@ export default async function ManageSubscriptionPage() {
         </div>
       </div>
 
-      <div className="px-6 space-y-4">
+      <div className="px-6 max-xs:px-4 space-y-4">
         {/* Current plan card */}
         <div>
           <p className="text-sm text-subtle font-medium mb-2">Current Plan</p>
@@ -79,9 +79,11 @@ export default async function ManageSubscriptionPage() {
         {/* Change plan */}
         <Link
           href="/change-plan"
-          className="flex items-center justify-between px-6 py-6 bg-[#E8E6DC] rounded-[12px] border border-[#E8E6DC] hover:opacity-80 transition-opacity active:scale-[0.98]"
+          className="flex items-center justify-between px-6 max-xs:px-4 py-6 max-xs:py-4 bg-[#E8E6DC] rounded-[12px] border border-[#E8E6DC] hover:opacity-80 transition-opacity active:scale-[0.98]"
         >
-          <p className="text-base font-medium text-[#333333CC]">Change Plan</p>
+          <p className="text-base max-xs:text-sm font-medium text-[#333333CC]">
+            Change Plan
+          </p>
           <ChevronRight className="w-4 h-4 text-muted-foreground" />
         </Link>
 

@@ -53,7 +53,7 @@ function LogBackInContent() {
   return (
     <div className="min-h-dvh bg-background pb-10">
       {/* Header */}
-      <div className="flex items-center px-6 pt-5 pb-8 relative">
+      <div className="flex items-center px-6 max-xs:px-4 pt-5 pb-8 relative">
         <button
           onClick={() => router.back()}
           className="size-10 absolute left-4 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
@@ -63,14 +63,16 @@ function LogBackInContent() {
         </button>
 
         <div className="flex-1 min-w-0 text-center">
-          <h1 className="text-xl font-semibold text-base-text">Log back in</h1>
+          <h1 className="text-xl max-xs:text-lg font-semibold text-base-text">
+            Log back in
+          </h1>
           <p className="text-sm text-subtle mt-1">
             Enter your new details to log in
           </p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="px-6 space-y-4">
+      <form onSubmit={handleSubmit} className="px-6 max-xs:px-4 space-y-4">
         <div className="space-y-1.5">
           <label className="text-sm text-muted-foreground">
             Your email address
@@ -124,7 +126,7 @@ function LogBackInContent() {
         <button
           type="submit"
           disabled={!email.trim() || !password.trim() || isPending}
-          className="w-full py-4 rounded-full text-white font-semibold text-base disabled:opacity-50 mt-2"
+          className="w-full py-4 max-xs:py-3 rounded-full text-white font-semibold text-base max-xs:text-sm disabled:opacity-50 mt-2"
           style={{ backgroundColor: "var(--mint-green)" }}
         >
           {isPending ? "Logging in…" : "Log in"}

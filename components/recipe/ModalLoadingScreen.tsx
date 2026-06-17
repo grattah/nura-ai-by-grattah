@@ -12,7 +12,7 @@ export default function ModalLoadingScreen({
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center px-6">
       <div
-        className="bg-white rounded-2xl px-8 py-8 flex flex-col items-center gap-3 max-w-xs w-full"
+        className="bg-white rounded-2xl px-8 max-xs:px-6 py-8 max-xs:py-6 flex flex-col items-center gap-3 max-w-xs w-full"
         role="status"
         aria-live="polite"
       >

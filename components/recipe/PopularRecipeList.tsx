@@ -10,7 +10,10 @@ import { createClient } from "@/lib/supabase/client";
 import { truncateText } from "@/lib/truncate-text";
 import { BookmarkProvider } from "@/components/bookmark-provider";
 import { BookmarkButton } from "@/components/bookmark-button";
-import { fetchPopularRecipesPage, POPULAR_PAGE_SIZE } from "@/lib/popular-recipes";
+import {
+  fetchPopularRecipesPage,
+  POPULAR_PAGE_SIZE,
+} from "@/lib/popular-recipes";
 
 const FETCH_TIMEOUT_MS = 15000;
 
@@ -43,7 +46,8 @@ export function PopularRecipesList({
   const controllerRef = useRef<AbortController | null>(null);
 
   const loadMore = useCallback(async () => {
-    if (fetchingRef.current || !hasMoreRef.current || loadMoreErrorRef.current) return;
+    if (fetchingRef.current || !hasMoreRef.current || loadMoreErrorRef.current)
+      return;
     fetchingRef.current = true;
     setIsLoadingMore(true);
 
@@ -57,7 +61,11 @@ export function PopularRecipesList({
 
     try {
       const next = pageRef.current + 1;
-      const rows = await fetchPopularRecipesPage(supabase, next, controller.signal);
+      const rows = await fetchPopularRecipesPage(
+        supabase,
+        next,
+        controller.signal,
+      );
       if (rows.length > 0) {
         pageRef.current = next;
         setRecipes((prev) => {
@@ -113,15 +121,20 @@ export function PopularRecipesList({
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 space-y-3">
+      <div className="grid grid-cols-2 gap-3 space-y-3 max-xs:space-y-1.5">
         {recipes.map((recipe) => {
           const firstTag = recipe.recipe_tags?.[0]?.tags?.name ?? null;
           return (
             <div key={recipe.id} className="relative flex flex-col gap-2">
               <div className="absolute flex justify-between px-2 top-3 left-0 right-0 z-10">
-                <button className="bg-[#000000] opacity-75 flex items-center gap-1 rounded-full p-1.5 px-3">
-                  <Heart size={12} color="#FFFFFF" strokeWidth={2} />
-                  <span className="text-xs text-[#FFFFFF] opacity-100">
+                <button className="bg-black/75 flex items-center gap-1 rounded-full p-1.5 px-3 max-xs:px-1.5 shrink-0">
+                  <Heart
+                    size={12}
+                    color="#FFFFFF"
+                    strokeWidth={2}
+                    className="max-xs:size-2"
+                  />
+                  <span className="text-xs max-xs:text-[10px] text-[#FFFFFF] opacity-100">
                     {recipe.likes}
                   </span>
                 </button>
@@ -139,7 +152,7 @@ export function PopularRecipesList({
                     <Image
                       src={recipe.image_url}
                       alt={recipe.title}
-                      className="w-full h-[167px] object-cover transition-transform duration-300 hover:scale-110"
+                      className="w-full xs:h-41.75 max-xs:aspect-square object-cover transition-transform duration-300 hover:scale-110"
                       width={100}
                       height={200}
                     />
@@ -149,14 +162,14 @@ export function PopularRecipesList({
               {firstTag && (
                 <Link
                   href={`/recipes/${recipe.id}`}
-                  className="text-[#727E7A] text-xs font-medium font-redHatDisplay uppercase"
+                  className="text-[#727E7A] text-xs max-xs:text-[10px] font-medium font-redHatDisplay uppercase"
                 >
                   {firstTag}
                 </Link>
               )}
               <Link
                 href={`/recipes/${recipe.id}`}
-                className="text-[#111312] font-medium font-josefin"
+                className="text-[#111312] font-medium max-xs:text-xs font-josefin"
               >
                 {truncateText(recipe.title, 3)}
               </Link>
@@ -168,7 +181,11 @@ export function PopularRecipesList({
       {!atEnd && (
         <div ref={sentinelRef} className="py-6 flex justify-center">
           {isLoadingMore ? (
-            <div className="flex gap-1.5" role="status" aria-label="Loading more recipes">
+            <div
+              className="flex gap-1.5"
+              role="status"
+              aria-label="Loading more recipes"
+            >
               {[0, 150, 300].map((d) => (
                 <span
                   key={d}

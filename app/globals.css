@@ -126,7 +126,10 @@
 }
 
 @theme inline {
-  --breakpoint-xs: 370px;
+  /* Breakpoints */
+  --breakpoint-2xs: 20.5rem;
+  --breakpoint-xs: 24.5rem;
+
   --font-mono: "Geist Mono", "Geist Mono Fallback", monospace;
   --font-sans: "Red Hat Text", "Red Hat Text Fallback", system-ui, sans-serif;
   --font-josefin:
