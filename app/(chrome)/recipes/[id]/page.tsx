@@ -166,7 +166,7 @@ export default async function RecipeDetailPage({
         <div className="min-h-screen bg-background">
           {/* Sub-header */}
           <div className="flex items-center justify-between px-6 pt-5 pb-3">
-            <BackButton className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
+            <BackButton className="p-3 max-xs:p-2 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
             <div className="flex items-center gap-2">
               <ShareButton
                 recipeId={recipe.id}
@@ -189,10 +189,10 @@ export default async function RecipeDetailPage({
 
             {/* Title + description */}
             <div className="px-6 mb-8">
-              <h1 className="text-2xl font-bold text-foreground mb-1.5 leading-tight">
+              <h1 className="text-2xl max-xs:text-base font-bold text-foreground mb-1.5 leading-tight">
                 {recipe.title}
               </h1>
-              <p className="text-base font-medium text-[#57605E] leading-relaxed">
+              <p className="text-base max-xs:text-sm font-medium text-subtle leading-relaxed">
                 {recipe.short_description}
               </p>
             </div>
@@ -225,9 +225,9 @@ export default async function RecipeDetailPage({
                 />
               </div>
 
-              <div className="flex justify-between items-center mt-8">
-                <div className="flex items-center gap-2">
-                  <p className="text-[#727E7A] text-sm max-[385px]:text-xs max-[330px]:text-[10px]">
+              <div className="flex justify-between items-center gap-2 mt-8">
+                <div className="flex items-center gap-2 flex-1">
+                  <p className="text-subtle text-sm max-xs:text-xs max-2xs:text-[10.5px] text-nowrap">
                     Was this helpful?
                   </p>
                   <LikeButton
@@ -236,7 +236,7 @@ export default async function RecipeDetailPage({
                     isAuthenticated={!!user}
                   />
                 </div>
-                <p className="font-medium text-sm max-[385px]:text-xs max-[330px]:text-[10px]">
+                <p className="font-medium text-sm max-xs:text-xs max-2xs:text-[10.5px] flex-1 text-nowrap">
                   {recipe.likes ?? 0}{" "}
                   {(recipe.likes ?? 0) > 1 ? "people" : "person"} found this
                   helpful

@@ -46,7 +46,7 @@ export function SearchSection() {
       }
       cb();
     },
-    [hasAccess, isLoading]
+    [hasAccess, isLoading],
   );
 
   const handleSubmit = useCallback(() => {
@@ -68,7 +68,7 @@ export function SearchSection() {
     (concern: string) => {
       requireAccess(() => setQuery(concern));
     },
-    [requireAccess]
+    [requireAccess],
   );
 
   const handleMic = useCallback(() => {
@@ -96,7 +96,7 @@ export function SearchSection() {
       recognition.onresult = (e) => {
         const transcript = e.results[0]?.[0]?.transcript ?? "";
         setQuery((prev) =>
-          prev.trim() ? `${prev.trim()} ${transcript}` : transcript
+          prev.trim() ? `${prev.trim()} ${transcript}` : transcript,
         );
       };
 
@@ -121,10 +121,10 @@ export function SearchSection() {
           style={{
             border: query ? "1px solid var(--mint-green)" : "none",
           }}
-          className="flex items-center gap-3 bg-card rounded-[12px] px-3 h-11.25 shadow-none"
+          className="flex items-center gap-3 max-xs:gap-2 bg-card max-xs:rounded-sm rounded-[12px] max-xs:px-2 px-3 h-11.25 max-xs:h-9 shadow-none"
         >
           <Search
-            className="w-4 h-4 text-muted-foreground shrink-0"
+            className="max-xs:size-3 size-4 text-muted-foreground shrink-0"
             strokeWidth={1.75}
           />
           <input
@@ -134,7 +134,7 @@ export function SearchSection() {
             onFocus={handleFocus}
             onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
             placeholder="Bloating, constipation, low energy, hor..."
-            className="flex-1 bg-transparent text-base text-base-text outline-none placeholder:text-muted-2"
+            className="flex-1 bg-transparent max-xs:text-sm text-base text-base-text outline-none placeholder:text-muted-2"
           />
 
           {query.trim() ? (
@@ -153,7 +153,7 @@ export function SearchSection() {
               className="shrink-0"
             >
               <Mic
-                className={`size-4 text-mint-green ${
+                className={`size-4 max-xs:size-3 text-mint-green ${
                   isRecording ? "animate-pulse" : ""
                 }`}
                 strokeWidth={1.75}
@@ -164,7 +164,7 @@ export function SearchSection() {
 
         {/* Common concerns */}
         <div>
-          <p className="text-xs font-medium text-subtle uppercase tracking-wider mb-3">
+          <p className="max-xs:text-[10px] text-xs font-medium text-subtle uppercase tracking-wider mb-3">
             Common Concerns
           </p>
           <div className="flex flex-wrap gap-2">
@@ -172,7 +172,7 @@ export function SearchSection() {
               <button
                 key={concern}
                 onClick={() => handleBadgeClick(concern)}
-                className="px-6 py-2.5 rounded-full bg-badge text-sm text-foreground border border-badge-border hover:opacity-75 transition-opacity active:scale-95"
+                className="px-6 max-xs:px-3 py-2.5 max-xs:py-1.5 rounded-full bg-badge max-xs:text-xs text-sm text-base-text border border-badge-border hover:opacity-75 transition-opacity active:scale-95"
               >
                 {concern}
               </button>

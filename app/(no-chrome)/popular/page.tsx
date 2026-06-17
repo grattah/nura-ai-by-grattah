@@ -52,16 +52,16 @@ const page = async () => {
 
   return (
     <div className="bg-background pb-10">
-      <main className="px-6 pt-3 flex flex-col gap-10">
+      <main className="px-6 max-xs:px-4 pt-3 flex flex-col gap-10 max-xs:gap-7">
         <div className="flex items-center justify-between">
           <Link href="/" className="rounded-full bg-[#E8E6DC] p-3">
             <ArrowLeft size={20} color="#1B1D1D" strokeWidth={1.5} />
           </Link>
-          <p className="font-semibold text-xl">Popular Recipes</p>
+          <p className="font-semibold text-xl max-xs:text-lg">Popular Recipes</p>
           <div />
         </div>
 
-        <div className="grid grid-cols-2 gap-3 space-y-3">
+        <div className="grid grid-cols-2 gap-3 max-xs:gap-2 space-y-3">
           {recipesWithBookmarks?.map((recipe) => (
             <div key={recipe.id} className="relative flex flex-col gap-2">
               <div className="absolute flex justify-between px-2 top-3 left-0 right-0 z-10">
@@ -112,7 +112,7 @@ const page = async () => {
 
         <Link
           href="/find-recipe"
-          className="w-full flex items-center justify-center text-[#FFFFFF] gap-3 py-4 bg-[#227B6F] hover:opacity-90 transition-opacity rounded-full font-medium"
+          className="w-full flex items-center justify-center text-[#FFFFFF] gap-3 py-4 max-xs:py-3 bg-[#227B6F] hover:opacity-90 transition-opacity rounded-full font-medium"
         >
           Find a recipe <MoveRight size={16} color="#FFFFFF" />
         </Link>

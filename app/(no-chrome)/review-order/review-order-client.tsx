@@ -52,7 +52,7 @@ function ReviewOrderContent() {
   return (
     <div className="min-h-dvh bg-background pb-10">
       {/* Header */}
-      <div className="flex items-center px-6 pt-5 pb-10 relative">
+      <div className="flex items-center px-6 max-xs:px-4 pt-5 pb-10 relative">
         <button
           onClick={() => router.back()}
           className="size-10 shrink-0 absolute left-4 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
@@ -61,12 +61,12 @@ function ReviewOrderContent() {
           <ArrowLeft className="size-5 text-foreground" />
         </button>
 
-        <h1 className="text-xl flex-1 text-center min-w-0 font-semibold text-base-text">
+        <h1 className="text-xl max-xs:text-lg flex-1 text-center min-w-0 font-semibold text-base-text">
           Review
         </h1>
       </div>
 
-      <div className="px-6 space-y-6">
+      <div className="px-6 max-xs:px-4 space-y-6">
         {/* Order summary */}
         <div className="bg-[#E8E6DC] rounded-3xl px-4 py-6 space-y-5.5 border border-border">
           <p className="text-base font-semibold text-foreground">
@@ -114,7 +114,7 @@ function ReviewOrderContent() {
         <div className="space-y-2 pt-2">
           <button
             onClick={() => router.push(`/continue-payment?plan=${plan}`)}
-            className="w-full py-4 rounded-full text-white font-semibold text-base"
+            className="w-full py-4 max-xs:py-3 rounded-full text-white font-semibold text-base max-xs:text-sm"
             style={{ backgroundColor: "var(--mint-green)" }}
           >
             Pay {config.price}

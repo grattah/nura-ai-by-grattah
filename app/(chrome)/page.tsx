@@ -31,14 +31,16 @@ const WELLNESS_TIP = {
 const getPopularRecipes = unstable_cache(
   async () => {
     const supabase = createServiceRoleClient();
-    return supabase
-      .from("recipes")
-      .select("id, title, image_url, recipe_tags(tags(name, slug))")
-      // Service role bypasses RLS, so filter out pending recipes explicitly.
-      // `status` was added in migration 20260615120000 (not in generated types yet).
-      .eq("status" as never, "approved" as never)
-      .order("display_order", { ascending: true })
-      .limit(10);
+    return (
+      supabase
+        .from("recipes")
+        .select("id, title, image_url, recipe_tags(tags(name, slug))")
+        // Service role bypasses RLS, so filter out pending recipes explicitly.
+        // `status` was added in migration 20260615120000 (not in generated types yet).
+        .eq("status" as never, "approved" as never)
+        .order("display_order", { ascending: true })
+        .limit(10)
+    );
   },
   ["home-popular-recipes"],
   { revalidate: 300 },
@@ -83,10 +85,10 @@ export default async function HomePage() {
 
   return (
     <div className="bg-background">
-      <main className="px-6 pt-2 space-y-6">
+      <main className="px-6 pt-2 max-xs:space-y-5 space-y-6">
         {/* Hero */}
-        <section className="space-y-4">
-          <h1 className="text-[1.75rem] font-semibold text-grey-c950 leading-snug">
+        <section className="max-xs:space-y-3 space-y-4">
+          <h1 className="max-2xs:text-lg max-xs:text-xl text-[1.75rem] font-semibold text-grey-c950 leading-snug">
             Hello! what would you like to{" "}
             <span className="text-mint-green">improve</span> today?
           </h1>
@@ -96,23 +98,26 @@ export default async function HomePage() {
         {/* Popular Recipes */}
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl leading-none font-semibold text-grey-c950">
+            <h2 className="max-xs:text-base text-2xl leading-none font-semibold text-grey-c950">
               Popular recipes
             </h2>
             <Link
               href="/popular"
-              className="text-base font-semibold text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4"
+              className="max-xs:text-xs text-base font-semibold text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4"
             >
               See all
             </Link>
           </div>
 
           <div className="">
-            <div className="flex gap-x-5 overflow-x-auto hide-scrollbar snap-x snap-mandatory">
+            <div className="flex max-xs:gap-x-2.5 gap-x-5 overflow-x-auto hide-scrollbar snap-x snap-mandatory">
               {popularRecipes.map((recipe, i) => {
                 const firstTag = recipe.recipe_tags?.[0]?.tags?.name;
                 return (
-                  <div key={recipe.id} className="shrink-0 w-50 snap-start">
+                  <div
+                    key={recipe.id}
+                    className="shrink-0 max-xs:w-33 w-50 snap-start"
+                  >
                     <RecipeCardNew
                       id={recipe.id}
                       title={recipe.title}

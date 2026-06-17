@@ -43,21 +43,21 @@ export default function Comment({
   return (
     <section className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-[#111312]">
+        <h2 className="text-base max-xs:text-sm font-semibold text-[#111312]">
           Comments ({total})
         </h2>
         <Link
           href={seeAllHref}
-          className="text-mint-green underline font-semibold"
+          className="text-mint-green max-xs:text-xs underline font-semibold"
         >
           See all
         </Link>
       </div>
 
-      <div className="rounded-2xl bg-[#FFFFFF] p-5 flex flex-col gap-5">
+      <div className="rounded-2xl bg-[#FFFFFF] p-5 max-xs:p-4 flex flex-col gap-5 max-xs:gap-4">
         {latestComment && (
           <div className="flex items-start gap-3">
-            <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0">
+            <div className="relative w-12 h-12 max-xs:w-10 max-xs:h-10 rounded-full overflow-hidden shrink-0">
               {latestComment && (
                 <Image
                   src={latestComment.profiles.avatar_url || profile}
@@ -73,12 +73,12 @@ export default function Comment({
               <p className="font-semibold text-[#1B1D1D] font-redHatDisplay lowercase">
                 @{latestComment?.profiles?.username || "unknown"}
               </p>
-              <p className="text-[#57605E] leading-relaxed">
+              <p className="text-[#57605E] max-xs:text-sm leading-relaxed">
                 {latestComment?.content || ""}
               </p>
 
-              <div className="flex items-center gap-8 mt-2">
-                <span className="text-sm text-[#727E7A] font-medium">
+              <div className="flex items-center gap-8 max-xs:gap-5 mt-2">
+                <span className="text-sm max-xs:text-xs text-[#727E7A] font-medium">
                   {latestComment &&
                     formatRelativeTime(latestComment.created_at)}
                 </span>
