@@ -11,6 +11,10 @@ const withSerwist = withSerwistInit({
 const nextConfig: NextConfig = {
   experimental: {
     staleTimes: { dynamic: 30, static: 180 },
+    // Recipe image uploads go through a server action; the default 1MB body cap
+    // would reject images below our real 5MB limit. Allow headroom for the
+    // multipart/FormData overhead on top of a 5MB file.
+    serverActions: { bodySizeLimit: "6mb" },
   },
   images: {
     remotePatterns: [
