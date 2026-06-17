@@ -54,23 +54,23 @@ export default function Comment({
         </Link>
       </div>
 
-      <div className="rounded-2xl bg-[#FFFFFF] p-5 max-xs:p-4 flex flex-col gap-5 max-xs:gap-4">
+      <div className="rounded-2xl max-xs:rounded-lg bg-white p-5 max-xs:p-4 flex flex-col gap-5 max-xs:gap-4">
         {latestComment && (
           <div className="flex items-start gap-3">
-            <div className="relative w-12 h-12 max-xs:w-10 max-xs:h-10 rounded-full overflow-hidden shrink-0">
+            <div className="relative size-12 max-xs:size-9 rounded-full overflow-hidden shrink-0">
               {latestComment && (
                 <Image
                   src={latestComment.profiles.avatar_url || profile}
                   alt={`${latestComment.profiles.username}'s avatar`}
                   fill
-                  className="object-cover"
+                  className="object-cover max-xs:size-9"
                   sizes="48px"
                 />
               )}
             </div>
 
             <div className="flex flex-col gap-1 flex-1 min-w-0">
-              <p className="font-semibold text-[#1B1D1D] font-redHatDisplay lowercase">
+              <p className="font-semibold max-xs:text-sm text-[#1B1D1D] font-redHatDisplay lowercase">
                 @{latestComment?.profiles?.username || "unknown"}
               </p>
               <p className="text-[#57605E] max-xs:text-sm leading-relaxed">

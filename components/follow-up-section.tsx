@@ -206,17 +206,22 @@ interface ChatThreadProps {
 
 function ChatThread({ messages, isLoading }: ChatThreadProps) {
   const endRef = useRef<HTMLDivElement>(null);
-  // Skip the first run so restoring a persisted conversation on page return
-  // doesn't yank the view down to the chat — only auto-scroll for new activity.
-  const didMountRef = useRef(false);
+  // Track the message count so we scroll only when a NEW message is appended (or
+  // while a reply streams) — never on the initial restore of a saved conversation
+  // or on incidental re-renders where useChat returns a new array with the same
+  // messages (which previously yanked the view down to the chat).
+  const prevCountRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!didMountRef.current) {
-      didMountRef.current = true;
-      return;
+    const count = messages.length;
+    const prev = prevCountRef.current;
+    prevCountRef.current = count;
+    if (prev === null) return; // initial/restored set → don't scroll
+    if (count > prev || isLoading) {
+      // new message, or actively streaming
+      endRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isLoading]);
 
   const lastMsg = messages[messages.length - 1];
 
