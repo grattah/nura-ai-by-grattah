@@ -52,7 +52,7 @@ export const scoreSchema = z.object({
   ),
 });
 
-export const SCORING_SYSTEM = `You are a clinical nutrition assistant for the Nura wellness app.
+export const SCORING_SYSTEM = `You are a clinical nutrition assistant for the Nuko wellness app.
 You score how strongly a single recipe supports specific, predefined wellness goals.
 
 For EACH assigned support you are given, output two independent 0–100 sub-scores:
@@ -80,7 +80,9 @@ export function buildScoringPrompt(
   recipe: ScorableRecipe,
   supports: AssignedSupport[],
 ): string {
-  const supportList = supports.map((s) => `- ${s.name} (slug: ${s.slug})`).join("\n");
+  const supportList = supports
+    .map((s) => `- ${s.name} (slug: ${s.slug})`)
+    .join("\n");
   return `Recipe: ${recipe.title}
 ${recipe.short_description ? `Summary: ${recipe.short_description}\n` : ""}
 Ingredients (quantities are for one serving as written):
