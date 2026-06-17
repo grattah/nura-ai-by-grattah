@@ -15,6 +15,11 @@ import {
   type RecipeInput,
 } from "@/actions/admin-recipes";
 
+// Keep in sync with the 5MB cap enforced in uploadRecipeImage (admin-recipes.ts)
+// and the server-action bodySizeLimit in next.config.ts.
+const MAX_IMAGE_MB = 5;
+const MAX_IMAGE_BYTES = MAX_IMAGE_MB * 1024 * 1024;
+
 interface TagOption {
   id: string;
   name: string;
@@ -62,8 +67,26 @@ export function RecipeForm({
   }
 
   async function onImage(file: File) {
-    setUploading(true);
     setError(null);
+
+    // Validate up front so the admin gets a specific reason instead of a generic
+    // failure. Large files would otherwise be rejected by the server action's
+    // body-size limit and surface only as an opaque thrown error.
+    if (!file.type.startsWith("image/")) {
+      setError(
+        `"${file.name}" isn't an image (${file.type || "unknown type"}). Please choose a JPG, PNG, or WebP file.`,
+      );
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+      setError(
+        `Image is too large (${sizeMb} MB). Please upload an image under ${MAX_IMAGE_MB} MB — try compressing or resizing it first.`,
+      );
+      return;
+    }
+
+    setUploading(true);
     try {
       const fd = new FormData();
       fd.append("file", file);
@@ -74,7 +97,9 @@ export function RecipeForm({
       }
       set("image_url", res.url);
     } catch {
-      setError("Image upload failed.");
+      setError(
+        `Couldn't upload "${file.name}". Please check your connection and try again, or use a smaller image (under ${MAX_IMAGE_MB} MB).`,
+      );
     } finally {
       setUploading(false);
     }
