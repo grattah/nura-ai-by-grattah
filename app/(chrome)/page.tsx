@@ -31,17 +31,22 @@ const WELLNESS_TIP = {
 const getPopularRecipes = unstable_cache(
   async () => {
     const supabase = createServiceRoleClient();
-    return supabase
-      .from("recipes")
-      .select("id, title, image_url, recipe_tags(tags(name, slug))")
-      // Service role bypasses RLS, so filter out pending recipes explicitly.
-      // `status` was added in migration 20260615120000 (not in generated types yet).
-      .eq("status" as never, "approved" as never)
-      .order("display_order", { ascending: true })
-      .limit(10);
+    return (
+      supabase
+        .from("recipes")
+        .select("id, title, image_url, recipe_tags(tags(name, slug))")
+        // Service role bypasses RLS, so filter out pending recipes explicitly.
+        // `status` was added in migration 20260615120000 (not in generated types yet).
+        .eq("status" as never, "approved" as never)
+        .or("shares.gt.0, saves.gt.0, comments.gt.0, likes.gt.0")
+        .order("weighted_score", { ascending: false })
+        .order("last_engaged_at", { ascending: false, nullsFirst: false })
+        .order("id", { ascending: false })
+        .limit(10)
+    );
   },
   ["home-popular-recipes"],
-  { revalidate: 300 },
+  { revalidate: 300 }
 );
 
 export default async function HomePage() {
@@ -70,10 +75,10 @@ export default async function HomePage() {
           .select("status, expires_at")
           .eq("user_id", user.id)
           .eq("status", "active")
-          .maybeSingle(),
+          .maybeSingle()
       ),
       withTiming("home:getBookmarkedIds", () =>
-        getBookmarkedIds(popularRecipes.map((r) => r.id)),
+        getBookmarkedIds(popularRecipes.map((r) => r.id))
       ),
     ]);
     hasAccess =
