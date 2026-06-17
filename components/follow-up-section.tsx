@@ -200,8 +200,15 @@ interface ChatThreadProps {
 
 function ChatThread({ messages, isLoading }: ChatThreadProps) {
   const endRef = useRef<HTMLDivElement>(null);
+  // Skip the first run so restoring a persisted conversation on page return
+  // doesn't yank the view down to the chat — only auto-scroll for new activity.
+  const didMountRef = useRef(false);
 
   useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 

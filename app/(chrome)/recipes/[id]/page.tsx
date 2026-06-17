@@ -154,11 +154,7 @@ export default async function RecipeDetailPage({
     .filter((t): t is { name: string; slug: string } => !!t)
     .map((t) => ({ name: t.name, slug: t.slug }));
 
-  // Freshly generated recipes are "pending" until an admin approves them — they
-  // can't be shared yet (status added in migration 20260615120000, not yet in
-  // the generated types). Bookmarking is unaffected.
-  const shareDisabled =
-    (recipe as { status?: string }).status !== "approved";
+  const shareDisabled = (recipe as { status?: string }).status !== "approved";
 
   return (
     <PaywallGate>
@@ -231,7 +227,9 @@ export default async function RecipeDetailPage({
 
               <div className="flex justify-between items-center mt-8">
                 <div className="flex items-center gap-2">
-                  <p className="text-[#727E7A] text-sm max-[385px]:text-xs max-[330px]:text-[10px]">Was this helpful?</p>
+                  <p className="text-[#727E7A] text-sm max-[385px]:text-xs max-[330px]:text-[10px]">
+                    Was this helpful?
+                  </p>
                   <LikeButton
                     recipeId={recipe.id}
                     initialLiked={liked}
