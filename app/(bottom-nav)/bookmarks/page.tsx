@@ -26,10 +26,12 @@ export default async function BookmarksPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="px-8 py-4.75 mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A]">
-        <h1 className="text-2xl font-semibold text-[#111312]">Saved Recipes</h1>
+        <h1 className="max-xs:text-base text-2xl font-semibold text-[#111312]">
+          Saved Recipes
+        </h1>
       </div>
 
-      <main className="px-6 pb-10">
+      <main className="px-6 max-xs:px-4 pb-10">
         {initialBookmarks.length > 0 ? (
           <BookmarksList initialBookmarks={initialBookmarks} userId={userId} />
         ) : (
@@ -59,7 +61,7 @@ function EmptyBookmarks() {
       </p>
       <Link
         href="/recipes"
-        className="rounded-full px-6 py-4 text-sm font-semibold bg-[#227B6F] text-[#FFFFFF] hover:opacity-90 transition-opacity"
+        className="rounded-full px-6 py-4 max-xs:py-3 text-sm font-semibold bg-[#227B6F] text-[#FFFFFF] hover:opacity-90 transition-opacity"
       >
         Browse Recipes
       </Link>

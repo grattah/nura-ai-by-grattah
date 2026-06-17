@@ -90,7 +90,7 @@ function SearchCategoryContent() {
   return (
     <div className="bg-background min-h-dvh pb-24">
       {/* Header — search bar IS the header */}
-      <div className="flex items-center gap-8.75 px-6 pt-5 pb-4">
+      <div className="flex items-center gap-8.75 max-xs:gap-4 px-6 max-xs:px-4 pt-5 pb-4">
         <button
           onClick={() => router.push(backHref)}
           className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center shrink-0 hover:opacity-75 transition-opacity"
@@ -120,7 +120,7 @@ function SearchCategoryContent() {
         </div>
       </div>
 
-      <div className="px-6 space-y-4">
+      <div className="px-6 max-xs:px-4 space-y-4">
         {/* Category banner (if context present) */}
         {categorySlug && (
           <CategoryBanner name={categoryName || categorySlug} config={config} />
@@ -132,13 +132,13 @@ function SearchCategoryContent() {
             <p className="text-sm text-subtle">Search results</p>
 
             {isLoading ? (
-              <div className="grid grid-cols-2 gap-4 animate-pulse">
+              <div className="grid grid-cols-2 gap-4 max-xs:gap-2.5 animate-pulse">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className="aspect-square bg-muted rounded-3xl" />
                 ))}
               </div>
             ) : results.length > 0 ? (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 max-xs:gap-2.5">
                 {results.map((recipe, i) => (
                   <RecipeCard
                     key={recipe.id}
@@ -155,10 +155,10 @@ function SearchCategoryContent() {
       </div>
 
       {/* Find a recipe CTA — always visible */}
-      <div className="px-6 mt-6">
+      <div className="px-6 max-xs:px-4 mt-6">
         <Link
           href="/find-recipe"
-          className="w-full flex items-center justify-center gap-2.5 py-4 rounded-full border border-mint-green text-mint-green text-base font-semibold hover:opacity-80 transition-opacity"
+          className="w-full flex items-center justify-center gap-2.5 py-4 max-xs:py-3 rounded-full border border-mint-green text-mint-green text-base max-xs:text-sm font-semibold hover:opacity-80 transition-opacity"
         >
           Find a recipe <ArrowRight className="size-5 text-mint-green" />
         </Link>

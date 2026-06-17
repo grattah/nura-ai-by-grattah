@@ -35,7 +35,7 @@ export function BottomNav() {
               key={href}
               href={href}
               className={cn(
-                "min-w-0 w-full flex flex-col items-center gap-0.5 py-2 px-3 max-[380px]:px-1 rounded-full transition-all duration-150 active:scale-95",
+                "min-w-0 w-full flex flex-col items-center gap-0.5 py-2 px-3 max-xs:px-1 rounded-full transition-all duration-150 active:scale-95",
                 active ? "bg-black/12" : "",
               )}
               aria-label={label}
@@ -50,7 +50,7 @@ export function BottomNav() {
               />
               <span
                 className={cn(
-                  "max-[380px]:text-[10px] text-sm leading-none transition-colors duration-150 text-nowrap",
+                  "max-xs:text-[10px] text-sm leading-none transition-colors duration-150 text-nowrap",
                   active
                     ? "text-[#0A4A41] font-semibold"
                     : "text-subtle font-medium",

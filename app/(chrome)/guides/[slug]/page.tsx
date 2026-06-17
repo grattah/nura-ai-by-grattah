@@ -76,7 +76,7 @@ export default function GuidesPage() {
         <header className="px-4 pt-12 pb-3">
           <BackButton className="p-0 h-auto text-foreground hover:opacity-70 transition-opacity gap-1 font-normal mb-4" />
 
-          <h1 className="text-2xl font-bold text-foreground mb-1 leading-tight">
+          <h1 className="text-2xl max-xs:text-xl font-bold text-foreground mb-1 leading-tight">
             {title}
           </h1>
           <p className="text-sm text-muted-foreground leading-snug max-w-xs">
@@ -159,7 +159,7 @@ function RiskCard({ item }: { item: RiskItem }) {
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-base font-bold text-foreground leading-snug mb-0.5">
+            <p className="text-base max-xs:text-sm font-bold text-foreground leading-snug mb-0.5">
               {item.title}
             </p>
             <p className="text-xs text-muted-foreground leading-snug">

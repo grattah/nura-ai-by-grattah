@@ -1,4 +1,6 @@
-export default function GutHealth() {
+import { SVGProps } from "react";
+
+export default function GutHealth(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       width="20"
@@ -6,6 +8,7 @@ export default function GutHealth() {
       viewBox="0 0 20 20"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      {...props}
     >
       <path
         d="M7.90427 1.66663C8.10677 2.90829 8.70094 3.81163 10.3959 3.22663C13.8976 2.01746 16.6659 5.70746 16.6659 8.99996C16.6659 12.3133 14.4609 15 11.7409 15H10.8543C8.74344 15 6.89594 16.36 6.21094 18.3333"
