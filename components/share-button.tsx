@@ -19,6 +19,8 @@ interface ShareButtonProps {
   recipeTitle: string;
   text: string;
   addText: string;
+  /** Pending recipes can't be shared until an admin approves them. */
+  disabled?: boolean;
 }
 
 export function ShareButton({
@@ -26,6 +28,7 @@ export function ShareButton({
   recipeTitle,
   text,
   addText,
+  disabled = false,
 }: ShareButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -122,15 +125,30 @@ export function ShareButton({
     },
   ];
 
+  const handleToggle = () => {
+    if (disabled) {
+      toast({
+        title: "Not available yet",
+        description:
+          "This recipe is awaiting admin approval before it can be shared.",
+      });
+      return;
+    }
+    setIsOpen(!isOpen);
+  };
+
   return (
     <div className="relative w-full" ref={menuRef}>
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`rounded-full hover:opacity-70 transition-opacity flex items-center ${
+        onClick={handleToggle}
+        aria-disabled={disabled}
+        className={cn(
+          "rounded-full transition-opacity flex items-center",
           showText
             ? "border border-[#C4CAC8] bg-inherit px-3 py-3"
-            : "bg-[#E8E6DC] p-3"
-        }`}
+            : "bg-[#E8E6DC] p-3",
+          disabled ? "opacity-40 cursor-not-allowed" : "hover:opacity-70",
+        )}
         aria-label="Share recipe"
       >
         <Share strokeWidth={2.5} size={16} color="#57605E" />
@@ -141,7 +159,7 @@ export function ShareButton({
         )}
       </button>
 
-      {isOpen && (
+      {isOpen && !disabled && (
         <div className={`absolute ${showText ? "left-0" : "right-0"}  top-13 bg-card border border-border rounded-2xl shadow-lg z-50 min-w-56 overflow-hidden`}>
           <div className="p-3 space-y-1">
             {shareOptions.map((option) => {
