@@ -29,10 +29,10 @@ export function CategoryCard({ slug, name, config }: CategoryCardProps) {
             className="object-contain"
           />
           <div>
-            <p className="text-base font-semibold text-foreground leading-snug">
+            <p className="text-base max-xs:text-sm font-semibold text-foreground leading-snug">
               {name}
             </p>
-            <p className="text-sm text-muted-foreground leading-snug mt-0.5 line-clamp-2">
+            <p className="text-sm max-xs:text-xs text-muted-foreground leading-snug mt-0.5 line-clamp-2">
               {config.subtitle}
             </p>
           </div>

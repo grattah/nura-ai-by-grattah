@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { logShare } from "@/actions/share";
 
 interface ShareButtonProps {
   recipeId: string;
@@ -142,24 +143,29 @@ export function ShareButton({
         onClick={handleToggle}
         aria-disabled={disabled}
         className={cn(
-          "rounded-full transition-opacity flex items-center",
-          showText
-            ? "border border-[#C4CAC8] bg-inherit px-3 py-3"
-            : "bg-[#E8E6DC] p-3",
+          "rounded-full transition-opacity flex items-center p-3 max-xs:p-2",
+          showText ? "border border-[#C4CAC8] bg-inherit" : "bg-[#E8E6DC]",
           disabled ? "opacity-40 cursor-not-allowed" : "hover:opacity-70",
         )}
         aria-label="Share recipe"
       >
-        <Share strokeWidth={2.5} size={16} color="#57605E" />
+        <Share
+          strokeWidth={2.5}
+          size={16}
+          color="#57605E"
+          className="max-xs:size-2.5"
+        />
         {showText && (
-          <span className="ml-1 font-medium text-sm max-[385px]:text-xs max-[330px]:text-[10px] text-[#727E7A] text-nowrap">
+          <span className="ml-1 font-medium text-sm max-xs:text-xs max-2xs:text-[10px] text-[#727E7A] text-nowrap">
             {text}
           </span>
         )}
       </button>
 
       {isOpen && !disabled && (
-        <div className={`absolute ${showText ? "left-0" : "right-0"}  top-13 bg-card border border-border rounded-2xl shadow-lg z-50 min-w-56 overflow-hidden`}>
+        <div
+          className={`absolute ${showText ? "left-0" : "right-0"}  top-13 bg-card border border-border rounded-2xl shadow-lg z-50 min-w-56 overflow-hidden`}
+        >
           <div className="p-3 space-y-1">
             {shareOptions.map((option) => {
               const Icon = option.icon;
@@ -169,20 +175,21 @@ export function ShareButton({
                   key={option.label}
                   onClick={() => {
                     option.action();
+                    logShare(recipeId);
                   }}
                   className={cn(
-                    "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm transition-colors",
+                    "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm max-xs:text-xs transition-colors",
                     isActive
                       ? "bg-foreground/10 text-foreground"
                       : "hover:bg-foreground/5 text-foreground/80 hover:text-foreground",
                   )}
                 >
                   {isActive && option.label === "Copy Link" ? (
-                    <Check className="w-4 h-4" />
+                    <Check className="size-4 max-xs:size-2.5" />
                   ) : (
-                    <Icon className="w-4 h-4" />
+                    <Icon className="size-4 max-xs:size-2.5" />
                   )}
-                  <span>{option.label}</span>
+                  <span className="max-xs:text-xs">{option.label}</span>
                 </button>
               );
             })}

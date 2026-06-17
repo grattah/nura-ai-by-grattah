@@ -70,7 +70,7 @@ const CommentCard = ({
           <p className="text-subtle leading-relaxed">{comment.content}</p>
 
           <div className="flex items-center gap-x-8.5 mt-1.5">
-            <span className="text-sm text-subtle font-medium max-[340px]:text-xs">
+            <span className="text-sm text-subtle font-medium max-2xs:text-xs">
               {formatRelativeTime(comment.created_at)}
             </span>
 
@@ -78,7 +78,7 @@ const CommentCard = ({
               onClick={() =>
                 setVisibleReplyCount(showReplies ? 0 : INITIAL_REPLY_COUNT)
               }
-              className="text-sm max-[340px]:text-xs text-[#727E7A] font-medium hover:text-[#1A1A1A] transition-colors"
+              className="text-sm max-2xs:text-xs text-[#727E7A] font-medium hover:text-[#1A1A1A] transition-colors"
             >
               {showReplies
                 ? "Hide replies"
@@ -88,6 +88,7 @@ const CommentCard = ({
             </button>
 
             <CommentLikeButton
+              key={comment.id}
               commentId={comment.id}
               recipeId={recipeId}
               initialLiked={comment.hasLiked}

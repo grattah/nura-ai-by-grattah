@@ -99,7 +99,9 @@ export default async function NotificationsPage() {
           </Link>
         </Button>
         <div className="flex items-center gap-2">
-          <h1 className="text-xl font-bold text-foreground">Notifications</h1>
+          <h1 className="text-xl max-xs:text-lg font-bold text-foreground">
+            Notifications
+          </h1>
           {unreadCount > 0 && (
             <span
               className="inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold text-white"
@@ -138,7 +140,7 @@ function NotificationCard({ notification }: { notification: Notification }) {
         isUnread ? "bg-card" : "bg-card/60",
       )}
     >
-      <CardContent className="p-5">
+      <CardContent className="p-5 max-xs:p-4">
         {/* Title row */}
         <div className="flex items-center gap-3 mb-3">
           <div
@@ -157,7 +159,7 @@ function NotificationCard({ notification }: { notification: Notification }) {
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <p
               className={cn(
-                "text-base leading-snug truncate",
+                "text-base max-xs:text-sm leading-snug truncate",
                 isUnread
                   ? "font-bold text-foreground"
                   : "font-semibold text-foreground/70",
@@ -176,7 +178,7 @@ function NotificationCard({ notification }: { notification: Notification }) {
         </div>
 
         {/* Body */}
-        <p className="text-sm text-muted-foreground leading-relaxed mb-4 line-clamp-3">
+        <p className="text-sm max-xs:text-xs text-muted-foreground leading-relaxed mb-4 line-clamp-3">
           {notification.body}
         </p>
 

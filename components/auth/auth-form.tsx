@@ -488,7 +488,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       </div>
 
       {/* Main */}
-      <div className="flex-1 flex flex-col items-center px-6 pb-12">
+      <div className="flex-1 flex flex-col items-center px-6 max-xs:px-4 pb-12">
         <div className="relative flex justify-center w-full mb-8">
           {!isOtpStep && (
             <button
@@ -505,7 +505,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 <ShieldCheck color="#FFFFFF" size={24} />
               </div>
             )}
-            <h1 className="text-xl font-semibold text-base-text text-center">
+            <h1 className="text-xl max-xs:text-lg font-semibold text-base-text text-center">
               {step === "email" && "Get full access"}
               {step === "login" && "Enter your password"}
               {isOtpStep && "Check your email"}
@@ -538,7 +538,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                   onClick={handleGoogleSignIn}
                   disabled={isGoogleLoading}
                   className={cn(
-                    "w-full flex items-center justify-center gap-3 bg-[#E8E6DC] text-nura-forest py-4 rounded-full font-medium hover:opacity-90 transition-opacity",
+                    "w-full flex items-center justify-center gap-3 bg-[#E8E6DC] text-nura-forest py-4 max-xs:py-3 rounded-full font-medium hover:opacity-90 transition-opacity",
                     isGoogleLoading ? "opacity-50" : "disabled:opacity-50",
                   )}
                 >
@@ -582,7 +582,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                         e.key === "Enter" && handleEmailContinue()
                       }
                       autoComplete="email"
-                      className="w-full pl-10 pr-4 py-4 rounded-sm bg-white text-base-text placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
+                      className="w-full pl-10 pr-4 py-4 max-xs:py-3 rounded-sm bg-white text-base-text placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
                     />
                   </div>
                 </div>
@@ -591,7 +591,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                   onClick={handleEmailContinue}
                   disabled={!email || isLoading}
                   className={cn(
-                    "w-full flex items-center justify-center bg-mint-green text-white py-4 rounded-full font-medium border border-border hover:opacity-90 transition-opacity",
+                    "w-full flex items-center justify-center bg-mint-green text-white py-4 max-xs:py-3 rounded-full font-medium border border-border hover:opacity-90 transition-opacity",
                     isLoading ? "opacity-50" : "disabled:opacity-40",
                   )}
                 >
@@ -615,7 +615,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                   <p className="text-subtle text-sm font-medium">
                     Your email address
                   </p>
-                  <div className="w-full px-4 py-4 rounded-sm bg-muted text-sm flex gap-2 items-center">
+                  <div className="w-full px-4 py-4 max-xs:py-3 rounded-sm bg-muted text-sm flex gap-2 items-center">
                     <Mail size={20} color="#57605E" />
                     <p>{email}</p>
                   </div>
@@ -641,7 +641,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                     autoComplete="current-password"
                     autoFocus
                     required
-                    className="w-full pl-10 pr-4 py-4 rounded-sm bg-white text-base-text placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
+                    className="w-full pl-10 pr-4 py-4 max-xs:py-3 rounded-sm bg-white text-base-text placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
                   />
                   <button
                     type="button"
@@ -672,7 +672,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                   type="submit"
                   disabled={isLoading || !password}
                   className={cn(
-                    "w-full flex items-center justify-center bg-mint-green text-white py-4 rounded-full font-medium hover:opacity-90 transition-opacity",
+                    "w-full flex items-center justify-center bg-mint-green text-white py-4 max-xs:py-3 rounded-full font-medium hover:opacity-90 transition-opacity",
                     isLoading ? "opacity-50" : "disabled:opacity-40",
                   )}
                 >
@@ -691,7 +691,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                   onClick={handleGoogleSignIn}
                   disabled={isGoogleLoading}
                   className={cn(
-                    "w-full flex items-center justify-center gap-3 bg-[#E8E6DC] text-nura-forest py-4 rounded-full font-medium hover:opacity-90 transition-opacity",
+                    "w-full flex items-center justify-center gap-3 bg-[#E8E6DC] text-nura-forest py-4 max-xs:py-3 rounded-full font-medium hover:opacity-90 transition-opacity",
                     isGoogleLoading ? "opacity-50" : "disabled:opacity-50",
                   )}
                 >
@@ -724,7 +724,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 }}
                 autoFocus
                 autoComplete="one-time-code"
-                className="w-full px-4 py-4 rounded-sm bg-white text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] outline-none text-center text-xl tracking-widest"
+                className="w-full px-4 py-4 max-xs:py-3 rounded-sm bg-white text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] outline-none text-center text-xl tracking-widest"
               />
 
               {isLoading && (
@@ -767,7 +767,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                   <p className="text-[#57605E] text-sm font-medium">
                     Your email address
                   </p>
-                  <div className="w-full px-4 py-4 rounded-sm bg-muted text-sm flex gap-2 items-center">
+                  <div className="w-full px-4 py-4 max-xs:py-3 rounded-sm bg-muted text-sm flex gap-2 items-center">
                     <Mail size={20} color="#57605E" />
                     <p>{email}</p>
                   </div>
@@ -795,7 +795,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                     }}
                     autoComplete="new-password"
                     required
-                    className="w-full pl-10 pr-4 py-4 rounded-sm bg-white text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
+                    className="w-full pl-10 pr-4 py-4 max-xs:py-3 rounded-sm bg-white text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
                   />
                   <button
                     type="button"
@@ -833,7 +833,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                   autoComplete="name"
                   autoFocus
                   required
-                  className="w-full px-4 py-4 rounded-sm bg-white text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
+                  className="w-full px-4 py-4 max-xs:py-3 rounded-sm bg-white text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
                 />
 
                 {error && (
@@ -846,7 +846,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                   type="submit"
                   disabled={isLoading || !fullName || !password}
                   className={cn(
-                    "w-full flex items-center justify-center bg-[#227B6F] text-white py-4 rounded-full font-medium hover:opacity-90 transition-opacity",
+                    "w-full flex items-center justify-center bg-[#227B6F] text-white py-4 max-xs:py-3 rounded-full font-medium hover:opacity-90 transition-opacity",
                     isLoading ? "opacity-50" : "disabled:opacity-40",
                   )}
                 >
@@ -854,7 +854,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 </button>
               </form>
               <button
-                className="w-full flex items-center justify-center bg-[#E8E6DC] py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+                className="w-full flex items-center justify-center bg-[#E8E6DC] py-4 max-xs:py-3 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
                 onClick={handleSkipProfile}
               >
                 Do this later

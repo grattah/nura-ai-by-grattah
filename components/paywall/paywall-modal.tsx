@@ -44,13 +44,13 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
         className="sm:max-w-md p-0 gap-0 overflow-hidden"
         showCloseButton={false}
       >
-        <div className="p-6 space-y-5">
+        <div className="p-6 max-xs:p-4 space-y-5 max-xs:space-y-4">
           <DialogHeader className="flex flex-col items-center justify-center text-center space-y-5 gap-0">
             <div className="p-3 rounded-full bg-mint-green w-min mb-5">
               <LockKeyhole size={20} color="#FFFFFF" />
             </div>
             <div className="space-y-3">
-              <DialogTitle className="text-2xl font-semibold text-black mb-3">
+              <DialogTitle className="text-2xl max-xs:text-xl font-semibold text-black mb-3">
                 A premium remedy
               </DialogTitle>
               <p className="text-subtle">
@@ -91,7 +91,7 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
           </div>
 
           <button
-            className="w-full py-4 rounded-4xl bg-[#227B6F] text-[#FFFFFF] font-medium"
+            className="w-full py-4 max-xs:py-3 rounded-4xl bg-[#227B6F] text-[#FFFFFF] font-medium"
             onClick={() => {
               onOpenChange(false);
               router.push("/checkout");

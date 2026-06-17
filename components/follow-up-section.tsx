@@ -79,7 +79,13 @@ export function FollowUpSection({
     fetch("/api/rag/questions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contextId, contextType, title, description, context }),
+      body: JSON.stringify({
+        contextId,
+        contextType,
+        title,
+        description,
+        context,
+      }),
     })
       .then((r) => r.json())
       .then(({ questions: aiQs }) => {
@@ -121,7 +127,7 @@ export function FollowUpSection({
 
   return (
     <div className="space-y-3">
-      <h2 className="text-lg font-semibold text-foreground">
+      <h2 className="text-lg max-xs:text-sm font-semibold text-foreground">
         Follow Up Questions
       </h2>
 
@@ -153,7 +159,7 @@ interface QuestionsListProps {
 
 function QuestionsList({ questions, loading, onSelect }: QuestionsListProps) {
   return (
-    <Card className="border-0 rounded-3xl shadow-none overflow-hidden bg-[#FFFFFF]">
+    <Card className="border-0 rounded-3xl max-xs:rounded-xl shadow-none overflow-hidden bg-white max-xs:py-3 max-xs:gap-3">
       <CardContent className="p-0">
         {loading
           ? Array.from({ length: 4 }).map((_, i) => (
@@ -164,8 +170,8 @@ function QuestionsList({ questions, loading, onSelect }: QuestionsListProps) {
                     style={{ width: "calc(100% - 32px)" }}
                   />
                 )}
-                <div className="px-5 min-h-14 flex items-center">
-                  <div className="h-4 bg-muted rounded-full animate-pulse w-3/4" />
+                <div className="px-5 max-xs:px-3 min-h-14 max-xs:min-h-10 flex items-center">
+                  <div className="h-4 max-xs:h-2.5 bg-muted rounded-full animate-pulse w-3/4" />
                 </div>
               </div>
             ))
@@ -181,10 +187,10 @@ function QuestionsList({ questions, loading, onSelect }: QuestionsListProps) {
                   onClick={() => onSelect(q)}
                   className="w-full flex items-center justify-between px-5 min-h-14 py-3 text-left hover:opacity-75 transition-opacity active:scale-[0.98]"
                 >
-                  <span className="text-[#57605E] font-medium leading-snug pr-4">
+                  <span className="text-subtle max-xs:text-xs font-medium leading-snug pr-4">
                     {q}
                   </span>
-                  <ChevronRight className="w-5 h-5 shrink-0 text-muted-foreground" />
+                  <ChevronRight className="size-5 max-xs:size-3 shrink-0 text-muted-foreground" />
                 </button>
               </div>
             ))}
@@ -200,10 +206,22 @@ interface ChatThreadProps {
 
 function ChatThread({ messages, isLoading }: ChatThreadProps) {
   const endRef = useRef<HTMLDivElement>(null);
+  // Track the message count so we scroll only when a NEW message is appended (or
+  // while a reply streams) — never on the initial restore of a saved conversation
+  // or on incidental re-renders where useChat returns a new array with the same
+  // messages (which previously yanked the view down to the chat).
+  const prevCountRef = useRef<number | null>(null);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    const count = messages.length;
+    const prev = prevCountRef.current;
+    prevCountRef.current = count;
+    if (prev === null) return; // initial/restored set → don't scroll
+    if (count > prev || isLoading) {
+      // new message, or actively streaming
+      endRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, isLoading]);
 
   const lastMsg = messages[messages.length - 1];
 
@@ -237,7 +255,7 @@ function ChatThread({ messages, isLoading }: ChatThreadProps) {
 
             <div
               className={cn(
-                "max-w-[85%] px-4 py-3 rounded-2xl text-base leading-relaxed",
+                "max-w-[85%] max-xs:px-2 max-xs:py-1.5 px-4 py-3 rounded-2xl text-base max-xs:text-xs leading-relaxed",
                 m.role === "user"
                   ? "bg-foreground text-background rounded-br-sm"
                   : "bg-card text-foreground rounded-bl-sm",
@@ -267,7 +285,7 @@ function ChatThread({ messages, isLoading }: ChatThreadProps) {
                   return (
                     <>
                       {(hasActiveTool || betweenToolAndText) && (
-                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1.5 text-sm max-xs:-text-xs text-muted-foreground">
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
                           Searching trusted sources…
                         </div>
@@ -276,7 +294,7 @@ function ChatThread({ messages, isLoading }: ChatThreadProps) {
                       {finalText ? (
                         <span>{stripMarkdown(finalText.text)}</span>
                       ) : !isLoading ? (
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-sm max-xs:text-xs text-muted-foreground">
                           Nura couldn't generate a response. Please try asking a
                           different question or check back later.
                         </span>
@@ -314,9 +332,9 @@ interface ChatInputProps {
 
 function ChatInput({ input, isLoading, onChange, onSend }: ChatInputProps) {
   return (
-    <Card className="border-0 rounded-3xl shadow-none bg-[#FFFFFF]">
+    <Card className="border-0 rounded-3xl max-xs:rounded-xl shadow-none bg-white max-xs:gap-3 max-xs:py-3">
       <CardContent className="px-4">
-        <p className="text-sm font-semibold mb-2 text-[#1B1D1D]">
+        <p className="text-sm max-xs:text-xs font-semibold mb-2 text-[#1B1D1D]">
           Ask a follow-up question
         </p>
         <div className="flex items-end gap-3">
@@ -328,20 +346,20 @@ function ChatInput({ input, isLoading, onChange, onSend }: ChatInputProps) {
               onKeyDown={(e) => e.key === "Enter" && onSend()}
               placeholder="Type your question..."
               disabled={isLoading}
-              className="w-full bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground disabled:opacity-50"
+              className="w-full bg-transparent text-base max-xs:text-xs text-foreground outline-none placeholder:text-muted-foreground disabled:opacity-50"
             />
           </div>
           <Button
             size="icon"
             onClick={onSend}
             disabled={isLoading || !input.trim()}
-            className="w-10 h-10 rounded-full bg-foreground hover:bg-foreground/85 text-background shrink-0 shadow-none border-0 disabled:opacity-40"
+            className="size-10 max-xs:size-6 rounded-full bg-foreground hover:bg-foreground/85 text-background shrink-0 shadow-none border-0 disabled:opacity-40"
             aria-label="Send question"
           >
             {isLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="size-4 max-xs:size-2.5 animate-spin" />
             ) : (
-              <SendHorizontal className="w-4 h-4" />
+              <SendHorizontal className="size-4 max-xs:size-2.5" />
             )}
           </Button>
         </div>
@@ -355,10 +373,10 @@ function ChatInput({ input, isLoading, onChange, onSend }: ChatInputProps) {
 function NuraAvatar() {
   return (
     <div
-      className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5"
+      className="size-8 max-xs:size-5 rounded-full flex items-center justify-center shrink-0 mt-0.5"
       style={{ backgroundColor: "#5C6B3A" }}
     >
-      <Bot className="w-4 h-4 text-white" />
+      <Bot className="size-4 max-xs:size-2.5 text-white" />
     </div>
   );
 }

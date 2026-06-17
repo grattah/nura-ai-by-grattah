@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { SendHorizontal } from "lucide-react";
+import { SendHorizontal, Loader2 } from "lucide-react";
 import { addComment } from "@/actions/add-comment";
 
 interface ReplyTarget {
@@ -34,8 +34,14 @@ const CommentForm = ({
       }
       return result;
     },
-    null
+    null,
   );
+
+  React.useEffect(() => {
+    if (state?.success) {
+      setValue("");
+    }
+  }, [state]);
 
   React.useEffect(() => {
     if (replyingTo) {
@@ -52,7 +58,7 @@ const CommentForm = ({
     const handlePointerDown = (e: PointerEvent) => {
       const target = e.target as HTMLElement;
       if (target.closest("[data-reply-trigger]")) return;
-    
+
       if (formRef.current && !formRef.current.contains(e.target as Node)) {
         const prefix = `@${replyingTo.username} `;
         const current = value.trim();
@@ -82,16 +88,20 @@ const CommentForm = ({
             onChange={(e) => setValue(e.target.value)}
             placeholder={placeholder}
             disabled={isPending}
-            className="bg-[#FFFFFF] pl-5 pr-14 py-4 text-[#57605E] text-sm rounded-full w-full outline-0 disabled:opacity-50 placeholder:text-subtle placeholder:text-sm"
+            className="bg-[#FFFFFF] pl-5 max-xs:pl-4 pr-14 py-4 max-xs:py-3 text-[#57605E] text-sm rounded-full w-full outline-0 disabled:opacity-50 placeholder:text-subtle placeholder:text-sm"
           />
           <button
             type="submit"
             disabled={isPending}
             className={`bg-mint-green p-2 rounded-full absolute top-1.5 right-2 disabled:opacity-50 ${
-              value.length === 0 && "opacity-70"
+              value.trim().length === 0 && "opacity-70"
             }`}
           >
-            <SendHorizontal size={24} color="#FFFFFF" />
+            {isPending ? (
+              <Loader2 size={24} color="#FFFFFF" className="animate-spin" />
+            ) : (
+              <SendHorizontal size={24} color="#FFFFFF" />
+            )}
           </button>
         </div>
         {state?.error && (
@@ -104,15 +114,23 @@ const CommentForm = ({
   // Default compact variant (what you had before)
   return (
     <form ref={formRef} action={submitAction}>
-      <input
-        ref={inputRef}
-        name="comment"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder="Add a Comment..."
-        disabled={isPending}
-        className="w-full text-left rounded-full bg-[#F2F3F3] px-5 py-4 text-[#57605E] text-sm outline-0"
-      />
+      <div className="relative">
+        <input
+          ref={inputRef}
+          name="comment"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="Add a Comment..."
+          disabled={isPending}
+          className="w-full text-left rounded-full bg-[#F2F3F3] px-5 max-xs:px-4 py-4 max-xs:py-3 text-[#57605E] text-sm outline-0"
+        />
+        {isPending && (
+          <Loader2
+            size={20}
+            className="animate-spin absolute top-1/2 right-4 -translate-y-1/2 text-[#57605E]"
+          />
+        )}
+      </div>
       {state?.error && (
         <p className="text-sm text-red-500 mt-2">{state.error}</p>
       )}

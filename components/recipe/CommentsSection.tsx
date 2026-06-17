@@ -73,7 +73,7 @@ export default function CommentsSection({
               <Link
                 href={`?recipeId=${recipeId}&limit=200`}
                 scroll={false}
-                className="block w-full text-center border border-[#C4CAC8] rounded-full py-4 text-[#227B6F] font-semibold text-sm hover:bg-[#C4CAC8]/5 transition-colors"
+                className="block w-full text-center border border-[#C4CAC8] rounded-full py-4 max-xs:py-3 text-[#227B6F] font-semibold text-sm hover:bg-[#C4CAC8]/5 transition-colors"
               >
                 Load more comments
               </Link>
@@ -82,7 +82,7 @@ export default function CommentsSection({
             {limit > 5 && (
               <Link
                 href={`?recipeId=${recipeId}`}
-                className="block w-full text-center border border-[#C4CAC8] rounded-full py-4 text-[#227B6F] font-semibold text-sm hover:bg-[#C4CAC8]/5 transition-colors"
+                className="block w-full text-center border border-[#C4CAC8] rounded-full py-4 max-xs:py-3 text-[#227B6F] font-semibold text-sm hover:bg-[#C4CAC8]/5 transition-colors"
               >
                 Hide comments
               </Link>
@@ -93,7 +93,7 @@ export default function CommentsSection({
 
       <div className="px-4 mt-10 sticky bottom-2 bg-white/30 backdrop-blur-sm pt-4 flex gap-2">
         {userAvatar && (
-          <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0">
+          <div className="relative w-12 h-12 max-xs:w-10 max-xs:h-10 rounded-full overflow-hidden shrink-0">
             <Image
               src={userAvatar || profile}
               alt={userEmail ?? "user avatar"}

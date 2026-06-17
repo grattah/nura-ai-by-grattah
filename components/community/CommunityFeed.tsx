@@ -12,6 +12,7 @@ import {
   ACTIVITIES_PAGE_SIZE,
   type ActivityItem,
 } from "@/lib/activities";
+import Link from "next/link";
 
 const FETCH_TIMEOUT_MS = 15000;
 
@@ -41,7 +42,11 @@ export function CommunityFeed({
   const controllerRef = useRef<AbortController | null>(null);
 
   const loadMore = useCallback(async () => {
-    if (fetchingRef.current || !hasMoreRef.current || loadMoreErrorRef.current) {
+    if (
+      fetchingRef.current ||
+      !hasMoreRef.current ||
+      loadMoreErrorRef.current
+    ) {
       return;
     }
     fetchingRef.current = true;
@@ -116,37 +121,43 @@ export function CommunityFeed({
   return (
     <div className="flex flex-col gap-5">
       {activities.map((item) => (
-        <div key={item.id} className="flex items-stretch gap-6 w-full">
-          <div className="flex gap-4 flex-1">
-            <Image
-              src={item.profile?.avatar_url || profile}
-              alt={item.profile?.username || "unknown user"}
-              width={48}
-              height={48}
-              className="rounded-full object-cover w-12 h-12 shrink-0"
-            />
-            <div className="flex flex-col gap-2.5">
-              <p className="text-subtle">
-                <span className="font-semibold text-[#1B1D1D]">
-                  {item.profile?.username || "unknown user"}
-                </span>{" "}
-                {item.action} {item.recipe?.title}
-              </p>
-              <p className="text-[#57605E] text-sm">
-                {formatRelativeTime(item.created_at)} ago
-              </p>
+        <Link
+          key={item.id}
+          href={`/recipes/${item.recipe?.id}`}
+          className="block"
+        >
+          <div className="flex items-stretch gap-6 max-xs:gap-3 w-full">
+            <div className="flex gap-4 max-xs:gap-3 flex-1">
+              <Image
+                src={item.profile?.avatar_url || profile}
+                alt={item.profile?.username || "unknown user"}
+                width={48}
+                height={48}
+                className="rounded-full object-cover size-12 max-xs:size-10 shrink-0"
+              />
+              <div className="flex flex-col gap-2.5">
+                <p className="text-subtle max-xs:text-sm">
+                  <span className="font-semibold text-[#1B1D1D]">
+                    {item.profile?.username || "unknown user"}
+                  </span>{" "}
+                  {item.action} {item.recipe?.title}
+                </p>
+                <p className="text-[#57605E] text-sm max-xs:text-xs">
+                  {formatRelativeTime(item.created_at)} ago
+                </p>
+              </div>
             </div>
+            {item.recipe?.image_url && (
+              <Image
+                src={item.recipe.image_url}
+                alt="photo"
+                className="rounded-lg object-cover w-15.5 h-auto max-h-20 shrink-0"
+                width={62}
+                height={80}
+              />
+            )}
           </div>
-          {item.recipe?.image_url && (
-            <Image
-              src={item.recipe.image_url}
-              alt="photo"
-              className="rounded-lg object-cover w-15.5 h-auto max-h-20 shrink-0"
-              width={62}
-              height={80}
-            />
-          )}
-        </div>
+        </Link>
       ))}
 
       {!atEnd && (
@@ -168,7 +179,7 @@ export function CommunityFeed({
           ) : loadMoreError ? (
             <button
               onClick={retryLoadMore}
-              className="text-sm font-semibold text-[#227B6F] underline underline-offset-4 hover:opacity-75 transition-opacity active:scale-95"
+              className="text-sm max-xs:text-xs font-semibold text-mint-green underline underline-offset-4 hover:opacity-75 transition-opacity active:scale-95"
             >
               Couldn&apos;t load more, retry
             </button>
@@ -177,7 +188,7 @@ export function CommunityFeed({
       )}
 
       {atEnd && activities.length >= ACTIVITIES_PAGE_SIZE && (
-        <p className="text-center text-sm text-muted-foreground pb-2">
+        <p className="text-center text-sm max-xs:text-xs text-muted-foreground pb-2">
           You&apos;ve reached the end.
         </p>
       )}
