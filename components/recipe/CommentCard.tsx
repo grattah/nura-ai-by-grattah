@@ -88,6 +88,7 @@ const CommentCard = ({
             </button>
 
             <CommentLikeButton
+              key={comment.id}
               commentId={comment.id}
               recipeId={recipeId}
               initialLiked={comment.hasLiked}

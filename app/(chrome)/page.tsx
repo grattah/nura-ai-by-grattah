@@ -38,7 +38,10 @@ const getPopularRecipes = unstable_cache(
         // Service role bypasses RLS, so filter out pending recipes explicitly.
         // `status` was added in migration 20260615120000 (not in generated types yet).
         .eq("status" as never, "approved" as never)
-        .order("display_order", { ascending: true })
+        .or("shares.gt.0, saves.gt.0, comments.gt.0, likes.gt.0")
+        .order("weighted_score", { ascending: false })
+        .order("last_engaged_at", { ascending: false, nullsFirst: false })
+        .order("id", { ascending: false })
         .limit(10)
     );
   },

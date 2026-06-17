@@ -1,118 +1,53 @@
-import React from "react";
+// app/popular/page.tsx (or wherever this lives)
 import Link from "next/link";
-import Image from "next/image";
-import { ArrowLeft, MoveRight, Heart, Bookmark } from "lucide-react";
-
-import { BookmarkButton } from "@/components/bookmark-button";
+import { ArrowLeft, MoveRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { isBookmarked } from "@/actions/bookmark";
-import { truncateText } from "@/lib/truncate-text";
-import { BookmarkProvider } from "@/components/bookmark-provider";
+import { getBookmarkedIds } from "@/actions/bookmark";
+import { fetchPopularRecipesPage } from "@/lib/popular-recipes";
+import { PopularRecipesList } from "@/components/recipe/PopularRecipeList";
 
 const page = async () => {
   const supabase = await createClient();
 
   const [
-    { data: recipes, error },
+    initialRecipes,
     {
       data: { user },
     },
   ] = await Promise.all([
-    supabase
-      .from("recipes")
-      .select(
-        `
-        *,
-        recipe_tags (
-          tags (id, name)
-        )
-      `
-      )
-      .eq("status" as never, "approved" as never)
-      .gt("likes", 100)
-      .order("title", { ascending: false }),
+    fetchPopularRecipesPage(supabase, 0),
     supabase.auth.getUser(),
   ]);
 
-  if (error) {
-    throw new Error("Failed to load popular recipes");
-  }
-
-  // Check bookmark status for all recipes in parallel
-  const bookmarkStatuses = await Promise.all(
-    (recipes ?? []).map((recipe) => isBookmarked(recipe.id))
-  );
-
-  // Pair each recipe with its bookmark status
-  const recipesWithBookmarks = (recipes ?? []).map((recipe, i) => ({
-    ...recipe,
-    bookmarked: bookmarkStatuses[i],
-    firstTag: recipe.recipe_tags?.[0]?.tags?.name ?? null,
-  }));
+  const bookmarkedSet = await getBookmarkedIds(initialRecipes.map((r) => r.id));
 
   return (
     <div className="bg-background pb-10">
       <main className="px-6 max-xs:px-4 pt-3 flex flex-col gap-10 max-xs:gap-7">
         <div className="flex items-center justify-between">
-          <Link href="/" className="rounded-full bg-[#E8E6DC] p-3">
-            <ArrowLeft size={20} color="#1B1D1D" strokeWidth={1.5} />
+          <Link href="/" className="rounded-full bg-[#E8E6DC] p-3 max-xs:p-2">
+            <ArrowLeft
+              size={20}
+              color="#1B1D1D"
+              strokeWidth={1.5}
+              className="max-xs:size-3"
+            />
           </Link>
-          <p className="font-semibold text-xl max-xs:text-lg">Popular Recipes</p>
+          <p className="font-semibold text-xl max-xs:text-base">
+            Popular Recipes
+          </p>
           <div />
         </div>
 
-        <div className="grid grid-cols-2 gap-3 max-xs:gap-2 space-y-3">
-          {recipesWithBookmarks?.map((recipe) => (
-            <div key={recipe.id} className="relative flex flex-col gap-2">
-              <div className="absolute flex justify-between px-2 top-3 left-0 right-0 z-10">
-                <button className="bg-[#000000] opacity-75 flex items-center gap-1 rounded-full p-1.5 px-3">
-                  <Heart size={12} color="#FFFFFF" strokeWidth={2} />
-                  <span className="text-xs text-[#FFFFFF] opacity-100">
-                    {recipe.likes}
-                  </span>
-                </button>
-                <BookmarkProvider
-                  recipeId={recipe.id}
-                  initialBookmarked={recipe.bookmarked}
-                  isAuthenticated={!!user}
-                >
-                  <BookmarkButton text="" addText="" popularStyle="yes" />
-                </BookmarkProvider>
-              </div>
-              {recipe.image_url && (
-                <Link href={`/recipes/${recipe.id}`}>
-                  <div className="overflow-hidden rounded-2xl">
-                    <Image
-                      src={recipe.image_url}
-                      alt={recipe.title}
-                      className="w-full h-[167] object-cover transition-transform duration-300 hover:scale-110"
-                      width={100}
-                      height={200}
-                    />
-                  </div>
-                </Link>
-              )}
-              {recipe.firstTag && (
-                <Link
-                  href={`/recipes/${recipe.id}`}
-                  className="text-[#727E7A] text-xs font-medium font-redHatDisplay uppercase"
-                >
-                  {recipe.firstTag}
-                </Link>
-              )}
-              <Link
-                href={`/recipes/${recipe.id}`}
-                className="text-[#111312] font-medium font-josefin"
-              >
-                {truncateText(recipe.title, 3)}
-              </Link>
-            </div>
-          ))}
-        </div>
+        <PopularRecipesList
+          initialRecipes={initialRecipes}
+          bookmarkedIds={Array.from(bookmarkedSet)}
+          isAuthenticated={!!user}
+        />
 
         <Link
           href="/find-recipe"
-          className="w-full flex items-center justify-center text-[#FFFFFF] gap-3 py-4 max-xs:py-3 bg-[#227B6F] hover:opacity-90 transition-opacity rounded-full font-medium"
+          className="w-full flex items-center max-xs:text-sm justify-center text-white gap-3 py-4 max-xs:py-3 bg-mint-green hover:opacity-90 transition-opacity rounded-full font-medium"
         >
           Find a recipe <MoveRight size={16} color="#FFFFFF" />
         </Link>
