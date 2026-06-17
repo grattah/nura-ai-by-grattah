@@ -154,6 +154,12 @@ export default async function RecipeDetailPage({
     .filter((t): t is { name: string; slug: string } => !!t)
     .map((t) => ({ name: t.name, slug: t.slug }));
 
+  // Freshly generated recipes are "pending" until an admin approves them — they
+  // can't be shared yet (status added in migration 20260615120000, not yet in
+  // the generated types). Bookmarking is unaffected.
+  const shareDisabled =
+    (recipe as { status?: string }).status !== "approved";
+
   return (
     <PaywallGate>
       <BookmarkProvider
@@ -171,6 +177,7 @@ export default async function RecipeDetailPage({
                 recipeTitle={recipe.title}
                 addText=""
                 text=""
+                disabled={shareDisabled}
               />
               <BookmarkButton text="" addText="" popularStyle="" />
             </div>
@@ -244,6 +251,7 @@ export default async function RecipeDetailPage({
                   recipeTitle={recipe.title}
                   text="Send this to a friend"
                   addText="show"
+                  disabled={shareDisabled}
                 />
 
                 <BookmarkButton
