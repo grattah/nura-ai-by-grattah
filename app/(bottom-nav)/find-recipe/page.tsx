@@ -292,7 +292,7 @@ const page = () => {
             />
             {searchTerm.length > 0 && (
               <button
-                className="absolute top-1/2 -translate-y-1/2 left-3 max-xs:right-2"
+                className="absolute top-1/2 -translate-y-1/2 right-3 max-xs:right-2"
                 onClick={handleClearSearch}
               >
                 <X color="#9CA5A3" size={16} className="size-4 max-xs:size-3" />
