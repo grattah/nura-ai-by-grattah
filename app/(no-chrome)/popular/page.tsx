@@ -29,8 +29,11 @@ const page = async () => {
       `
       )
       .eq("status" as never, "approved" as never)
-      .gt("likes", 100)
-      .order("title", { ascending: false }),
+      .or("shares.gt.0, saves.gt.0, comments.gt.0, likes.gt.0")
+      .order("weighted_score", { ascending: false })
+      .order("last_engaged_at", { ascending: false, nullsFirst: false })
+      .order("id", { ascending: false })
+      .limit(20),
     supabase.auth.getUser(),
   ]);
 

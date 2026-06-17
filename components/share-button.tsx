@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { logShare } from "@/actions/share";
 
 interface ShareButtonProps {
   recipeId: string;
@@ -151,6 +152,7 @@ export function ShareButton({
                   key={option.label}
                   onClick={() => {
                     option.action();
+                    logShare(recipeId);
                   }}
                   className={cn(
                     "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm transition-colors",
