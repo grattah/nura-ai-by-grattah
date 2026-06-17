@@ -101,9 +101,11 @@ export function MembersManager({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Email</TableHead>
-              <TableHead className="w-40">Role</TableHead>
-              <TableHead className="w-[1%] text-right">Actions</TableHead>
+              <TableHead className="px-4 py-3">Email</TableHead>
+              <TableHead className="w-40 px-4 py-3">Role</TableHead>
+              <TableHead className="w-[1%] px-4 py-3 text-right">
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -145,13 +147,13 @@ function MemberRow({ member, isSelf }: { member: Member; isSelf: boolean }) {
 
   return (
     <TableRow>
-      <TableCell className="font-medium">
+      <TableCell className="px-4 py-4 font-medium">
         {member.email}
         {isSelf && (
           <span className="text-muted-foreground text-xs"> (you)</span>
         )}
       </TableCell>
-      <TableCell>
+      <TableCell className="px-4 py-4">
         {isOwner ? (
           <Badge>owner</Badge>
         ) : (
@@ -173,7 +175,7 @@ function MemberRow({ member, isSelf }: { member: Member; isSelf: boolean }) {
           </Select>
         )}
       </TableCell>
-      <TableCell className="text-right">
+      <TableCell className="px-4 py-4 text-right">
         {!isOwner && !isSelf && (
           <Button
             variant="destructive"
