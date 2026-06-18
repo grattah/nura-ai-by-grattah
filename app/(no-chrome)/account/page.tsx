@@ -166,7 +166,7 @@ export default async function AccountPage() {
           <SettingsRow
             icon={<Shield className="w-4 h-4 text-grey-c500" strokeWidth={2} />}
             label="Terms and privacy"
-            href="/terms"
+            href="/terms-and-privacy"
           />
           <form action={signOut}>
             <button
