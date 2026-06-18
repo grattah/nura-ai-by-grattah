@@ -80,6 +80,7 @@ export function RecipeCardNew({
                 sizes="(max-width: 640px) 167px, 200px"
                 className="object-cover group-hover:scale-[1.02] transition-transform duration-300"
                 priority={priority}
+                unoptimized={!transformedUrl.includes("/upload/")}
               />
             )}
 

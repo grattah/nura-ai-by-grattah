@@ -61,6 +61,10 @@ export function RecipeHeroImage({
           sizes="calc(100vw - 32px)"
           className="object-cover"
           priority
+          // Cloudinary URLs are already CDN-optimized; Supabase-hosted images
+          // (AI-generated) are served directly to avoid the Next optimizer
+          // timing out fetching/re-encoding them.
+          unoptimized={!src.includes("/upload/")}
         />
       ) : failed ? (
         <div className="absolute inset-0 flex items-center justify-center">
