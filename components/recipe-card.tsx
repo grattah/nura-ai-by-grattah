@@ -26,6 +26,7 @@ export function RecipeCard({
               sizes="(max-width: 640px) 160px, (max-width: 1024px) 200px, 260px"
               className="object-cover "
               priority={priority}
+              unoptimized={!imageUrl.includes("/upload/")}
             />
           )}
         </div>
