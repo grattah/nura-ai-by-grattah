@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { Search, Mic, SendHorizontal } from "lucide-react";
+import { Search, Mic, SendHorizontal, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAccess } from "@/hooks/use-access";
 import { PaywallModal } from "@/components/paywall/paywall-modal";
@@ -34,6 +34,7 @@ export function SearchSection() {
   const { hasAccess, isLoading } = useAccess();
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const [isRouteLoading, setIsLoading] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
@@ -51,12 +52,15 @@ export function SearchSection() {
 
   const handleSubmit = useCallback(() => {
     const trimmed = query.trim();
-    if (!trimmed) return;
+    if (!trimmed || isLoading) return;
+
     requireAccess(() => {
+      setIsLoading(true);
+
       saveRecentSearch(trimmed);
       router.push(`/personalized-search?q=${encodeURIComponent(trimmed)}`);
     });
-  }, [query, requireAccess, router]);
+  }, [query, requireAccess, router, isLoading]);
 
   const handleFocus = useCallback(() => {
     if (!isLoading && !hasAccess) {
@@ -140,11 +144,16 @@ export function SearchSection() {
           {query.trim() ? (
             <button
               onClick={handleSubmit}
-              className="size-7 rounded-full flex items-center justify-center shrink-0"
+              disabled={isRouteLoading}
+              className="size-7 rounded-full flex items-center justify-center shrink-0 disabled:opacity-70"
               style={{ backgroundColor: "var(--mint-green)" }}
               aria-label="Search"
             >
-              <SendHorizontal className="size-4 text-white" />
+              {isRouteLoading ? (
+                <Loader2 className="size-4 text-white animate-spin" />
+              ) : (
+                <SendHorizontal className="size-4 text-white" />
+              )}
             </button>
           ) : (
             <button

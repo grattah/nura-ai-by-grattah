@@ -14,6 +14,7 @@ import {
   Bookmark,
   Bell,
 } from "lucide-react";
+import CoinStack from "./vectors/CoinStack";
 import FilledLock from "@/components/vectors/filled-lock";
 import { createClient } from "@/lib/supabase/client";
 import { initiateCheckout } from "@/actions/checkout";
@@ -71,9 +72,9 @@ const FEATURES = [
     subtitle: "Save your remedies for whenever you need them",
   },
   {
-    icon: Bell,
-    title: "Smart reminders",
-    subtitle: "Gentle nudges for your routines",
+    icon: CoinStack,
+    title: "Free weekly tokens",
+    subtitle: "Enjoy complimentary weekly tokens for personalized insights and wellness feedback.",
   },
 ];
 
