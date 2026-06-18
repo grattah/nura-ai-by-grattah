@@ -247,9 +247,9 @@ function SelectStep({
         </button>
         <p className="text-center mt-3 flex items-center justify-center gap-[3px]">
           <IoMdLock size={12} color="#82A198" />{" "}
-          <p className="text-sm max-[400px]:text-xs text-[#57605E]">
+          <span className="text-sm max-[400px]:text-xs text-[#57605E]">
             Secure checkout • No subscription
-          </p>
+          </span>
         </p>
       </div>
     </div>
