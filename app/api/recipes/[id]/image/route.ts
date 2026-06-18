@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateText } from "ai";
 import { google } from "@ai-sdk/google";
+import sharp from "sharp";
 import { getCachedUser, createServiceRoleClient } from "@/lib/supabase/server";
 import { getAdminIdentity } from "@/lib/admin/auth";
 
@@ -63,11 +64,19 @@ export async function POST(
     const image = result.files.find((f) => f.mediaType?.startsWith("image/"));
     if (!image) throw new Error("model returned no image");
 
-    const path = `${id}.png`;
+    // The model returns a large full-resolution PNG (often 1–3 MB). Downscale
+    // and recompress to WebP before storing so the hero/cards load fast and the
+    // Next.js image optimizer doesn't time out fetching a multi-MB source.
+    const optimized = await sharp(Buffer.from(image.uint8Array))
+      .resize({ width: 1280, height: 1280, fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 78 })
+      .toBuffer();
+
+    const path = `${id}.webp`;
     const { error: uploadErr } = await admin.storage
       .from("recipe-images")
-      .upload(path, image.uint8Array, {
-        contentType: image.mediaType ?? "image/png",
+      .upload(path, optimized, {
+        contentType: "image/webp",
         upsert: true,
       });
     if (uploadErr) throw uploadErr;

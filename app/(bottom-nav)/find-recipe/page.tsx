@@ -22,7 +22,6 @@ import { WELLNESS_SOURCES } from "@/lib/wellness-sources";
 import BackButton from "@/components/back-button";
 
 interface RecipeSuggestion {
-  id: string;
   title: string;
 }
 
@@ -56,7 +55,6 @@ const page = () => {
   const [pendingRecipe, setPendingRecipe] = React.useState<string | null>(null);
   const [generating, setGenerating] = React.useState(false);
   const [generateError, setGenerateError] = React.useState(false);
-  const [isPending, startTransition] = React.useTransition();
   const [aiSuggestions, setAiSuggestions] = React.useState<RecipeSuggestion[]>(
     [],
   );
@@ -172,14 +170,6 @@ const page = () => {
     setShowSuggestions(false);
   };
 
-  const handleRecipeClick = (id: string, title: string) => {
-    setPendingRecipe(title);
-    setSearchTerm(title);
-    startTransition(() => {
-      router.push(`/recipes/${id}`);
-    });
-  };
-
   const handleGenerate = React.useCallback(
     async (name: string, concern?: string) => {
       const clean = name.trim();
@@ -255,8 +245,8 @@ const page = () => {
     }
   };
 
-  // Show the full-screen loading state while navigating to / generating a recipe
-  if ((isPending || generating) && pendingRecipe) {
+  // Show the full-screen loading state while a recipe is being generated.
+  if (generating && pendingRecipe) {
     return (
       <RecipeLoadingScreen
         recipeName={pendingRecipe}
@@ -497,11 +487,19 @@ const page = () => {
                   </p>
                 ) : (
                   <div className="flex flex-col gap-3">
+                    {generateError && (
+                      <p className="text-sm max-xs:text-xs text-red-500">
+                        Couldn&apos;t generate that recipe. Please try again.
+                      </p>
+                    )}
                     {aiSuggestions.map((recipe) => (
                       <button
-                        key={recipe.id}
+                        key={recipe.title}
                         onClick={() =>
-                          handleRecipeClick(recipe.id, recipe.title)
+                          handleGenerate(
+                            recipe.title,
+                            searchTerm.trim() || undefined,
+                          )
                         }
                         className="flex items-center gap-3 p-3 rounded-md hover:bg-[#E8E6DC] text-left transition-colors"
                       >
