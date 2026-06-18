@@ -44,23 +44,23 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
         className="sm:max-w-md p-0 gap-0 overflow-hidden"
         showCloseButton={false}
       >
-        <div className="p-6 space-y-5">
-          <DialogHeader className="flex flex-col items-center justify-center text-center space-y-5 gap-0">
+        <div className="p-6 max-[400px]:p-4 space-y-5 max-[400px]:space-y-4">
+          <DialogHeader className="flex flex-col items-center justify-center text-center space-y-5 max-[400px]:space-y-3 gap-0">
             <div className="p-3 rounded-full bg-mint-green w-min mb-5">
               <LockKeyhole size={20} color="#FFFFFF" />
             </div>
             <div className="space-y-3">
-              <DialogTitle className="text-2xl font-semibold text-black mb-3">
+              <DialogTitle className="text-2xl max-[350px]:text-xl font-semibold text-black mb-3">
                 A premium remedy
               </DialogTitle>
-              <p className="text-subtle">
+              <p className="text-subtle max-[350px]:text-sm">
                 Unlock the full method, ingredients and gain full access to all
                 Nuko’s recipes
               </p>
             </div>
           </DialogHeader>
 
-          <ul className="rounded-2xl bg-grey-c100 py-4 px-3 space-y-3">
+          <ul className="rounded-2xl bg-grey-c100 py-4 max-[400px]:py-2 px-3 space-y-3">
             {benefits.map((item) => (
               <li key={item.title} className="flex items-center gap-3">
                 <Check
@@ -80,10 +80,10 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
             ))}
           </ul>
 
-          <div className="rounded-xl bg-[#F2F3F3] p-4">
+          <div className="rounded-xl bg-[#F2F3F3] p-4 max-[350px]:p-3">
             <p className="text-sm font-medium text-[#57605E]">Monthly</p>
             <p className="mt-1">
-              <span className="text-xl font-semibold text-[#1A1A1A]">
+              <span className="text-xl max-[350px]:text-lg font-semibold text-[#1A1A1A]">
                 £7.99
               </span>
               <span className="text-sm text-[#57605E]"> / month</span>
@@ -91,7 +91,7 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
           </div>
 
           <button
-            className="w-full py-4 rounded-4xl bg-[#227B6F] text-[#FFFFFF] font-medium"
+            className="w-full py-4 max-[350px]:py-3 rounded-4xl bg-[#227B6F] text-[#FFFFFF] font-medium"
             onClick={() => {
               onOpenChange(false);
               router.push("/checkout");

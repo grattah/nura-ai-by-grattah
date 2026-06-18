@@ -127,7 +127,7 @@ function AgeControl({
       >
         −
       </button>
-      <span className="flex-1 text-center text-2xl font-bold text-foreground">
+      <span className="flex-1 text-center text-2xl max-xs:text-xl font-bold text-foreground">
         {value}
       </span>
       <button
@@ -306,10 +306,10 @@ export function ProstateCancerRiskChecker() {
             </span>
           </div>
 
-          <h1 className="text-2xl font-bold text-foreground mb-1 leading-tight">
+          <h1 className="text-2xl max-xs:text-xl font-bold text-foreground mb-1 leading-tight">
             {step === "results" ? "Your results" : "Prostate Cancer Risk"}
           </h1>
-          <p className="text-sm text-muted-foreground leading-snug">
+          <p className="text-sm max-xs:text-xs text-muted-foreground leading-snug">
             {step === "personal" &&
               "Estimate biopsy cancer probability using the PCPTRC 2.0 model."}
             {step === "tests" && "Enter your most recent clinical test values."}
@@ -333,7 +333,7 @@ export function ProstateCancerRiskChecker() {
           {/* ── Step 1: Personal ────────────────────────────────────── */}
           {step === "personal" && (
             <Card className="border-0 rounded-3xl shadow-none bg-card">
-              <CardContent className="p-5 space-y-5">
+              <CardContent className="p-5 max-xs:p-4 space-y-5 max-xs:space-y-4">
                 <Field
                   label="Current age"
                   hint="The PCPTRC 2.0 is validated for men aged 40 to 80."
@@ -371,7 +371,7 @@ export function ProstateCancerRiskChecker() {
               </div>
 
               <Card className="border-0 rounded-3xl shadow-none bg-card">
-                <CardContent className="p-5 space-y-5">
+                <CardContent className="p-5 max-xs:p-4 space-y-5 max-xs:space-y-4">
                   <Field
                     label="PSA value (ng/mL)"
                     hint="Prostate-Specific Antigen from your most recent blood test."
@@ -412,7 +412,7 @@ export function ProstateCancerRiskChecker() {
           {/* ── Step 3: History ──────────────────────────────────────── */}
           {step === "history" && (
             <Card className="border-0 rounded-3xl shadow-none bg-card">
-              <CardContent className="p-5 space-y-5">
+              <CardContent className="p-5 max-xs:p-4 space-y-5 max-xs:space-y-4">
                 <Field
                   label="Family history of prostate cancer"
                   hint="Father, brother, or son diagnosed with prostate cancer."
@@ -454,13 +454,13 @@ export function ProstateCancerRiskChecker() {
                 className="border-0 rounded-3xl shadow-none overflow-hidden"
                 style={{ backgroundColor: "#E8836A" }}
               >
-                <CardContent className="p-6">
+                <CardContent className="p-6 max-xs:p-5">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-widest text-foreground/55 mb-1">
                         Any cancer on biopsy
                       </p>
-                      <p className="text-5xl font-bold text-foreground/85 leading-none tracking-tight mb-3">
+                      <p className="text-5xl max-xs:text-4xl font-bold text-foreground/85 leading-none tracking-tight mb-3">
                         {pct(result.anyCancerRisk)}
                       </p>
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-foreground/80">
@@ -503,7 +503,7 @@ export function ProstateCancerRiskChecker() {
               </Card>
 
               {/* Stats grid */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 max-xs:gap-2">
                 {(
                   [
                     ["Any cancer", pct(result.anyCancerRisk), "text-[#E8836A]"],
@@ -522,7 +522,7 @@ export function ProstateCancerRiskChecker() {
                   >
                     <CardContent className="p-4 text-center">
                       <p
-                        className={`text-xl font-bold leading-none mb-1 ${cls}`}
+                        className={`text-xl max-xs:text-lg font-bold leading-none mb-1 ${cls}`}
                       >
                         {value}
                       </p>

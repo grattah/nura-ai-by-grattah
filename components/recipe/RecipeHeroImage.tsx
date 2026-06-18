@@ -52,7 +52,7 @@ export function RecipeHeroImage({
     : undefined;
 
   return (
-    <div className="mx-6 rounded-4xl overflow-hidden bg-muted mb-8 relative aspect-video">
+    <div className="mx-6 max-xs:mx-4 rounded-4xl max-xs:rounded-3xl overflow-hidden bg-muted mb-8 max-xs:mb-6 relative aspect-video">
       {src ? (
         <Image
           src={src}
@@ -61,6 +61,10 @@ export function RecipeHeroImage({
           sizes="calc(100vw - 32px)"
           className="object-cover"
           priority
+          // Cloudinary URLs are already CDN-optimized; Supabase-hosted images
+          // (AI-generated) are served directly to avoid the Next optimizer
+          // timing out fetching/re-encoding them.
+          unoptimized={!src.includes("/upload/")}
         />
       ) : failed ? (
         <div className="absolute inset-0 flex items-center justify-center">

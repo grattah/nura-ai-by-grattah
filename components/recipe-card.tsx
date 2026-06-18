@@ -26,11 +26,12 @@ export function RecipeCard({
               sizes="(max-width: 640px) 160px, (max-width: 1024px) 200px, 260px"
               className="object-cover "
               priority={priority}
+              unoptimized={!imageUrl.includes("/upload/")}
             />
           )}
         </div>
 
-        <p className="text-base font-medium text-grey-c950 mb-2 leading-snug truncate font-josefin">
+        <p className="text-base max-xs:text-sm font-medium text-grey-c950 mb-2 leading-snug truncate font-josefin">
           {recipe.title}
         </p>
       </div>

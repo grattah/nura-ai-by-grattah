@@ -14,6 +14,7 @@ import {
   Bookmark,
   Bell,
 } from "lucide-react";
+import CoinStack from "./vectors/CoinStack";
 import FilledLock from "@/components/vectors/filled-lock";
 import { createClient } from "@/lib/supabase/client";
 import { initiateCheckout } from "@/actions/checkout";
@@ -71,9 +72,9 @@ const FEATURES = [
     subtitle: "Save your remedies for whenever you need them",
   },
   {
-    icon: Bell,
-    title: "Smart reminders",
-    subtitle: "Gentle nudges for your routines",
+    icon: CoinStack,
+    title: "Free weekly tokens",
+    subtitle: "Enjoy complimentary weekly tokens for personalized insights and wellness feedback.",
   },
 ];
 
@@ -239,7 +240,7 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
           </div>
 
           <div className="px-4 space-y-6">
-            <h1 className="text-3xl font-semibold text-foreground leading-tight">
+            <h1 className="text-3xl max-xs:text-2xl font-semibold text-foreground leading-tight">
               Your natural path,
               <br />
               <span className="italic" style={{ color: "var(--mint-green)" }}>
@@ -314,7 +315,7 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
                           </div>
                         </div>
                         <div className="text-right shrink-0 flex flex-col">
-                          <span className="text-2xl font-bold text-foreground">
+                          <span className="text-2xl max-xs:text-xl font-bold text-foreground">
                             {plan.price}
                           </span>
                           <span className="text-sm text-muted-foreground">
@@ -333,7 +334,7 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
               <button
                 type="button"
                 onClick={handleContinueFromPlan}
-                className="w-full flex items-center justify-center py-4 rounded-full text-white font-semibold text-base hover:opacity-90 transition-opacity"
+                className="w-full flex items-center justify-center py-4 max-xs:py-3 rounded-full text-white font-semibold text-base hover:opacity-90 transition-opacity"
                 style={{ backgroundColor: "var(--mint-green)" }}
               >
                 Continue
@@ -395,7 +396,7 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
                   autoComplete="email"
                   autoFocus
                   required
-                  className="w-full px-4 py-4 rounded-2xl bg-muted text-foreground placeholder:text-muted-foreground border-0 focus:ring-2 focus:ring-ring outline-none"
+                  className="w-full px-4 py-4 max-xs:py-3 rounded-2xl bg-muted text-foreground placeholder:text-muted-foreground border-0 focus:ring-2 focus:ring-ring outline-none"
                 />
 
                 {error && (
@@ -407,7 +408,7 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
                 <button
                   type="submit"
                   disabled={!email || isLoading}
-                  className="w-full flex items-center justify-center text-white py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+                  className="w-full flex items-center justify-center text-white py-4 max-xs:py-3 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
                   style={{ backgroundColor: "var(--mint-green)" }}
                 >
                   {isLoading ? "Sending code..." : "Continue →"}
@@ -481,7 +482,7 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
                   }
                   autoFocus
                   autoComplete="one-time-code"
-                  className="w-full px-4 py-4 rounded-2xl bg-muted text-foreground placeholder:text-muted-foreground border-0 focus:ring-2 focus:ring-ring outline-none text-center text-2xl tracking-widest font-mono"
+                  className="w-full px-4 py-4 max-xs:py-3 rounded-2xl bg-muted text-foreground placeholder:text-muted-foreground border-0 focus:ring-2 focus:ring-ring outline-none text-center text-2xl tracking-widest font-mono"
                 />
 
                 {error && (
@@ -493,7 +494,7 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
                 <button
                   type="submit"
                   disabled={otpCode.length < 8 || isLoading}
-                  className="w-full flex items-center justify-center text-white py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+                  className="w-full flex items-center justify-center text-white py-4 max-xs:py-3 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
                   style={{ backgroundColor: "var(--mint-green)" }}
                 >
                   {isLoading ? "Verifying..." : "Verify & continue →"}
@@ -557,7 +558,7 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-xl font-bold text-foreground">
+                <p className="text-xl max-xs:text-lg font-bold text-foreground">
                   {planInfo.price}
                 </p>
                 <p className="text-xs text-muted-foreground">/ month</p>

@@ -35,7 +35,7 @@ export function FilterPills({
               key={pill.slug}
               onClick={() => onChange(pill.slug)}
               className={cn(
-                "shrink-0 px-4 py-2 min-h-8 rounded-full text-sm font-semibold transition-all duration-150 active:scale-95",
+                "shrink-0 px-4 max-xs:px-3 py-2 min-h-8 rounded-full text-sm max-xs:text-xs font-semibold transition-all duration-150 active:scale-95",
                 isActive
                   ? "bg-foreground/70 text-background backdrop-blur-sm"
                   : "text-muted-foreground hover:text-foreground",

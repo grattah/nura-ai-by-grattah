@@ -12,7 +12,7 @@ export function CategoryBanner({ name, config }: CategoryBannerProps) {
       className="flex items-center justify-between pl-6 min-h-16 overflow-hidden"
       style={{ backgroundColor: config.bgColor }}
     >
-      <div className="flex-1 min-w-0 pr-3 my-4 flex items-center gap-4">
+      <div className="flex-1 min-w-0 pr-3 my-4 flex items-center gap-4 max-xs:gap-3">
         <Image
           src={config.iconUrl}
           alt={name}
@@ -20,7 +20,7 @@ export function CategoryBanner({ name, config }: CategoryBannerProps) {
           height={48}
           className="object-contain"
         />
-        <p className="text-lg font-semibold text-base-text capitalize">
+        <p className="text-lg max-xs:text-base font-semibold text-base-text capitalize">
           {name}
         </p>
       </div>

@@ -46,7 +46,7 @@ export default async function AccountPage() {
   return (
     <div className="min-h-dvh bg-background pb-10">
       {/* Header */}
-      <div className="flex items-center px-6 pt-5 pb-4 gap-3 mb-3.5">
+      <div className="flex items-center px-6 max-xs:px-4 pt-5 pb-4 gap-3 mb-3.5">
         <Link
           href="/"
           className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center shrink-0 hover:opacity-75 transition-opacity"
@@ -54,13 +54,13 @@ export default async function AccountPage() {
         >
           <ArrowLeft className="size-5 text-foreground" />
         </Link>
-        <h1 className="flex-1 text-center text-xl font-semibold text-base-text capitalize">
+        <h1 className="flex-1 text-center text-xl max-xs:text-lg font-semibold text-base-text capitalize">
           Account
         </h1>
         <div className="size-10 shrink-0" aria-hidden />
       </div>
 
-      <div className="px-6 space-y-4">
+      <div className="px-6 max-xs:px-4 space-y-4">
         {/* User card */}
         <div className="bg-card rounded-2xl p-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -173,7 +173,7 @@ export default async function AccountPage() {
           <SettingsRow
             icon={<Shield className="w-4 h-4 text-grey-c500" strokeWidth={2} />}
             label="Terms and privacy"
-            href="/terms"
+            href="/terms-and-privacy"
           />
           <form action={signOut}>
             <button

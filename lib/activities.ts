@@ -59,10 +59,11 @@ export async function fetchActivitiesPage(
       id,
       action,
       created_at,
-      profiles ( id, username, avatar_url ),
+      profiles!inner ( id, username, avatar_url ),
       recipes ( id, title, image_url )
     `,
     )
+    .not("profiles.username", "is", null)
     .order("created_at", { ascending: false })
     .order("id", { ascending: false })
     .range(start, end);

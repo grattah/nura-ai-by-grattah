@@ -82,7 +82,9 @@ export function EditSearchSheet({
 
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-6 pb-4">
-          <h2 className="text-xl font-semibold text-foreground">Edit search</h2>
+          <h2 className="text-xl max-xs:text-lg font-semibold text-foreground">
+            Edit search
+          </h2>
           <button
             onClick={() => onOpenChange(false)}
             className="w-9 h-9 rounded-full bg-card flex items-center justify-center hover:opacity-75 transition-opacity"
@@ -94,7 +96,7 @@ export function EditSearchSheet({
 
         <div className="flex-1 overflow-y-auto px-4 pb-8 space-y-5">
           {/* Search input */}
-          <div className="flex items-center gap-3 bg-card rounded-[12px] px-3 h-12 border border-mint-green">
+          <div className="flex items-center gap-3 bg-card rounded-[12px] max-xs:rounded-sm px-3 h-12 max-xs:h-10 border border-mint-green">
             <Search
               className="w-4 h-4 text-muted-foreground shrink-0"
               strokeWidth={1.75}
@@ -105,7 +107,7 @@ export function EditSearchSheet({
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
               autoFocus
-              className="flex-1 bg-transparent text-base outline-none text-foreground placeholder:text-muted-foreground"
+              className="flex-1 bg-transparent text-base max-xs:text-sm outline-none text-foreground placeholder:text-muted-foreground"
             />
             {query.trim() && (
               <button
@@ -129,7 +131,7 @@ export function EditSearchSheet({
                 <button
                   key={concern}
                   onClick={() => setQuery(concern)}
-                  className="px-5 py-2.5 rounded-full bg-badge text-sm text-foreground border border-badge-border hover:opacity-75 transition-opacity active:scale-95"
+                  className="px-5 max-xs:px-3 py-2.5 max-xs:py-1.5 rounded-full bg-badge text-sm max-xs:text-xs text-foreground border border-badge-border hover:opacity-75 transition-opacity active:scale-95"
                 >
                   {concern}
                 </button>
@@ -161,7 +163,7 @@ export function EditSearchSheet({
                       className="w-full flex items-center gap-3 py-3.5 text-left hover:opacity-75 transition-opacity"
                     >
                       <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
-                      <span className="text-base text-foreground">
+                      <span className="text-base max-xs:text-sm text-foreground">
                         {search}
                       </span>
                     </button>
