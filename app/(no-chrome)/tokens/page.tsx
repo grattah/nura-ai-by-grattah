@@ -24,7 +24,7 @@ const page = () => {
         </div>
 
         <div className="flex flex-col gap-8">
-          <TokensCard />
+          <TokensCard variant="weekly" />
           <div className="w-full border border-[#E2E4E4]" />
           <TokensModal />
         </div>

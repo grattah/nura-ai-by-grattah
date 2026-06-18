@@ -13,6 +13,7 @@ import { IoPersonOutline } from "react-icons/io5";
 
 import BackButton from "@/components/back-button";
 import Link from "next/link";
+import Stripe from "../vectors/stripe";
 
 type Bundle = {
   id: string;
@@ -246,7 +247,7 @@ function SelectStep({
         </button>
         <p className="text-center mt-3 flex items-center justify-center gap-[3px]">
           <IoMdLock size={12} color="#82A198" />{" "}
-          <p className="text-xs text-[#57605E]">
+          <p className="text-sm max-[400px]:text-xs text-[#57605E]">
             Secure checkout • No subscription
           </p>
         </p>
@@ -292,7 +293,7 @@ function ReviewStep({
         </button>
         <p className="text-center mt-3 flex items-center justify-center gap-[3px]">
           <IoMdLock size={12} color="#82A198" />{" "}
-          <span className="text-xs text-[#57605E]">
+          <span className="text-sm max-[400px]:text-xs text-[#57605E]">
             Secure checkout • No subscription
           </span>
         </p>
@@ -396,8 +397,8 @@ function CardStep({
         >
           {isPaying ? "Processing…" : `Make payment`}
         </button>
-        <p className="text-xs text-[#57605E] text-center mt-2 flex items-center justify-center gap-1">
-          <IoMdLock size={12} /> Secured by Stripe
+        <p className="text-sm max-[400px]:text-xs text-[#57605E] text-center mt-2 flex items-center justify-center gap-1">
+          <IoMdLock size={12} /> Secured by <Stripe />
         </p>
       </div>
     </>
@@ -424,7 +425,7 @@ function Row({
       </span>
       <span
         className={`max-[400px]:text-xs ${
-          bold ? "font-semibold text-[#1B1D1D]" : "text-subtle"
+          bold ? "font-semibold text-[#1B1D1D]" : "text-subtle font-medium"
         }`}
       >
         {value}
