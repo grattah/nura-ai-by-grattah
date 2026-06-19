@@ -14,7 +14,7 @@ function BackButton({
       onClick={() => router.back()}
       className={className}
     >
-      <ArrowLeft size={16} color="#1B1D1D" className="max-xs:size-2.5" />
+      <ArrowLeft size={16} color="#1B1D1D" />
     </button>
   );
 }

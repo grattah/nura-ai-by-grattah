@@ -434,6 +434,10 @@ function PersonalizedSearchContent() {
         onOpenChange={setEditOpen}
         currentQuery={query}
       />
+
+      {/* Regenerating after an edit: overlay the "Preparing your answer" modal
+          over the (now blurred) stale content until the new answer is ready. */}
+      {loading && <LoadingModal />}
     </>
   );
 }
