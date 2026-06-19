@@ -5,18 +5,24 @@ import { Info, Zap } from "lucide-react";
 import Link from "next/link";
 import { useCredits } from "@/components/providers/credits-provider";
 import { formatResetDate } from "@/lib/tokens-format";
+import { LOW_WARN_PCT } from "@/lib/credits";
 
 const PersonalizedTokenModal = () => {
   const { hasAccess, isLow, isOut, state } = useCredits();
 
-  if (!hasAccess || !isLow || isOut || (state.extraPct && state.extraPct < 80))
+  if (
+    !hasAccess ||
+    !isLow ||
+    isOut ||
+    (state.extraPct && state.extraPct < LOW_WARN_PCT * 100)
+  )
     return null;
 
   console.log(state);
 
   const WHAT_TO_SHOW =
-    state.weeklyPct >= 80
-      ? state.extraPct != null && state.extraPct >= 80
+    state.weeklyPct >= LOW_WARN_PCT * 100
+      ? state.extraPct != null && state.extraPct >= LOW_WARN_PCT * 100
         ? "SHOWEXTRA"
         : "SHOWFREE"
       : null;
