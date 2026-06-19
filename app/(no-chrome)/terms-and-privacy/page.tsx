@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 
 import PrivacyComponent from "@/components/terms/PrivacyComponent";
 import TermsComponent from "@/components/terms/TermsComponent";
+import BackButton from "@/components/back-button";
 
 const page = () => {
   const [pageState, setPageState] = React.useState("privacy");
@@ -14,13 +15,7 @@ const page = () => {
     <div className="min-h-dvh bg-background pb-10">
       <main className="px-6 max-xs:px-4">
         <div className="flex items-center pt-5 pb-4 gap-3 mb-2.5">
-          <Link
-            href="/"
-            className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center shrink-0 hover:opacity-75 transition-opacity"
-            aria-label="Back"
-          >
-            <ArrowLeft className="size-5 text-foreground" />
-          </Link>
+          <BackButton className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center shrink-0 hover:opacity-75 transition-opacity" />
           <h1 className="flex-1 text-center text-xl max-xs:text-lg font-semibold text-base-text">
             Terms and Privacy
           </h1>
