@@ -46,7 +46,9 @@ describe("personalized-search — access control (audit M3)", () => {
   it("returns 403 when the subscription has expired", async () => {
     h.client!.client.auth.getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
     h.client!.setResult("subscriptions", {
-      data: { status: "active", expires_at: new Date(Date.now() - 1000).toISOString() },
+      data: [
+        { status: "active", expires_at: new Date(Date.now() - 1000).toISOString() },
+      ],
       error: null,
     });
     const res = await post({ query: "bloating" });

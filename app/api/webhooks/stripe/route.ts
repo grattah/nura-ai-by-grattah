@@ -3,6 +3,8 @@ import { headers } from "next/headers";
 import Stripe from "stripe";
 import { createClient as createSbClient } from "@supabase/supabase-js";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { activateSubscriptionFromSession } from "@/lib/subscription-activate";
+import { creditTokenPurchaseFromSession } from "@/lib/token-purchase";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -61,9 +63,9 @@ async function sendWelcomeEmail(email: string) {
 
   // TODO: swap in Resend / Postmark
   // await resend.emails.send({
-  //   from: "nura@yourdomain.com",
+  //   from: "nuko@yourdomain.com",
   //   to: email,
-  //   subject: "Welcome to Nura",
+  //   subject: "Welcome to Nuko",
   //   html: `<p>Click to access your account: <a href="${actionLink}">Open Nura</a></p>`
   // })
 
@@ -168,28 +170,17 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     throw new Error("No client_reference_id on checkout session");
   }
 
-  const supabase = createServiceRoleClient();
-
-  // Pull the real subscription to read its true period end and plan.
-  let expiresAt: string | null = null;
-  const subscriptionId = session.subscription as string | null;
-  if (subscriptionId) {
-    const sub = await stripe.subscriptions.retrieve(subscriptionId);
-    expiresAt = periodEndToIso(sub);
+  // One-time token-bundle purchase (mode:"payment"). Credit the user's "extra"
+  // bucket via the shared helper (idempotent per Stripe session — safe alongside
+  // the synchronous /buy-tokens/return credit).
+  if (session.metadata?.type === "credits") {
+    await creditTokenPurchaseFromSession(session);
+    console.log(`[webhook] Credited token purchase for ${userId}`);
+    return;
   }
 
-  await supabase.from("subscriptions").upsert(
-    {
-      user_id: userId,
-      stripe_session_id: session.id,
-      stripe_subscription_id: subscriptionId,
-      stripe_customer_id: session.customer as string,
-      plan: session.metadata?.plan ?? "annual",
-      status: "active",
-      expires_at: expiresAt,
-    },
-    { onConflict: "stripe_session_id" },
-  );
+  // Persist the active subscription (shared with the /return synchronous path).
+  await activateSubscriptionFromSession(session);
 
   if (email) {
     await sendWelcomeEmail(email);
@@ -223,11 +214,12 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
     return;
   }
 
-  const { data: existing } = await supabase
+  const { data: existingRows } = await supabase
     .from("subscriptions")
     .select("status")
     .eq("stripe_subscription_id", sub.id)
-    .maybeSingle();
+    .limit(1);
+  const existing = existingRows?.[0];
 
   if (existing?.status === "cancelled" && status === "active") {
     const end = periodEndToIso(sub);

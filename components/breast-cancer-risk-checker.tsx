@@ -92,7 +92,7 @@ function NuraSelect({
       onChange={(e) => onChange(e.target.value)}
       className="w-full px-4 py-4 rounded-2xl bg-muted text-foreground text-sm border-0 focus:ring-2 focus:ring-ring outline-none cursor-pointer appearance-none"
       style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='currentColor' stroke-width='1.5' fill='none'/%3E%3C/svg%3E")`,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='currentColor' strokeWidth='1.5' fill='none'/%3E%3C/svg%3E")`,
         backgroundRepeat: "no-repeat",
         backgroundPosition: "right 16px center",
       }}
@@ -221,7 +221,7 @@ export function BreastCancerRiskChecker() {
       <main className="max-w-lg mx-auto pb-20">
         <div className="px-4 pt-5 pb-6">
           <div className="flex items-center justify-between mb-5">
-             <BackButton className="p-0 h-auto text-foreground hover:opacity-70 transition-opacity gap-1 font-normal mb-4" />
+            <BackButton className="p-0 h-auto text-foreground hover:opacity-70 transition-opacity gap-1 font-normal mb-4" />
             <span className="text-xs font-semibold px-3 py-1 rounded-full bg-primary/10 text-primary tracking-wide">
               Gail Model
             </span>

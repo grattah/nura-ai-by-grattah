@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
+import { useCredits } from "@/components/providers/credits-provider";
 import { useRecentSearches } from "@/hooks/use-recent-searches";
 import ModalLoadingScreen from "@/components/recipe/ModalLoadingScreen";
 import SearchX from "@/components/vectors/SearchX";
@@ -70,6 +71,7 @@ const page = () => {
   );
 
   const { recents, add: addRecent, clear: clearRecents } = useRecentSearches();
+  const { applyState, openTokenWall, refresh: refreshCredits } = useCredits();
 
   const router = useRouter();
 
@@ -187,9 +189,18 @@ const page = () => {
             allowedDomains: WELLNESS_SOURCES,
           }),
         });
+        if (res.status === 402) {
+          const body = await res.json().catch(() => ({}));
+          if (body.state) applyState(body.state);
+          setGenerating(false);
+          setPendingRecipe(null);
+          openTokenWall();
+          return;
+        }
         if (!res.ok) throw new Error("generate failed");
         const data = await res.json();
         if (!data?.id) throw new Error("no id returned");
+        refreshCredits();
         router.replace(`/recipes/${data.id}`);
       } catch (err) {
         console.error("[find-recipe] generate", err);
@@ -198,7 +209,7 @@ const page = () => {
         setGenerateError(true);
       }
     },
-    [router],
+    [router, applyState, openTokenWall, refreshCredits],
   );
 
   const autoTriggered = React.useRef(false);
