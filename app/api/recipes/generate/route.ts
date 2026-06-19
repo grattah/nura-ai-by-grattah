@@ -144,10 +144,13 @@ export async function POST(req: NextRequest) {
 
   // 2. Generate the recipe content.
   let recipe: z.infer<typeof RecipeSchema>;
-  let recipeUsage: { totalTokens?: number; inputTokens?: number; outputTokens?: number } | undefined;
+  let recipeUsage:
+    | { totalTokens?: number; inputTokens?: number; outputTokens?: number }
+    | undefined;
   try {
     const result = await generateObject({
-      model: anthropic("claude-sonnet-4-6"),
+      model: anthropic("claude-haiku-4-5"),
+      // model: anthropic("claude-sonnet-4-6"),
       maxOutputTokens: MAX_OUTPUT_TOKENS.generate,
       schema: RecipeSchema,
       system: `You are a culinary wellness expert for the Nuko app. Create one specific,
