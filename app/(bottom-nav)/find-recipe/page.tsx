@@ -21,6 +21,8 @@ import ModalLoadingScreen from "@/components/recipe/ModalLoadingScreen";
 import SearchX from "@/components/vectors/SearchX";
 import { WELLNESS_SOURCES } from "@/lib/wellness-sources";
 import BackButton from "@/components/back-button";
+import { PaywallModal } from "@/components/paywall/paywall-modal";
+import TokensModal from "@/components/tokens/TokensModal";
 
 interface RecipeSuggestion {
   title: string;
@@ -56,6 +58,9 @@ const page = () => {
   const [pendingRecipe, setPendingRecipe] = React.useState<string | null>(null);
   const [generating, setGenerating] = React.useState(false);
   const [generateError, setGenerateError] = React.useState(false);
+  // Gated-response modals: paywall (guest / no subscription), token top-up (out of tokens).
+  const [paywallOpen, setPaywallOpen] = React.useState(false);
+  const [tokenModalOpen, setTokenModalOpen] = React.useState(false);
   const [aiSuggestions, setAiSuggestions] = React.useState<RecipeSuggestion[]>(
     [],
   );
@@ -71,7 +76,7 @@ const page = () => {
   );
 
   const { recents, add: addRecent, clear: clearRecents } = useRecentSearches();
-  const { applyState, openTokenWall, refresh: refreshCredits } = useCredits();
+  const { applyState, refresh: refreshCredits } = useCredits();
 
   const router = useRouter();
 
@@ -189,12 +194,21 @@ const page = () => {
             allowedDomains: WELLNESS_SOURCES,
           }),
         });
+        // Out of tokens (subscriber): show the "Need more token?" modal on blur.
         if (res.status === 402) {
           const body = await res.json().catch(() => ({}));
           if (body.state) applyState(body.state);
           setGenerating(false);
           setPendingRecipe(null);
-          openTokenWall();
+          setTokenModalOpen(true);
+          return;
+        }
+        // Guest (401) or no active subscription (403): show the paywall/sign-up
+        // modal rather than the generic red error.
+        if (res.status === 401 || res.status === 403) {
+          setGenerating(false);
+          setPendingRecipe(null);
+          setPaywallOpen(true);
           return;
         }
         if (!res.ok) throw new Error("generate failed");
@@ -209,7 +223,7 @@ const page = () => {
         setGenerateError(true);
       }
     },
-    [router, applyState, openTokenWall, refreshCredits],
+    [router, applyState, refreshCredits],
   );
 
   const autoTriggered = React.useRef(false);
@@ -538,6 +552,24 @@ const page = () => {
       </main>
       {showModalScreenLoader && (
         <ModalLoadingScreen message="Fetching your recipe..." />
+      )}
+
+      {/* Guest / non-subscriber tried to generate → sign-up / subscribe modal. */}
+      <PaywallModal open={paywallOpen} onOpenChange={setPaywallOpen} />
+
+      {/* Subscriber out of tokens → "Need more token?" modal on a blurred page. */}
+      {tokenModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
+          <button
+            type="button"
+            aria-label="Close"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setTokenModalOpen(false)}
+          />
+          <div className="relative w-full max-w-sm">
+            <TokensModal />
+          </div>
+        </div>
       )}
     </div>
   );
