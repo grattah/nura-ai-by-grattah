@@ -42,7 +42,7 @@ const HelpForm = ({ email, fullname }: { email: string; fullname: string }) => {
             handleSubmit();
           }}
         >
-          <div className="flex flex-col gap-11.25">
+          <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
               <label className="text-subtle text-sm max-[400px]:text-xs font-medium">
                 Your email address
@@ -88,7 +88,7 @@ const HelpForm = ({ email, fullname }: { email: string; fullname: string }) => {
               <FeedbackMessage value={message} onChange={setMessage} />
             </div>
           </div>
-          <div className="flex flex-col gap-2.25 justify-center mt-3">
+          <div className="flex flex-col gap-2.25 justify-center mt-4">
             <button
               type="submit"
               className="py-4 rounded-full bg-mint-green text-white"
