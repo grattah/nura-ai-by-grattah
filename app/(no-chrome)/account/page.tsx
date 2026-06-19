@@ -169,7 +169,7 @@ export default async function AccountPage() {
               <HelpCircle className="w-4 h-4 text-grey-c500" strokeWidth={2} />
             }
             label="Help & guidance"
-            href="/help"
+            href="/help-and-guidance"
           />
           <SettingsRow
             icon={<Shield className="w-4 h-4 text-grey-c500" strokeWidth={2} />}
