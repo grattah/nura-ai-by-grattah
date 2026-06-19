@@ -1,11 +1,27 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getBalance } from "@/lib/credits-server";
-import { LOW_THRESHOLD } from "@/lib/credits";
+import { getTokenState, isLowState, type TokenState } from "@/lib/credits-server";
+import { hasActiveSubscription } from "@/lib/subscription";
+import { WEEKLY_UNITS } from "@/lib/credits";
 
-// Current credit balance for the signed-in subscriber. Applies the idempotent
-// daily grant (service-role RPC) so the first load of a new day tops up. Non-
-// subscribers get no grant — credits are a subscriber benefit gated upstream.
+// Token state for the signed-in subscriber. Applies the rolling weekly reset
+// (service-role RPC). Non-subscribers get no allowance — tokens are a subscriber
+// benefit gated upstream by the paywall.
+
+const EMPTY: TokenState = {
+  weeklyUnits: WEEKLY_UNITS,
+  weeklyUsed: 0,
+  weeklyRemaining: WEEKLY_UNITS,
+  weeklyPct: 0,
+  extraPurchased: 0,
+  extraUsed: 0,
+  extraBalance: 0,
+  extraPct: 0,
+  totalRemaining: 0,
+  resetAt: null,
+  lastPurchaseAt: null,
+};
+
 export async function GET() {
   const supabase = await createClient();
   const {
@@ -16,34 +32,30 @@ export async function GET() {
     return NextResponse.json({
       authenticated: false,
       hasAccess: false,
-      balance: 0,
       isLow: false,
+      isOut: true,
+      state: EMPTY,
     });
   }
 
-  const { data: sub } = await supabase
-    .from("subscriptions")
-    .select("status, expires_at")
-    .eq("user_id", user.id)
-    .eq("status", "active")
-    .maybeSingle();
-  const hasAccess =
-    !!sub && (!sub.expires_at || new Date(sub.expires_at) > new Date());
+  const hasAccess = await hasActiveSubscription(supabase, user.id);
 
   if (!hasAccess) {
     return NextResponse.json({
       authenticated: true,
       hasAccess: false,
-      balance: 0,
       isLow: false,
+      isOut: true,
+      state: EMPTY,
     });
   }
 
-  const balance = await getBalance(user.id);
+  const state = await getTokenState(user.id);
   return NextResponse.json({
     authenticated: true,
     hasAccess: true,
-    balance,
-    isLow: balance <= LOW_THRESHOLD,
+    isLow: isLowState(state),
+    isOut: state.totalRemaining <= 0,
+    state,
   });
 }

@@ -42,14 +42,14 @@ export function FollowUpSection({
 
   const [input, setInput] = useState("");
 
-  const { setBalance, openBuyModal, refresh: refreshCredits } = useCredits();
+  const { applyState, openTokenWall, refresh: refreshCredits } = useCredits();
 
   const { messages, sendMessage, status, setMessages } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/rag/chat",
-      // Each user-asked follow-up spends a credit. Intercept the response to
-      // surface the out-of-credits modal on 402 and refresh the balance after
-      // a successful charge (the spend happens server-side before streaming).
+      // Each user-asked follow-up meters tokens. Intercept the response to
+      // surface the out-of-tokens wall on 402 and refresh the balance after a
+      // successful answer (the server meters in onFinish once it completes).
       fetch: async (input, init) => {
         const res = await fetch(input as RequestInfo, init);
         if (res.status === 402) {
@@ -57,12 +57,13 @@ export function FollowUpSection({
             .clone()
             .json()
             .then((b) => {
-              if (typeof b?.balance === "number") setBalance(b.balance);
+              if (b?.state) applyState(b.state);
             })
             .catch(() => {});
-          openBuyModal();
+          openTokenWall();
         } else if (res.ok) {
-          refreshCredits();
+          // Meter lands server-side when the stream finishes; refresh shortly after.
+          setTimeout(() => refreshCredits(), 1500);
         }
         return res;
       },
@@ -309,7 +310,7 @@ function ChatThread({ messages, isLoading }: ChatThreadProps) {
                       {(hasActiveTool || betweenToolAndText) && (
                         <div className="flex items-center gap-1.5 text-sm max-xs:-text-xs text-muted-foreground">
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          Searching trusted sources…
+                          {/* Searching trusted sources… */}
                         </div>
                       )}
 
@@ -317,7 +318,7 @@ function ChatThread({ messages, isLoading }: ChatThreadProps) {
                         <span>{stripMarkdown(finalText.text)}</span>
                       ) : !isLoading ? (
                         <span className="text-sm max-xs:text-xs text-muted-foreground">
-                          Nura couldn't generate a response. Please try asking a
+                          Nuko couldn't generate a response. Please try asking a
                           different question or check back later.
                         </span>
                       ) : null}

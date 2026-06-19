@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Nura AI",
-    short_name: "Nura",
+    name: "Nuko AI",
+    short_name: "Nuko",
     start_url: "/",
     icons: [
       {

@@ -7,29 +7,50 @@ import {
   useEffect,
   useState,
 } from "react";
-import { LOW_THRESHOLD } from "@/lib/credits";
-import { OutOfCreditsModal } from "@/components/credits/out-of-credits-modal";
+import { WEEKLY_UNITS, LOW_WARN_PCT, type TokenState } from "@/lib/credits";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import NoTokens from "@/components/tokens/NoTokens";
+
+const EMPTY_STATE: TokenState = {
+  weeklyUnits: WEEKLY_UNITS,
+  weeklyUsed: 0,
+  weeklyRemaining: WEEKLY_UNITS,
+  weeklyPct: 0,
+  extraPurchased: 0,
+  extraUsed: 0,
+  extraBalance: 0,
+  extraPct: 0,
+  totalRemaining: 0,
+  resetAt: null,
+  lastPurchaseAt: null,
+};
 
 interface CreditsState {
-  balance: number;
-  isLow: boolean;
+  state: TokenState;
+  isLow: boolean; // weekly allowance ≥ LOW_WARN_PCT used
+  isOut: boolean; // no weekly nor extra units left
   hasAccess: boolean;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
 
 interface CreditsContextValue extends CreditsState {
-  /** Re-fetch the balance from the server (applies the daily grant). */
+  /** Re-fetch token state from the server (applies the rolling weekly reset). */
   refresh: () => Promise<void>;
-  /** Optimistically set the balance (e.g. from a 402 response body). */
-  setBalance: (balance: number) => void;
-  /** Open the global "out of credits" modal. */
-  openBuyModal: () => void;
+  /** Apply a state pushed from a 402 response body. */
+  applyState: (state: TokenState) => void;
+  /** Show the full-screen "out of tokens" wall. */
+  openTokenWall: () => void;
 }
 
 const initialState: CreditsState = {
-  balance: 0,
+  state: EMPTY_STATE,
   isLow: false,
+  isOut: false,
   hasAccess: false,
   isAuthenticated: false,
   isLoading: true,
@@ -38,13 +59,20 @@ const initialState: CreditsState = {
 const CreditsContext = createContext<CreditsContextValue>({
   ...initialState,
   refresh: async () => {},
-  setBalance: () => {},
-  openBuyModal: () => {},
+  applyState: () => {},
+  openTokenWall: () => {},
 });
+
+function deriveFlags(s: TokenState) {
+  return {
+    isLow: s.weeklyPct >= LOW_WARN_PCT * 100,
+    isOut: s.totalRemaining <= 0,
+  };
+}
 
 export function CreditsProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<CreditsState>(initialState);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [wallOpen, setWallOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -53,12 +81,14 @@ export function CreditsProvider({ children }: { children: React.ReactNode }) {
       const data = (await res.json()) as {
         authenticated: boolean;
         hasAccess: boolean;
-        balance: number;
         isLow: boolean;
+        isOut: boolean;
+        state: TokenState;
       };
       setState({
-        balance: data.balance,
+        state: data.state,
         isLow: data.isLow,
+        isOut: data.isOut,
         hasAccess: data.hasAccess,
         isAuthenticated: data.authenticated,
         isLoading: false,
@@ -68,11 +98,11 @@ export function CreditsProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const setBalance = useCallback((balance: number) => {
-    setState((s) => ({ ...s, balance, isLow: balance <= LOW_THRESHOLD }));
+  const applyState = useCallback((next: TokenState) => {
+    setState((s) => ({ ...s, state: next, ...deriveFlags(next) }));
   }, []);
 
-  const openBuyModal = useCallback(() => setModalOpen(true), []);
+  const openTokenWall = useCallback(() => setWallOpen(true), []);
 
   useEffect(() => {
     refresh();
@@ -80,14 +110,20 @@ export function CreditsProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <CreditsContext.Provider
-      value={{ ...state, refresh, setBalance, openBuyModal }}
+      value={{ ...state, refresh, applyState, openTokenWall }}
     >
       {children}
-      <OutOfCreditsModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        balance={state.balance}
-      />
+      <Dialog open={wallOpen} onOpenChange={setWallOpen}>
+        <DialogContent
+          className="sm:max-w-md p-0 gap-0 overflow-hidden border-0 bg-background"
+          showCloseButton
+        >
+          <DialogTitle className="sr-only">Out of tokens</DialogTitle>
+          <div className="pt-10">
+            <NoTokens resetAt={state.state.resetAt} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </CreditsContext.Provider>
   );
 }

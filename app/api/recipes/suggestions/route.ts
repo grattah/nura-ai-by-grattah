@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
 A user searched for a wellness drink/recipe that wasn't in our catalogue. Invent
 exactly 5 NEW, distinct recipe names that are closely related and convincingly
 similar to what they searched for — the kind of drink/recipe someone making that
-search would love to discover.
+search would love to discover. DO NOT SUGGEST FOOD RECIPES. All the recipes you suggest MUST be limited to drinks.
 
 Rules:
 - Return plain, specific drink/recipe names only (e.g. "Cucumber Mint Cooler").

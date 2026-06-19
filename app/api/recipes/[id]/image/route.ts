@@ -4,6 +4,8 @@ import { google } from "@ai-sdk/google";
 import sharp from "sharp";
 import { getCachedUser, createServiceRoleClient } from "@/lib/supabase/server";
 import { getAdminIdentity } from "@/lib/admin/auth";
+import { meterUnits } from "@/lib/credits-server";
+import { IMAGE_UNITS } from "@/lib/credits";
 
 export const maxDuration = 60;
 
@@ -86,6 +88,20 @@ export async function POST(
     } = admin.storage.from("recipe-images").getPublicUrl(path);
 
     await admin.from("recipes").update({ image_url: publicUrl }).eq("id", id);
+
+    // Account for the Gemini image cost: a fixed unit charge to the recipe's
+    // creator (image models bill per-image, so no token divisor). Admin-triggered
+    // generations for the catalogue are not charged. Not gated — this is the
+    // deferred completion of an already-initiated generate.
+    if (isOwner) {
+      const usage = result.usage as
+        | { totalTokens?: number; inputTokens?: number; outputTokens?: number }
+        | undefined;
+      const rawTokens =
+        usage?.totalTokens ??
+        (usage?.inputTokens ?? 0) + (usage?.outputTokens ?? 0);
+      await meterUnits(user.id, IMAGE_UNITS, "recipe-image", rawTokens);
+    }
 
     return NextResponse.json({ imageUrl: publicUrl });
   } catch (err) {

@@ -1,24 +1,51 @@
-// Credit economy config — shared by client and server. Pure (no I/O).
+// Token economy config — shared by client and server. Pure (no I/O).
 //
-// Credits meter user-initiated LLM work. Subscribers get DAILY_GRANT credits
-// each day; unused credits carry over forever (never expire). They can also buy
-// one-time bundles. Costs are fixed per action; token caps on each LLM call keep
-// the real cost behind one credit bounded.
+// Metered LLM work spends "tokens" (friendly units). Each unit is calibrated from
+// real Claude token usage: a call's actual usage (input + output, the way Claude
+// counts them for claude-sonnet-4-6) is converted to units via UNIT_TOKENS.
+// Subscribers get WEEKLY_UNITS free each week (rolling 7-day window, never carries
+// over); they can also buy "extra" units that never expire and are consumed only
+// after the weekly allowance is exhausted.
 
 export type CreditAction = "search" | "followup" | "generate";
 
-export const DAILY_GRANT = 30;
-export const LOW_THRESHOLD = 10;
+// Client-safe token wallet snapshot (shared by the API, server helpers, and UI).
+export interface TokenState {
+  weeklyUnits: number;
+  weeklyUsed: number;
+  weeklyRemaining: number;
+  weeklyPct: number; // 0–100, share of the weekly allowance used
+  extraPurchased: number;
+  extraUsed: number;
+  extraBalance: number;
+  extraPct: number; // 0–100, share of purchased extra used
+  totalRemaining: number;
+  resetAt: string | null; // ISO; when the weekly bucket next resets
+  lastPurchaseAt: string | null;
+}
 
-export const COSTS: Record<CreditAction, number> = {
-  search: 1,
-  followup: 1,
-  // Covers the whole recipe deliverable — text generation + the lazily
-  // generated hero image (the image route isn't billed separately).
-  generate: 3,
-};
+// Free weekly allowance for subscribers (units). Keep in sync with the SQL
+// constant in the tokens migration.
+export const WEEKLY_UNITS = 50;
 
-// Output-token ceilings per metered call, so one credit maps to a bounded spend.
+// Claude tokens per 1 unit. Calibrated so a typical action (~1–3k real tokens)
+// costs ~1–2 units. Output tokens dominate; MAX_OUTPUT_TOKENS bounds the worst case.
+export const UNIT_TOKENS = 1500;
+
+// Show the "almost out" warning once this fraction of the weekly allowance is used.
+export const LOW_WARN_PCT = 0.8;
+
+// Fixed unit cost for a generated hero image (Gemini bills per-image, not per text
+// token, so it can't share the Claude token divisor).
+export const IMAGE_UNITS = 2;
+
+/** Convert real Claude token usage to billable units (min 1 for any real call). */
+export function unitsForTokens(claudeTokens: number): number {
+  if (!Number.isFinite(claudeTokens) || claudeTokens <= 0) return 1;
+  return Math.max(1, Math.ceil(claudeTokens / UNIT_TOKENS));
+}
+
+// Output-token ceilings per metered call, so one action maps to a bounded spend.
 export const MAX_OUTPUT_TOKENS: Record<CreditAction, number> = {
   search: 1200,
   followup: 1024,
@@ -27,7 +54,7 @@ export const MAX_OUTPUT_TOKENS: Record<CreditAction, number> = {
 
 export interface CreditBundle {
   id: string;
-  credits: number;
+  credits: number; // units granted to the "extra" bucket
   amount: number; // price in pence (GBP)
   label: string;
   blurb: string;

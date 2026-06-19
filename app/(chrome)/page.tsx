@@ -10,8 +10,8 @@ import { RecipeCardNew } from "@/components/home/recipe-card-new";
 import { WellnessTipCard } from "@/components/home/wellness-tip-card";
 import { CategorySection } from "@/components/home/category-section";
 import { UpgradeBanner } from "@/components/home/upgrade-banner";
-import { LowCreditsBanner } from "@/components/credits/low-credits-banner";
 import { getBookmarkedIds } from "@/actions/bookmark";
+import { hasActiveSubscription } from "@/lib/subscription";
 import { withTiming } from "@/lib/perf";
 
 type RecipeWithTags = {
@@ -69,21 +69,15 @@ export default async function HomePage() {
   const bookmarkedIds = new Set<string>();
   if (user) {
     const supabase = await createClient();
-    const [{ data: sub }, ids] = await Promise.all([
-      withTiming("home:subscription", async () =>
-        supabase
-          .from("subscriptions")
-          .select("status, expires_at")
-          .eq("user_id", user.id)
-          .eq("status", "active")
-          .maybeSingle(),
+    const [access, ids] = await Promise.all([
+      withTiming("home:subscription", () =>
+        hasActiveSubscription(supabase, user.id),
       ),
       withTiming("home:getBookmarkedIds", () =>
         getBookmarkedIds(popularRecipes.map((r) => r.id)),
       ),
     ]);
-    hasAccess =
-      !!sub && (!sub.expires_at || new Date(sub.expires_at) > new Date());
+    hasAccess = access;
     ids.forEach((id) => bookmarkedIds.add(id));
   }
 
@@ -98,9 +92,6 @@ export default async function HomePage() {
           </h1>
           <SearchSection />
         </section>
-
-        {/* Low-credits warning (subscribers only, self-hides when balance ok) */}
-        <LowCreditsBanner />
 
         {/* Popular Recipes */}
         <section>

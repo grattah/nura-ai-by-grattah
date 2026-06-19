@@ -1,19 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   MoveRight,
   X,
   Infinity as InfinityIcon,
-  CreditCard,
 } from "lucide-react";
 import { IoMdLock } from "react-icons/io";
-import { IoPersonOutline } from "react-icons/io5";
 
 import BackButton from "@/components/back-button";
 import Link from "next/link";
-import Stripe from "../vectors/stripe";
+import { createTokenCheckout } from "@/actions/credits-checkout";
+import { CheckoutEmbed } from "@/components/checkout-embed";
 
 type Bundle = {
   id: string;
@@ -49,19 +48,26 @@ export default function BuyTokens() {
   const [selected, setSelected] = useState<Bundle>(
     BUNDLES.find((b) => b.id === "popular")!
   );
-  const [isPaying, setIsPaying] = useState(false);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handlePay = async () => {
-    setIsPaying(true);
-    // ── STRIPE GOES HERE ──────────────────────────────────────────────
-    // Replace this block with a call to a server action that creates a
-    // Stripe Checkout session / PaymentIntent for `selected.id`, then
-    // redirects or confirms. The server resolves the real price from the
-    // bundle id; do NOT send `selected.price` from here.
-    await new Promise((r) => setTimeout(r, 1200)); // placeholder
-    setIsPaying(false);
-    alert(`Payment step for ${selected.tokens} tokens — wire Stripe here.`);
-    // ──────────────────────────────────────────────────────────────────
+  // Create the Stripe session when the user reaches the card step. The server
+  // resolves the real price from the bundle id (never trusts the client price).
+  useEffect(() => {
+    if (step !== "card" || clientSecret) return;
+    setError(null);
+    createTokenCheckout(selected.id)
+      .then((res) => {
+        if ("error" in res) setError(res.error);
+        else setClientSecret(res.clientSecret);
+      })
+      .catch(() => setError("Failed to start payment. Please try again."));
+  }, [step, clientSecret, selected.id]);
+
+  // Re-selecting a bundle invalidates any prepared session.
+  const handleSelect = (b: Bundle) => {
+    setSelected(b);
+    setClientSecret(null);
   };
 
   const title =
@@ -140,7 +146,7 @@ export default function BuyTokens() {
         {step === "select" && (
           <SelectStep
             selected={selected}
-            onSelect={setSelected}
+            onSelect={handleSelect}
             onContinue={() => setStep("review")}
           />
         )}
@@ -148,7 +154,7 @@ export default function BuyTokens() {
           <ReviewStep bundle={selected} onContinue={() => setStep("card")} />
         )}
         {step === "card" && (
-          <CardStep bundle={selected} isPaying={isPaying} onPay={handlePay} />
+          <CardStep bundle={selected} clientSecret={clientSecret} error={error} />
         )}
       </main>
     </div>
@@ -304,102 +310,37 @@ function ReviewStep({
 
 function CardStep({
   bundle,
-  isPaying,
-  onPay,
+  clientSecret,
+  error,
 }: {
   bundle: Bundle;
-  isPaying: boolean;
-  onPay: () => void;
+  clientSecret: string | null;
+  error: string | null;
 }) {
   return (
     <>
       <div className="rounded-2xl border border-[#227B6F] bg-[#E6F4EB] px-4 py-3 mt-2 flex items-center">
         <div className="flex-1 flex flex-col gap-1">
-          <p className="font-semibold text-sm">Nuko Credits</p>
+          <p className="font-semibold text-sm">Nuko Tokens</p>
           <p className="text-xs font-medium">Personalized feedbacks</p>
         </div>
 
         <div className="text-end">
           <p className="text-xl font-semibold">{gbp(bundle.price)}</p>
-          <p className="text-sm font-medium">{bundle.tokens} credits</p>
+          <p className="text-sm font-medium">{bundle.tokens} tokens</p>
         </div>
       </div>
 
-      {/* Placeholder card fields — these get REPLACED by Stripe Elements when
-          you wire payment. They are non-functional and collect nothing. */}
-      <form className="mt-6 space-y-4">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="cardNumber" className="text-sm text-[#57605E]">
-            Card number
-          </label>
-          <div className="relative w-full">
-            <input
-              type="text"
-              id="cardNumber"
-              placeholder="0000 0000 0000 0000"
-              className="rounded-lg pl-9 pr-3 py-[14px] text-sm bg-[#FFFFFF] placeholder:text-muted w-full"
-            />
-            <CreditCard
-              size={16}
-              color="#9CA5A3"
-              className="absolute top-4.25 left-3"
-            />
+      <div className="mt-6">
+        {error ? (
+          <p className="text-sm text-red-500 text-center">{error}</p>
+        ) : !clientSecret ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="w-8 h-8 rounded-full border-2 border-muted-foreground border-t-transparent animate-spin" />
           </div>
-        </div>
-        <div className="flex gap-3">
-          <div className="flex-1 flex flex-col gap-1">
-            <label htmlFor="expiryDate" className="text-sm text-[#57605E]">
-              Expiry date
-            </label>
-            <input
-              type="date"
-              id="expiryDate"
-              className="rounded-lg px-3 py-[14px] text-sm bg-[#FFFFFF] placeholder:text-muted w-full"
-            />
-          </div>
-          <div className="flex-1 flex flex-col gap-1">
-            <label htmlFor="cvcNumber" className="text-sm text-[#57605E]">
-              CVC
-            </label>
-            <input
-              type="text"
-              id="cvcNumber"
-              placeholder="123"
-              className="rounded-lg px-3 py-[14px] text-sm bg-[#FFFFFF] placeholder:text-muted w-full"
-            />
-          </div>
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="cardName" className="text-sm text-[#57605E]">
-            Name on card
-          </label>
-          <div className="relative w-full">
-            <input
-              type="text"
-              id="cardName"
-              placeholder="Full name"
-              className="rounded-lg pl-9 pr-3 py-[14px] text-sm bg-[#FFFFFF] placeholder:text-muted w-full"
-            />
-            <IoPersonOutline
-              size={16}
-              color="#9CA5A3"
-              className="absolute top-4.25 left-3"
-            />
-          </div>
-        </div>
-      </form>
-
-      <div className="mt-auto pt-6">
-        <button
-          onClick={onPay}
-          disabled={isPaying}
-          className="w-full bg-[#227B6F] text-white font-medium rounded-full py-4 hover:opacity-90 transition-opacity disabled:opacity-50"
-        >
-          {isPaying ? "Processing…" : `Make payment`}
-        </button>
-        <p className="text-sm max-[400px]:text-xs text-[#57605E] text-center mt-2 flex items-center justify-center gap-1">
-          <IoMdLock size={12} /> Secured by <Stripe />
-        </p>
+        ) : (
+          <CheckoutEmbed clientSecret={clientSecret} />
+        )}
       </div>
     </>
   );

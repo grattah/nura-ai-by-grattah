@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useAccess } from "@/hooks/use-access";
 import { useCredits } from "@/components/providers/credits-provider";
+import PersonalizedTokenModal from "@/components/tokens/PersonalizedTokenModal";
 import { EditSearchSheet } from "@/components/search/edit-search-sheet";
 import type { PersonalizedSearchResult } from "@/app/api/personalized-search/route";
 import Cup from "@/components/vectors/cup";
@@ -85,7 +86,7 @@ function PersonalizedSearchContent() {
   const query = params.get("q") ?? "";
 
   const { hasAccess, isLoading: accessLoading } = useAccess();
-  const { setBalance, openBuyModal, refresh: refreshCredits } = useCredits();
+  const { applyState, openTokenWall, refresh: refreshCredits } = useCredits();
   const [result, setResult] = useState<PersonalizedSearchResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -118,9 +119,9 @@ function PersonalizedSearchContent() {
       });
       if (res.status === 402) {
         const body = await res.json().catch(() => ({}));
-        if (typeof body.balance === "number") setBalance(body.balance);
-        openBuyModal();
-        setError("You're out of credits. Top up to keep searching.");
+        if (body.state) applyState(body.state);
+        openTokenWall();
+        setError("You're out of tokens. Top up to keep searching.");
         return;
       }
       if (!res.ok) throw new Error("Failed");
@@ -135,7 +136,7 @@ function PersonalizedSearchContent() {
     } finally {
       setLoading(false);
     }
-  }, [setBalance, openBuyModal, refreshCredits]);
+  }, [applyState, openTokenWall, refreshCredits]);
 
   // Render a cached result instantly, independent of the access check —
   // no need to wait on the (potentially slow) subscription lookup just to
@@ -422,6 +423,9 @@ function PersonalizedSearchContent() {
               </button>
             </div>
           </div>
+
+          {/* Almost-out warning (subscribers near their weekly limit) */}
+          <PersonalizedTokenModal />
         </div>
       </div>
 

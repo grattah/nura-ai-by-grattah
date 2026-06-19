@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { hasActiveSubscription } from "@/lib/subscription";
 
 interface AccessState {
   hasAccess: boolean;
@@ -36,16 +37,9 @@ export function AccessProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const { data } = await supabase
-        .from("subscriptions")
-        .select("status, expires_at")
-        .eq("user_id", session.user.id)
-        .eq("status", "active")
-        .maybeSingle();
+      const valid = await hasActiveSubscription(supabase, session.user.id);
 
       if (!active) return;
-      const valid =
-        !!data && (!data.expires_at || new Date(data.expires_at) > new Date());
       setState({ hasAccess: valid, isAuthenticated: true, isLoading: false });
     }
 

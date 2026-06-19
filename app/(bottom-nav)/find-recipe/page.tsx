@@ -71,11 +71,7 @@ const page = () => {
   );
 
   const { recents, add: addRecent, clear: clearRecents } = useRecentSearches();
-  const {
-    setBalance,
-    openBuyModal,
-    refresh: refreshCredits,
-  } = useCredits();
+  const { applyState, openTokenWall, refresh: refreshCredits } = useCredits();
 
   const router = useRouter();
 
@@ -195,10 +191,10 @@ const page = () => {
         });
         if (res.status === 402) {
           const body = await res.json().catch(() => ({}));
-          if (typeof body.balance === "number") setBalance(body.balance);
+          if (body.state) applyState(body.state);
           setGenerating(false);
           setPendingRecipe(null);
-          openBuyModal();
+          openTokenWall();
           return;
         }
         if (!res.ok) throw new Error("generate failed");
@@ -213,7 +209,7 @@ const page = () => {
         setGenerateError(true);
       }
     },
-    [router, setBalance, openBuyModal, refreshCredits],
+    [router, applyState, openTokenWall, refreshCredits],
   );
 
   const autoTriggered = React.useRef(false);

@@ -16,8 +16,18 @@ import { type NextRequest } from "next/server";
 import { retrieve, formatContext } from "@/lib/rag";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
-import { spend } from "@/lib/credits-server";
+import { getTokenState, meter } from "@/lib/credits-server";
+import { hasActiveSubscription } from "@/lib/subscription";
 import { MAX_OUTPUT_TOKENS } from "@/lib/credits";
+
+// Extract total token usage from an AI SDK usage object (v5 shape).
+function usageTokens(u: {
+  totalTokens?: number;
+  inputTokens?: number;
+  outputTokens?: number;
+}): number {
+  return u?.totalTokens ?? (u?.inputTokens ?? 0) + (u?.outputTokens ?? 0);
+}
 
 function jsonError(message: string, status: number, extra?: object) {
   return new Response(JSON.stringify({ error: message, ...extra }), {
@@ -69,7 +79,7 @@ Only avoid: inventing specific statistics, citing sources you haven't seen, or m
 strong clinical claims (e.g. "this cures X"). For general nutritional and wellness
 knowledge, speak with confidence.
 
-Keep your answer to 3–5 sentences, warm, and plain-English.
+Keep your answer to 3 sentences max, warm, and plain-English.
 Do not use any markdown formatting — no bold, no italics, no bullet points,
 no headers, no asterisks. Write in plain prose only.
 
@@ -94,6 +104,13 @@ IF YOU SEARCH, use these sources in order of preference:
 1. ${domainList}
 2. PubMed, NIH, NHS, CDC, WHO, BMJ, Lancet
 Avoid forums, blogs, supplement sites, or sensationalist sources.
+
+BRAND SAFETY POLICY:
+- Never mention, recommend, compare, link to, or reference any external company, website, application, service, product, brand, publication, or platform.
+- This rule applies even when the user explicitly asks for external recommendations.
+- If the user requests external websites, apps, brands, tools, competitors, or resources, politely decline and provide help using Nuko’s knowledge only.
+- Do not generate URLs, company names, app names, marketplace names, social media platforms, or competitor references.
+- Keep all responses within the Nuko ecosystem.
 
 TONE AND STYLE:
 - Speak with confidence about well-established nutrition and wellness knowledge.
@@ -128,14 +145,7 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return jsonError("Unauthorized", 401);
 
-  const { data: sub } = await supabase
-    .from("subscriptions")
-    .select("status, expires_at")
-    .eq("user_id", user.id)
-    .eq("status", "active")
-    .maybeSingle();
-  const hasAccess =
-    !!sub && (!sub.expires_at || new Date(sub.expires_at) > new Date());
+  const hasAccess = await hasActiveSubscription(supabase, user.id);
   if (!hasAccess) return jsonError("Subscription required", 403);
 
   try {
@@ -170,16 +180,29 @@ export async function POST(req: NextRequest) {
     const typeLabel = contextType === "recipe" ? "recipe" : "health guide";
     const domainList = safeDomains.map((d) => `site:${d}`).join(" OR ");
 
-    // Charge a credit only for a genuine user-asked question (the last message
-    // is from the user). Streaming refunds aren't attempted, so charge once here.
-    if (lastMessage?.role === "user" && userQuestion.trim()) {
-      const charge = await spend(user.id, "followup", "follow-up");
-      if (!charge.ok) {
-        return jsonError("insufficient_credits", 402, {
-          balance: charge.balance,
-        });
+    // Meter only a genuine user-asked question (the last message is from the
+    // user). Gate before streaming; deduct the real usage in onFinish.
+    const shouldMeter = lastMessage?.role === "user" && !!userQuestion.trim();
+    if (shouldMeter) {
+      const state = await getTokenState(user.id);
+      if (state.totalRemaining <= 0) {
+        return jsonError("insufficient_tokens", 402, { state });
       }
     }
+    const onFinish = shouldMeter
+      ? ({
+          totalUsage,
+        }: {
+          totalUsage: {
+            totalTokens?: number;
+            inputTokens?: number;
+            outputTokens?: number;
+          };
+        }) => {
+          // Fire-and-forget; the stream has already completed for the client.
+          void meter(user.id, usageTokens(totalUsage), "follow-up");
+        }
+      : undefined;
 
     const { chunks, hasGoodResults } = await retrieve(
       userQuestion,
@@ -200,6 +223,7 @@ export async function POST(req: NextRequest) {
           domainList,
         ),
         messages: convertToModelMessages(safeMessages),
+        onFinish,
       });
 
       return result.toUIMessageStreamResponse();
@@ -217,6 +241,7 @@ export async function POST(req: NextRequest) {
         safeContext,
       ),
       messages: convertToModelMessages(safeMessages),
+      onFinish,
 
       providerOptions: {
         anthropic: {

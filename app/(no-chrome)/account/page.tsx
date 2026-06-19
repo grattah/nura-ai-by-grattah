@@ -23,12 +23,13 @@ export default async function AccountPage() {
     hasPassword =
       adminUser.user?.identities?.some((i) => i.provider === "email") ?? false;
 
-    const { data: sub } = await supabase
+    const { data: subs } = await supabase
       .from("subscriptions")
       .select("status, plan")
       .eq("user_id", user.id)
-      .maybeSingle();
-    subscription = sub;
+      .order("created_at", { ascending: false })
+      .limit(1);
+    subscription = subs?.[0] ?? null;
   }
 
   const isGuest = !user;

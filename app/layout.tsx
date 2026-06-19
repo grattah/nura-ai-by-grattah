@@ -70,7 +70,7 @@ export default function RootLayout({
     // ThemeProvider to: defaultTheme="system" enableSystem disableTransitionOnChange
     <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="apple-mobile-web-app-title" content="Nura" />
+        <meta name="apple-mobile-web-app-title" content="Nuko" />
         <meta name="mobile-web-app-capable" content="yes" />
         <link rel="apple-touch-icon" href="/web-app-manifest-192x192.png" />
       </head>

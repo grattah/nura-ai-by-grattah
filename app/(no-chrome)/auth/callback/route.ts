@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { hasActiveSubscription } from "@/lib/subscription";
 import { sanitizeNext } from "@/lib/safe-redirect";
 
 export async function GET(request: Request) {
@@ -20,14 +21,8 @@ export async function GET(request: Request) {
       let destination = next;
 
       if (user) {
-        const { data: sub } = await supabase
-          .from("subscriptions")
-          .select("status")
-          .eq("user_id", user.id)
-          .eq("status", "active")
-          .maybeSingle();
-
-        destination = sub ? next : "/checkout";
+        const active = await hasActiveSubscription(supabase, user.id);
+        destination = active ? next : "/checkout";
       }
 
       // Host-aware redirect — must wrap all return paths

@@ -20,6 +20,7 @@ import { isLiked } from "@/actions/likes";
 import type { Database } from "@/lib/database.types";
 import type { SupportScore } from "@/lib/wellness-score";
 import { BookmarkProvider } from "@/components/bookmark-provider";
+import PersonalizedTokenModal from "@/components/tokens/PersonalizedTokenModal";
 
 // support_scores isn't in the generated types yet; recipe_tags is a join.
 type RecipeRecord = Database["public"]["Tables"]["recipes"]["Row"] & {
@@ -150,9 +151,9 @@ export default async function RecipeDetailPage({
 
   // The recipe's assigned wellness supports (its tags) for the DetoxCard.
   const assignedSupports = (recipe.recipe_tags ?? [])
-    .map((rt) => rt.tags)
-    .filter((t): t is { name: string; slug: string } => !!t)
-    .map((t) => ({ name: t.name, slug: t.slug }));
+    .map((rt: any) => rt.tags)
+    .filter((t: any): t is { name: string; slug: string } => !!t)
+    .map((t: any) => ({ name: t.name, slug: t.slug }));
 
   const shareDisabled = (recipe as { status?: string }).status !== "approved";
 
@@ -224,6 +225,10 @@ export default async function RecipeDetailPage({
                   savedQuestions={recipe.follow_up_questions}
                 />
               </div>
+
+              {/* Almost-out token warning — only on freshly generated (pending)
+                  recipes, not the seeded/approved catalogue. Self-hides unless low. */}
+              {shareDisabled && <PersonalizedTokenModal />}
 
               <div className="flex justify-between items-center gap-2 mt-8">
                 <div className="flex items-center gap-2 flex-1">

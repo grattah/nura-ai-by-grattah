@@ -3,7 +3,8 @@ import { generateObject } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { spend, refund } from "@/lib/credits-server";
+import { getTokenState, meter } from "@/lib/credits-server";
+import { hasActiveSubscription } from "@/lib/subscription";
 import { MAX_OUTPUT_TOKENS } from "@/lib/credits";
 
 export const maxDuration = 30;
@@ -64,15 +65,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: sub } = await supabase
-    .from("subscriptions")
-    .select("status, expires_at")
-    .eq("user_id", user.id)
-    .eq("status", "active")
-    .maybeSingle();
-
-  const hasAccess =
-    !!sub && (!sub.expires_at || new Date(sub.expires_at) > new Date());
+  const hasAccess = await hasActiveSubscription(supabase, user.id);
 
   if (!hasAccess) {
     return NextResponse.json(
@@ -92,17 +85,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Query is required" }, { status: 400 });
   }
 
-  // Charge a credit for this search (cache hits never reach the route).
-  const charge = await spend(user.id, "search", "personalized-search");
-  if (!charge.ok) {
+  // Gate before the call; we meter the real usage after it succeeds (cache hits
+  // never reach the route).
+  const state = await getTokenState(user.id);
+  if (state.totalRemaining <= 0) {
     return NextResponse.json(
-      { error: "insufficient_credits", balance: charge.balance },
+      { error: "insufficient_tokens", state },
       { status: 402 },
     );
   }
 
   try {
-    const { object } = await generateObject({
+    const { object, usage } = await generateObject({
       model: anthropic("claude-sonnet-4-6"),
       maxOutputTokens: MAX_OUTPUT_TOKENS.search,
       schema: PersonalizedSearchSchema,
@@ -124,10 +118,15 @@ Rules:
 Provide personalized wellness guidance for this concern.`,
     });
 
+    // Meter the real Claude usage now that it succeeded.
+    const tokens =
+      usage?.totalTokens ??
+      (usage?.inputTokens ?? 0) + (usage?.outputTokens ?? 0);
+    await meter(user.id, tokens, "personalized-search");
+
     return NextResponse.json(object);
   } catch (err) {
     console.error("[personalized-search]", err);
-    await refund(user.id, "search"); // generation failed — give the credit back
     return NextResponse.json(
       { error: "Failed to generate response" },
       { status: 500 },

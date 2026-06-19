@@ -5,15 +5,15 @@ import { createClient } from "@/lib/supabase/server";
 import { headers } from "next/headers";
 import { getBundle } from "@/lib/credits";
 
-// One-time credit-bundle purchase. Unlike the subscription flow this uses
+// One-time extra-token purchase. Unlike the subscription flow this uses
 // mode:"payment" with inline price_data (GBP) so no Stripe dashboard prices are
 // needed — the bundle catalogue lives in lib/credits.ts. The webhook reads
-// metadata.{type,credits} to top up the balance after payment succeeds.
-export async function createCreditCheckout(
+// metadata.{type,credits} and tops up the user's "extra" token bucket.
+export async function createTokenCheckout(
   bundleId: string,
 ): Promise<{ clientSecret: string } | { error: string }> {
   const bundle = getBundle(bundleId);
-  if (!bundle) return { error: "Unknown credit bundle." };
+  if (!bundle) return { error: "Unknown token bundle." };
 
   const origin = (await headers()).get("origin");
 
@@ -23,7 +23,7 @@ export async function createCreditCheckout(
   } = await supabase.auth.getUser();
 
   if (!user?.id) {
-    return { error: "Please sign in to buy credits." };
+    return { error: "Please sign in to buy tokens." };
   }
 
   const session = await stripe.checkout.sessions.create({
@@ -36,13 +36,13 @@ export async function createCreditCheckout(
           currency: "gbp",
           unit_amount: bundle.amount,
           product_data: {
-            name: `${bundle.credits} Nuko credits`,
+            name: `${bundle.credits} Nuko tokens`,
             description: `${bundle.label} bundle — ${bundle.blurb}`,
           },
         },
       },
     ],
-    return_url: `${origin}/buy-credits/return?session_id={CHECKOUT_SESSION_ID}`,
+    return_url: `${origin}/buy-tokens/return?session_id={CHECKOUT_SESSION_ID}&credits=${bundle.credits}`,
     client_reference_id: user.id,
     metadata: {
       type: "credits",

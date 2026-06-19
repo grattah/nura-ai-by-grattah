@@ -1,34 +1,40 @@
-'use client'
+"use client";
 
-import { cn } from '@/lib/utils'
+import { cn } from "@/lib/utils";
 
 interface NuraLogoProps {
-  className?: string
-  size?: 'sm' | 'md' | 'lg' | 'xl'
-  variant?: 'full' | 'icon' | 'text'
+  className?: string;
+  size?: "sm" | "md" | "lg" | "xl";
+  variant?: "full" | "icon" | "text";
 }
 
-export function NuraLogo({ className, size = 'md', variant = 'full' }: NuraLogoProps) {
+export function NuraLogo({
+  className,
+  size = "md",
+  variant = "full",
+}: NuraLogoProps) {
   const sizeClasses = {
-    sm: 'w-8 h-8',
-    md: 'w-12 h-12',
-    lg: 'w-16 h-16',
-    xl: 'w-20 h-20',
-  }
+    sm: "w-8 h-8",
+    md: "w-12 h-12",
+    lg: "w-16 h-16",
+    xl: "w-20 h-20",
+  };
 
   const textSizeClasses = {
-    sm: 'text-lg',
-    md: 'text-2xl',
-    lg: 'text-3xl',
-    xl: 'text-4xl',
-  }
+    sm: "text-lg",
+    md: "text-2xl",
+    lg: "text-3xl",
+    xl: "text-4xl",
+  };
 
   const LogoIcon = () => (
-    <div className={cn(
-      'rounded-xl bg-nura-cream flex items-center justify-center',
-      sizeClasses[size],
-      className
-    )}>
+    <div
+      className={cn(
+        "rounded-xl bg-nura-cream flex items-center justify-center",
+        sizeClasses[size],
+        className,
+      )}
+    >
       <svg
         viewBox="0 0 40 40"
         fill="none"
@@ -56,46 +62,71 @@ export function NuraLogo({ className, size = 'md', variant = 'full' }: NuraLogoP
           strokeLinecap="round"
           className="text-nura-forest"
         />
-        <circle cx="20" cy="14" r="2" fill="currentColor" className="text-nura-forest" />
+        <circle
+          cx="20"
+          cy="14"
+          r="2"
+          fill="currentColor"
+          className="text-nura-forest"
+        />
       </svg>
     </div>
-  )
+  );
 
-  if (variant === 'icon') {
-    return <LogoIcon />
+  if (variant === "icon") {
+    return <LogoIcon />;
   }
 
-  if (variant === 'text') {
+  if (variant === "text") {
     return (
-      <span className={cn('font-semibold italic text-foreground', textSizeClasses[size], className)}>
-        Nura.ai
+      <span
+        className={cn(
+          "font-semibold italic text-foreground",
+          textSizeClasses[size],
+          className,
+        )}
+      >
+        Nuko.ai
       </span>
-    )
+    );
   }
 
   return (
     <div className="flex items-center gap-3">
       <LogoIcon />
-      <span className={cn('font-semibold italic text-foreground', textSizeClasses[size])}>
-        Nura.ai
+      <span
+        className={cn(
+          "font-semibold italic text-foreground",
+          textSizeClasses[size],
+        )}
+      >
+        Nuko.ai
       </span>
     </div>
-  )
+  );
 }
 
-export function NuraLeafIcon({ className, size = 'md' }: { className?: string; size?: 'sm' | 'md' | 'lg' }) {
+export function NuraLeafIcon({
+  className,
+  size = "md",
+}: {
+  className?: string;
+  size?: "sm" | "md" | "lg";
+}) {
   const sizeClasses = {
-    sm: 'w-8 h-8',
-    md: 'w-12 h-12',
-    lg: 'w-16 h-16',
-  }
+    sm: "w-8 h-8",
+    md: "w-12 h-12",
+    lg: "w-16 h-16",
+  };
 
   return (
-    <div className={cn(
-      'rounded-full bg-nura-olive flex items-center justify-center',
-      sizeClasses[size],
-      className
-    )}>
+    <div
+      className={cn(
+        "rounded-full bg-nura-olive flex items-center justify-center",
+        sizeClasses[size],
+        className,
+      )}
+    >
       <svg
         viewBox="0 0 24 24"
         fill="none"
@@ -125,22 +156,30 @@ export function NuraLeafIcon({ className, size = 'md' }: { className?: string; s
         />
       </svg>
     </div>
-  )
+  );
 }
 
-export function NuraGoldLeafIcon({ className, size = 'md' }: { className?: string; size?: 'sm' | 'md' | 'lg' }) {
+export function NuraGoldLeafIcon({
+  className,
+  size = "md",
+}: {
+  className?: string;
+  size?: "sm" | "md" | "lg";
+}) {
   const sizeClasses = {
-    sm: 'w-10 h-10',
-    md: 'w-14 h-14',
-    lg: 'w-20 h-20',
-  }
+    sm: "w-10 h-10",
+    md: "w-14 h-14",
+    lg: "w-20 h-20",
+  };
 
   return (
-    <div className={cn(
-      'rounded-full bg-nura-gold flex items-center justify-center',
-      sizeClasses[size],
-      className
-    )}>
+    <div
+      className={cn(
+        "rounded-full bg-nura-gold flex items-center justify-center",
+        sizeClasses[size],
+        className,
+      )}
+    >
       <svg
         viewBox="0 0 24 24"
         fill="none"
@@ -170,5 +209,5 @@ export function NuraGoldLeafIcon({ className, size = 'md' }: { className?: strin
         />
       </svg>
     </div>
-  )
+  );
 }

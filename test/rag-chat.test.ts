@@ -3,7 +3,8 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 const h = vi.hoisted(() => ({
   retrieve: vi.fn(),
   streamText: vi.fn(),
-  spend: vi.fn(),
+  getTokenState: vi.fn(),
+  meter: vi.fn(),
 }));
 
 vi.mock("ai", () => ({
@@ -18,7 +19,8 @@ vi.mock("@/lib/rag", () => ({
   formatContext: () => "ctx",
 }));
 vi.mock("@/lib/credits-server", () => ({
-  spend: (...args: unknown[]) => h.spend(...args),
+  getTokenState: (...args: unknown[]) => h.getTokenState(...args),
+  meter: (...args: unknown[]) => h.meter(...args),
 }));
 
 // Authenticated subscriber by default — chainable stub for the auth + sub reads.
@@ -31,6 +33,11 @@ vi.mock("@/lib/supabase/server", () => ({
       const chain = {
         select: () => chain,
         eq: () => chain,
+        order: () => chain,
+        // getActiveSubscription reads via .order().limit(1) → array of rows.
+        limit: async () => ({
+          data: [{ status: "active", expires_at: null }],
+        }),
         maybeSingle: async () => ({
           data: { status: "active", expires_at: null },
         }),
@@ -62,7 +69,8 @@ beforeEach(() => {
   h.streamText.mockReturnValue({
     toUIMessageStreamResponse: () => new Response("stream"),
   });
-  h.spend.mockResolvedValue({ ok: true, balance: 10 });
+  h.getTokenState.mockResolvedValue({ totalRemaining: 50 });
+  h.meter.mockResolvedValue({ totalRemaining: 49 });
 });
 
 describe("rag/chat — input clamping (audit M1)", () => {

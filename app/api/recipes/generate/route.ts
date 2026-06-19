@@ -4,7 +4,8 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { WELLNESS_SOURCES } from "@/lib/wellness-sources";
-import { spend, refund } from "@/lib/credits-server";
+import { getTokenState, meter } from "@/lib/credits-server";
+import { hasActiveSubscription } from "@/lib/subscription";
 import { MAX_OUTPUT_TOKENS } from "@/lib/credits";
 
 export const maxDuration = 60;
@@ -62,15 +63,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: sub } = await supabase
-    .from("subscriptions")
-    .select("status, expires_at")
-    .eq("user_id", user.id)
-    .eq("status", "active")
-    .maybeSingle();
-
-  const hasAccess =
-    !!sub && (!sub.expires_at || new Date(sub.expires_at) > new Date());
+  const hasAccess = await hasActiveSubscription(supabase, user.id);
 
   if (!hasAccess) {
     return NextResponse.json(
@@ -138,20 +131,22 @@ export async function POST(req: NextRequest) {
   const { data: tags } = await admin.from("tags").select("id, name, slug");
   const tagList = (tags ?? []).map((t) => `${t.slug} | ${t.name}`).join("\n");
 
-  // Charge now that we're actually generating (reused/matched recipes above are
-  // free). This one charge covers the recipe text AND its lazily-generated image.
-  const charge = await spend(user.id, "generate", cleanName);
-  if (!charge.ok) {
+  // Gate now that we're actually generating (reused/matched recipes above are
+  // free). The real Claude usage is metered after success; the hero image is
+  // metered separately by the image route (fixed IMAGE_UNITS).
+  const state = await getTokenState(user.id);
+  if (state.totalRemaining <= 0) {
     return NextResponse.json(
-      { error: "insufficient_credits", balance: charge.balance },
+      { error: "insufficient_tokens", state },
       { status: 402 },
     );
   }
 
   // 2. Generate the recipe content.
   let recipe: z.infer<typeof RecipeSchema>;
+  let recipeUsage: { totalTokens?: number; inputTokens?: number; outputTokens?: number } | undefined;
   try {
-    ({ object: recipe } = await generateObject({
+    const result = await generateObject({
       model: anthropic("claude-sonnet-4-6"),
       maxOutputTokens: MAX_OUTPUT_TOKENS.generate,
       schema: RecipeSchema,
@@ -169,15 +164,24 @@ ${tagList}`,
       prompt: `Create a recipe for: "${cleanName}".${
         concern ? `\nThe user's wellness concern was: "${concern}".` : ""
       }\n\nKeep it realistic and easy to make at home.`,
-    }));
+    });
+    recipe = result.object;
+    recipeUsage = result.usage;
   } catch (err) {
     console.error("[recipes/generate] text", err);
-    await refund(user.id, "generate"); // text generation failed — refund
     return NextResponse.json(
       { error: "Failed to generate recipe" },
       { status: 500 },
     );
   }
+
+  // Meter the real Claude usage now that generation succeeded.
+  await meter(
+    user.id,
+    recipeUsage?.totalTokens ??
+      (recipeUsage?.inputTokens ?? 0) + (recipeUsage?.outputTokens ?? 0),
+    cleanName,
+  );
 
   // 3. Insert the recipe (pending, owned by the requesting user).
   const insertPayload = {
