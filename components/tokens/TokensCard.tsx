@@ -38,13 +38,29 @@ const TokensCard = ({
         </div>
         <div className="bg-white rounded-2xl p-4 flex flex-col gap-1.75">
           <div className="flex flex-col gap-3">
-            <ProgressBar value={state.extraPct} color="#F39128" trackColor="#ECEBEA" />
-            <p className="text-[#F39128] text-sm font-semibold max-[400px]:text-xs">
+            <ProgressBar
+              value={state.extraPct}
+              color={state.extraBalance === 0 ? "#F90000" : "#F39128"}
+              trackColor={state.extraBalance === 0 ? "#FFDBD6" : "#ECEBEA"}
+            />
+            <p
+              className={`${state.extraBalance === 0 ? "text-[#F90000]" : "text-[#F39128]"} text-sm font-semibold max-[400px]:text-xs`}
+            >
               {state.extraPct}% used
             </p>
           </div>
-          <div className="bg-[#F391281A] rounded-lg p-3 flex gap-1 items-start">
-            <Info color="#F39128" size={24} strokeWidth={1.67} />
+          <div
+            style={{
+              backgroundColor:
+                state.extraBalance === 0 ? "#FFDBD6" : "#F391281A",
+            }}
+            className="rounded-lg p-3 flex gap-1 items-start"
+          >
+            <Info
+              color={state.extraBalance === 0 ? "#F90000" : "#F39128"}
+              size={24}
+              strokeWidth={1.67}
+            />
             <p className="font-medium text-sm text-[#1B1D1D] max-[400px]:text-xs">
               Extra token are used only after your weekly limit is exhausted
             </p>
@@ -66,6 +82,7 @@ const TokensCard = ({
   }
 
   const almostOut = state.weeklyPct >= LOW_WARN_PCT * 100;
+  const isOut = state.weeklyRemaining === 0;
 
   return (
     <div className="flex flex-col gap-3.75">
@@ -89,13 +106,17 @@ const TokensCard = ({
         <div className="flex flex-col gap-3">
           <ProgressBar
             value={state.weeklyPct}
-            color={almostOut ? "#F39128" : undefined}
-            trackColor={almostOut ? "#ECEBEA" : undefined}
+            color={isOut ? "#F90000" : almostOut ? "#F39128" : undefined}
+            trackColor={isOut ? "#FFDBD6" : almostOut ? "#ECEBEA" : undefined}
           />
           <div className="flex justify-between items-center">
             <p
               className={`text-sm font-semibold max-[400px]:text-xs ${
-                almostOut ? "text-[#F39128]" : "text-mint-green"
+                isOut
+                  ? "text-[#F90000]"
+                  : almostOut
+                    ? "text-[#F39128]"
+                    : "text-mint-green"
               }`}
             >
               {state.weeklyPct}% used
@@ -107,10 +128,16 @@ const TokensCard = ({
         </div>
         <div
           className={`rounded-lg p-3 flex gap-1 items-start ${
-            almostOut ? "bg-[#F391281A]" : "bg-[#227B6F1A]"
+            isOut
+              ? "bg-[#FFDBD6]"
+              : almostOut
+                ? "bg-[#F391281A]"
+                : "bg-[#227B6F1A]"
           }`}
         >
-          {almostOut ? (
+          {isOut ? (
+            <Info color="#F90000" size={24} strokeWidth={1.67} />
+          ) : almostOut ? (
             <Info color="#F39128" size={24} strokeWidth={1.67} />
           ) : (
             <HiOutlineSparkles color="#227B6F" size={24} strokeWidth={1.67} />

@@ -5,6 +5,7 @@ import { ArrowLeft, Crown, HelpCircle, Shield, LogOut } from "lucide-react";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { SettingsRow } from "@/components/account/settings-row";
 import { signOut } from "@/actions/auth";
+import BackButton from "@/components/back-button";
 
 export default async function AccountPage() {
   const supabase = await createClient();
@@ -49,13 +50,7 @@ export default async function AccountPage() {
     <div className="min-h-dvh bg-background pb-10">
       {/* Header */}
       <div className="flex items-center px-6 max-xs:px-4 pt-5 pb-4 gap-3 mb-3.5">
-        <Link
-          href="/"
-          className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center shrink-0 hover:opacity-75 transition-opacity"
-          aria-label="Back"
-        >
-          <ArrowLeft className="size-5 text-foreground" />
-        </Link>
+        <BackButton className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center shrink-0 hover:opacity-75 transition-opacity" />
         <h1 className="flex-1 text-center text-xl max-xs:text-lg font-semibold text-base-text capitalize">
           Account
         </h1>

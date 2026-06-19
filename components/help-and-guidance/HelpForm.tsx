@@ -1,23 +1,40 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { Mail, Clock } from "lucide-react";
 import { IoPersonOutline } from "react-icons/io5";
 
 import BackButton from "@/components/back-button";
 import { FeedbackMessage } from "@/components/help-and-guidance/FeedbackMessage";
 import SuccessModal from "../SuccessModal";
+import { isValidEmail } from "@/lib/utils";
 
 const HelpForm = ({ email, fullname }: { email: string; fullname: string }) => {
   const [message, setMessage] = useState("");
   const [fullName, setFullName] = useState(fullname);
   const [success, setSuccess] = useState(false);
 
-  const handleSubmit = () => {
-    if (!message.trim()) return; // nothing to send
-    // send { fullName, message } to your server action / API
-    console.log({ email, fullName, message });
-    setSuccess(true);
+  const CONTACT_EMAIL = "info@grattah.com";
+
+  const canSubmit = fullName.trim() && isValidEmail(email) && message.trim();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSubmit) return;
+
+    try {
+      setSuccess(false);
+      const subject = `New enquiry from ${fullName}`;
+      const body = `Name: ${fullName}\nEmail: ${email}\n\n${message}`;
+
+      window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
+        subject,
+      )}&body=${encodeURIComponent(body)}`;
+      setSuccess(true);
+    } catch (error) {
+    } finally {
+      setSuccess(false);
+    }
   };
 
   return (
@@ -36,12 +53,7 @@ const HelpForm = ({ email, fullname }: { email: string; fullname: string }) => {
           <div className="size-10 shrink-0" aria-hidden />
         </div>
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSubmit();
-          }}
-        >
+        <form onSubmit={handleSubmit}>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
               <label className="text-subtle text-sm max-[400px]:text-xs font-medium">
