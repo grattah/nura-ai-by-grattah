@@ -1,30 +1,50 @@
 "use client";
 
-import React from "react";
 import { ProgressBar } from "../ProgressBar";
 import { Info, Zap } from "lucide-react";
 import Link from "next/link";
 import { useCredits } from "@/components/providers/credits-provider";
 import { formatResetDate } from "@/lib/tokens-format";
+import { LOW_WARN_PCT } from "@/lib/credits";
 
-// The ≥80% "almost out" warning shown at the bottom of token-consuming result
-// pages (personalized-search results, a freshly generated recipe). Self-hides
-// unless the user is low (but not fully out — that triggers the full-screen wall).
 const PersonalizedTokenModal = () => {
   const { hasAccess, isLow, isOut, state } = useCredits();
 
-  if (!hasAccess || !isLow || isOut) return null;
+  if (
+    !hasAccess ||
+    !isLow ||
+    isOut ||
+    (state.extraPct && state.extraPct < LOW_WARN_PCT * 100)
+  )
+    return null;
+
+  console.log(state);
+
+  const WHAT_TO_SHOW =
+    state.weeklyPct >= LOW_WARN_PCT * 100
+      ? state.extraPct != null && state.extraPct >= LOW_WARN_PCT * 100
+        ? "SHOWEXTRA"
+        : "SHOWFREE"
+      : null;
 
   return (
     <div className="p-4 rounded-2xl bg-white flex flex-col gap-4">
       <div className="flex flex-col gap-3">
         <p className="font-semibold text-black max-[400px]:text-sm text-center">
-          You're almost out of free credits
+          You're almost out of {WHAT_TO_SHOW === "SHOWEXTRA" ? "extra" : "free"}{" "}
+          credits
         </p>
-        <ProgressBar value={state.weeklyPct} color="#F39128" trackColor="#ECEBEA" />
+        <ProgressBar
+          value={
+            WHAT_TO_SHOW === "SHOWEXTRA" ? state.extraPct : state.weeklyPct
+          }
+          color="#F39128"
+          trackColor="#ECEBEA"
+        />
         <div className="flex justify-between items-center">
           <p className="font-semibold text-[#F39128] text-sm max-[400px]:text-xs">
-            {state.weeklyPct}% used
+            {WHAT_TO_SHOW === "SHOWEXTRA" ? state.extraPct : state.weeklyPct}%
+            used
           </p>
           <p className="font-medium text-subtle text-sm max-[400px]:text-xs">
             Resets {formatResetDate(state.resetAt)}
