@@ -27,7 +27,7 @@ const page = () => {
           <div className="size-10 shrink-0" aria-hidden />
         </div>
 
-        <div className="w-full rounded-full p-1 flex items-center bg-white/20 backdrop-blur-[1px] border border-white/20">
+        <div className="w-full rounded-full p-1 flex items-center liquid-glass">
           <button
             onClick={() => setPageState("privacy")}
             className={`flex-1 w-full text-center py-3 rounded-full text-sm ${
