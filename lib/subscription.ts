@@ -11,13 +11,26 @@ export async function getActiveSubscription(
   supabase: SupabaseClient<Database>,
   userId: string,
 ): Promise<ActiveSubscription | null> {
+  // NB: use limit(1), NOT .maybeSingle() — a user can legitimately have more
+  // than one `active` row (e.g. re-payments). maybeSingle() ERRORS on >1 match,
+  // which would silently read as "no subscription" and lock the user out.
   const { data } = await supabase
     .from("subscriptions")
     .select("plan, expires_at")
     .eq("user_id", userId)
     .eq("status", "active")
-    .maybeSingle();
-  return data ?? null;
+    .order("created_at", { ascending: false })
+    .limit(1);
+  return data?.[0] ?? null;
+}
+
+/** True when the user has an active, unexpired subscription. */
+export async function hasActiveSubscription(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+): Promise<boolean> {
+  const sub = await getActiveSubscription(supabase, userId);
+  return !!sub && (!sub.expires_at || new Date(sub.expires_at) > new Date());
 }
 
 /**

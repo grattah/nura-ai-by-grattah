@@ -1,4 +1,5 @@
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
+import { getActiveSubscription } from "@/lib/subscription";
 import { NextResponse } from "next/server";
 
 const MAX_ATTEMPTS = 10;
@@ -21,15 +22,10 @@ export async function POST() {
   const adminSupabase = createServiceRoleClient();
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    const { data } = await adminSupabase
-      .from("subscriptions")
-      .select("status, expires_at")
-      .eq("user_id", user.id)
-      .eq("status", "active")
-      .maybeSingle();
+    const sub = await getActiveSubscription(adminSupabase, user.id);
 
-    if (data) {
-      const valid = !data.expires_at || new Date(data.expires_at) > new Date();
+    if (sub) {
+      const valid = !sub.expires_at || new Date(sub.expires_at) > new Date();
       return NextResponse.json({ success: valid });
     }
 

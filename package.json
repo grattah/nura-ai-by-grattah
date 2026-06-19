@@ -7,7 +7,7 @@
     "build": "next build --webpack",
     "lint": "eslint .",
     "start": "next start",
-    "generate-types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > lib/database.types.ts",
+    "generate-types": "supabase gen types typescript --project-id vmykfwzaxswiezkqakdu > lib/database.types.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "vectorise": "node --env-file=.env.local scripts/vectorise.mjs",

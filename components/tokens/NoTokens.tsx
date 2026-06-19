@@ -1,11 +1,22 @@
+"use client";
+
 import React from "react";
 import Image from "next/image";
 import { Calendar } from "lucide-react";
 
 import TokensModal from "./TokensModal";
 import coin from "@/public/broken-coin.png";
+import { formatResetCountdown, formatResetLong } from "@/lib/tokens-format";
 
-const NoTokens = () => {
+const NoTokens = ({ resetAt = null }: { resetAt?: string | null }) => {
+  // Tick once a second so the countdown stays live.
+  const [, setTick] = React.useState(0);
+  React.useEffect(() => {
+    if (!resetAt) return;
+    const t = setInterval(() => setTick((n) => n + 1), 1000);
+    return () => clearInterval(t);
+  }, [resetAt]);
+
   return (
     <div className="bg-background pb-10">
       <main className="px-6 flex flex-col gap-12">
@@ -33,10 +44,10 @@ const NoTokens = () => {
                 Tokens resets in
               </p>
               <p className="font-semibold text-mint-green text-2xl max-[400px]:text-xl">
-                4d 12h 34m 56s
+                {formatResetCountdown(resetAt)}
               </p>
               <p className="font-medium text-sm text-subtle">
-                Monday, 12 may 2025 | 00:00
+                {formatResetLong(resetAt)}
               </p>
             </div>
           </div>
