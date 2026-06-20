@@ -69,7 +69,7 @@ export default function SetupProfilePage() {
     <>
       <div className="min-h-dvh bg-background pb-10">
         {/* Header */}
-        <div className="flex items-center px-6 max-xs:px-4 pt-5 pb-11 relative">
+        <div className="flex items-center px-6 pt-5 pb-11 relative">
           <button
             onClick={() => router.back()}
             className="size-10 absolute left-4 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
@@ -79,7 +79,7 @@ export default function SetupProfilePage() {
           </button>
 
           <div className="flex-1 text-center min-w-0">
-            <h1 className="text-xl max-xs:text-lg font-semibold text-base-text">
+            <h1 className="text-xl font-semibold text-base-text">
               Set up your profile
             </h1>
             <p className="text-sm text-subtle font-medium mt-1">
@@ -88,7 +88,7 @@ export default function SetupProfilePage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 max-xs:px-4 space-y-4">
+        <form onSubmit={handleSubmit} className="px-6 space-y-4">
           {/* Email (read-only) */}
           <div className="space-y-1.5">
             <label className="text-sm text-muted-foreground">
@@ -155,7 +155,7 @@ export default function SetupProfilePage() {
           <button
             type="submit"
             disabled={!canSubmit}
-            className="w-full py-4 max-xs:py-3 rounded-full text-white font-semibold text-base max-xs:text-sm transition-opacity disabled:opacity-50"
+            className="w-full py-4 rounded-full text-white font-semibold text-base transition-opacity disabled:opacity-50"
             style={{ backgroundColor: "var(--mint-green)" }}
           >
             {isPending ? "Setting up…" : "Set up profile"}
@@ -165,7 +165,7 @@ export default function SetupProfilePage() {
 
       {/* Success dialog */}
       <Dialog open={done}>
-        <DialogContent className="sm:max-w-sm p-8 max-xs:p-6 text-center space-y-4 [&>button]:hidden">
+        <DialogContent className="sm:max-w-sm p-8 text-center space-y-4 [&>button]:hidden">
           {/* Confetti check */}
           <div className="flex justify-center">
             <Image
@@ -188,14 +188,14 @@ export default function SetupProfilePage() {
           <div className="space-y-3 pt-2">
             <button
               onClick={() => router.push("/profile")}
-              className="w-full py-4 max-xs:py-3 rounded-full text-white font-semibold"
+              className="w-full py-4 rounded-full text-white font-semibold"
               style={{ backgroundColor: "var(--mint-green)" }}
             >
               Upload profile picture
             </button>
             <button
               onClick={() => router.push("/")}
-              className="w-full py-4 max-xs:py-3 rounded-full bg-muted text-foreground font-semibold"
+              className="w-full py-4 rounded-full bg-muted text-foreground font-semibold"
             >
               Do this later
             </button>

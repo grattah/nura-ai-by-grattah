@@ -28,12 +28,8 @@ const SuccessModal = ({
           <SuccessAnimation />
         </div>
         <div className="flex flex-col gap-3 justify-center items-center">
-          <p className="text-2xl max-[400px]:text-xl font-semibold text-center">
-            {message}
-          </p>
-          <p className="text-center max-[400px]:text-sm text-subtle">
-            {subtitle}
-          </p>
+          <p className="text-2xl font-semibold text-center">{message}</p>
+          <p className="text-center text-base text-subtle">{subtitle}</p>
         </div>
         <button
           onClick={onClose}

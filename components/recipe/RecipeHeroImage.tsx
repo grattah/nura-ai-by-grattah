@@ -52,7 +52,7 @@ export function RecipeHeroImage({
     : undefined;
 
   return (
-    <div className="mx-6 max-xs:mx-4 rounded-4xl max-xs:rounded-3xl overflow-hidden bg-muted mb-8 max-xs:mb-6 relative aspect-video">
+    <div className="mx-6 rounded-4xl overflow-hidden bg-muted mb-8 relative aspect-video">
       {src ? (
         <Image
           src={src}

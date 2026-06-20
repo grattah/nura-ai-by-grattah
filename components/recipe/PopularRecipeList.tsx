@@ -121,20 +121,20 @@ export function PopularRecipesList({
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 space-y-3 max-xs:space-y-1.5">
+      <div className="grid grid-cols-2 gap-3 space-y-3">
         {recipes.map((recipe) => {
           const firstTag = recipe.recipe_tags?.[0]?.tags?.name ?? null;
           return (
             <div key={recipe.id} className="relative flex flex-col gap-2">
               <div className="absolute flex justify-between px-2 top-3 left-0 right-0 z-10">
-                <button className="bg-black/75 flex items-center gap-1 rounded-full p-1.5 px-3 max-xs:px-1.5 shrink-0">
+                <button className="bg-black/75 flex items-center gap-1 rounded-full p-1.5 px-3 shrink-0">
                   <Heart
                     size={12}
                     color="#FFFFFF"
                     strokeWidth={2}
-                    className="max-xs:size-2"
+                    className="size-3"
                   />
-                  <span className="text-xs max-xs:text-[10px] text-[#FFFFFF] opacity-100">
+                  <span className="text-xs text-[#FFFFFF] opacity-100">
                     {recipe.likes}
                   </span>
                 </button>
@@ -152,10 +152,10 @@ export function PopularRecipesList({
                     <Image
                       src={recipe.image_url}
                       alt={recipe.title}
-                      className="w-full xs:h-41.75 max-xs:aspect-square object-cover transition-transform duration-300 hover:scale-110"
-                      width={400}
-                      height={300}
-                      sizes="(max-width: 768px) 45vw, 200px"
+                      className="w-[clamp(136px,42.6vw,183px)] h-[clamp(124px,38.8vw,167px)] object-cover transition-transform duration-300 hover:scale-110"
+                      width={183}
+                      height={167}
+                      sizes="(max-width: 430px) 42.6vw, 183px"
                     />
                   </div>
                 </Link>
@@ -163,14 +163,14 @@ export function PopularRecipesList({
               {firstTag && (
                 <Link
                   href={`/recipes/${recipe.id}`}
-                  className="text-[#727E7A] text-xs max-xs:text-[10px] font-medium font-redHatDisplay uppercase"
+                  className="text-[#727E7A] text-xs font-medium font-redHatDisplay uppercase"
                 >
                   {firstTag}
                 </Link>
               )}
               <Link
                 href={`/recipes/${recipe.id}`}
-                className="text-[#111312] font-medium max-xs:text-xs font-josefin"
+                className="text-[#111312] font-medium text-base font-josefin"
               >
                 {truncateText(recipe.title, 3)}
               </Link>

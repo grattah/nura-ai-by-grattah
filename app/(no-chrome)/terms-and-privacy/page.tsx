@@ -13,10 +13,10 @@ const page = () => {
 
   return (
     <div className="min-h-dvh bg-background pb-10">
-      <main className="px-6 max-xs:px-4">
+      <main className="px-6">
         <div className="flex items-center pt-5 pb-4 gap-3 mb-2.5">
           <BackButton className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center shrink-0 hover:opacity-75 transition-opacity" />
-          <h1 className="flex-1 text-center text-xl max-xs:text-lg font-semibold text-base-text">
+          <h1 className="flex-1 text-center text-xl font-semibold text-base-text">
             Terms and Privacy
           </h1>
           <div className="size-10 shrink-0" aria-hidden />
@@ -51,7 +51,7 @@ const page = () => {
           </p>
           <div className="bg-[#E8E6DC] py-4 px-3 rounded-2xl">
             {pageState === "privacy" ? (
-              <div className="flex flex-col gap-2.5 text-[#333333E5] font-medium max-[400px]:text-sm">
+              <div className="flex flex-col gap-2.5 text-[#333333E5] font-medium text-base">
                 <p>Welcome to Nuko Health (“we,” “our,” or “us”).</p>
                 <p>
                   We respect your privacy and are committed to protecting your
@@ -61,7 +61,7 @@ const page = () => {
                 </p>
               </div>
             ) : pageState === "terms" ? (
-              <div className="text-[#333333E5] font-medium max-[400px]:text-sm">
+              <div className="text-[#333333E5] font-medium text-base">
                 <p>
                   These Terms of Service govern your use of the Nuko Health
                   website, web app, and related services.

@@ -76,60 +76,45 @@
   --sidebar-accent-foreground: oklch(0.955 0.012 82);
   --sidebar-border: oklch(0.32 0.038 148);
   --sidebar-ring: oklch(0.46 0.08 148);
-}
 
-.dark {
-  /* Dark mode — deep forest green palette (Figma) */
-  --background: oklch(0.155 0.028 148); /* very dark forest */
-  --foreground: oklch(0.945 0.012 82); /* warm cream text */
-  --card: oklch(0.195 0.028 148); /* raised surface */
-  --card-foreground: oklch(0.945 0.012 82);
-  --popover: oklch(0.195 0.028 148);
-  --popover-foreground: oklch(0.945 0.012 82);
-  --primary: oklch(0.945 0.022 82);
-  --primary-foreground: oklch(0.155 0.028 148);
-  --secondary: oklch(0.235 0.028 148);
-  --secondary-foreground: oklch(0.945 0.012 82);
-  --muted: oklch(0.235 0.028 148);
-  --muted-foreground: oklch(0.6 0.022 148);
-  --accent: oklch(0.76 0.115 52);
-  --accent-foreground: oklch(0.155 0.028 148);
-  --destructive: oklch(0.55 0.22 25);
-  --destructive-foreground: oklch(0.98 0.005 82);
-  --border: oklch(0.27 0.028 148);
-  --input: oklch(0.235 0.028 148);
-  --ring: oklch(0.46 0.08 148);
+  /* Fluid responsiveness */
+  --mobile-padding: clamp(16px, 5.6vw, 24px);
+  --searchbar-height: clamp(42px, 10.5vw, 45px);
+  --cta-btn-height: clamp(48px, 12vw, 52px);
 
-  /* Nura brand tokens — dark mode */
-  --nura-forest: oklch(0.155 0.028 148);
-  --nura-forest-light: oklch(0.235 0.028 148);
-  --nura-cream: oklch(0.945 0.022 82);
-  --nura-peach: oklch(0.76 0.115 52);
-  --nura-sage: oklch(0.79 0.065 142);
-  --nura-slate: oklch(0.8 0.02 225);
-  --nura-olive: oklch(0.44 0.078 142);
-  --nura-gold: oklch(0.82 0.09 88);
+  --space-8: clamp(6px, 1.9vw, 8px);
+  --space-10: clamp(8px, 2.3vw, 10px);
+  --space-12: clamp(8px, 2.8vw, 12px);
+  --space-14: clamp(12px, 3.3vw, 14px);
+  --space-16: clamp(12px, 3.7vw, 16px);
+  --space-20: clamp(16px, 4.7vw, 20px);
+  --space-24: clamp(16px, 5.6vw, 24px);
+  --space-28: clamp(22px, 6.5vw, 28px);
+  --space-32: clamp(24px, 7.4vw, 32px);
+  --space-36: clamp(28px, 8.4vw, 36px);
+  --space-40: clamp(32px, 9.3vw, 40px);
+  --space-44: clamp(34px, 10.2vw, 44px);
+  --space-56: clamp(46px, 13vw, 56px);
+  --space-64: clamp(52px, 14.9vw, 64px);
+  --space-80: clamp(64px, 18.6vw, 80px);
+  --space-96: clamp(76px, 22.3vw, 96px);
 
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.155 0.028 148);
-  --sidebar-foreground: oklch(0.945 0.012 82);
-  --sidebar-primary: oklch(0.945 0.022 82);
-  --sidebar-primary-foreground: oklch(0.155 0.028 148);
-  --sidebar-accent: oklch(0.235 0.028 148);
-  --sidebar-accent-foreground: oklch(0.945 0.012 82);
-  --sidebar-border: oklch(0.27 0.028 148);
-  --sidebar-ring: oklch(0.46 0.08 148);
+  --text-xs: clamp(11px, 2.8vw, 12px);
+  --text-sm: clamp(12px, 3.2vw, 14px);
+  --text-base: clamp(14px, 3.7vw, 16px);
+  --text-xl: clamp(16px, 4.7vw, 20px);
+  --text-title: clamp(20px, 5.6vw, 24px);
+  --text-hero: clamp(24px, 6.5vw, 28px);
+
+  --nrounded-sm: clamp(6px, 1.9vw, 8px);
+  --nrounded-md: clamp(10px, 2.8vw, 12px);
+  --nrounded-lg: clamp(12px, 3.7vw, 16px);
+  --nrounded-xl: clamp(18px, 5.6vw, 24px);
+  --nrounded-2xl: clamp(24px, 7.4vw, 32px);
 }
 
 @theme inline {
-  /* Breakpoints */
-  --breakpoint-2xs: 20.5rem;
-  --breakpoint-xs: 24.5rem;
-
+  --breakpoint-xs: 22.5rem;
   --font-mono: "Geist Mono", "Geist Mono Fallback", monospace;
   --font-sans: "Red Hat Text", "Red Hat Text Fallback", system-ui, sans-serif;
   --font-josefin:
@@ -160,10 +145,10 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
+  /* --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 4px); */
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -172,7 +157,9 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+}
 
+@theme {
   /* Nura custom color tokens */
   --color-nura-forest: var(--nura-forest);
   --color-nura-forest-light: var(--nura-forest-light);
@@ -205,6 +192,42 @@
 
   --color-success-c100: var(--success-c100);
   --color-success-c600: var(--success-c600);
+
+  /* Fluid typo */
+  --text-hero: var(--text-hero);
+  --text-title: var(--text-title);
+  --text-xl: var(--text-xl);
+  --text-base: var(--text-base);
+  --text-sm: var(--text-sm);
+  --text-xs: var(--text-xs);
+
+  /* Fluid spacing */
+  --spacing-2: var(--space-8);
+  --spacing-2.5: var(--space-10);
+  --spacing-3: var(--space-12);
+  --spacing-3.5: var(--space-14);
+  --spacing-4: var(--space-16);
+  --spacing-5: var(--space-20);
+  --spacing-6: var(--space-24);
+  --spacing-7: var(--space-28);
+  --spacing-8: var(--space-32);
+  --spacing-9: var(--space-36);
+  --spacing-10: var(--space-40);
+  --spacing-11: var(--space-44);
+  --spacing-14: var(--space-56);
+  --spacing-16: var(--space-64);
+  --spacing-20: var(--space-80);
+  --spacing-24: var(--space-96);
+
+  --spacing-mp: var(--mobile-padding);
+  --spacing-sb: var(--searchbar-height);
+  --spacing-fab: var(--cta-btn-height);
+
+  --radius-lg: var(--nrounded-sm);
+  --radius-xl: var(--nrounded-md);
+  --radius-2xl: var(--nrounded-lg);
+  --radius-3xl: var(--nrounded-xl);
+  --radius-4xl: var(--nrounded-2xl);
 }
 
 @layer base {
@@ -215,9 +238,6 @@
     @apply bg-background text-foreground;
   }
 
-  /* Tactile press feedback: every enabled button and link gently scales on
-     tap/click so a press is always visibly acknowledged. Lives in @layer base
-     so any explicit `active:scale-*` utility on an element still overrides it. */
   button:not(:disabled):not([aria-disabled="true"]),
   a[href],
   [role="button"]:not([aria-disabled="true"]) {

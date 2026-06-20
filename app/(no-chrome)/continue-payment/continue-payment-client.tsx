@@ -43,7 +43,7 @@ function ContinuePaymentContent() {
   return (
     <div className="min-h-dvh bg-background pb-10">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 max-xs:px-4 pt-5 pb-4">
+      <div className="flex items-center justify-between px-6 pt-5 pb-4">
         <button
           onClick={() => router.back()}
           className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
@@ -52,7 +52,7 @@ function ContinuePaymentContent() {
           <ArrowLeft className="size-5 text-foreground" />
         </button>
         <div className="text-center">
-          <p className="text-lg max-xs:text-base font-semibold text-foreground">
+          <p className="text-lg font-semibold text-foreground">
             Continue payment
           </p>
           <p className="text-sm text-muted-foreground">Welcome back</p>
@@ -66,7 +66,7 @@ function ContinuePaymentContent() {
         </button>
       </div>
 
-      <div className="px-6 max-xs:px-4 space-y-4">
+      <div className="px-6 space-y-4">
         {/* Plan summary */}
         <div
           className="flex items-center justify-between px-4 py-3 rounded-2xl border"
@@ -84,7 +84,7 @@ function ContinuePaymentContent() {
             </p>
           </div>
           <div className="text-right">
-            <p className="text-xl max-xs:text-lg font-bold text-foreground">
+            <p className="text-xl font-bold text-foreground">
               {planInfo.price}
             </p>
             <p className="text-xs text-muted-foreground">/ month</p>

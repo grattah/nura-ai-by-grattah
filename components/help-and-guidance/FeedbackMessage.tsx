@@ -43,8 +43,8 @@ export function FeedbackMessage({
       </div>
       <p
         className={`text-sm ${
-          value.length >= MAX ? "text-[#227B6F] font-medium" : "text-[#1B1D1D]"
-        }`}
+ value.length >= MAX ? "text-[#227B6F] font-medium" : "text-[#1B1D1D]"
+ }`}
         aria-live="polite"
       >
         {value.length}/{MAX}
