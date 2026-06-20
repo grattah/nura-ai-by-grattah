@@ -43,10 +43,10 @@ function DesktopBlocker() {
       </div>
 
       <h1 className="text-2xl font-bold text-foreground mb-3 leading-tight">
-        Nura is a mobile app
+        Nuko is a mobile app
       </h1>
       <p className="text-base text-muted-foreground leading-relaxed max-w-xs mb-8">
-        Scan the code below with your phone to open Nura. You can add it to your
+        Scan the code below with your phone to open Nuko. You can add it to your
         home screen for instant access.
       </p>
 

@@ -14,6 +14,7 @@ import {
   uploadRecipeImage,
   type RecipeInput,
 } from "@/actions/admin-recipes";
+import { DRINK_TYPES } from "@/lib/drink-types";
 
 // Keep in sync with the 5MB cap enforced in uploadRecipeImage (admin-recipes.ts)
 // and the server-action bodySizeLimit in next.config.ts.
@@ -54,6 +55,7 @@ export function RecipeForm({
     display_order: initial?.display_order ?? null,
     is_todays_recipe: initial?.is_todays_recipe ?? false,
     status: initial?.status ?? "approved",
+    drink_type: initial?.drink_type ?? "drinks",
     image_url: initial?.image_url ?? null,
     ingredients: initial?.ingredients ?? [{ emoji: "", label: "" }],
     how_to_make: initial?.how_to_make ?? [{ step: "1", instruction: "" }],
@@ -272,6 +274,29 @@ export function RecipeForm({
                 }`}
               >
                 {t.name}
+              </button>
+            );
+          })}
+        </div>
+      </Field>
+
+      {/* Drink type (sub-sub-category for the category filter pills) */}
+      <Field label="Drink type">
+        <div className="flex flex-wrap gap-2">
+          {DRINK_TYPES.map((d) => {
+            const checked = form.drink_type === d.slug;
+            return (
+              <button
+                type="button"
+                key={d.slug}
+                onClick={() => set("drink_type", d.slug)}
+                className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                  checked
+                    ? "bg-mint-green text-white border-mint-green"
+                    : "bg-card border-border text-foreground hover:bg-muted"
+                }`}
+              >
+                {d.name}
               </button>
             );
           })}

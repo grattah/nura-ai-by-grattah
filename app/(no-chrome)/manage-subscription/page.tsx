@@ -12,13 +12,18 @@ export default async function ManageSubscriptionPage() {
 
   if (!user) redirect("/auth/login");
 
-  const { data: sub } = await supabase
+  // limit(1), not maybeSingle(): a user may have >1 active row, which would make
+  // maybeSingle() error and wrongly bounce a subscribed user to /checkout.
+  const { data: subs } = await supabase
     .from("subscriptions")
     .select("status, plan, expires_at, stripe_subscription_id")
     .eq("user_id", user.id)
-    .maybeSingle();
+    .eq("status", "active")
+    .order("created_at", { ascending: false })
+    .limit(1);
+  const sub = subs?.[0];
 
-  if (!sub || sub.status !== "active") redirect("/checkout");
+  if (!sub) redirect("/checkout");
 
   const nextBilling = sub.expires_at
     ? format(new Date(sub.expires_at), "MMM d, yyyy")
@@ -92,7 +97,7 @@ export default async function ManageSubscriptionPage() {
           <p className="text-base text-grey-c500">
             Need help?{" "}
             <a
-              href="mailto:support@nura.app"
+              href="mailto:support@nuko.app"
               className="font-semibold text-mint-green"
             >
               Contact Support

@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     const details = (context ?? description ?? "").slice(0, MAX_CONTEXT_LEN);
 
     const { text } = await generateText({
-      model: anthropic("claude-sonnet-4-6"),
+      model: anthropic("claude-haiku-4-5"),
       system: `You are a health and wellness assistant for the Nuko app.
     Generate exactly 4 natural follow-up questions a curious user might ask
     after reading a ${typeLabel}.

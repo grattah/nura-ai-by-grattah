@@ -67,13 +67,15 @@ export async function getStripePortalUrl(): Promise<
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated." };
 
-  const { data: sub } = await supabase
+  const { data: subs } = await supabase
     .from("subscriptions")
     .select("stripe_customer_id")
     .eq("user_id", user.id)
-    .maybeSingle();
+    .not("stripe_customer_id", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(1);
 
-  let stripeCustomerId = sub?.stripe_customer_id ?? null;
+  let stripeCustomerId = subs?.[0]?.stripe_customer_id ?? null;
 
   if (!stripeCustomerId) {
     return { error: "No active subscription found." };

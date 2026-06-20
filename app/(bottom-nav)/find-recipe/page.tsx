@@ -15,30 +15,24 @@ import {
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
+import { useCredits } from "@/components/providers/credits-provider";
 import { useRecentSearches } from "@/hooks/use-recent-searches";
 import ModalLoadingScreen from "@/components/recipe/ModalLoadingScreen";
 import SearchX from "@/components/vectors/SearchX";
 import { WELLNESS_SOURCES } from "@/lib/wellness-sources";
 import BackButton from "@/components/back-button";
+import { PaywallModal } from "@/components/paywall/paywall-modal";
+import TokensModal from "@/components/tokens/TokensModal";
 
 interface RecipeSuggestion {
-  id: string;
   title: string;
 }
 
-interface Recipe {
-  created_at: string;
-  display_order: number;
-  short_description: string | null;
-  follow_up_questions: string[] | null;
-  how_to_make: any;
+// Search results / "you may like" only ever render id + title, so the queries
+// select just those columns (no full-row, no full-catalog pull).
+interface RecipeHit {
   id: string;
   title: string;
-  image_url: string | null;
-  ingredients: any;
-  inside_tip: string;
-  why_it_works: string;
-  status: "approved" | "pending";
 }
 
 const page = () => {
@@ -50,13 +44,17 @@ const page = () => {
   const [searchTerm, setSearchTerm] = React.useState(
     query || generateParam || "",
   );
-  const [allRecipes, setAllRecipes] = React.useState<Recipe[]>([]);
-  const [isLoadingRecipes, setIsLoadingRecipes] = React.useState(true);
-  const [suggestedRecipes, setSuggestedRecipes] = React.useState<Recipe[]>([]);
+  const [results, setResults] = React.useState<RecipeHit[]>([]);
+  const [searchLoading, setSearchLoading] = React.useState(false);
+  const [suggestedRecipes, setSuggestedRecipes] = React.useState<RecipeHit[]>(
+    [],
+  );
   const [pendingRecipe, setPendingRecipe] = React.useState<string | null>(null);
   const [generating, setGenerating] = React.useState(false);
   const [generateError, setGenerateError] = React.useState(false);
-  const [isPending, startTransition] = React.useTransition();
+  // Gated-response modals: paywall (guest / no subscription), token top-up (out of tokens).
+  const [paywallOpen, setPaywallOpen] = React.useState(false);
+  const [tokenModalOpen, setTokenModalOpen] = React.useState(false);
   const [aiSuggestions, setAiSuggestions] = React.useState<RecipeSuggestion[]>(
     [],
   );
@@ -72,27 +70,45 @@ const page = () => {
   );
 
   const { recents, add: addRecent, clear: clearRecents } = useRecentSearches();
+  const { applyState, refresh: refreshCredits } = useCredits();
 
   const router = useRouter();
 
+  // Debounced server-side search: query only the matching approved recipes
+  // (id + title) instead of pulling the whole catalogue and filtering on every
+  // keystroke. Each whitespace-split word must appear in the title (AND), which
+  // preserves the previous client-side semantics.
   React.useEffect(() => {
-    const fetchAllRecipes = async () => {
-      const { data, error } = await supabase
+    const term = searchTerm.trim();
+    if (!term) {
+      setResults([]);
+      setSearchLoading(false);
+      return;
+    }
+
+    setSearchLoading(true);
+    const handle = setTimeout(async () => {
+      const words = term.toLowerCase().split(/\s+/).filter(Boolean);
+      let q = supabase
         .from("recipes")
-        .select("*")
-        .eq("status" as never, "approved" as never)
-        .order("title", { ascending: true });
+        .select("id, title")
+        .eq("status" as never, "approved" as never);
+      for (const word of words) q = q.ilike("title", `%${word}%`);
+
+      const { data, error } = await q
+        .order("title", { ascending: true })
+        .limit(20);
 
       if (error) {
-        console.error("Failed to fetch recipes:", error);
+        console.error("Failed to search recipes:", error);
       } else {
-        setAllRecipes((data ?? []) as unknown as Recipe[]);
+        setResults((data ?? []) as unknown as RecipeHit[]);
       }
-      setIsLoadingRecipes(false);
-    };
+      setSearchLoading(false);
+    }, 250);
 
-    fetchAllRecipes();
-  }, []);
+    return () => clearTimeout(handle);
+  }, [searchTerm, supabase]);
 
   React.useEffect(() => {
     if (recents.length === 0) {
@@ -110,7 +126,7 @@ const page = () => {
 
       const { data, error } = await supabase
         .from("recipes")
-        .select("*")
+        .select("id, title")
         .eq("status" as never, "approved" as never)
         .or(orFilter)
         .limit(10);
@@ -121,7 +137,7 @@ const page = () => {
       }
 
       // Shuffle and take 3 so the user sees variety each visit
-      const shuffled = ((data ?? []) as unknown as Recipe[]).sort(
+      const shuffled = ((data ?? []) as unknown as RecipeHit[]).sort(
         () => Math.random() - 0.5,
       );
       setSuggestedRecipes(shuffled.slice(0, 3));
@@ -130,35 +146,22 @@ const page = () => {
     fetchSuggestions();
   }, [recents]);
 
-  const filteredRecipes = React.useMemo(() => {
-    const words = searchTerm.trim().toLowerCase().split(/\s+/).filter(Boolean);
-
-    if (words.length === 0) return [];
-
-    return allRecipes.filter((recipe) => {
-      const haystack = recipe.title.toLowerCase();
-      return words.every((word) => haystack.includes(word));
-    });
-  }, [searchTerm, allRecipes]);
-
   React.useEffect(() => {
-    if (!searchTerm.trim() || filteredRecipes.length === 0) return;
+    if (!searchTerm.trim() || results.length === 0) return;
     const timer = setTimeout(() => addRecent(searchTerm), 1000);
     return () => clearTimeout(timer);
-  }, [searchTerm, filteredRecipes]);
+  }, [searchTerm, results]);
 
   const showingResults =
-    !showSuggestions &&
-    searchTerm.trim().length > 0 &&
-    filteredRecipes.length > 0;
+    !showSuggestions && searchTerm.trim().length > 0 && results.length > 0;
   const showingEmpty =
     !showSuggestions &&
-    !isLoadingRecipes &&
+    !searchLoading &&
     searchTerm.trim().length > 0 &&
-    filteredRecipes.length === 0;
+    results.length === 0;
   const showingIdle = searchTerm.trim().length === 0 && !showSuggestions;
   const showingLoading =
-    isLoadingRecipes && searchTerm.trim().length > 0 && !showSuggestions;
+    searchLoading && searchTerm.trim().length > 0 && !showSuggestions;
 
   const handleSearchTermChange = (value: string) => {
     setSearchTerm(value);
@@ -170,14 +173,6 @@ const page = () => {
   const handleClearSearch = () => {
     setSearchTerm("");
     setShowSuggestions(false);
-  };
-
-  const handleRecipeClick = (id: string, title: string) => {
-    setPendingRecipe(title);
-    setSearchTerm(title);
-    startTransition(() => {
-      router.push(`/recipes/${id}`);
-    });
   };
 
   const handleGenerate = React.useCallback(
@@ -197,9 +192,27 @@ const page = () => {
             allowedDomains: WELLNESS_SOURCES,
           }),
         });
+        // Out of tokens (subscriber): show the "Need more token?" modal on blur.
+        if (res.status === 402) {
+          const body = await res.json().catch(() => ({}));
+          if (body.state) applyState(body.state);
+          setGenerating(false);
+          setPendingRecipe(null);
+          setTokenModalOpen(true);
+          return;
+        }
+        // Guest (401) or no active subscription (403): show the paywall/sign-up
+        // modal rather than the generic red error.
+        if (res.status === 401 || res.status === 403) {
+          setGenerating(false);
+          setPendingRecipe(null);
+          setPaywallOpen(true);
+          return;
+        }
         if (!res.ok) throw new Error("generate failed");
         const data = await res.json();
         if (!data?.id) throw new Error("no id returned");
+        refreshCredits();
         router.replace(`/recipes/${data.id}`);
       } catch (err) {
         console.error("[find-recipe] generate", err);
@@ -208,7 +221,7 @@ const page = () => {
         setGenerateError(true);
       }
     },
-    [router],
+    [router, applyState, refreshCredits],
   );
 
   const autoTriggered = React.useRef(false);
@@ -244,6 +257,12 @@ const page = () => {
 
       const data = await res.json();
       const suggestions: RecipeSuggestion[] = data.suggestions ?? [];
+      // Bound the in-memory cache for long sessions: evict the oldest entry
+      // once it grows past ~50 keys (Map preserves insertion order).
+      if (suggestionsCache.current.size >= 50) {
+        const oldest = suggestionsCache.current.keys().next().value;
+        if (oldest !== undefined) suggestionsCache.current.delete(oldest);
+      }
       suggestionsCache.current.set(cacheKey, suggestions);
       setAiSuggestions(suggestions);
       setShowModalScreenLoader(false);
@@ -255,8 +274,8 @@ const page = () => {
     }
   };
 
-  // Show the full-screen loading state while navigating to / generating a recipe
-  if ((isPending || generating) && pendingRecipe) {
+  // Show the full-screen loading state while a recipe is being generated.
+  if (generating && pendingRecipe) {
     return (
       <RecipeLoadingScreen
         recipeName={pendingRecipe}
@@ -425,11 +444,11 @@ const page = () => {
                 <div className="flex flex-col gap-2">
                   <p className="font-medium max-xs:text-sm">Results</p>
                   <p className="text-sm text-subtle max-xs:text-xs">
-                    {filteredRecipes.length} recipes found
+                    {results.length} recipes found
                   </p>
                 </div>
                 <div className="flex flex-col gap-3">
-                  {filteredRecipes.map((recipe) => (
+                  {results.map((recipe) => (
                     <Link
                       key={recipe.id}
                       href={`/recipes/${recipe.id}`}
@@ -497,11 +516,19 @@ const page = () => {
                   </p>
                 ) : (
                   <div className="flex flex-col gap-3">
+                    {generateError && (
+                      <p className="text-sm max-xs:text-xs text-red-500">
+                        Couldn&apos;t generate that recipe. Please try again.
+                      </p>
+                    )}
                     {aiSuggestions.map((recipe) => (
                       <button
-                        key={recipe.id}
+                        key={recipe.title}
                         onClick={() =>
-                          handleRecipeClick(recipe.id, recipe.title)
+                          handleGenerate(
+                            recipe.title,
+                            searchTerm.trim() || undefined,
+                          )
                         }
                         className="flex items-center gap-3 p-3 rounded-md hover:bg-[#E8E6DC] text-left transition-colors"
                       >
@@ -529,6 +556,24 @@ const page = () => {
       </main>
       {showModalScreenLoader && (
         <ModalLoadingScreen message="Fetching your recipe..." />
+      )}
+
+      {/* Guest / non-subscriber tried to generate → sign-up / subscribe modal. */}
+      <PaywallModal open={paywallOpen} onOpenChange={setPaywallOpen} />
+
+      {/* Subscriber out of tokens → "Need more token?" modal on a blurred page. */}
+      {tokenModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
+          <button
+            type="button"
+            aria-label="Close"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setTokenModalOpen(false)}
+          />
+          <div className="relative w-full max-w-sm">
+            <TokensModal />
+          </div>
+        </div>
       )}
     </div>
   );

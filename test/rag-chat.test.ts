@@ -3,6 +3,8 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 const h = vi.hoisted(() => ({
   retrieve: vi.fn(),
   streamText: vi.fn(),
+  getTokenState: vi.fn(),
+  meter: vi.fn(),
 }));
 
 vi.mock("ai", () => ({
@@ -15,6 +17,34 @@ vi.mock("@ai-sdk/anthropic", () => ({ anthropic: vi.fn(() => "model") }));
 vi.mock("@/lib/rag", () => ({
   retrieve: (...args: unknown[]) => h.retrieve(...args),
   formatContext: () => "ctx",
+}));
+vi.mock("@/lib/credits-server", () => ({
+  getTokenState: (...args: unknown[]) => h.getTokenState(...args),
+  meter: (...args: unknown[]) => h.meter(...args),
+}));
+
+// Authenticated subscriber by default — chainable stub for the auth + sub reads.
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: async () => ({
+    auth: {
+      getUser: async () => ({ data: { user: { id: "user-1" } } }),
+    },
+    from: () => {
+      const chain = {
+        select: () => chain,
+        eq: () => chain,
+        order: () => chain,
+        // getActiveSubscription reads via .order().limit(1) → array of rows.
+        limit: async () => ({
+          data: [{ status: "active", expires_at: null }],
+        }),
+        maybeSingle: async () => ({
+          data: { status: "active", expires_at: null },
+        }),
+      };
+      return chain;
+    },
+  }),
 }));
 
 import { POST } from "@/app/api/rag/chat/route";
@@ -39,6 +69,8 @@ beforeEach(() => {
   h.streamText.mockReturnValue({
     toUIMessageStreamResponse: () => new Response("stream"),
   });
+  h.getTokenState.mockResolvedValue({ totalRemaining: 50 });
+  h.meter.mockResolvedValue({ totalRemaining: 49 });
 });
 
 describe("rag/chat — input clamping (audit M1)", () => {

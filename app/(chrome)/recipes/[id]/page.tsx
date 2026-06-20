@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { notFound } from "next/navigation";
 
 import { FollowUpSection } from "@/components/follow-up-section";
 import { buildRecipeContext } from "@/lib/recipe-context";
 import { PaywallGate } from "@/components/paywall/paywall-gate";
 import { ShareButton } from "@/components/share-button";
-import { createClient } from "@/lib/supabase/server";
+import {
+  createClient,
+  createServiceRoleClient,
+} from "@/lib/supabase/server";
 import { isBookmarked } from "@/actions/bookmark";
 import { BookmarkButton } from "@/components/bookmark-button";
 import BackButton from "@/components/back-button";
@@ -20,6 +24,7 @@ import { isLiked } from "@/actions/likes";
 import type { Database } from "@/lib/database.types";
 import type { SupportScore } from "@/lib/wellness-score";
 import { BookmarkProvider } from "@/components/bookmark-provider";
+import PersonalizedTokenModal from "@/components/tokens/PersonalizedTokenModal";
 
 // support_scores isn't in the generated types yet; recipe_tags is a join.
 type RecipeRecord = Database["public"]["Tables"]["recipes"]["Row"] & {
@@ -42,13 +47,41 @@ interface Profile {
   avatar_url: string;
 }
 
-// React cache deduplicates this fetch — generateMetadata and the page
-// both call getRecipe(id) but Supabase is only queried once per request
-const getRecipe = cache(async (id: string) => {
+const RECIPE_SELECT = "*, recipe_tags(tags(name, slug))";
+
+// Approved recipes are public and rarely change, so the row is cached across
+// requests/users (revalidated on edit/approve/delete via the `recipe-${id}` tag,
+// or after 5 min). Uses a no-cookie service-role client and filters to
+// `approved` so nothing private is ever cached. Pending/owned recipes are not
+// returned here — they fall through to the RLS-scoped read below.
+const getCachedApprovedRecipe = (id: string) =>
+  unstable_cache(
+    async () => {
+      const admin = createServiceRoleClient();
+      const { data } = await admin
+        .from("recipes")
+        .select(RECIPE_SELECT)
+        .eq("id", id)
+        .eq("status" as never, "approved" as never)
+        .maybeSingle();
+      return data ? (data as unknown as RecipeRecord) : null;
+    },
+    ["recipe-detail", id],
+    { revalidate: 300, tags: [`recipe-${id}`] },
+  )();
+
+// React cache deduplicates within a request — generateMetadata and the page
+// both call getRecipe(id) but it resolves once per request.
+const getRecipe = cache(async (id: string): Promise<RecipeRecord | null> => {
+  const cached = await getCachedApprovedRecipe(id);
+  if (cached) return cached;
+
+  // Not an approved recipe (e.g. the owner viewing their freshly generated,
+  // still-pending recipe) — read with the user's RLS-scoped session, uncached.
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("recipes")
-    .select("*, recipe_tags(tags(name, slug))")
+    .select(RECIPE_SELECT)
     .eq("id", id)
     .single();
   if (error || !data) return null;
@@ -103,7 +136,7 @@ export default async function RecipeDetailPage({
     },
     { data: latestComment },
 
-    { data: totalComments },
+    { count: totalCommentCount },
   ] = await Promise.all([
     isBookmarked(recipe.id),
     isLiked(recipe.id),
@@ -127,7 +160,7 @@ export default async function RecipeDetailPage({
       .maybeSingle(),
     supabase
       .from("comments")
-      .select("*")
+      .select("*", { count: "exact", head: true })
       .eq("recipe_id", recipe.id)
       .is("parent_id", null),
   ]);
@@ -150,9 +183,9 @@ export default async function RecipeDetailPage({
 
   // The recipe's assigned wellness supports (its tags) for the DetoxCard.
   const assignedSupports = (recipe.recipe_tags ?? [])
-    .map((rt) => rt.tags)
-    .filter((t): t is { name: string; slug: string } => !!t)
-    .map((t) => ({ name: t.name, slug: t.slug }));
+    .map((rt: any) => rt.tags)
+    .filter((t: any): t is { name: string; slug: string } => !!t)
+    .map((t: any) => ({ name: t.name, slug: t.slug }));
 
   const shareDisabled = (recipe as { status?: string }).status !== "approved";
 
@@ -225,6 +258,10 @@ export default async function RecipeDetailPage({
                 />
               </div>
 
+              {/* Almost-out token warning — only on freshly generated (pending)
+                  recipes, not the seeded/approved catalogue. Self-hides unless low. */}
+              {shareDisabled && <PersonalizedTokenModal />}
+
               <div className="flex justify-between items-center gap-2 mt-8">
                 <div className="flex items-center gap-2 flex-1">
                   <p className="text-subtle text-sm max-xs:text-xs max-2xs:text-[10.5px] text-nowrap">
@@ -261,7 +298,7 @@ export default async function RecipeDetailPage({
 
               <div className="mt-8">
                 <Comment
-                  total={totalComments?.length}
+                  total={totalCommentCount ?? 0}
                   latestComment={latestCommentWithLike}
                   seeAllHref={`/comments?recipeId=${recipe.id}&limit=5`}
                   recipeId={recipe.id}

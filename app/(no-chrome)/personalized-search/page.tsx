@@ -15,11 +15,15 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useAccess } from "@/hooks/use-access";
+import { useCredits } from "@/components/providers/credits-provider";
+import PersonalizedTokenModal from "@/components/tokens/PersonalizedTokenModal";
 import { EditSearchSheet } from "@/components/search/edit-search-sheet";
 import type { PersonalizedSearchResult } from "@/app/api/personalized-search/route";
 import Cup from "@/components/vectors/cup";
 
-const CACHE_PREFIX = "nura_search_cache_";
+// v2: bumped when the result shape was flattened — invalidates old object-shaped
+// cached results so they don't render with undefined fields.
+const CACHE_PREFIX = "nura_search_cache_v2_";
 
 function normalizeKey(q: string) {
   return `${CACHE_PREFIX}${q.trim().toLowerCase()}`;
@@ -84,6 +88,7 @@ function PersonalizedSearchContent() {
   const query = params.get("q") ?? "";
 
   const { hasAccess, isLoading: accessLoading } = useAccess();
+  const { applyState, openTokenWall, refresh: refreshCredits } = useCredits();
   const [result, setResult] = useState<PersonalizedSearchResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -114,9 +119,17 @@ function PersonalizedSearchContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: q }),
       });
+      if (res.status === 402) {
+        const body = await res.json().catch(() => ({}));
+        if (body.state) applyState(body.state);
+        openTokenWall();
+        setError("You're out of tokens. Top up to keep searching.");
+        return;
+      }
       if (!res.ok) throw new Error("Failed");
       const data: PersonalizedSearchResult = await res.json();
       setResult(data);
+      refreshCredits();
       try {
         localStorage.setItem(cacheKey, JSON.stringify(data));
       } catch {}
@@ -125,7 +138,7 @@ function PersonalizedSearchContent() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [applyState, openTokenWall, refreshCredits]);
 
   // Render a cached result instantly, independent of the access check —
   // no need to wait on the (potentially slow) subscription lookup just to
@@ -241,7 +254,7 @@ function PersonalizedSearchContent() {
             <div className="bg-success-c100 rounded-2xl border border-[#C4CAC8] p-4 flex flex-col gap-y-2">
               <div className="flex-1 flex items-center justify-between gap-3">
                 <p className="text-base max-xs:text-sm font-medium text-base-text">
-                  {result.whatToTry.title}
+                  {result.whatToTryTitle}
                 </p>
                 <div className="shrink-0">
                   <Info
@@ -251,7 +264,7 @@ function PersonalizedSearchContent() {
                 </div>
               </div>
               <p className="text-sm max-xs:text-xs text-base-text">
-                {result.whatToTry.description}
+                {result.whatToTryDescription}
               </p>
             </div>
           </div>
@@ -298,7 +311,7 @@ function PersonalizedSearchContent() {
                       <div className="h-px bg-black/10 mx-17 max-xs:mx-12.5" />
                     )}
                     <Link
-                      href={`/find-recipe?generate=${encodeURIComponent(drink.name)}&concern=${encodeURIComponent(query)}`}
+                      href={`/find-recipe?generate=${encodeURIComponent(drink)}&concern=${encodeURIComponent(query)}`}
                       className="flex items-center justify-between max-xs:px-3 max-xs:py-2.5 px-4 py-3.5 hover:opacity-75 transition-opacity"
                     >
                       <div className="flex items-center gap-3">
@@ -311,7 +324,7 @@ function PersonalizedSearchContent() {
                           <Cup className="max-xs:size-3" />
                         </div>
                         <span className="text-base max-xs:text-xs font-medium text-subtle">
-                          {drink.name}
+                          {drink}
                         </span>
                       </div>
                       <ChevronRight className="size-4 max-xs:size-3 text-grey-c700 shrink-0" />
@@ -340,12 +353,9 @@ function PersonalizedSearchContent() {
                     >
                       🌿
                     </div>
-                    <div className="min-w-0 space-y-1">
-                      <p className="text-base max-xs:text-sm font-medium text-base-text">
-                        {item.title}
-                      </p>
-                      <p className="text-sm max-xs:text-xs text-subtle leading-snug">
-                        {item.description}
+                    <div className="min-w-0">
+                      <p className="text-base max-xs:text-sm font-medium text-base-text leading-snug">
+                        {item}
                       </p>
                     </div>
                   </div>
@@ -412,6 +422,9 @@ function PersonalizedSearchContent() {
               </button>
             </div>
           </div>
+
+          {/* Almost-out warning (subscribers near their weekly limit) */}
+          <PersonalizedTokenModal />
         </div>
       </div>
 
@@ -420,6 +433,10 @@ function PersonalizedSearchContent() {
         onOpenChange={setEditOpen}
         currentQuery={query}
       />
+
+      {/* Regenerating after an edit: overlay the "Preparing your answer" modal
+          over the (now blurred) stale content until the new answer is ready. */}
+      {loading && <LoadingModal />}
     </>
   );
 }

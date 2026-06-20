@@ -34,13 +34,14 @@ function ReviewOrderContent() {
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return;
-      const { data: sub } = await supabase
+      const { data: subs } = await supabase
         .from("subscriptions")
         .select("expires_at, status")
         .eq("user_id", user.id)
         .eq("status", "active")
-        .maybeSingle();
-      if (sub?.expires_at) setExpiresAt(sub.expires_at);
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (subs?.[0]?.expires_at) setExpiresAt(subs[0].expires_at);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

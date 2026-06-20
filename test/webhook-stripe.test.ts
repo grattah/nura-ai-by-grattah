@@ -139,7 +139,7 @@ describe("Stripe webhook — idempotency (audit M2)", () => {
 describe("Stripe webhook — ordering (audit M2)", () => {
   it("does NOT resurrect a cancelled subscription from a stale active update", async () => {
     // Our DB already has this subscription cancelled.
-    h.subs!.setResult("subscriptions", { data: { status: "cancelled" }, error: null });
+    h.subs!.setResult("subscriptions", { data: [{ status: "cancelled" }], error: null });
     h.constructEvent.mockReturnValue({
       id: "evt_stale",
       type: "customer.subscription.updated",

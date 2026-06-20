@@ -2,7 +2,9 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
+  useMemo,
   useState,
   useTransition,
   type ReactNode,
@@ -35,7 +37,7 @@ export function BookmarkProvider({
   const [bookmarked, setBookmarked] = useState(initialBookmarked);
   const [isPending, startTransition] = useTransition();
 
-  const toggle = () => {
+  const toggle = useCallback(() => {
     if (!isAuthenticated) {
       router.push("/auth/login");
       return;
@@ -64,10 +66,15 @@ export function BookmarkProvider({
         });
       }
     });
-  };
+  }, [isAuthenticated, recipeId, router, toast, startTransition]);
+
+  const value = useMemo(
+    () => ({ bookmarked, isPending, toggle }),
+    [bookmarked, isPending, toggle],
+  );
 
   return (
-    <BookmarkContext.Provider value={{ bookmarked, isPending, toggle }}>
+    <BookmarkContext.Provider value={value}>
       {children}
     </BookmarkContext.Provider>
   );

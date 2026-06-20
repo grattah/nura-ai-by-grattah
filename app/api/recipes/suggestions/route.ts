@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateObject } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 export const maxDuration = 30;
@@ -11,13 +10,14 @@ const SuggestionsSchema = z.object({
   suggestions: z
     .array(
       z.object({
-        id: z.string().describe("The id of a recipe from the provided list"),
-        title: z.string().describe("The title of that recipe"),
+        title: z
+          .string()
+          .describe("A short, specific wellness drink/recipe name"),
       }),
     )
-    .max(3)
+    .max(5)
     .describe(
-      "Up to 3 recipes from the provided list that best match what the user is looking for",
+      "Exactly 5 distinct new recipe names closely related to the user's search",
     ),
 });
 
@@ -74,34 +74,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(cached);
   }
 
-  const supabase = await createClient();
-  const { data: recipes, error } = await supabase
-    .from("recipes")
-    .select("id, title, short_description")
-    .eq("status" as never, "approved" as never)
-    .limit(200);
-
-  if (error || !recipes || recipes.length === 0) {
-    return NextResponse.json({ suggestions: [] });
-  }
-
   try {
     const { object } = await generateObject({
-      model: anthropic("claude-sonnet-4-6"),
+      model: anthropic("claude-haiku-4-5"),
       schema: SuggestionsSchema,
-      system: `You are a recipe recommendation assistant for the Nura wellness app.
-A user searched for a recipe but the direct keyword search returned few or no
-good matches. From the list of available recipes below, pick up to 3 that best
-match what the user is likely looking for, based on the meaning and intent of
-their search — not just keyword overlap.
+      maxOutputTokens: 256,
+      system: `You are a recipe ideas assistant for the Nuko wellness app.
+A user searched for a wellness drink/recipe that wasn't in our catalogue. Invent
+exactly 5 NEW, distinct recipe names that are closely related and convincingly
+similar to what they searched for — the kind of drink/recipe someone making that
+search would love to discover. DO NOT SUGGEST FOOD RECIPES. All the recipes you suggest MUST be limited to drinks.
 
-Available recipes (id | title | description):
-${recipes
-  .map((r) => `${r.id} | ${r.title} | ${r.short_description ?? ""}`)
-  .join("\n")}
-
-Only return ids that appear in the list above, with their exact titles. If
-nothing is reasonably relevant to the search, return an empty array.`,
+Rules:
+- Return plain, specific drink/recipe names only (e.g. "Cucumber Mint Cooler").
+- 5 distinct ideas; no duplicates and don't simply repeat the search verbatim.
+- Keep them realistic, home-makeable wellness drinks/recipes.
+- No medical claims, no descriptions — just the names.`,
       prompt: `The user searched for: "${query.trim()}"`,
     });
 

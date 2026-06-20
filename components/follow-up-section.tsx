@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronRight, SendHorizontal, Loader2, Bot } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { stripMarkdown } from "@/lib/strip-markdown";
 import { loadChat, saveChat } from "@/lib/chat-cache";
+import { useCredits } from "@/components/providers/credits-provider";
 
 interface FollowUpSectionProps {
   contextId: string;
@@ -22,13 +23,22 @@ interface FollowUpSectionProps {
   savedQuestions?: string[] | null;
 }
 
+// Module-level default so the prop reference is stable across renders (keeps the
+// memoized chat transport from being recreated when the parent omits it).
+const DEFAULT_ALLOWED_DOMAINS = [
+  "healthline.com",
+  "webmd.com",
+  "nhs.uk",
+  "mayoclinic.org",
+];
+
 export function FollowUpSection({
   contextId,
   contextType,
   title,
   description,
   context,
-  allowedDomains = ["healthline.com", "webmd.com", "nhs.uk", "mayoclinic.org"],
+  allowedDomains = DEFAULT_ALLOWED_DOMAINS,
   savedQuestions,
 }: FollowUpSectionProps) {
   const [questions, setQuestions] = useState<string[]>(
@@ -41,20 +51,64 @@ export function FollowUpSection({
 
   const [input, setInput] = useState("");
 
-  const { messages, sendMessage, status, setMessages } = useChat({
-    transport: new DefaultChatTransport({
-      api: "/api/rag/chat",
-      body: {
-        input,
-        contextId,
-        contextType,
-        title,
-        allowedDomains,
-        description,
-        context,
-      },
-    }),
-  });
+  const { applyState, openTokenWall, refresh: refreshCredits } = useCredits();
+
+  // Each user-asked follow-up meters tokens. Intercept the response to surface
+  // the out-of-tokens wall on 402 and refresh the balance after a successful
+  // answer (the server meters in onFinish once it completes).
+  const interceptFetch = useCallback(
+    async (
+      reqInput: Parameters<typeof fetch>[0],
+      init?: Parameters<typeof fetch>[1],
+    ) => {
+      const res = await fetch(reqInput, init);
+      if (res.status === 402) {
+        res
+          .clone()
+          .json()
+          .then((b) => {
+            if (b?.state) applyState(b.state);
+          })
+          .catch(() => {});
+        openTokenWall();
+      } else if (res.ok) {
+        // Meter lands server-side when the stream finishes; refresh shortly after.
+        setTimeout(() => refreshCredits(), 1500);
+      }
+      return res;
+    },
+    [applyState, openTokenWall, refreshCredits],
+  );
+
+  // Memoize the transport so `useChat` isn't re-initialized on every render.
+  // The actual question flows through `sendMessage` (the message list); the body
+  // here only carries the stable per-context grounding fields.
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/rag/chat",
+        fetch: interceptFetch,
+        body: {
+          contextId,
+          contextType,
+          title,
+          allowedDomains,
+          description,
+          context,
+        },
+      }),
+    [
+      interceptFetch,
+      contextId,
+      contextType,
+      title,
+      allowedDomains,
+      description,
+      context,
+    ],
+  );
+
+  const { messages, sendMessage, status, setMessages } = useChat({ transport });
 
   const isLoading = status === "submitted" || status === "streaming";
 
@@ -287,7 +341,7 @@ function ChatThread({ messages, isLoading }: ChatThreadProps) {
                       {(hasActiveTool || betweenToolAndText) && (
                         <div className="flex items-center gap-1.5 text-sm max-xs:-text-xs text-muted-foreground">
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          Searching trusted sources…
+                          {/* Searching trusted sources… */}
                         </div>
                       )}
 
@@ -295,7 +349,7 @@ function ChatThread({ messages, isLoading }: ChatThreadProps) {
                         <span>{stripMarkdown(finalText.text)}</span>
                       ) : !isLoading ? (
                         <span className="text-sm max-xs:text-xs text-muted-foreground">
-                          Nura couldn't generate a response. Please try asking a
+                          Nuko couldn't generate a response. Please try asking a
                           different question or check back later.
                         </span>
                       ) : null}

@@ -15,6 +15,26 @@ import { z } from "zod";
 import { type NextRequest } from "next/server";
 import { retrieve, formatContext } from "@/lib/rag";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { createClient } from "@/lib/supabase/server";
+import { getTokenState, meter } from "@/lib/credits-server";
+import { hasActiveSubscription } from "@/lib/subscription";
+import { MAX_OUTPUT_TOKENS } from "@/lib/credits";
+
+// Extract total token usage from an AI SDK usage object (v5 shape).
+function usageTokens(u: {
+  totalTokens?: number;
+  inputTokens?: number;
+  outputTokens?: number;
+}): number {
+  return u?.totalTokens ?? (u?.inputTokens ?? 0) + (u?.outputTokens ?? 0);
+}
+
+function jsonError(message: string, status: number, extra?: object) {
+  return new Response(JSON.stringify({ error: message, ...extra }), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+}
 
 export const maxDuration = 30;
 
@@ -59,7 +79,7 @@ Only avoid: inventing specific statistics, citing sources you haven't seen, or m
 strong clinical claims (e.g. "this cures X"). For general nutritional and wellness
 knowledge, speak with confidence.
 
-Keep your answer to 3–5 sentences, warm, and plain-English.
+Keep your answer to 3 sentences max, warm, and plain-English.
 Do not use any markdown formatting — no bold, no italics, no bullet points,
 no headers, no asterisks. Write in plain prose only.
 
@@ -85,6 +105,13 @@ IF YOU SEARCH, use these sources in order of preference:
 2. PubMed, NIH, NHS, CDC, WHO, BMJ, Lancet
 Avoid forums, blogs, supplement sites, or sensationalist sources.
 
+BRAND SAFETY POLICY:
+- Never mention, recommend, compare, link to, or reference any external company, website, application, service, product, brand, publication, or platform.
+- This rule applies even when the user explicitly asks for external recommendations.
+- If the user requests external websites, apps, brands, tools, competitors, or resources, politely decline and provide help using Nuko’s knowledge only.
+- Do not generate URLs, company names, app names, marketplace names, social media platforms, or competitor references.
+- Keep all responses within the Nuko ecosystem.
+
 TONE AND STYLE:
 - Speak with confidence about well-established nutrition and wellness knowledge.
 - You do not need a source for every claim — general nutritional facts are fine to state directly.
@@ -108,6 +135,23 @@ export async function POST(req: NextRequest) {
       headers: { "Content-Type": "application/json" },
     });
   }
+
+  // Follow-up questions are a metered LLM action: require auth + an active
+  // subscription before doing any work (the credit charge happens once we know
+  // the latest message is a real user question, below).
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return jsonError("Unauthorized", 401);
+
+  // Access + token state are independent reads — fetch them together. The token
+  // state is only consulted when the turn is actually metered (below).
+  const [hasAccess, state] = await Promise.all([
+    hasActiveSubscription(supabase, user.id),
+    getTokenState(user.id),
+  ]);
+  if (!hasAccess) return jsonError("Subscription required", 403);
 
   try {
     const {
@@ -141,6 +185,27 @@ export async function POST(req: NextRequest) {
     const typeLabel = contextType === "recipe" ? "recipe" : "health guide";
     const domainList = safeDomains.map((d) => `site:${d}`).join(" OR ");
 
+    // Meter only a genuine user-asked question (the last message is from the
+    // user). Gate before streaming; deduct the real usage in onFinish.
+    const shouldMeter = lastMessage?.role === "user" && !!userQuestion.trim();
+    if (shouldMeter && state.totalRemaining <= 0) {
+      return jsonError("insufficient_tokens", 402, { state });
+    }
+    const onFinish = shouldMeter
+      ? ({
+          totalUsage,
+        }: {
+          totalUsage: {
+            totalTokens?: number;
+            inputTokens?: number;
+            outputTokens?: number;
+          };
+        }) => {
+          // Fire-and-forget; the stream has already completed for the client.
+          void meter(user.id, usageTokens(totalUsage), "follow-up");
+        }
+      : undefined;
+
     const { chunks, hasGoodResults } = await retrieve(
       userQuestion,
       contextId,
@@ -151,7 +216,8 @@ export async function POST(req: NextRequest) {
     // ── Path A: answer grounded in vector DB context ───────────────────────────
     if (hasGoodResults) {
       const result = streamText({
-        model: anthropic("claude-sonnet-4-6"),
+        model: anthropic("claude-haiku-4-5"),
+        maxOutputTokens: MAX_OUTPUT_TOKENS.followup,
         system: buildSystemPrompt(
           typeLabel,
           safeTitle,
@@ -159,6 +225,7 @@ export async function POST(req: NextRequest) {
           domainList,
         ),
         messages: convertToModelMessages(safeMessages),
+        onFinish,
       });
 
       return result.toUIMessageStreamResponse();
@@ -166,7 +233,8 @@ export async function POST(req: NextRequest) {
 
     // PATH B: Web search fallback
     const result = streamText({
-      model: anthropic("claude-sonnet-4-6"),
+      model: anthropic("claude-haiku-4-5"),
+      maxOutputTokens: MAX_OUTPUT_TOKENS.followup,
       system: buildSystemPrompt(
         typeLabel,
         safeTitle,
@@ -175,6 +243,7 @@ export async function POST(req: NextRequest) {
         safeContext,
       ),
       messages: convertToModelMessages(safeMessages),
+      onFinish,
 
       providerOptions: {
         anthropic: {
