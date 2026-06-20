@@ -66,17 +66,21 @@ const TokensCard = ({
             </p>
           </div>
         </div>
-        <div className="px-3 py-2 rounded-2xl bg-white flex justify-between items-center">
-          <Link href="/buy-tokens" className="flex gap-1.5 items-center">
+
+        <Link
+          href="/buy-tokens"
+          className="px-3 py-2 rounded-2xl bg-white flex justify-between items-center hover:opacity-80 transition-opacity active:scale-[0.98]"
+        >
+          <div className="flex gap-1.5 items-center">
             <div className="bg-[#FFF7EC] rounded-full">
               <CoinAnimation />
             </div>
             <p className="text-black font-medium max-[400px]:text-sm">
               Buy extra credits
             </p>
-          </Link>
+          </div>
           <ChevronRight size={20} color="#1B1D1D" strokeWidth={2} />
-        </div>
+        </Link>
       </div>
     );
   }

@@ -243,6 +243,7 @@ export type Database = {
           id: number
           label: string | null
           reason: string
+          stripe_session_id: string | null
           tokens: number | null
           user_id: string
         }
@@ -252,6 +253,7 @@ export type Database = {
           id?: never
           label?: string | null
           reason: string
+          stripe_session_id?: string | null
           tokens?: number | null
           user_id: string
         }
@@ -261,6 +263,7 @@ export type Database = {
           id?: never
           label?: string | null
           reason?: string
+          stripe_session_id?: string | null
           tokens?: number | null
           user_id?: string
         }
@@ -503,6 +506,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           display_order: number
+          drink_type: string
           follow_up_questions: string[] | null
           generated_from: string | null
           how_to_make: Json
@@ -531,6 +535,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           display_order?: number
+          drink_type?: string
           follow_up_questions?: string[] | null
           generated_from?: string | null
           how_to_make?: Json
@@ -559,6 +564,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           display_order?: number
+          drink_type?: string
           follow_up_questions?: string[] | null
           generated_from?: string | null
           how_to_make?: Json
@@ -723,6 +729,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      category_drink_types: {
+        Args: { p_slug: string }
+        Returns: {
+          drink_type: string
+        }[]
+      }
       check_email_status: {
         Args: { p_email: string }
         Returns: {
@@ -750,6 +762,7 @@ export type Database = {
         Args: {
           p_label?: string
           p_reason: string
+          p_session_id?: string
           p_units: number
           p_user: string
         }

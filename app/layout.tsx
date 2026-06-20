@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import {
-  Geist,
   Geist_Mono,
   Red_Hat_Text,
   Josefin_Sans,
@@ -15,7 +14,6 @@ import { CreditsProvider } from "@/components/providers/credits-provider";
 import { ChatCacheCleaner } from "@/components/chat-cache-cleaner";
 import { PerfProfiler } from "@/components/dev/perf-profiler";
 
-const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 const _redHatText = Red_Hat_Text({ subsets: ["latin"] });
 const _josefinSans = Josefin_Sans({ subsets: ["latin"] });

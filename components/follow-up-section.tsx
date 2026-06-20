@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronRight, SendHorizontal, Loader2, Bot } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
@@ -23,13 +23,22 @@ interface FollowUpSectionProps {
   savedQuestions?: string[] | null;
 }
 
+// Module-level default so the prop reference is stable across renders (keeps the
+// memoized chat transport from being recreated when the parent omits it).
+const DEFAULT_ALLOWED_DOMAINS = [
+  "healthline.com",
+  "webmd.com",
+  "nhs.uk",
+  "mayoclinic.org",
+];
+
 export function FollowUpSection({
   contextId,
   contextType,
   title,
   description,
   context,
-  allowedDomains = ["healthline.com", "webmd.com", "nhs.uk", "mayoclinic.org"],
+  allowedDomains = DEFAULT_ALLOWED_DOMAINS,
   savedQuestions,
 }: FollowUpSectionProps) {
   const [questions, setQuestions] = useState<string[]>(
@@ -44,40 +53,62 @@ export function FollowUpSection({
 
   const { applyState, openTokenWall, refresh: refreshCredits } = useCredits();
 
-  const { messages, sendMessage, status, setMessages } = useChat({
-    transport: new DefaultChatTransport({
-      api: "/api/rag/chat",
-      // Each user-asked follow-up meters tokens. Intercept the response to
-      // surface the out-of-tokens wall on 402 and refresh the balance after a
-      // successful answer (the server meters in onFinish once it completes).
-      fetch: async (input, init) => {
-        const res = await fetch(input as RequestInfo, init);
-        if (res.status === 402) {
-          res
-            .clone()
-            .json()
-            .then((b) => {
-              if (b?.state) applyState(b.state);
-            })
-            .catch(() => {});
-          openTokenWall();
-        } else if (res.ok) {
-          // Meter lands server-side when the stream finishes; refresh shortly after.
-          setTimeout(() => refreshCredits(), 1500);
-        }
-        return res;
-      },
-      body: {
-        input,
-        contextId,
-        contextType,
-        title,
-        allowedDomains,
-        description,
-        context,
-      },
-    }),
-  });
+  // Each user-asked follow-up meters tokens. Intercept the response to surface
+  // the out-of-tokens wall on 402 and refresh the balance after a successful
+  // answer (the server meters in onFinish once it completes).
+  const interceptFetch = useCallback(
+    async (
+      reqInput: Parameters<typeof fetch>[0],
+      init?: Parameters<typeof fetch>[1],
+    ) => {
+      const res = await fetch(reqInput, init);
+      if (res.status === 402) {
+        res
+          .clone()
+          .json()
+          .then((b) => {
+            if (b?.state) applyState(b.state);
+          })
+          .catch(() => {});
+        openTokenWall();
+      } else if (res.ok) {
+        // Meter lands server-side when the stream finishes; refresh shortly after.
+        setTimeout(() => refreshCredits(), 1500);
+      }
+      return res;
+    },
+    [applyState, openTokenWall, refreshCredits],
+  );
+
+  // Memoize the transport so `useChat` isn't re-initialized on every render.
+  // The actual question flows through `sendMessage` (the message list); the body
+  // here only carries the stable per-context grounding fields.
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/rag/chat",
+        fetch: interceptFetch,
+        body: {
+          contextId,
+          contextType,
+          title,
+          allowedDomains,
+          description,
+          context,
+        },
+      }),
+    [
+      interceptFetch,
+      contextId,
+      contextType,
+      title,
+      allowedDomains,
+      description,
+      context,
+    ],
+  );
+
+  const { messages, sendMessage, status, setMessages } = useChat({ transport });
 
   const isLoading = status === "submitted" || status === "streaming";
 

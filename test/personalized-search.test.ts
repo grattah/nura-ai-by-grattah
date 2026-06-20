@@ -3,14 +3,23 @@ import { makeSupabaseMock } from "./helpers/supabase-mock";
 
 const h = vi.hoisted(() => ({
   client: null as ReturnType<typeof import("./helpers/supabase-mock").makeSupabaseMock> | null,
+  getTokenState: vi.fn(),
+  meter: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(() => Promise.resolve(h.client!.client)),
 }));
 
+// Token state/metering run via the service-role client; mock the module so the
+// access-control tests don't need it wired up.
+vi.mock("@/lib/credits-server", () => ({
+  getTokenState: (...args: unknown[]) => h.getTokenState(...args),
+  meter: (...args: unknown[]) => h.meter(...args),
+}));
+
 // Don't hit the model — if auth passes we still shouldn't call Anthropic in these tests.
-vi.mock("ai", () => ({ generateObject: vi.fn() }));
+vi.mock("ai", () => ({ generateObject: vi.fn(), generateText: vi.fn() }));
 vi.mock("@ai-sdk/anthropic", () => ({ anthropic: vi.fn() }));
 
 import { POST } from "@/app/api/personalized-search/route";
@@ -27,6 +36,8 @@ function post(body: unknown) {
 beforeEach(() => {
   vi.clearAllMocks();
   h.client = makeSupabaseMock();
+  // Default: tokens available (access-control tests fail earlier anyway).
+  h.getTokenState.mockResolvedValue({ totalRemaining: 100 });
 });
 
 describe("personalized-search — access control (audit M3)", () => {

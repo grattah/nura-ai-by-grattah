@@ -18,8 +18,6 @@ const PersonalizedTokenModal = () => {
   )
     return null;
 
-  console.log(state);
-
   const WHAT_TO_SHOW =
     state.weeklyPct >= LOW_WARN_PCT * 100
       ? state.extraPct != null && state.extraPct >= LOW_WARN_PCT * 100

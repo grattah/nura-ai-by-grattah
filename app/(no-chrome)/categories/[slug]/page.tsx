@@ -9,6 +9,8 @@ import { getCategoryConfig } from "@/lib/category-config";
 import { CategoryBanner } from "@/components/categories/category-banner";
 import { RecipesEmptyState } from "@/components/categories/recipes-empty-state";
 import { RecipeCard } from "@/components/recipe-card";
+import { FilterPills, type FilterPill } from "@/components/filter-pills";
+import { DRINK_TYPES } from "@/lib/drink-types";
 import type { CategoryRecipe } from "@/lib/types";
 
 const PAGE_SIZE = 8;
@@ -29,6 +31,10 @@ export default function CategoryDetailPage() {
 
   // Hoisted so a new client isn't requested on every fetch.
   const supabase = useMemo(() => createClient(), []);
+
+  // Drink-type sub-sub-category filter ("all" = no filter, the default).
+  const [activeType, setActiveType] = useState("all");
+  const [availableTypes, setAvailableTypes] = useState<string[]>([]);
 
   const [recipes, setRecipes] = useState<CategoryRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -56,13 +62,20 @@ export default function CategoryDetailPage() {
 
       // `display_order` then `id` is a total order, so OFFSET pagination can't
       // return overlapping pages (recipes share display_order values).
-      const { data, error } = await supabase
+      let query = supabase
         .from("recipes")
         .select(
           "id, title, image_url, display_order, recipe_tags!inner(tags!inner(slug))",
         )
         .eq("recipe_tags.tags.slug", slug)
-        .eq("status" as never, "approved" as never)
+        .eq("status" as never, "approved" as never);
+
+      // Narrow to a single drink-type sub-sub-category when one is selected.
+      if (activeType !== "all") {
+        query = query.eq("drink_type" as never, activeType as never);
+      }
+
+      const { data, error } = await query
         .order("display_order", { ascending: true })
         .order("id", { ascending: true })
         .range(start, end)
@@ -70,12 +83,11 @@ export default function CategoryDetailPage() {
 
       if (error) {
         if (signal.aborted) throw new DOMException("Aborted", "AbortError");
-        console.log(error);
         throw new Error(error.message);
       }
       return (data as unknown as CategoryRecipe[]) ?? [];
     },
-    [supabase, slug],
+    [supabase, slug, activeType],
   );
 
   // Append the next page. Stable within a slug (only dep is `fetchPage`), so the
@@ -203,6 +215,39 @@ export default function CategoryDetailPage() {
     };
   }, [slug, fetchPage, reloadKey]);
 
+  // On category change: reset the pill to "All" and load which drink types are
+  // present in this category (so we only render pills that have recipes). Runs
+  // alongside the first-page fetch above.
+  useEffect(() => {
+    setActiveType("all");
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.rpc("category_drink_types" as never, {
+        p_slug: slug,
+      } as never);
+      if (cancelled) return;
+      const present = new Set(
+        ((data as { drink_type: string }[] | null) ?? []).map(
+          (r) => r.drink_type,
+        ),
+      );
+      setAvailableTypes(
+        DRINK_TYPES.filter((d) => present.has(d.slug)).map((d) => d.slug),
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, supabase]);
+
+  const pills: FilterPill[] = [
+    { slug: "all", name: "All" },
+    ...DRINK_TYPES.filter((d) => availableTypes.includes(d.slug)).map((d) => ({
+      slug: d.slug,
+      name: d.name,
+    })),
+  ];
+
   const displayName = slug?.replace(/-/g, " ") ?? "";
 
   return (
@@ -231,6 +276,18 @@ export default function CategoryDetailPage() {
       <div className="space-y-6">
         {/* Category banner */}
         <CategoryBanner name={displayName} config={config} />
+
+        {/* Drink-type sub-sub-category filter (shown once present types load) */}
+        {pills.length > 1 && (
+          <div className="px-6 max-xs:px-4">
+            <FilterPills
+              pills={pills}
+              active={activeType}
+              activeLabel={activeType === "all" ? "All" : undefined}
+              onChange={setActiveType}
+            />
+          </div>
+        )}
 
         {/* Recipe grid */}
         {isLoading ? (

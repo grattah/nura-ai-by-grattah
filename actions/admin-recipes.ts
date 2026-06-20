@@ -1,9 +1,15 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/admin/auth";
 import { canApprove } from "@/lib/admin/roles";
+import type { DrinkTypeSlug } from "@/lib/drink-types";
+import {
+  vectorizeRecipe,
+  removeRecipeVectors,
+  type RecipeForIngest,
+} from "@/lib/rag/ingest";
 
 const BUCKET = "recipe-images";
 
@@ -17,6 +23,7 @@ export interface RecipeInput {
   display_order: number | null;
   is_todays_recipe: boolean;
   status: "pending" | "approved";
+  drink_type: DrinkTypeSlug;
   image_url: string | null;
   ingredients: { emoji: string; label: string }[];
   how_to_make: { step: string; instruction: string }[];
@@ -133,6 +140,28 @@ async function syncTags(
   }
 }
 
+// Best-effort vectorization: never block an approval/edit on an embedding hiccup
+// (the recipe is still saved; re-saving or the bulk script can retry).
+async function safeVectorize(recipe: RecipeForIngest) {
+  try {
+    await vectorizeRecipe(recipe);
+  } catch (e) {
+    console.error("[admin-recipes] vectorize", e);
+  }
+}
+
+function ingestShape(id: string, input: RecipeInput): RecipeForIngest {
+  return {
+    id,
+    title: input.title,
+    short_description: input.short_description,
+    ingredients: input.ingredients,
+    how_to_make: input.how_to_make,
+    why_it_works: input.why_it_works,
+    inside_tip: input.inside_tip,
+  };
+}
+
 export async function createRecipe(
   input: RecipeInput,
 ): Promise<Result<{ id: string }>> {
@@ -156,6 +185,7 @@ export async function createRecipe(
     source_url: input.source_url ?? "",
     display_order,
     is_todays_recipe: input.is_todays_recipe,
+    drink_type: input.drink_type,
     image_url: input.image_url,
     ingredients: input.ingredients,
     how_to_make: input.how_to_make,
@@ -174,6 +204,9 @@ export async function createRecipe(
   if (error || !data) return { error: error?.message ?? "Failed to create." };
 
   await syncTags(admin, data.id, input.tagIds);
+  if (input.status === "approved") {
+    await safeVectorize(ingestShape(data.id, input));
+  }
   revalidatePath("/admin/recipes");
   return { id: data.id };
 }
@@ -198,6 +231,7 @@ export async function updateRecipe(
     source_url: input.source_url ?? "",
     display_order: input.display_order ?? 0,
     is_todays_recipe: input.is_todays_recipe,
+    drink_type: input.drink_type,
     image_url: input.image_url,
     ingredients: input.ingredients,
     how_to_make: input.how_to_make,
@@ -207,15 +241,23 @@ export async function updateRecipe(
   // Only admins/owner may change publish status.
   if (canApprove(gate.identity.role)) payload.status = input.status;
 
-  const { error } = await admin
+  const { data: updated, error } = await admin
     .from("recipes")
     .update(payload as never)
-    .eq("id", id);
+    .eq("id", id)
+    .select("status")
+    .maybeSingle();
   if (error) return { error: error.message };
 
   await syncTags(admin, id, input.tagIds);
+  // Re-vectorize when the recipe is (now) approved — covers an admin
+  // approving-on-edit and an editor editing an already-approved recipe.
+  if ((updated as { status?: string } | null)?.status === "approved") {
+    await safeVectorize(ingestShape(id, input));
+  }
   revalidatePath("/admin/recipes");
   revalidatePath(`/recipes/${id}`);
+  updateTag(`recipe-${id}`);
   return { success: true };
 }
 
@@ -227,14 +269,23 @@ export async function setRecipeStatus(
   if (!gate.ok) return { error: gate.error };
 
   const admin = createServiceRoleClient();
-  const { error } = await admin
+  const { data: row, error } = await admin
     .from("recipes")
     .update({ status } as never)
-    .eq("id", id);
+    .eq("id", id)
+    .select(
+      "id, title, short_description, ingredients, how_to_make, why_it_works, inside_tip",
+    )
+    .maybeSingle();
   if (error) return { error: error.message };
+
+  if (status === "approved" && row) {
+    await safeVectorize(row as unknown as RecipeForIngest);
+  }
 
   revalidatePath("/admin/recipes");
   revalidatePath(`/recipes/${id}`);
+  updateTag(`recipe-${id}`);
   return { success: true };
 }
 
@@ -261,10 +312,11 @@ export async function deleteRecipe(id: string): Promise<Result> {
   }
 
   await admin.from("recipe_tags").delete().eq("recipe_id", id);
-  await admin.from("nura_embeddings").delete().eq("context_id", id);
+  await removeRecipeVectors(id);
   const { error } = await admin.from("recipes").delete().eq("id", id);
   if (error) return { error: error.message };
 
   revalidatePath("/admin/recipes");
+  updateTag(`recipe-${id}`);
   return { success: true };
 }
