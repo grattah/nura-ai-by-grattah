@@ -2,9 +2,12 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import Stripe from "stripe";
 import { createClient as createSbClient } from "@supabase/supabase-js";
+import { format } from "date-fns";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { activateSubscriptionFromSession } from "@/lib/subscription-activate";
 import { creditTokenPurchaseFromSession } from "@/lib/token-purchase";
+import { sendEmail } from "@/lib/email/send";
+import { subscriptionConfirmationEmail } from "@/lib/email/templates";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -49,31 +52,29 @@ function periodEndToIso(sub: Stripe.Subscription): string | null {
   return end ? new Date(end * 1000).toISOString() : null;
 }
 
-async function sendWelcomeEmail(email: string) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  const adminSupabase = createServiceRoleClient();
+function planLabel(plan: string | null | undefined): string {
+  return plan === "monthly" ? "Monthly Plan" : "Premium Plan";
+}
 
-  const { data: linkData } = await adminSupabase.auth.admin.generateLink({
-    type: "magiclink",
-    email,
-    options: { redirectTo: `${appUrl}/auth/callback?next=/` },
+function fmtDate(iso: string | null | undefined): string | null {
+  return iso ? format(new Date(iso), "MMM d, yyyy") : null;
+}
+
+// Subscription confirmation, sent from the deduped webhook so it fires once.
+// Reads plan/period-end from the row activateSubscriptionFromSession just wrote.
+async function sendSubscriptionConfirmation(userId: string, email: string) {
+  const supabase = createServiceRoleClient();
+  const { data } = await supabase
+    .from("subscriptions")
+    .select("plan, expires_at")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const row = data as { plan?: string; expires_at?: string | null } | null;
+  const { subject, html } = subscriptionConfirmationEmail({
+    planLabel: planLabel(row?.plan),
+    renewsAt: fmtDate(row?.expires_at),
   });
-
-  const actionLink = linkData?.properties?.action_link;
-
-  // TODO: swap in Resend / Postmark
-  // await resend.emails.send({
-  //   from: "nuko@yourdomain.com",
-  //   to: email,
-  //   subject: "Welcome to Nuko",
-  //   html: `<p>Click to access your account: <a href="${actionLink}">Open Nura</a></p>`
-  // })
-
-  if (!actionLink) {
-    console.warn(`[webhook] Could not generate welcome link for ${email}`);
-  } else {
-    console.log(`[webhook] Welcome email queued for ${email}`);
-  }
+  await sendEmail({ to: email, subject, html });
 }
 
 export async function POST(req: Request) {
@@ -183,7 +184,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   await activateSubscriptionFromSession(session);
 
   if (email) {
-    await sendWelcomeEmail(email);
+    try {
+      await sendSubscriptionConfirmation(userId, email);
+    } catch (e) {
+      console.error("[webhook] confirmation email failed", e);
+    }
   }
 }
 
@@ -232,11 +237,22 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
     }
   }
 
+  // Persist the period end and the cancel-at-period-end flag (and status when it
+  // mapped to one). We always write so the flag stays in sync.
+  const incomingCancel = !!sub.cancel_at_period_end;
+  const update: Record<string, unknown> = {
+    expires_at: periodEndToIso(sub),
+    cancel_at_period_end: incomingCancel,
+  };
+  if (status) update.status = status;
+
   const { error } = await supabase
     .from("subscriptions")
-    .update({ status, expires_at: periodEndToIso(sub) })
+    .update(update as never)
     .eq("stripe_subscription_id", sub.id);
 
   if (error) throw new Error(`Failed to update subscription: ${error.message}`);
-  console.log(`[webhook] Subscription ${sub.id} → ${status}`);
+  console.log(
+    `[webhook] Subscription ${sub.id} updated (status=${status ?? "unchanged"}, cancelAtPeriodEnd=${incomingCancel})`,
+  );
 }
