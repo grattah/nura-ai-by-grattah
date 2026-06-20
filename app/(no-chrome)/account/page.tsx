@@ -51,7 +51,10 @@ export default async function AccountPage() {
     <div className="min-h-dvh bg-background pb-10">
       {/* Header */}
       <div className="flex items-center px-6 pt-5 pb-4 gap-3 mb-3.5">
-        <BackButton className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center shrink-0 hover:opacity-75 transition-opacity" />
+        <BackButton
+          backPage="/"
+          className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center shrink-0 hover:opacity-75 transition-opacity"
+        />
         <h1 className="flex-1 text-center text-xl font-semibold text-base-text capitalize">
           Account
         </h1>

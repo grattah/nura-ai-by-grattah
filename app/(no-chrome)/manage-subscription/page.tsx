@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ChevronRight, Mail } from "lucide-react";
+import { ArrowLeft, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { format } from "date-fns";
+import { CancelSubscriptionButton } from "@/components/subscription/cancel-subscription-button";
 
 export default async function ManageSubscriptionPage() {
   const supabase = await createClient();
@@ -16,12 +17,19 @@ export default async function ManageSubscriptionPage() {
   // maybeSingle() error and wrongly bounce a subscribed user to /checkout.
   const { data: subs } = await supabase
     .from("subscriptions")
-    .select("status, plan, expires_at, stripe_subscription_id")
+    .select("*")
     .eq("user_id", user.id)
     .eq("status", "active")
     .order("created_at", { ascending: false })
     .limit(1);
-  const sub = subs?.[0];
+  const sub = subs?.[0] as
+    | {
+        status: string;
+        plan: string;
+        expires_at: string | null;
+        cancel_at_period_end?: boolean;
+      }
+    | undefined;
 
   if (!sub) redirect("/checkout");
 
@@ -91,6 +99,12 @@ export default async function ManageSubscriptionPage() {
           </p>
           <ChevronRight className="w-4 h-4 text-muted-foreground" />
         </Link>
+
+        {/* Cancel / resume */}
+        <CancelSubscriptionButton
+          cancelAtPeriodEnd={!!sub.cancel_at_period_end}
+          accessUntil={nextBilling}
+        />
 
         {/* Support */}
         <div className="pt-4 text-center mt-18">

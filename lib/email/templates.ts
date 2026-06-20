@@ -1,0 +1,157 @@
+// Branded HTML email builders. Pure functions (no server-only) so they can be
+// unit-tested. Each returns { subject, html } with inline, email-safe styles.
+import { APP_URL, EMAIL_LOGO_URL, SUPPORT_EMAIL, BRAND } from "./config";
+
+function esc(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+interface LayoutOpts {
+  heading: string;
+  /** Pre-escaped/trusted HTML for the body paragraphs. */
+  body: string;
+  cta?: { label: string; url: string };
+  preview?: string;
+}
+
+function layout({ heading, body, cta, preview }: LayoutOpts): string {
+  const button = cta
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+         <tr><td style="border-radius:9999px;background:${BRAND.primary};">
+           <a href="${esc(cta.url)}" style="display:inline-block;padding:14px 28px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:9999px;">${esc(cta.label)}</a>
+         </td></tr>
+       </table>`
+    : "";
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(heading)}</title></head>
+<body style="margin:0;padding:0;background:${BRAND.pageBg};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  ${preview ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;">${esc(preview)}</div>` : ""}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BRAND.pageBg};padding:32px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:${BRAND.cardBg};border:1px solid ${BRAND.border};border-radius:20px;overflow:hidden;">
+        <tr><td style="padding:28px 32px 8px;text-align:center;">
+          <img src="${EMAIL_LOGO_URL}" alt="Nuko" width="48" height="48" style="border-radius:12px;display:inline-block;" />
+        </td></tr>
+        <tr><td style="padding:8px 32px 32px;">
+          <h1 style="margin:0 0 12px;font-size:20px;font-weight:700;color:${BRAND.text};text-align:center;">${esc(heading)}</h1>
+          <div style="font-size:15px;line-height:1.6;color:${BRAND.muted};text-align:center;">${body}</div>
+          <div style="text-align:center;">${button}</div>
+        </td></tr>
+      </table>
+      <p style="max-width:480px;margin:20px auto 0;font-size:12px;line-height:1.5;color:${BRAND.faint};text-align:center;">
+        Nuko — your health & wellness companion.<br>
+        Need help? <a href="mailto:${SUPPORT_EMAIL}" style="color:${BRAND.faint};">${SUPPORT_EMAIL}</a>
+      </p>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+export interface EmailContent {
+  subject: string;
+  html: string;
+}
+
+// ─── Auth (Supabase Send Email hook) ─────────────────────────────────────────
+
+export function otpEmail({ code }: { code: string }): EmailContent {
+  return {
+    subject: "Your Nuko verification code",
+    html: layout({
+      heading: "Verify your email",
+      preview: "Your Nuko verification code",
+      body: `<p style="margin:0 0 16px;">Enter this code to continue. It expires shortly.</p>
+        <p style="margin:0;font-size:30px;font-weight:700;letter-spacing:6px;color:${BRAND.text};">${esc(code)}</p>
+        <p style="margin:16px 0 0;font-size:13px;color:${BRAND.faint};">If you didn't request this, you can ignore this email.</p>`,
+    }),
+  };
+}
+
+export function recoveryEmail({ url }: { url: string }): EmailContent {
+  return {
+    subject: "Reset your Nuko password",
+    html: layout({
+      heading: "Reset your password",
+      preview: "Reset your Nuko password",
+      body: `<p style="margin:0;">Click the button below to choose a new password. This link expires shortly. If you didn't request it, ignore this email.</p>`,
+      cta: { label: "Reset password", url },
+    }),
+  };
+}
+
+export function genericAuthEmail({ url }: { url: string }): EmailContent {
+  return {
+    subject: "Confirm your request on Nuko",
+    html: layout({
+      heading: "Confirm your request",
+      preview: "Confirm your request on Nuko",
+      body: `<p style="margin:0;">Click the button below to continue. This link expires shortly.</p>`,
+      cta: { label: "Continue", url },
+    }),
+  };
+}
+
+// ─── Transactional ───────────────────────────────────────────────────────────
+
+export function welcomeEmail({ name }: { name?: string | null }): EmailContent {
+  const hi = name?.trim() ? `Hi ${esc(name.trim().split(/\s+/)[0])}, ` : "";
+  return {
+    subject: "Welcome to Nuko 🌿",
+    html: layout({
+      heading: "Welcome to Nuko",
+      preview: "Welcome to Nuko",
+      body: `<p style="margin:0 0 12px;">${hi}we're glad you're here. Explore wellness recipes, personalized guidance, and more.</p>`,
+      cta: { label: "Open Nuko", url: APP_URL },
+    }),
+  };
+}
+
+export function subscriptionConfirmationEmail({
+  planLabel,
+  renewsAt,
+}: {
+  planLabel: string;
+  renewsAt?: string | null;
+}): EmailContent {
+  const renew = renewsAt
+    ? `<p style="margin:12px 0 0;font-size:13px;color:${BRAND.faint};">Next billing date: ${esc(renewsAt)}</p>`
+    : "";
+  return {
+    subject: "Your Nuko subscription is active ✨",
+    html: layout({
+      heading: "You're subscribed to Nuko+",
+      preview: "Your Nuko subscription is active",
+      body: `<p style="margin:0;">Thanks for subscribing — your <strong>${esc(planLabel)}</strong> is now active and you have full access.</p>${renew}`,
+      cta: { label: "Start exploring", url: APP_URL },
+    }),
+  };
+}
+
+export function cancellationEmail({
+  planLabel,
+  accessUntil,
+}: {
+  planLabel: string;
+  accessUntil?: string | null;
+}): EmailContent {
+  const until = accessUntil
+    ? `<p style="margin:12px 0 0;">You'll keep full access until <strong>${esc(accessUntil)}</strong>.</p>`
+    : "";
+  return {
+    subject: "Your Nuko subscription has been cancelled",
+    html: layout({
+      heading: "Subscription cancelled",
+      preview: "Your Nuko subscription has been cancelled",
+      body: `<p style="margin:0;">Your <strong>${esc(planLabel)}</strong> won't renew.</p>${until}
+        <p style="margin:12px 0 0;">Changed your mind? You can resume anytime.</p>`,
+      cta: { label: "Manage subscription", url: `${APP_URL}/manage-subscription` },
+    }),
+  };
+}
