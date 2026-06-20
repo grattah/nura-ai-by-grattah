@@ -108,7 +108,7 @@ export function RecipeCardNew({
                 className="bg-black/60 px-3 py-2 flex items-center gap-1.5 absolute bottom-2.75 left-1.5 rounded-full"
               >
                 <Lock className="size-3 text-white shrink-0" />
-                <span className="text-white text-xs font-medium tracking-wide uppercase">
+                <span className="text-white text-xs max-xs:text-[9px] font-medium tracking-wide uppercase">
                   Unlock Full Recipe
                 </span>
               </button>
