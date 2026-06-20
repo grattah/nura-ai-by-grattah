@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const { object } = await generateObject({
-      model: anthropic("claude-sonnet-4-6"),
+      model: anthropic("claude-haiku-4-5"),
       schema: SuggestionsSchema,
       maxOutputTokens: 256,
       system: `You are a recipe ideas assistant for the Nuko wellness app.

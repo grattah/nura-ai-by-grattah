@@ -61,7 +61,7 @@ export async function POST(
     const result = await generateText({
       model: google("gemini-3.1-flash-image-preview"),
       providerOptions: { google: { responseModalities: ["TEXT", "IMAGE"] } },
-      prompt: `Appetizing, photorealistic photo of "${recipe.title}", a wellness drink or dish. Soft natural light, clean neutral background, 45-degree food photography, vibrant and fresh. No text, no watermark.`,
+      prompt: `Appetizing, photorealistic photo of "${recipe.title}", a wellness drink. Soft natural light, clean neutral background, 45-degree food photography, vibrant and fresh. No text, no watermark.`,
     });
     const image = result.files.find((f) => f.mediaType?.startsWith("image/"));
     if (!image) throw new Error("model returned no image");
@@ -70,7 +70,12 @@ export async function POST(
     // and recompress to WebP before storing so the hero/cards load fast and the
     // Next.js image optimizer doesn't time out fetching a multi-MB source.
     const optimized = await sharp(Buffer.from(image.uint8Array))
-      .resize({ width: 1280, height: 1280, fit: "inside", withoutEnlargement: true })
+      .resize({
+        width: 1280,
+        height: 1280,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
       .webp({ quality: 78 })
       .toBuffer();
 
