@@ -22,12 +22,10 @@ export function SettingsRow({
   const inner = (
     <div className="flex items-center justify-between px-4 py-4 min-h-14">
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-[#F3F1E8] flex items-center justify-center shrink-0">
+        <div className="size-10 rounded-full bg-[#F3F1E8] grid place-items-center shrink-0">
           {icon}
         </div>
-        <span className={`text-base font-medium ${textClass}`}>
-          {label}
-        </span>
+        <span className={`text-base font-medium ${textClass}`}>{label}</span>
       </div>
       <ChevronRight className={`w-4 h-4 ${textClass}`} />
     </div>

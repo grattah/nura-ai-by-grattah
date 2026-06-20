@@ -146,7 +146,7 @@ export default async function AccountPage() {
               </p>
             </div>
           </div>
-          <ArrowLeft className="w-4 h-4 text-white rotate-180" />
+          <ArrowLeft className="size-4 text-white rotate-180" />
         </Link>
 
         {/* Settings section */}
@@ -155,19 +155,19 @@ export default async function AccountPage() {
             Settings
           </p>
           <SettingsRow
-            icon={<Tokens className="w-4 h-4 text-grey-c500" />}
+            icon={<Tokens className="size-4 text-grey-c500" />}
             label="Tokens"
             href="/tokens"
           />
           <SettingsRow
             icon={
-              <HelpCircle className="w-4 h-4 text-grey-c500" strokeWidth={2} />
+              <HelpCircle className="size-4 text-grey-c500" strokeWidth={2} />
             }
             label="Help & guidance"
             href="/help-and-guidance"
           />
           <SettingsRow
-            icon={<Shield className="w-4 h-4 text-grey-c500" strokeWidth={2} />}
+            icon={<Shield className="size-4 text-grey-c500" strokeWidth={2} />}
             label="Terms and privacy"
             href="/terms-and-privacy"
           />
@@ -177,8 +177,8 @@ export default async function AccountPage() {
               className="w-full flex items-center justify-between px-4 py-4 min-h-14 bg-card rounded-2xl hover:opacity-80 transition-opacity active:scale-[0.98] text-left"
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-[#F3F1E8] flex items-center justify-center shrink-0">
-                  <LogOut className="w-4 h-4 text-error-c700" strokeWidth={2} />
+                <div className="size-10 rounded-full bg-[#F3F1E8] flex items-center justify-center shrink-0">
+                  <LogOut className="size-4 text-error-c700" strokeWidth={2} />
                 </div>
                 <span className="text-base font-medium text-error-c500">
                   Log out

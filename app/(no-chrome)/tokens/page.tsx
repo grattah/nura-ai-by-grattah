@@ -26,7 +26,10 @@ export default async function TokensPage() {
     <div className="min-h-dvh bg-background pb-10">
       <main className="px-6">
         <div className="flex items-center justify-between pt-5 pb-4 gap-3 mb-3.5">
-          <BackButton className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
+          <BackButton
+            backPage="/account"
+            className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity"
+          />
           <div>
             <h1 className="flex-1 text-center text-xl font-semibold text-base-text capitalize">
               Tokens
