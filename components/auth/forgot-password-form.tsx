@@ -80,7 +80,7 @@ export function ForgotPasswordForm({
 
           <div className="rounded-xl bg-[#E8E6DC] p-4 flex items-start gap-3">
             <Mail size={20} className="text-mint-green mt-0.5 shrink-0" />
-            <div className="flex flex-col ">
+            <div className="flex flex-col">
               <p className="text-xs text-subtle uppercase tracking-wide font-medium">
                 Sent to
               </p>

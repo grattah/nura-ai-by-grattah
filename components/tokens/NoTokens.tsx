@@ -26,10 +26,10 @@ const NoTokens = ({ resetAt = null }: { resetAt?: string | null }) => {
               <Image src={coin} alt="icon" />
             </div>
             <div className="flex flex-col gap-3 justify-center items-center">
-              <p className="text-center text-2xl max-[400px]:text-xl font-semibold text-black">
+              <p className="text-center text-2xl font-semibold text-black">
                 You’ve used all your free weekly tokens
               </p>
-              <p className="text-center text-subtle max-[400px]:text-sm">
+              <p className="text-center text-subtle">
                 You’ve reached your weekly limit for this feature. Your free
                 tokens will reset at the end of the week.
               </p>
@@ -40,10 +40,8 @@ const NoTokens = ({ resetAt = null }: { resetAt?: string | null }) => {
               <Calendar color="#227B6F" size={16} strokeWidth={2} />
             </div>
             <div className="flex flex-col gap-1 flex-1">
-              <p className="font-medium text-sm max-[400px]:text-xs">
-                Tokens resets in
-              </p>
-              <p className="font-semibold text-mint-green text-2xl max-[400px]:text-xl">
+              <p className="font-medium text-sm">Tokens resets in</p>
+              <p className="font-semibold text-mint-green text-2xl">
                 {formatResetCountdown(resetAt)}
               </p>
               <p className="font-medium text-sm text-subtle">

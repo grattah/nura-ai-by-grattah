@@ -25,10 +25,12 @@ export function BookmarkButton({
       disabled={isPending}
       className={cn(
         "flex items-center justify-center rounded-full transition-all hover:opacity-70 disabled:opacity-50",
-        !showText && !popular && "bg-[#E8E6DC] p-3 max-xs:p-2 text-subtle",
+        !showText &&
+          !popular &&
+          "bg-[#E8E6DC] size-10 grid place-items-center text-subtle shrink-0",
         showText &&
-          "border border-[#C4CAC8] bg-transparent p-3 max-xs:p-2 text-subtle w-full",
-        popular && "bg-white p-2",
+          "border border-[#C4CAC8] bg-transparent p-3 text-subtle w-full",
+        popular && "bg-white p-2 shrink-0",
       )}
       aria-label={bookmarked ? "Remove bookmark" : "Bookmark recipe"}
     >
@@ -36,13 +38,13 @@ export function BookmarkButton({
         strokeWidth={2.5}
         size={16}
         className={cn(
-          "transition-all max-xs:size-2.5",
+          "transition-all size-4",
           bookmarked && "fill-mint-green text-mint-green",
           popular && "text-mint-green",
         )}
       />
       {showText && (
-        <span className="ml-1 font-medium text-sm max-xs:text-xs max-2xs:text-[10px] text-[#727E7A] text-nowrap">
+        <span className="ml-1 font-medium text-sm max-2xs:text-[10px] text-[#727E7A] text-nowrap">
           {text}
         </span>
       )}

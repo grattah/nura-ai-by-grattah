@@ -22,16 +22,14 @@ const TokensCard = ({
       <div className="flex flex-col gap-3.75">
         <div className="flex justify-between items-start">
           <div className="flex flex-col gap-1">
-            <p className="font-semibold text-xl max-[400px]:text-lg">
-              Extra tokens
-            </p>
-            <p className="text-subtle font-medium text-sm max-[400px]:text-xs">
+            <p className="font-semibold text-xl">Extra tokens</p>
+            <p className="text-subtle font-medium text-sm">
               Purchased separately
             </p>
           </div>
           <div className="bg-[#227B6F1A] p-2 rounded-lg flex items-center gap-1">
             <Calendar size={16} color="#227B6F" strokeWidth={1.67} />
-            <p className="text-xs font-semibold text-mint-green max-[400px]:text-[10px]">
+            <p className="text-xs font-semibold text-mint-green">
               Bought {formatBoughtDate(state.lastPurchaseAt)}
             </p>
           </div>
@@ -44,7 +42,7 @@ const TokensCard = ({
               trackColor={state.extraBalance === 0 ? "#FFDBD6" : "#ECEBEA"}
             />
             <p
-              className={`${state.extraBalance === 0 ? "text-[#F90000]" : "text-[#F39128]"} text-sm font-semibold max-[400px]:text-xs`}
+              className={`${state.extraBalance === 0 ? "text-[#F90000]" : "text-[#F39128]"} text-sm font-semibold`}
             >
               {state.extraPct}% used
             </p>
@@ -61,7 +59,7 @@ const TokensCard = ({
               size={24}
               strokeWidth={1.67}
             />
-            <p className="font-medium text-sm text-[#1B1D1D] max-[400px]:text-xs">
+            <p className="font-medium text-sm text-[#1B1D1D]">
               Extra token are used only after your weekly limit is exhausted
             </p>
           </div>
@@ -75,7 +73,7 @@ const TokensCard = ({
             <div className="bg-[#FFF7EC] rounded-full">
               <CoinAnimation />
             </div>
-            <p className="text-black font-medium max-[400px]:text-sm">
+            <p className="text-black font-medium text-base">
               Buy extra credits
             </p>
           </div>
@@ -92,16 +90,14 @@ const TokensCard = ({
     <div className="flex flex-col gap-3.75">
       <div className="flex justify-between items-start">
         <div className="flex flex-col gap-1">
-          <p className="font-semibold text-xl max-[400px]:text-lg">
-            Weekly limits
-          </p>
-          <p className="text-subtle font-medium text-sm max-[400px]:text-xs">
+          <p className="font-semibold text-xl">Weekly limits</p>
+          <p className="text-subtle font-medium text-sm">
             Included with your subscription
           </p>
         </div>
         <div className="bg-[#227B6F1A] p-2 rounded-lg flex items-center gap-1">
           <Calendar size={16} color="#227B6F" strokeWidth={1.67} />
-          <p className="text-xs font-semibold text-mint-green max-[400px]:text-[10px]">
+          <p className="text-xs font-semibold text-mint-green">
             Resets in {formatResetShort(state.resetAt)}
           </p>
         </div>
@@ -115,7 +111,7 @@ const TokensCard = ({
           />
           <div className="flex justify-between items-center">
             <p
-              className={`text-sm font-semibold max-[400px]:text-xs ${
+              className={`text-sm font-semibold ${
                 isOut
                   ? "text-[#F90000]"
                   : almostOut
@@ -125,9 +121,7 @@ const TokensCard = ({
             >
               {state.weeklyPct}% used
             </p>
-            <p className="text-sm text-subtle font-medium max-[400px]:text-xs">
-              Resets weekly
-            </p>
+            <p className="text-sm text-subtle font-medium">Resets weekly</p>
           </div>
         </div>
         <div
@@ -146,7 +140,7 @@ const TokensCard = ({
           ) : (
             <HiOutlineSparkles color="#227B6F" size={24} strokeWidth={1.67} />
           )}
-          <p className="font-medium text-sm text-[#1B1D1D] max-[400px]:text-xs">
+          <p className="font-medium text-sm text-[#1B1D1D]">
             {almostOut
               ? `Only ${state.weeklyRemaining} free weekly token${
                   state.weeklyRemaining === 1 ? "" : "s"

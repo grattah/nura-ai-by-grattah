@@ -68,10 +68,10 @@ export default async function AdminRecipesPage({
             key={t.key}
             href={`/admin/recipes${t.key === "all" ? "" : `?status=${t.key}`}`}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              filter === t.key
-                ? "bg-mint-green text-white"
-                : "bg-card border border-border text-foreground hover:bg-muted"
-            }`}
+ filter === t.key
+ ? "bg-mint-green text-white"
+ : "bg-card border border-border text-foreground hover:bg-muted"
+ }`}
           >
             {t.label}
           </Link>

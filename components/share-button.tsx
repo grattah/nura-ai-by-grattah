@@ -143,20 +143,17 @@ export function ShareButton({
         onClick={handleToggle}
         aria-disabled={disabled}
         className={cn(
-          "rounded-full transition-opacity flex items-center p-3 max-xs:p-2",
-          showText ? "border border-[#C4CAC8] bg-inherit" : "bg-[#E8E6DC]",
+          "rounded-full transition-opacity flex items-center",
+          showText
+            ? "border border-[#C4CAC8] bg-inherit p-3"
+            : "bg-[#E8E6DC] size-10 grid place-items-center",
           disabled ? "opacity-40 cursor-not-allowed" : "hover:opacity-70",
         )}
         aria-label="Share recipe"
       >
-        <Share
-          strokeWidth={2.5}
-          size={16}
-          color="#57605E"
-          className="max-xs:size-2.5"
-        />
+        <Share strokeWidth={2.5} size={16} color="#57605E" className="size-4" />
         {showText && (
-          <span className="ml-1 font-medium text-sm max-xs:text-xs max-2xs:text-[10px] text-[#727E7A] text-nowrap">
+          <span className="ml-1 font-medium text-sm text-[#727E7A] text-nowrap">
             {text}
           </span>
         )}
@@ -164,7 +161,7 @@ export function ShareButton({
 
       {isOpen && !disabled && (
         <div
-          className={`absolute ${showText ? "left-0" : "right-0"}  top-13 bg-card border border-border rounded-2xl shadow-lg z-50 min-w-56 overflow-hidden`}
+          className={`absolute ${showText ? "left-0" : "right-0"} top-13 bg-card border border-border rounded-2xl shadow-lg z-50 min-w-56 overflow-hidden`}
         >
           <div className="p-3 space-y-1">
             {shareOptions.map((option) => {
@@ -178,18 +175,18 @@ export function ShareButton({
                     logShare(recipeId);
                   }}
                   className={cn(
-                    "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm max-xs:text-xs transition-colors",
+                    "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm transition-colors",
                     isActive
                       ? "bg-foreground/10 text-foreground"
                       : "hover:bg-foreground/5 text-foreground/80 hover:text-foreground",
                   )}
                 >
                   {isActive && option.label === "Copy Link" ? (
-                    <Check className="size-4 max-xs:size-2.5" />
+                    <Check className="size-4" />
                   ) : (
-                    <Icon className="size-4 max-xs:size-2.5" />
+                    <Icon className="size-4" />
                   )}
-                  <span className="max-xs:text-xs">{option.label}</span>
+                  <span className="text-base">{option.label}</span>
                 </button>
               );
             })}

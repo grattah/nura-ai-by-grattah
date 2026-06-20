@@ -50,15 +50,15 @@ export default async function AccountPage() {
   return (
     <div className="min-h-dvh bg-background pb-10">
       {/* Header */}
-      <div className="flex items-center px-6 max-xs:px-4 pt-5 pb-4 gap-3 mb-3.5">
+      <div className="flex items-center px-6 pt-5 pb-4 gap-3 mb-3.5">
         <BackButton className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center shrink-0 hover:opacity-75 transition-opacity" />
-        <h1 className="flex-1 text-center text-xl max-xs:text-lg font-semibold text-base-text capitalize">
+        <h1 className="flex-1 text-center text-xl font-semibold text-base-text capitalize">
           Account
         </h1>
         <div className="size-10 shrink-0" aria-hidden />
       </div>
 
-      <div className="px-6 max-xs:px-4 space-y-4">
+      <div className="px-6 space-y-4">
         {/* User card */}
         <div className="bg-card rounded-2xl p-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -146,7 +146,7 @@ export default async function AccountPage() {
               </p>
             </div>
           </div>
-          <ArrowLeft className="w-4 h-4 text-white rotate-180" />
+          <ArrowLeft className="size-4 text-white rotate-180" />
         </Link>
 
         {/* Settings section */}
@@ -155,19 +155,19 @@ export default async function AccountPage() {
             Settings
           </p>
           <SettingsRow
-            icon={<Tokens className="w-4 h-4 text-grey-c500" />}
+            icon={<Tokens className="size-4 text-grey-c500" />}
             label="Tokens"
             href="/tokens"
           />
           <SettingsRow
             icon={
-              <HelpCircle className="w-4 h-4 text-grey-c500" strokeWidth={2} />
+              <HelpCircle className="size-4 text-grey-c500" strokeWidth={2} />
             }
             label="Help & guidance"
             href="/help-and-guidance"
           />
           <SettingsRow
-            icon={<Shield className="w-4 h-4 text-grey-c500" strokeWidth={2} />}
+            icon={<Shield className="size-4 text-grey-c500" strokeWidth={2} />}
             label="Terms and privacy"
             href="/terms-and-privacy"
           />
@@ -177,8 +177,8 @@ export default async function AccountPage() {
               className="w-full flex items-center justify-between px-4 py-4 min-h-14 bg-card rounded-2xl hover:opacity-80 transition-opacity active:scale-[0.98] text-left"
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-[#F3F1E8] flex items-center justify-center shrink-0">
-                  <LogOut className="w-4 h-4 text-error-c700" strokeWidth={2} />
+                <div className="size-10 rounded-full bg-[#F3F1E8] flex items-center justify-center shrink-0">
+                  <LogOut className="size-4 text-error-c700" strokeWidth={2} />
                 </div>
                 <span className="text-base font-medium text-error-c500">
                   Log out

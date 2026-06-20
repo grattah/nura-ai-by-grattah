@@ -68,11 +68,11 @@ const page = async ({ searchParams }: PageProps) => {
   return (
     <div className="bg-background">
       <main>
-        <div className="flex items-center justify-between px-6 max-xs:px-4 py-3.25 relative">
+        <div className="flex items-center justify-between px-6 py-3.25 relative">
           <BackButton className="rounded-full bg-[#E8E6DC] p-3 absolute left-6" />
           <div className="flex flex-col gap-1 items-center w-full">
-            <p className="font-semibold text-xl max-xs:text-lg">Comments</p>
-            <p className="font-medium text-[#57605E] text-sm max-xs:text-xs">
+            <p className="font-semibold text-xl">Comments</p>
+            <p className="font-medium text-[#57605E] text-sm">
               {recipe.title}
             </p>
           </div>
@@ -89,9 +89,9 @@ const page = async ({ searchParams }: PageProps) => {
           />
         </div>
 
-        <div className="px-6 max-xs:px-4 pt-6 bg-[#FFFFFF]">
+        <div className="px-6 pt-6 bg-[#FFFFFF]">
           <div className="flex items-center justify-between">
-            <p className="text-xl max-xs:text-lg font-semibold text-base-text">
+            <p className="text-xl font-semibold text-base-text">
               All comments({totalCount})
             </p>
             <button className="flex gap-2 items-center">

@@ -253,7 +253,7 @@ export default function CategoryDetailPage() {
   return (
     <div className="bg-white pb-24 min-h-svh">
       {/* Header */}
-      <div className="flex items-center px-6 max-xs:px-4 pt-5 pb-4 gap-3 bg-background">
+      <div className="flex items-center px-6 pt-5 pb-4 gap-3 bg-background">
         <button
           onClick={() => router.back()}
           className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center shrink-0 hover:opacity-75 transition-opacity"
@@ -261,7 +261,7 @@ export default function CategoryDetailPage() {
         >
           <ArrowLeft className="size-5 text-foreground" />
         </button>
-        <h1 className="flex-1 text-center text-xl max-xs:text-lg font-semibold text-base-text capitalize">
+        <h1 className="flex-1 text-center text-xl font-semibold text-base-text capitalize">
           {displayName}
         </h1>
         <Link
@@ -279,7 +279,7 @@ export default function CategoryDetailPage() {
 
         {/* Drink-type sub-sub-category filter (shown once present types load) */}
         {pills.length > 1 && (
-          <div className="px-6 max-xs:px-4">
+          <div className="px-6">
             <FilterPills
               pills={pills}
               active={activeType}
@@ -291,7 +291,7 @@ export default function CategoryDetailPage() {
 
         {/* Recipe grid */}
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-4 max-xs:gap-2.5 animate-pulse px-6 max-xs:px-4">
+          <div className="grid grid-cols-2 gap-4 animate-pulse px-6">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="aspect-square bg-muted rounded-3xl" />
             ))}
@@ -310,7 +310,7 @@ export default function CategoryDetailPage() {
           </div>
         ) : recipes.length > 0 ? (
           <>
-            <div className="grid grid-cols-2 gap-4 max-xs:gap-2.5 px-6 max-xs:px-4">
+            <div className="grid grid-cols-2 gap-4 px-6">
               {recipes.map((recipe, i) => (
                 <RecipeCard key={recipe.id} recipe={recipe} priority={i < 4} />
               ))}
@@ -355,10 +355,10 @@ export default function CategoryDetailPage() {
       </div>
 
       {/* Find a recipe CTA */}
-      <div className="px-6 max-xs:px-4 mt-4">
+      <div className="px-6 mt-4">
         <Link
           href="/find-recipe"
-          className="w-full flex items-center justify-center gap-2.5 py-4 max-xs:py-3 rounded-full border border-mint-green text-mint-green text-base max-xs:text-sm font-semibold hover:opacity-80 transition-opacity"
+          className="w-full flex items-center justify-center gap-2.5 py-4 rounded-full border border-mint-green text-mint-green text-base font-semibold hover:opacity-80 transition-opacity"
         >
           Find a recipe <ArrowRight className="size-5 text-mint-green" />
         </Link>
