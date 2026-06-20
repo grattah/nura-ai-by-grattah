@@ -13,6 +13,7 @@ import { UpgradeBanner } from "@/components/home/upgrade-banner";
 import { getBookmarkedIds } from "@/actions/bookmark";
 import { hasActiveSubscription } from "@/lib/subscription";
 import { withTiming } from "@/lib/perf";
+import { getDailyTip, utcDayKey, FALLBACK_TIP } from "@/lib/daily-tip";
 
 type RecipeWithTags = {
   id: string;
@@ -22,13 +23,6 @@ type RecipeWithTags = {
 };
 
 // Static wellness tip — swap for a DB-driven fetch when ready
-const WELLNESS_TIP = {
-  title: "Chew a little longer",
-  description:
-    "Digestion begins in the mouth. Twenty unhurried chews per bite can noticeably reduce bloating.",
-  imageUrl: "/daily-wtip.png" as string | undefined,
-};
-
 const getPopularRecipes = unstable_cache(
   async () => {
     const supabase = createServiceRoleClient();
@@ -56,10 +50,14 @@ export default async function HomePage() {
       data: { user },
     },
     { data: rawRecipes },
+    dailyTipRow,
   ] = await Promise.all([
     withTiming("home:getCachedUser", () => getCachedUser()),
     withTiming("home:getPopularRecipes", () => getPopularRecipes()),
+    withTiming("home:getDailyTip", () => getDailyTip(utcDayKey())),
   ]);
+
+  const dailyTip = dailyTipRow ?? FALLBACK_TIP;
 
   const recipes = (rawRecipes ?? []) as unknown as RecipeWithTags[];
   const popularRecipes = recipes.slice(0, 5);
@@ -134,9 +132,10 @@ export default async function HomePage() {
 
         {/* Daily Wellness Tip */}
         <WellnessTipCard
-          title={WELLNESS_TIP.title}
-          description={WELLNESS_TIP.description}
-          imageUrl={WELLNESS_TIP.imageUrl}
+          title={dailyTip.title}
+          description={dailyTip.description}
+          imageUrl={dailyTip.imageUrl}
+          stale={!dailyTipRow}
         />
 
         {/* Categories */}
