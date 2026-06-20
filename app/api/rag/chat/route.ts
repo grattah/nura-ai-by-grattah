@@ -214,7 +214,7 @@ export async function POST(req: NextRequest) {
     // ── Path A: answer grounded in vector DB context ───────────────────────────
     if (hasGoodResults) {
       const result = streamText({
-        model: anthropic("claude-sonnet-4-6"),
+        model: anthropic("claude-haiku-4-5"),
         maxOutputTokens: MAX_OUTPUT_TOKENS.followup,
         system: buildSystemPrompt(
           typeLabel,
@@ -231,7 +231,7 @@ export async function POST(req: NextRequest) {
 
     // PATH B: Web search fallback
     const result = streamText({
-      model: anthropic("claude-sonnet-4-6"),
+      model: anthropic("claude-haiku-4-5"),
       maxOutputTokens: MAX_OUTPUT_TOKENS.followup,
       system: buildSystemPrompt(
         typeLabel,

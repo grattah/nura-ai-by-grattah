@@ -145,7 +145,7 @@ export async function scoreSupports(
   if (!supports.length) return [];
 
   const { object } = await generateObject({
-    model: anthropic("claude-sonnet-4-6"),
+    model: anthropic("claude-haiku-4-5"),
     schema: scoreSchema,
     system: SCORING_SYSTEM,
     prompt: buildScoringPrompt(recipe, supports),
