@@ -35,10 +35,10 @@ export function FilterPills({
               key={pill.slug}
               onClick={() => onChange(pill.slug)}
               className={cn(
-                "shrink-0 px-4 max-xs:px-3 py-2 min-h-8 rounded-full text-sm max-xs:text-xs font-semibold transition-all duration-150 active:scale-95",
+                "shrink-0 px-4 max-xs:px-3 max-xs:py-2 py-3 min-h-8 rounded-full text-sm max-xs:text-xs font-semibold transition-all duration-150 active:scale-95",
                 isActive
-                  ? "bg-foreground/70 text-background backdrop-blur-sm"
-                  : "text-muted-foreground hover:text-foreground",
+                  ? "bg-mint-green text-white"
+                  : "bg-grey-c100 text-base-text",
               )}
               aria-pressed={isActive}
             >
@@ -47,13 +47,6 @@ export function FilterPills({
           );
         })}
       </div>
-
-      {label && (
-        <p className="text-sm text-muted-foreground px-1">
-          Showing:{" "}
-          <span className="font-semibold text-foreground">{label}</span>
-        </p>
-      )}
     </div>
   );
 }

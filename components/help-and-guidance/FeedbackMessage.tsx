@@ -28,14 +28,16 @@ export function FeedbackMessage({
     <div className="flex flex-col gap-1">
       <div className="rounded-lg bg-white border border-[#E6ECEA] py-3.5 px-4">
         <div className="flex gap-3">
-          <Mail size={16} color="#57605E" className="shrink-0 mt-0.5" />
+          {!value && (
+            <Mail size={16} color="#57605E" className="shrink-0 mt-0.5" />
+          )}
           <textarea
             value={value}
             onChange={(e) => setValue(e.target.value)}
             maxLength={MAX}
             rows={5}
             placeholder="Enter message here"
-            className="flex-1 resize-none bg-white text-base text-[#1B1D1D] outline-none placeholder:text-[#9CA5A3]"
+            className="flex-1 text-sm resize-none bg-white text-[#1B1D1D] outline-none placeholder:text-[#9CA5A3]"
           />
         </div>
       </div>

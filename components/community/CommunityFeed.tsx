@@ -133,6 +133,7 @@ export function CommunityFeed({
                 alt={item.profile?.username || "unknown user"}
                 width={48}
                 height={48}
+                sizes="48px"
                 className="rounded-full object-cover size-12 max-xs:size-10 shrink-0"
               />
               <div className="flex flex-col gap-2.5">
@@ -154,6 +155,7 @@ export function CommunityFeed({
                 className="rounded-lg object-cover w-15.5 h-auto max-h-20 shrink-0"
                 width={62}
                 height={80}
+                sizes="62px"
               />
             )}
           </div>

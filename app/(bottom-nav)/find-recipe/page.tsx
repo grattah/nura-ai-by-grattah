@@ -28,19 +28,11 @@ interface RecipeSuggestion {
   title: string;
 }
 
-interface Recipe {
-  created_at: string;
-  display_order: number;
-  short_description: string | null;
-  follow_up_questions: string[] | null;
-  how_to_make: any;
+// Search results / "you may like" only ever render id + title, so the queries
+// select just those columns (no full-row, no full-catalog pull).
+interface RecipeHit {
   id: string;
   title: string;
-  image_url: string | null;
-  ingredients: any;
-  inside_tip: string;
-  why_it_works: string;
-  status: "approved" | "pending";
 }
 
 const page = () => {
@@ -52,9 +44,11 @@ const page = () => {
   const [searchTerm, setSearchTerm] = React.useState(
     query || generateParam || "",
   );
-  const [allRecipes, setAllRecipes] = React.useState<Recipe[]>([]);
-  const [isLoadingRecipes, setIsLoadingRecipes] = React.useState(true);
-  const [suggestedRecipes, setSuggestedRecipes] = React.useState<Recipe[]>([]);
+  const [results, setResults] = React.useState<RecipeHit[]>([]);
+  const [searchLoading, setSearchLoading] = React.useState(false);
+  const [suggestedRecipes, setSuggestedRecipes] = React.useState<RecipeHit[]>(
+    [],
+  );
   const [pendingRecipe, setPendingRecipe] = React.useState<string | null>(null);
   const [generating, setGenerating] = React.useState(false);
   const [generateError, setGenerateError] = React.useState(false);
@@ -80,24 +74,41 @@ const page = () => {
 
   const router = useRouter();
 
+  // Debounced server-side search: query only the matching approved recipes
+  // (id + title) instead of pulling the whole catalogue and filtering on every
+  // keystroke. Each whitespace-split word must appear in the title (AND), which
+  // preserves the previous client-side semantics.
   React.useEffect(() => {
-    const fetchAllRecipes = async () => {
-      const { data, error } = await supabase
+    const term = searchTerm.trim();
+    if (!term) {
+      setResults([]);
+      setSearchLoading(false);
+      return;
+    }
+
+    setSearchLoading(true);
+    const handle = setTimeout(async () => {
+      const words = term.toLowerCase().split(/\s+/).filter(Boolean);
+      let q = supabase
         .from("recipes")
-        .select("*")
-        .eq("status" as never, "approved" as never)
-        .order("title", { ascending: true });
+        .select("id, title")
+        .eq("status" as never, "approved" as never);
+      for (const word of words) q = q.ilike("title", `%${word}%`);
+
+      const { data, error } = await q
+        .order("title", { ascending: true })
+        .limit(20);
 
       if (error) {
-        console.error("Failed to fetch recipes:", error);
+        console.error("Failed to search recipes:", error);
       } else {
-        setAllRecipes((data ?? []) as unknown as Recipe[]);
+        setResults((data ?? []) as unknown as RecipeHit[]);
       }
-      setIsLoadingRecipes(false);
-    };
+      setSearchLoading(false);
+    }, 250);
 
-    fetchAllRecipes();
-  }, []);
+    return () => clearTimeout(handle);
+  }, [searchTerm, supabase]);
 
   React.useEffect(() => {
     if (recents.length === 0) {
@@ -115,7 +126,7 @@ const page = () => {
 
       const { data, error } = await supabase
         .from("recipes")
-        .select("*")
+        .select("id, title")
         .eq("status" as never, "approved" as never)
         .or(orFilter)
         .limit(10);
@@ -126,7 +137,7 @@ const page = () => {
       }
 
       // Shuffle and take 3 so the user sees variety each visit
-      const shuffled = ((data ?? []) as unknown as Recipe[]).sort(
+      const shuffled = ((data ?? []) as unknown as RecipeHit[]).sort(
         () => Math.random() - 0.5,
       );
       setSuggestedRecipes(shuffled.slice(0, 3));
@@ -135,35 +146,22 @@ const page = () => {
     fetchSuggestions();
   }, [recents]);
 
-  const filteredRecipes = React.useMemo(() => {
-    const words = searchTerm.trim().toLowerCase().split(/\s+/).filter(Boolean);
-
-    if (words.length === 0) return [];
-
-    return allRecipes.filter((recipe) => {
-      const haystack = recipe.title.toLowerCase();
-      return words.every((word) => haystack.includes(word));
-    });
-  }, [searchTerm, allRecipes]);
-
   React.useEffect(() => {
-    if (!searchTerm.trim() || filteredRecipes.length === 0) return;
+    if (!searchTerm.trim() || results.length === 0) return;
     const timer = setTimeout(() => addRecent(searchTerm), 1000);
     return () => clearTimeout(timer);
-  }, [searchTerm, filteredRecipes]);
+  }, [searchTerm, results]);
 
   const showingResults =
-    !showSuggestions &&
-    searchTerm.trim().length > 0 &&
-    filteredRecipes.length > 0;
+    !showSuggestions && searchTerm.trim().length > 0 && results.length > 0;
   const showingEmpty =
     !showSuggestions &&
-    !isLoadingRecipes &&
+    !searchLoading &&
     searchTerm.trim().length > 0 &&
-    filteredRecipes.length === 0;
+    results.length === 0;
   const showingIdle = searchTerm.trim().length === 0 && !showSuggestions;
   const showingLoading =
-    isLoadingRecipes && searchTerm.trim().length > 0 && !showSuggestions;
+    searchLoading && searchTerm.trim().length > 0 && !showSuggestions;
 
   const handleSearchTermChange = (value: string) => {
     setSearchTerm(value);
@@ -259,6 +257,12 @@ const page = () => {
 
       const data = await res.json();
       const suggestions: RecipeSuggestion[] = data.suggestions ?? [];
+      // Bound the in-memory cache for long sessions: evict the oldest entry
+      // once it grows past ~50 keys (Map preserves insertion order).
+      if (suggestionsCache.current.size >= 50) {
+        const oldest = suggestionsCache.current.keys().next().value;
+        if (oldest !== undefined) suggestionsCache.current.delete(oldest);
+      }
       suggestionsCache.current.set(cacheKey, suggestions);
       setAiSuggestions(suggestions);
       setShowModalScreenLoader(false);
@@ -440,11 +444,11 @@ const page = () => {
                 <div className="flex flex-col gap-2">
                   <p className="font-medium max-xs:text-sm">Results</p>
                   <p className="text-sm text-subtle max-xs:text-xs">
-                    {filteredRecipes.length} recipes found
+                    {results.length} recipes found
                   </p>
                 </div>
                 <div className="flex flex-col gap-3">
-                  {filteredRecipes.map((recipe) => (
+                  {results.map((recipe) => (
                     <Link
                       key={recipe.id}
                       href={`/recipes/${recipe.id}`}
