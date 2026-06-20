@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import { WEEKLY_UNITS, LOW_WARN_PCT, type TokenState } from "@/lib/credits";
@@ -108,10 +109,13 @@ export function CreditsProvider({ children }: { children: React.ReactNode }) {
     refresh();
   }, [refresh]);
 
+  const value = useMemo(
+    () => ({ ...state, refresh, applyState, openTokenWall }),
+    [state, refresh, applyState, openTokenWall],
+  );
+
   return (
-    <CreditsContext.Provider
-      value={{ ...state, refresh, applyState, openTokenWall }}
-    >
+    <CreditsContext.Provider value={value}>
       {children}
       <Dialog open={wallOpen} onOpenChange={setWallOpen}>
         <DialogContent

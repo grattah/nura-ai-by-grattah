@@ -7,6 +7,7 @@ import { WELLNESS_SOURCES } from "@/lib/wellness-sources";
 import { getTokenState, meter } from "@/lib/credits-server";
 import { hasActiveSubscription } from "@/lib/subscription";
 import { MAX_OUTPUT_TOKENS } from "@/lib/credits";
+import { classifyDrinkType } from "@/lib/drink-types";
 
 export const maxDuration = 60;
 
@@ -95,40 +96,42 @@ export async function POST(req: NextRequest) {
     .slice(0, MAX_DOMAINS);
   const domainList = (domains.length ? domains : WELLNESS_SOURCES).join(", ");
 
-  const { data: priorGen } = await supabase
-    .from("recipes")
-    .select("id")
-    .eq("generated_from" as never, norm as never)
-    .limit(1)
-    .maybeSingle();
+  // Two independent dedup lookups: a prior generation of this exact prompt, and
+  // an existing recipe whose name matches. Run them together.
+  const [{ data: priorGen }, { data: existing }] = await Promise.all([
+    supabase
+      .from("recipes")
+      .select("id")
+      .eq("generated_from" as never, norm as never)
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("recipes")
+      .select("id")
+      .or(`title.ilike.%${cleanName}%,short_description.ilike.%${cleanName}%`)
+      .limit(1)
+      .maybeSingle(),
+  ]);
   if (priorGen) {
     return NextResponse.json({ id: priorGen.id, existed: true });
   }
-
-  // 2. Reuse an existing recipe whose name matches.
-  const { data: existing } = await supabase
-    .from("recipes")
-    .select("id")
-    .or(`title.ilike.%${cleanName}%,short_description.ilike.%${cleanName}%`)
-    .limit(1)
-    .maybeSingle();
   if (existing) {
     return NextResponse.json({ id: existing.id, existed: true });
   }
 
   const admin = createServiceRoleClient();
 
-  // Append after existing recipes with a unique order (avoids the old shared 9999).
-  const { data: lastOrder } = await admin
-    .from("recipes")
-    .select("display_order")
-    .order("display_order", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  // Last display_order (to append uniquely) and the tag list are independent.
+  const [{ data: lastOrder }, { data: tags }] = await Promise.all([
+    admin
+      .from("recipes")
+      .select("display_order")
+      .order("display_order", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    admin.from("tags").select("id, name, slug"),
+  ]);
   const nextDisplayOrder = (lastOrder?.display_order ?? 0) + 1;
-
-  // Ground tag selection to real tags.
-  const { data: tags } = await admin.from("tags").select("id, name, slug");
   const tagList = (tags ?? []).map((t) => `${t.slug} | ${t.name}`).join("\n");
 
   // Gate now that we're actually generating (reused/matched recipes above are
@@ -205,6 +208,7 @@ ${tagList}`,
     status: "pending",
     created_by: user.id,
     generated_from: norm,
+    drink_type: classifyDrinkType(recipe.title),
   };
 
   const { data: inserted, error: insertErr } = await admin

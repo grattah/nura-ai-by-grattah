@@ -145,7 +145,12 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return jsonError("Unauthorized", 401);
 
-  const hasAccess = await hasActiveSubscription(supabase, user.id);
+  // Access + token state are independent reads — fetch them together. The token
+  // state is only consulted when the turn is actually metered (below).
+  const [hasAccess, state] = await Promise.all([
+    hasActiveSubscription(supabase, user.id),
+    getTokenState(user.id),
+  ]);
   if (!hasAccess) return jsonError("Subscription required", 403);
 
   try {
@@ -183,11 +188,8 @@ export async function POST(req: NextRequest) {
     // Meter only a genuine user-asked question (the last message is from the
     // user). Gate before streaming; deduct the real usage in onFinish.
     const shouldMeter = lastMessage?.role === "user" && !!userQuestion.trim();
-    if (shouldMeter) {
-      const state = await getTokenState(user.id);
-      if (state.totalRemaining <= 0) {
-        return jsonError("insufficient_tokens", 402, { state });
-      }
+    if (shouldMeter && state.totalRemaining <= 0) {
+      return jsonError("insufficient_tokens", 402, { state });
     }
     const onFinish = shouldMeter
       ? ({

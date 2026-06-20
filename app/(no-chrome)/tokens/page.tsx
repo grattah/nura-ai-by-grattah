@@ -14,9 +14,13 @@ export default async function TokensPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login?next=/tokens");
 
-  const hasAccess = await hasActiveSubscription(supabase, user.id);
+  // Access + token state are independent — fetch them together.
+  const [hasAccess, tokenState] = await Promise.all([
+    hasActiveSubscription(supabase, user.id),
+    getTokenState(user.id),
+  ]);
 
-  const state = hasAccess ? await getTokenState(user.id) : null;
+  const state = hasAccess ? tokenState : null;
 
   return (
     <div className="min-h-dvh bg-background pb-10">

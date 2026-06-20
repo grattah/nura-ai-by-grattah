@@ -58,7 +58,7 @@ function ContinuePaymentContent() {
           <p className="text-sm text-muted-foreground">Welcome back</p>
         </div>
         <button
-          onClick={() => router.push("/")}
+          onClick={() => router.back()}
           className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
           aria-label="Close"
         >

@@ -14,7 +14,8 @@ const HelpForm = ({ email, fullname }: { email: string; fullname: string }) => {
   const [fullName, setFullName] = useState(fullname);
   const [success, setSuccess] = useState(false);
 
-  const CONTACT_EMAIL = "info@grattah.com";
+  // const CONTACT_EMAIL = "info@grattah.com";
+  const CONTACT_EMAIL = "drprime.dev@gmail.com";
 
   const canSubmit = fullName.trim() && isValidEmail(email) && message.trim();
 

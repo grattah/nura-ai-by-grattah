@@ -153,8 +153,9 @@ export function PopularRecipesList({
                       src={recipe.image_url}
                       alt={recipe.title}
                       className="w-full xs:h-41.75 max-xs:aspect-square object-cover transition-transform duration-300 hover:scale-110"
-                      width={100}
-                      height={200}
+                      width={400}
+                      height={300}
+                      sizes="(max-width: 768px) 45vw, 200px"
                     />
                   </div>
                 </Link>

@@ -56,7 +56,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const hasAccess = await hasActiveSubscription(supabase, user.id);
+  // Access + token state are independent reads — fetch them together to save a
+  // round-trip on the common (authorized) path.
+  const [hasAccess, state] = await Promise.all([
+    hasActiveSubscription(supabase, user.id),
+    getTokenState(user.id),
+  ]);
 
   if (!hasAccess) {
     return NextResponse.json(
@@ -78,7 +83,6 @@ export async function POST(req: NextRequest) {
 
   // Gate before the call; we meter the real usage after it succeeds (cache hits
   // never reach the route).
-  const state = await getTokenState(user.id);
   if (state.totalRemaining <= 0) {
     return NextResponse.json(
       { error: "insufficient_tokens", state },

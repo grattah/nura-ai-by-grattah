@@ -52,6 +52,7 @@ export default async function EditRecipePage({
           status: ((r.status as string) ?? "approved") as
             | "pending"
             | "approved",
+          drink_type: ((r.drink_type as string) ?? "drinks") as never,
           image_url: (r.image_url as string | null) ?? null,
           ingredients:
             (r.ingredients as { emoji: string; label: string }[]) ?? [],

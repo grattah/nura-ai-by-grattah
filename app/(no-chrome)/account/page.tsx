@@ -18,18 +18,19 @@ export default async function AccountPage() {
 
   if (user) {
     const adminSupabase = createServiceRoleClient();
-    const { data: adminUser } = await adminSupabase.auth.admin.getUserById(
-      user.id,
-    );
+    // The identity lookup and the subscription read are independent — run them
+    // together to save a round-trip.
+    const [{ data: adminUser }, { data: subs }] = await Promise.all([
+      adminSupabase.auth.admin.getUserById(user.id),
+      supabase
+        .from("subscriptions")
+        .select("status, plan")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1),
+    ]);
     hasPassword =
       adminUser.user?.identities?.some((i) => i.provider === "email") ?? false;
-
-    const { data: subs } = await supabase
-      .from("subscriptions")
-      .select("status, plan")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(1);
     subscription = subs?.[0] ?? null;
   }
 

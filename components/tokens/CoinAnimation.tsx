@@ -1,7 +1,10 @@
 "use client";
 
-import Lottie from "lottie-react";
+import dynamic from "next/dynamic";
 import coinAnimation from "@/public/coin.json";
+
+// Defer the ~120KB lottie-react chunk until the animation actually renders.
+const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 
 export function CoinAnimation() {
   return (
