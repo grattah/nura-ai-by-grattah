@@ -31,7 +31,7 @@ export function CommunityFeed({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState(false);
   const [atEnd, setAtEnd] = useState(
-    initialActivities.length < ACTIVITIES_PAGE_SIZE,
+    initialActivities.length < ACTIVITIES_PAGE_SIZE
   );
 
   const pageRef = useRef(0); // page 0 came from the server
@@ -104,11 +104,11 @@ export function CommunityFeed({
         ([entry]) => {
           if (entry.isIntersecting) loadMore();
         },
-        { rootMargin: "200px" },
+        { rootMargin: "200px" }
       );
       observerRef.current.observe(node);
     },
-    [loadMore],
+    [loadMore]
   );
 
   useEffect(() => {
@@ -144,7 +144,9 @@ export function CommunityFeed({
                   {item.action} {item.recipe?.title}
                 </p>
                 <p className="text-[#57605E] text-sm max-xs:text-xs">
-                  {formatRelativeTime(item.created_at)} ago
+                  {formatRelativeTime(item.created_at) === "now" ? "Just" : ""}{" "}
+                  {formatRelativeTime(item.created_at)}{" "}
+                  {formatRelativeTime(item.created_at) === "now" ? "" : "ago"}
                 </p>
               </div>
             </div>
