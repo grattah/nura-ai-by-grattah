@@ -121,7 +121,7 @@ function AgeControl({
       >
         −
       </button>
-      <span className="flex-1 text-center text-2xl max-xs:text-xl font-bold text-foreground">
+      <span className="flex-1 text-center text-2xl font-bold text-foreground">
         {value}
       </span>
       <button
@@ -227,10 +227,10 @@ export function BreastCancerRiskChecker() {
             </span>
           </div>
 
-          <h1 className="text-2xl max-xs:text-xl font-bold text-foreground mb-1 leading-tight">
+          <h1 className="text-2xl font-bold text-foreground mb-1 leading-tight">
             {step === "results" ? "Your results" : "Breast Cancer Risk"}
           </h1>
-          <p className="text-sm max-xs:text-xs text-muted-foreground leading-snug">
+          <p className="text-sm text-muted-foreground leading-snug">
             {step === "personal" &&
               "Estimate your 5-year and lifetime risk using the validated Gail model."}
             {step === "reproductive" &&
@@ -254,7 +254,7 @@ export function BreastCancerRiskChecker() {
         <div className="px-4 space-y-5">
           {step === "personal" && (
             <Card className="border-0 rounded-3xl shadow-none bg-card">
-              <CardContent className="p-5 max-xs:p-4 space-y-5 max-xs:space-y-4">
+              <CardContent className="p-5 space-y-5">
                 <Field
                   label="Current age"
                   hint="The Gail model is validated for women aged 35 to 85."
@@ -289,7 +289,7 @@ export function BreastCancerRiskChecker() {
 
           {step === "reproductive" && (
             <Card className="border-0 rounded-3xl shadow-none bg-card">
-              <CardContent className="p-5 max-xs:p-4 space-y-5 max-xs:space-y-4">
+              <CardContent className="p-5 space-y-5">
                 <Field label="Age at first menstrual period">
                   <NuraSelect
                     value={form.menarcheAge}
@@ -320,7 +320,7 @@ export function BreastCancerRiskChecker() {
 
           {step === "medical" && (
             <Card className="border-0 rounded-3xl shadow-none bg-card">
-              <CardContent className="p-5 max-xs:p-4 space-y-5 max-xs:space-y-4">
+              <CardContent className="p-5 space-y-5">
                 <Field
                   label="First-degree relatives with breast cancer"
                   hint="Mother, sisters, or daughters diagnosed with breast cancer."
@@ -373,13 +373,13 @@ export function BreastCancerRiskChecker() {
           {step === "results" && result && meta && (
             <>
               <Card className="border-0 rounded-3xl shadow-none overflow-hidden bg-primary text-primary-foreground">
-                <CardContent className="p-6 max-xs:p-5">
+                <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-widest opacity-80 mb-1">
                         5-year absolute risk
                       </p>
-                      <p className="text-5xl max-xs:text-4xl font-bold leading-none tracking-tight mb-3">
+                      <p className="text-5xl font-bold leading-none tracking-tight mb-3">
                         {pct(result.fiveYearRisk)}
                       </p>
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-background/20 text-primary-foreground">
@@ -419,7 +419,7 @@ export function BreastCancerRiskChecker() {
                 </CardContent>
               </Card>
 
-              <div className="grid grid-cols-2 gap-3 max-xs:gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 {[
                   ["Your 5-yr risk", pct(result.fiveYearRisk), true],
                   ["Avg 5-yr risk", pct(result.averageFiveYearRisk), false],
@@ -432,7 +432,7 @@ export function BreastCancerRiskChecker() {
                   >
                     <CardContent className="p-4 text-center">
                       <p
-                        className={`text-xl max-xs:text-lg font-bold leading-none mb-1 ${highlight ? "text-primary" : "text-muted-foreground"}`}
+                        className={`text-xl font-bold leading-none mb-1 ${highlight ? "text-primary" : "text-muted-foreground"}`}
                       >
                         {value as string}
                       </p>

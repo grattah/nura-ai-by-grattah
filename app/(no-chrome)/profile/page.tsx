@@ -130,7 +130,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-dvh bg-background pb-10">
       {/* Header */}
-      <div className="flex items-center px-6 max-xs:px-4 pt-5 pb-11 relative">
+      <div className="flex items-center px-6 pt-5 pb-11 relative">
         <button
           onClick={() => router.back()}
           className="size-10 absolute left-4 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
@@ -140,7 +140,7 @@ export default function ProfilePage() {
         </button>
 
         <div className="flex-1 min-w-0 text-center">
-          <h1 className="text-xl max-xs:text-lg font-semibold text-base-text">
+          <h1 className="text-xl font-semibold text-base-text">
             Profile
           </h1>
           <p className="text-sm text-subtle font-medium mt-0.5">
@@ -149,7 +149,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="px-6 max-xs:px-4 space-y-6">
+      <div className="px-6 space-y-6">
         {/* Avatar */}
         <div className="flex justify-center">
           <AvatarUpload

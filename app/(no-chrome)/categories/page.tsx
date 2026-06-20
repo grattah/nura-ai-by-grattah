@@ -17,7 +17,7 @@ export default async function CategoriesPage() {
   return (
     <div className="min-h-dvh bg-background pb-8">
       {/* Header */}
-      <div className="flex items-center px-6 max-xs:px-4 pt-5 pb-4 gap-3">
+      <div className="flex items-center px-6 pt-5 pb-4 gap-3">
         <Link
           href="/"
           className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center shrink-0 hover:opacity-75 transition-opacity"
@@ -25,14 +25,14 @@ export default async function CategoriesPage() {
         >
           <ArrowLeft className="size-5 text-foreground" />
         </Link>
-        <h1 className="flex-1 text-center text-xl max-xs:text-lg font-semibold text-base-text capitalize">
+        <h1 className="flex-1 text-center text-xl font-semibold text-base-text capitalize">
           Categories
         </h1>
         <div className="size-10 shrink-0" aria-hidden />
       </div>
 
       {/* Category list */}
-      <div className="px-6 max-xs:px-4 space-y-3">
+      <div className="px-6 space-y-3">
         {categories.map((tag) => (
           <CategoryCard
             key={tag.id}

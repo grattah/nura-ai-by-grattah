@@ -13,7 +13,7 @@ interface AppHeaderProps {
 
 export function AppHeader({ user }: AppHeaderProps) {
   return (
-    <header className="sticky top-0 z-40 px-4 py-3">
+    <header className="sticky top-0 z-40 px-6 py-2">
       <div className="flex items-center justify-between h-10">
         {/* Logo */}
         <Link
@@ -26,7 +26,7 @@ export function AppHeader({ user }: AppHeaderProps) {
             width={20}
             height={20}
           />
-          <span className="text-xl max-xs:text-lg font-semibold text-brown tracking-tight">
+          <span className="text-xl font-semibold text-brown tracking-tight">
             Nuko
           </span>
         </Link>
@@ -37,7 +37,7 @@ export function AppHeader({ user }: AppHeaderProps) {
             {/* Avatar — navigates to /account */}
             <Link
               href="/account"
-              className="size-9 max-xs:size-8 rounded-full flex items-center justify-center text-sm font-bold text-[#D4C48A] hover:opacity-80 transition-opacity"
+              className="size-8 rounded-full flex items-center justify-center text-sm font-bold text-[#D4C48A] hover:opacity-80 transition-opacity"
               style={{ backgroundColor: "#5C6B3A" }}
               aria-label="Account"
             >
@@ -45,9 +45,9 @@ export function AppHeader({ user }: AppHeaderProps) {
                 <Image
                   alt="avatar"
                   src={user?.avatar}
-                  width={36}
-                  height={36}
-                  className="object-cover size-9 max-xs:size-8 rounded-full"
+                  width={32}
+                  height={32}
+                  className="object-cover size-8 rounded-full"
                 />
               ) : (
                 user.avatarLetter
@@ -57,7 +57,7 @@ export function AppHeader({ user }: AppHeaderProps) {
         ) : (
           <Link
             href="/auth/login"
-            className="text-base max-xs:text-sm font-semibold text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4 py-1 px-4 max-xs:px-3 rounded-full liquid-glass"
+            className="text-base font-semibold text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4 py-1 px-4 rounded-full liquid-glass"
           >
             Sign in
           </Link>

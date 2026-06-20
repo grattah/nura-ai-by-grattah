@@ -39,14 +39,14 @@ type Step = "select" | "review" | "card";
 
 const gbp = (n: number) =>
   new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(
-    n
+    n,
   );
 
 export default function BuyTokens() {
   const [step, setStep] = useState<Step>("select");
   // Default the selection to the popular bundle, matching the mockup's pre-selected radio.
   const [selected, setSelected] = useState<Bundle>(
-    BUNDLES.find((b) => b.id === "popular")!
+    BUNDLES.find((b) => b.id === "popular")!,
   );
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -74,20 +74,20 @@ export default function BuyTokens() {
     step === "select"
       ? "Buy extra tokens"
       : step === "review"
-      ? "Review"
-      : "Continue payment";
+        ? "Review"
+        : "Continue payment";
   const subtitle =
     step === "select"
       ? "For personalized feedbacks"
       : step === "card"
-      ? "Enter card details"
-      : null;
+        ? "Enter card details"
+        : null;
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header — back arrow is step-aware */}
       <div
-        className={`px-6 max-[400px]:px-4 py-4.75 ${
+        className={`px-6 py-4.75 ${
           step === "select"
             ? "bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A]"
             : "bg-inherit"
@@ -95,48 +95,34 @@ export default function BuyTokens() {
       >
         <div className="flex items-center gap-3">
           {step === "select" ? (
-            <BackButton className="p-3 max-[400px]:p-2 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
+            <BackButton className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
           ) : step === "review" ? (
             <button
-              className="p-3 max-[400px]:p-2 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity"
+              className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity"
               onClick={() => setStep("select")}
             >
-              <ArrowLeft
-                size={16}
-                color="#1B1D1D"
-                className="max-xs:size-2.5"
-              />
+              <ArrowLeft size={16} color="#1B1D1D" className="" />
             </button>
           ) : step === "card" ? (
             <button
-              className="p-3 max-[400px]:p-2 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity"
+              className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity"
               onClick={() => setStep("review")}
             >
-              <ArrowLeft
-                size={16}
-                color="#1B1D1D"
-                className="max-xs:size-2.5"
-              />
+              <ArrowLeft size={16} color="#1B1D1D" className="" />
             </button>
           ) : null}
 
           <div className={`flex-1 text-center ${step !== "card" && "pr-9"}`}>
-            <h1 className="text-xl max-[400px]:text-lg font-semibold">
-              {title}
-            </h1>
-            {subtitle && (
-              <p className="text-sm max-[400px]:text-xs text-subtle">
-                {subtitle}
-              </p>
-            )}
+            <h1 className="text-xl font-semibold">{title}</h1>
+            {subtitle && <p className="text-sm text-subtle">{subtitle}</p>}
           </div>
 
           {step === "card" && (
             <Link
               href="/"
-              className="p-3 max-[400px]:p-2 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity"
+              className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity"
             >
-              <X size={16} color="#1B1D1D" className="max-xs:size-2.5" />
+              <X size={16} color="#1B1D1D" className="" />
             </Link>
           )}
         </div>
@@ -154,7 +140,11 @@ export default function BuyTokens() {
           <ReviewStep bundle={selected} onContinue={() => setStep("card")} />
         )}
         {step === "card" && (
-          <CardStep bundle={selected} clientSecret={clientSecret} error={error} />
+          <CardStep
+            bundle={selected}
+            clientSecret={clientSecret}
+            error={error}
+          />
         )}
       </main>
     </div>
@@ -172,7 +162,7 @@ function SelectStep({
 }) {
   return (
     <div className="mt-5">
-      <p className="text-sm max-[400px]:text-xs font-medium text-subtle uppercase tracking-wider mb-5">
+      <p className="text-sm font-medium text-subtle uppercase tracking-wider mb-5">
         Choose a bundle
       </p>
 
@@ -223,7 +213,7 @@ function SelectStep({
                 <div
                   className={`${
                     active ? "bg-mint-green" : "bg-[#6E7E79]"
-                  } text-white max-[400px]:text-sm font-medium w-full py-2 justify-center flex gap-2 items-center`}
+                  } text-white text-base font-medium w-full py-2 justify-center flex gap-2 items-center`}
                 >
                   <p>Buy</p>
                   <MoveRight size={14} color="#FFFFFF" />
@@ -235,7 +225,7 @@ function SelectStep({
         })}
       </div>
 
-      <div className="mt-10 rounded-2xl bg-white py-3 px-4 max-[400px]:px-3 max-[400px]:py-2 flex gap-1">
+      <div className="mt-10 rounded-2xl bg-white py-3 px-4 flex gap-1">
         <InfinityIcon size={20} className="text-[#227B6F] shrink-0 mt-0.5" />
         <p className="text-sm text-[#57605E] font-medium">
           <span className="text-[#1B1D1D]">Extra tokens never expire.</span>{" "}
@@ -251,9 +241,9 @@ function SelectStep({
         >
           Buy {selected.tokens} tokens → {gbp(selected.price)}
         </button>
-        <p className="text-center mt-3 flex items-center justify-center gap-[3px]">
+        <p className="text-center mt-3 flex items-center justify-center gap-0.75">
           <IoMdLock size={12} color="#82A198" />{" "}
-          <span className="text-sm max-[400px]:text-xs text-[#57605E]">
+          <span className="text-sm text-[#57605E]">
             Secure checkout • No subscription
           </span>
         </p>
@@ -297,9 +287,9 @@ function ReviewStep({
         >
           Pay {gbp(bundle.price)}
         </button>
-        <p className="text-center mt-3 flex items-center justify-center gap-[3px]">
+        <p className="text-center mt-3 flex items-center justify-center gap-0.75">
           <IoMdLock size={12} color="#82A198" />{" "}
-          <span className="text-sm max-[400px]:text-xs text-[#57605E]">
+          <span className="text-sm text-[#57605E]">
             Secure checkout • No subscription
           </span>
         </p>
@@ -358,14 +348,14 @@ function Row({
   return (
     <div className="flex justify-between items-center">
       <span
-        className={`max-[400px]:text-xs ${
+        className={`text-base ${
           bold ? "font-semibold text-[#1B1D1D]" : "text-subtle"
         }`}
       >
         {label}
       </span>
       <span
-        className={`max-[400px]:text-xs ${
+        className={`text-base ${
           bold ? "font-semibold text-[#1B1D1D]" : "text-subtle font-medium"
         }`}
       >

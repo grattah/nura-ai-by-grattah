@@ -182,7 +182,7 @@ export default function AllRecipesPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 max-xs:px-4 pt-5 pb-3 sticky top-0 bg-background/80 backdrop-blur-md z-10">
+      <header className="flex items-center justify-between px-6 pt-5 pb-3 sticky top-0 bg-background/80 backdrop-blur-md z-10">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" asChild className="p-0 h-11 w-11">
             <Link href="/">
@@ -191,7 +191,7 @@ export default function AllRecipesPage() {
             </Link>
           </Button>
         </div>
-        <h1 className="text-xl max-xs:text-lg font-bold tracking-tight">
+        <h1 className="text-xl font-bold tracking-tight">
           All Recipes
         </h1>
 
@@ -209,7 +209,7 @@ export default function AllRecipesPage() {
       </header>
 
       {/* Top Pills Bar */}
-      <div className="px-6 max-xs:px-4 mb-4 overflow-hidden">
+      <div className="px-6 mb-4 overflow-hidden">
         <FilterPills
           pills={tags}
           active={committedTag}
@@ -239,16 +239,16 @@ export default function AllRecipesPage() {
       )}
 
       {/* Recipe Grid */}
-      <main className="px-6 max-xs:px-4 pb-12">
+      <main className="px-6 pb-12">
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-4 max-xs:gap-2.5 animate-pulse">
+          <div className="grid grid-cols-2 gap-4 animate-pulse">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="aspect-square bg-muted rounded-3xl" />
             ))}
           </div>
         ) : recipes.length > 0 ? (
           <>
-            <div className="grid grid-cols-2 gap-4 max-xs:gap-2.5">
+            <div className="grid grid-cols-2 gap-4">
               {recipes.map((recipe, index) => (
                 <RecipeCard
                   key={recipe.id}
@@ -283,14 +283,14 @@ export default function AllRecipesPage() {
 
       {/* Filter Drawer */}
       <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <DrawerContent className="bg-card px-6 max-xs:px-4 pb-10">
+        <DrawerContent className="bg-card px-6 pb-10">
           <DrawerTitle className="sr-only">
             Search and filter recipes
           </DrawerTitle>
 
           <div className="space-y-6">
             <div className="flex items-center justify-between pt-4">
-              <h2 className="text-xl max-xs:text-lg font-bold text-foreground">
+              <h2 className="text-xl font-bold text-foreground">
                 Search & Filter
               </h2>
               {hasDraftChanges && (
@@ -309,10 +309,10 @@ export default function AllRecipesPage() {
               <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest block mb-4">
                 Search Recipes
               </label>
-              <div className="flex items-center gap-3 bg-secondary/30 rounded-2xl px-4 py-4 max-xs:py-3 border border-border/50 focus-within:border-orange-500 transition-colors">
+              <div className="flex items-center gap-3 bg-secondary/30 rounded-2xl px-4 py-4 border border-border/50 focus-within:border-orange-500 transition-colors">
                 <Search className="w-5 h-5 text-muted-foreground" />
                 <input
-                  className="bg-transparent outline-none flex-1 text-base max-xs:text-sm"
+                  className="bg-transparent outline-none flex-1 text-base"
                   placeholder="Lemon, Chicken, Breakfast..."
                   value={draftSearch}
                   onChange={(e) => setDraftSearch(e.target.value)}
@@ -336,7 +336,7 @@ export default function AllRecipesPage() {
                     key={t.id}
                     onClick={() => setDraftTag(t.slug)}
                     className={cn(
-                      "flex justify-between items-center px-5 max-xs:px-4 py-4 max-xs:py-3 rounded-2xl max-xs:text-sm font-semibold transition-all",
+                      "flex justify-between items-center px-5 py-4 rounded-2xl font-semibold transition-all",
                       draftTag === t.slug
                         ? "bg-foreground/80 text-background scale-[0.98]"
                         : "bg-secondary/50 text-foreground active:scale-95",
@@ -353,7 +353,7 @@ export default function AllRecipesPage() {
 
             <Button
               onClick={handleDone}
-              className="w-full rounded-full min-h-14 text-base max-xs:text-sm font-bold bg-foreground/80 text-background hover:bg-foreground/75 border-0 shadow-none active:scale-[0.98] transition-all sticky bottom-2 mt-auto"
+              className="w-full rounded-full min-h-14 text-base font-bold bg-foreground/80 text-background hover:bg-foreground/75 border-0 shadow-none active:scale-[0.98] transition-all sticky bottom-2 mt-auto"
             >
               Show Results
             </Button>
@@ -373,20 +373,20 @@ function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
-      <p className="text-base max-xs:text-sm text-muted-foreground mb-1">
+      <p className="text-base text-muted-foreground mb-1">
         {hasFilters
           ? "No recipes match your search or filter."
           : "No recipes found."}
       </p>
       {hasFilters && (
         <>
-          <p className="text-sm max-xs:text-xs text-muted-foreground mb-5">
+          <p className="text-sm text-muted-foreground mb-5">
             Try a different search term or tag.
           </p>
           <Button
             variant="secondary"
             onClick={onClear}
-            className="rounded-full px-6 min-h-11 text-sm max-xs:text-xs font-semibold bg-card text-foreground border-0 shadow-none"
+            className="rounded-full px-6 min-h-11 text-sm font-semibold bg-card text-foreground border-0 shadow-none"
           >
             Clear filters
           </Button>

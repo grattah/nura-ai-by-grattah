@@ -70,7 +70,7 @@ export function DetoxCard({
   const offset = circumference - (pct / 100) * circumference;
 
   return (
-    <div className="rounded-3xl bg-white p-4 max-xs:p-3 flex items-center gap-4 max-xs:gap-3">
+    <div className="rounded-3xl bg-white p-4 flex items-center gap-4">
       <div className="relative shrink-0" style={{ width: size, height: size }}>
         <svg
           width={size}
@@ -105,7 +105,7 @@ export function DetoxCard({
           {loading ? (
             <span className="h-6 w-10 rounded-full bg-muted animate-pulse" />
           ) : (
-            <span className="text-2xl max-xs:text-xl font-semibold text-[#19803F]">
+            <span className="text-2xl font-semibold text-[#19803F]">
               {pct}%
             </span>
           )}
@@ -113,13 +113,13 @@ export function DetoxCard({
       </div>
 
       <div className="flex-1 space-y-2">
-        <p className="text-base max-xs:text-sm text-black font-semibold">
+        <p className="text-base text-black font-semibold">
           This recipe contains
         </p>
         {loading ? (
           <div className="h-4 w-3/4 rounded-full bg-muted animate-pulse" />
         ) : (
-          <p className="text-base max-xs:text-sm">
+          <p className="text-base">
             {shares.map((s, i) => (
               <span key={s.slug}>
                 <span
