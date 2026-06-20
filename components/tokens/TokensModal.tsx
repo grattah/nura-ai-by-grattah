@@ -10,17 +10,28 @@ const TokensModal = () => {
       <div className="bg-[#FFF7EC] rounded-full">
         <CoinAnimation />
       </div>
-	  <div className="flex flex-col gap-3.25 text-center">
-		<p className="font-semibold text-2xl text-[#1B1D1D] max-[400px]:text-lg">Need more token?</p>
-		<p className="font-medium text-subtle max-[400px]:text-sm">You can buy extra tokens to continue using this feature right away.</p>
-	  </div>
-	  <div className="w-full flex flex-col gap-4">
-		<Link href="/buy-tokens" className="w-full flex gap-1 justify-center items-center rounded-full py-3.75 bg-mint-green">
-			<Zap size={18} color="#FFFFFF" strokeWidth={2} />
-			<span className="text-white font-medium max-[400px]:text-sm">Get extra tokens</span>
-		</Link>
-		<p className="text-sm font-medium text-subtle text-center">Wait till reset</p>
-	  </div>
+      <div className="flex flex-col gap-3.25 text-center">
+        <p className="font-semibold text-2xl text-[#1B1D1D] text-lg">
+          Need more token?
+        </p>
+        <p className="font-medium text-subtle text-base">
+          You can buy extra tokens to continue using this feature right away.
+        </p>
+      </div>
+      <div className="w-full flex flex-col gap-4">
+        <Link
+          href="/buy-tokens"
+          className="w-full flex gap-1 justify-center items-center rounded-full py-3.75 bg-mint-green"
+        >
+          <Zap size={18} color="#FFFFFF" strokeWidth={2} />
+          <span className="text-white font-medium text-base">
+            Get extra tokens
+          </span>
+        </Link>
+        <p className="text-sm font-medium text-subtle text-center">
+          Wait till reset
+        </p>
+      </div>
     </div>
   );
 };

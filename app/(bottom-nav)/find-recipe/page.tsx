@@ -287,34 +287,28 @@ const page = () => {
   return (
     <div className="bg-background">
       <main className="">
-        <div className="px-6 max-xs:px-4 py-4.75 mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A]">
-          <p className="max-xs:text-base text-2xl font-semibold text-[#111312]">
-            Find a recipe
-          </p>
+        <div className="px-6 py-5 mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A]">
+          <p className="text-2xl font-semibold text-[#111312]">Find a recipe</p>
         </div>
-        <div className="mt-4 px-6 max-xs:px-4">
+        <div className="mt-4 px-6">
           <div className="relative">
-            <button className="absolute top-1/2 -translate-y-1/2 left-3 max-xs:left-2">
-              <Search
-                color="#82A198"
-                size={16}
-                className="size-4 max-xs:size-3"
-              />
+            <button className="absolute top-1/2 -translate-y-1/2 left-3">
+              <Search color="#82A198" size={16} className="size-4" />
             </button>
             <input
               name="search"
               value={searchTerm}
               onChange={(e) => handleSearchTermChange(e.target.value)}
               type="text"
-              className="w-full bg-white max-xs:py-2 py-3 pl-9 max-xs:pl-6.5 max-xs:pr-4 pr-3 max-xs:rounded-sm rounded-[12px] border border-[#E6ECEA] max-xs:text-xs text-base placeholder:text-[#9CA5A3] focus:ring-1 focus:ring-mint-green outline-none"
+              className="w-full bg-white py-3 pl-9 pr-3 rounded-xl border border-[#E6ECEA] text-base placeholder:text-[#9CA5A3] focus:ring-1 focus:ring-mint-green outline-none"
               placeholder="Search recipe..."
             />
             {searchTerm.length > 0 && (
               <button
-                className="absolute top-1/2 -translate-y-1/2 right-3 max-xs:right-2"
+                className="absolute top-1/2 -translate-y-1/2 right-3"
                 onClick={handleClearSearch}
               >
-                <X color="#9CA5A3" size={16} className="size-4 max-xs:size-3" />
+                <X color="#9CA5A3" size={16} className="size-4" />
               </button>
             )}
           </div>
@@ -337,12 +331,12 @@ const page = () => {
           {showingEmpty && (
             <div className="flex flex-col gap-5 mt-2 px-6">
               <div className="flex flex-col gap-2">
-                <p className="font-medium max-xs:text-xs">Results</p>
-                <p className="text-sm max-xs:text-[10px] text-subtle">
+                <p className="font-medium">Results</p>
+                <p className="text-sm text-subtle">
                   No recipe found for “{searchTerm.trim()}”.
                 </p>
                 {generateError && (
-                  <p className="text-sm max-xs:text-[10px] text-red-500">
+                  <p className="text-sm text-red-500">
                     Couldn&apos;t generate that recipe. Please try again.
                   </p>
                 )}
@@ -373,11 +367,9 @@ const page = () => {
               <>
                 <div className="flex flex-col gap-5 px-6">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm max-xs:text-xs text-subtle">
-                      Recently searched
-                    </p>
+                    <p className="text-sm text-subtle">Recently searched</p>
                     <button
-                      className="text-mint-green underline font-semibold text-sm max-xs:text-xs hover:opacity-90 transition-opacity"
+                      className="text-mint-green underline font-semibold text-sm hover:opacity-90 transition-opacity"
                       onClick={clearRecents}
                     >
                       Clear
@@ -394,23 +386,19 @@ const page = () => {
                       >
                         <Clock
                           size={20}
-                          className="max-xs:size-3"
+                          className=""
                           color="#9CA5A3"
                           strokeWidth={2}
                         />
-                        <p className="font-medium max-xs:text-sm text-left">
-                          {term}
-                        </p>
+                        <p className="font-medium text-left">{term}</p>
                       </button>
                     ))}
                   </div>
                 </div>
 
                 {suggestedRecipes.length > 0 && (
-                  <div className="mt-14 max-xs:mt-8 flex flex-col gap-5 px-6">
-                    <p className="text-sm text-subtle max-xs:text-xs">
-                      You may like
-                    </p>
+                  <div className="mt-14 flex flex-col gap-5 px-6">
+                    <p className="text-sm text-subtle">You may like</p>
                     <div className="flex flex-col gap-3">
                       {suggestedRecipes.map((recipe) => (
                         <Link
@@ -422,11 +410,9 @@ const page = () => {
                             size={20}
                             color="#9CA5A3"
                             strokeWidth={2}
-                            className="max-xs:size-3"
+                            className=""
                           />
-                          <p className="font-medium max-xs:text-sm">
-                            {recipe.title}
-                          </p>
+                          <p className="font-medium">{recipe.title}</p>
                         </Link>
                       ))}
                     </div>
@@ -442,8 +428,8 @@ const page = () => {
             <div className="mt-8 flex flex-col gap-24 px-6">
               <div className="flex flex-col gap-5">
                 <div className="flex flex-col gap-2">
-                  <p className="font-medium max-xs:text-sm">Results</p>
-                  <p className="text-sm text-subtle max-xs:text-xs">
+                  <p className="font-medium">Results</p>
+                  <p className="text-sm text-subtle">
                     {results.length} recipes found
                   </p>
                 </div>
@@ -459,16 +445,14 @@ const page = () => {
                           size={20}
                           color="#9CA5A3"
                           strokeWidth={2}
-                          className="max-xs:size-3"
+                          className="size-5"
                         />
-                        <p className="font-medium max-xs:text-sm">
-                          {recipe.title}
-                        </p>
+                        <p className="font-medium text-base">{recipe.title}</p>
                       </div>
                       <ChevronRight
                         size={16}
                         color="#3F4644"
-                        className="max-xs:size-2.75"
+                        className="size-4"
                       />
                     </Link>
                   ))}
@@ -482,9 +466,9 @@ const page = () => {
                   color="#227B6F"
                   size={20}
                   strokeWidth={2}
-                  className="max-xs:size-3"
+                  className="size-5"
                 />
-                <span className="text-mint-green font-medium max-xs:text-sm text-base">
+                <span className="text-mint-green font-medium text-base">
                   Get more suggestions
                 </span>
               </button>
@@ -517,7 +501,7 @@ const page = () => {
                 ) : (
                   <div className="flex flex-col gap-3">
                     {generateError && (
-                      <p className="text-sm max-xs:text-xs text-red-500">
+                      <p className="text-sm text-red-500">
                         Couldn&apos;t generate that recipe. Please try again.
                       </p>
                     )}
@@ -530,7 +514,7 @@ const page = () => {
                             searchTerm.trim() || undefined,
                           )
                         }
-                        className="flex items-center gap-3 p-3 rounded-md hover:bg-[#E8E6DC] text-left transition-colors"
+                        className="flex items-center gap-3 p-3 border-b hover:bg-[#E8E6DC] text-left transition-colors"
                       >
                         <GlassWater size={20} color="#9CA5A3" strokeWidth={2} />
                         <p className="font-medium flex-1">{recipe.title}</p>
@@ -546,7 +530,7 @@ const page = () => {
                 }}
               >
                 <ArrowLeft color="#227B6F" size={20} strokeWidth={2} />
-                <span className="text-mint-green font-medium">
+                <span className="text-mint-green font-medium text-base">
                   Back to results
                 </span>
               </button>
@@ -590,32 +574,32 @@ function RecipeLoadingScreen({
     <div className="bg-background min-h-screen">
       <main>
         <div
-          className={`px-6 max-xs:px-4 py-4.75 mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A] ${generateParam && "flex gap-5 max-xs:gap-3 items-center"}`}
+          className={`px-6 py-4.75 mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A] ${generateParam && "flex gap-5 items-center"}`}
         >
           {generateParam && (
-            <BackButton className="p-3 max-xs:p-2 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
+            <BackButton className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
           )}
-          <p className="text-2xl max-xs:text-base font-semibold text-[#111312]">
+          <p className="text-2xl font-semibold text-[#111312]">
             Find a recipe
           </p>
         </div>
 
-        <div className="mt-8 px-6 max-xs:px-4">
+        <div className="mt-8 px-6">
           <div className="relative">
             <div className="absolute top-1/2 -translate-y-1/2 left-3">
-              <Search color="#82A198" size={16} className="max-xs:size-2.5" />
+              <Search color="#82A198" size={16} className="size-4" />
             </div>
             <input
               type="text"
               value={recipeName}
               readOnly
-              className="w-full bg-white max-xs:py-2 max-xs:pr-2 py-3 pl-9 max-xs:pl-6 pr-3 max-xs:text-xs max-xs:rounded-sm rounded-lg border border-[#E6ECEA] text-sm text-[#1A1A1A] focus:outline-none"
+              className="w-full bg-white py-3 pl-9 pr-3 rounded-lg border border-[#E6ECEA] text-sm text-[#1A1A1A] focus:outline-none"
             />
           </div>
         </div>
 
-        <div className="mt-16 flex flex-col items-center text-center gap-6 px-6 max-xs:px-4">
-          <div className="relative size-24 max-xs:size-20 flex items-center justify-center">
+        <div className="mt-16 flex flex-col items-center text-center gap-6 px-6">
+          <div className="relative size-24 flex items-center justify-center">
             <svg
               className="absolute inset-0 animate-spin"
               viewBox="0 0 100 100"
@@ -632,30 +616,30 @@ function RecipeLoadingScreen({
                 strokeDasharray="100 283"
               />
             </svg>
-            <div className="size-20 max-xs:size-15 rounded-full bg-linear-to-b from-[#F3EBD3] to-[#F8F5EE] flex items-center justify-center">
+            <div className="size-20 rounded-full bg-linear-to-b from-[#F3EBD3] to-[#F8F5EE] flex items-center justify-center">
               <Sparkles
                 size={28}
                 color="#227B6F"
                 strokeWidth={2}
-                className="max-xs:size-5"
+                className="size-7"
               />
             </div>
           </div>
 
           <div className="flex flex-col gap-2">
-            <h2 className="text-xl max-xs:text-base font-semibold text-[#333333]">
+            <h2 className="text-xl font-semibold text-[#333333]">
               Fetching your recipe...
             </h2>
-            <p className="text-sm max-xs:text-xs text-subtle max-w-xs">
+            <p className="text-sm text-subtle max-w-xs">
               Please hold on while we find the best answer for you
             </p>
           </div>
         </div>
 
-        <div className="px-6 max-xs:px-4">
-          <div className="mt-12 rounded-full bg-[#E8E6DC] max-xs:px-3.5 max-xs:py-2 px-5 py-3 flex items-center justify-center gap-2">
-            <span className="text-lg max-xs:text-base">💡</span>
-            <p className="text-sm max-xs:text-xs text-subtle font-medium">
+        <div className="px-6">
+          <div className="mt-12 rounded-full bg-[#E8E6DC] px-5 py-3 flex items-center justify-center gap-2">
+            <span className="text-lg">💡</span>
+            <p className="text-sm text-subtle font-medium">
               Tip: This may take a few seconds
             </p>
           </div>
@@ -672,7 +656,7 @@ function RecipesSpinner() {
       role="status"
       aria-label="Loading recipes"
     >
-      <div className="w-8 h-8 rounded-full border-2 border-mint-green border-t-transparent animate-spin" />
+      <div className="size-8 rounded-full border-2 border-mint-green border-t-transparent animate-spin" />
     </div>
   );
 }

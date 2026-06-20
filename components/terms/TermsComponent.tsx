@@ -8,7 +8,7 @@ const TermsComponent = () => {
           <p>1.</p>
           <p>Use of Nuko Health</p>
         </div>
-        <div className="font-medium max-[400px]:text-sm text-subtle flex flex-col gap-3">
+        <div className="font-medium text-base text-subtle flex flex-col gap-3">
           <p>
             Nuko Health provides nutrition, wellness, recipe, and health-related
             tools to support healthier lifestyle choices.
@@ -22,7 +22,7 @@ const TermsComponent = () => {
           <p>2.</p>
           <p>Account Registration</p>
         </div>
-        <div className="font-medium max-[400px]:text-sm text-subtle flex flex-col gap-3">
+        <div className="font-medium text-base text-subtle flex flex-col gap-3">
           <p>
             Provide accurate information, keep account credentials secure, and
             remain responsible for activity under your account.
@@ -35,7 +35,7 @@ const TermsComponent = () => {
           <p>3.</p>
           <p>Subscriptions & Payments</p>
         </div>
-        <div className="font-medium max-[400px]:text-sm text-subtle flex flex-col gap-3">
+        <div className="font-medium text-base text-subtle flex flex-col gap-3">
           <p>Payments are securely processed through Stripe and Square.</p>
           <p>
             Subscription fees may recur, pricing may change, and users are
@@ -53,7 +53,7 @@ const TermsComponent = () => {
           <p>4.</p>
           <p>Acceptable Use</p>
         </div>
-        <div className="font-medium max-[400px]:text-sm text-subtle flex flex-col gap-3">
+        <div className="font-medium text-base text-subtle flex flex-col gap-3">
           <p>
             Do not misuse the platform, gain unauthorized access, copy content
             without permission, upload malicious content, or use the service
@@ -67,7 +67,7 @@ const TermsComponent = () => {
           <p>5.</p>
           <p>Health Disclaimer</p>
         </div>
-        <div className="font-medium max-[400px]:text-sm text-subtle flex flex-col gap-3">
+        <div className="font-medium text-base text-subtle flex flex-col gap-3">
           <p>
             Nuko Health provides informational wellness and nutrition content
             only and does not replace medical advice.
@@ -80,7 +80,7 @@ const TermsComponent = () => {
           <p>6.</p>
           <p>Intellectual Property</p>
         </div>
-        <div className="font-medium max-[400px]:text-sm text-subtle flex flex-col gap-3">
+        <div className="font-medium text-base text-subtle flex flex-col gap-3">
           <p>
             All branding, content, software, and materials are owned by or
             licensed to Nuko Health.
@@ -93,7 +93,7 @@ const TermsComponent = () => {
           <p>7.</p>
           <p>Service Availability</p>
         </div>
-        <div className="font-medium max-[400px]:text-sm text-subtle flex flex-col gap-3">
+        <div className="font-medium text-base text-subtle flex flex-col gap-3">
           <p>
             We may update, modify, suspend, or discontinue features at any time.
           </p>
@@ -105,7 +105,7 @@ const TermsComponent = () => {
           <p>8.</p>
           <p>Limitation of Liability</p>
         </div>
-        <div className="font-medium max-[400px]:text-sm text-subtle flex flex-col gap-3">
+        <div className="font-medium text-base text-subtle flex flex-col gap-3">
           <p>
             Use of Nuko Health is at your own risk. We are not liable for
             indirect or consequential damages.
@@ -118,7 +118,7 @@ const TermsComponent = () => {
           <p>9.</p>
           <p>Changes to These Terms</p>
         </div>
-        <div className="font-medium max-[400px]:text-sm text-subtle flex flex-col gap-3">
+        <div className="font-medium text-base text-subtle flex flex-col gap-3">
           <p>We may update these Terms and post updates on the platform.</p>
         </div>
       </div>
@@ -128,7 +128,7 @@ const TermsComponent = () => {
           <p>10.</p>
           <p>Contact Us</p>
         </div>
-        <div className="font-medium max-[400px]:text-sm text-subtle flex flex-col gap-3">
+        <div className="font-medium text-base text-subtle flex flex-col gap-3">
           <p>support@nukohealth.app</p>
         </div>
       </div>

@@ -54,16 +54,16 @@ const LikeButton = ({
       onClick={handleToggle}
       disabled={isPending}
       aria-label={liked ? "Unlike recipe" : "Like recipe"}
-      className="p-2 max-xs:p-1 rounded-full bg-[#E8E6DC] disabled:opacity-50 hover:opacity-70 transition-opacity"
+      className="p-2 rounded-full bg-[#E8E6DC] disabled:opacity-50 hover:opacity-70 transition-opacity"
     >
       {liked ? (
-        <FaHeart size={16} color="#227B6F" className="max-xs:size-2.5" />
+        <FaHeart size={16} color="#227B6F" className="" />
       ) : (
         <Heart
           size={16}
           color="#227B6F"
           strokeWidth={1.5}
-          className="max-xs:size-2.5"
+          className=""
         />
       )}
     </button>

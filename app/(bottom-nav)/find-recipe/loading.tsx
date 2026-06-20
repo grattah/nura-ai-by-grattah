@@ -5,7 +5,7 @@ export default function FindRecipeLoading() {
         <p className="text-2xl font-semibold text-[#111312]">Find a recipe</p>
       </div>
       <div className="mt-4 px-6">
-        <div className="h-12 rounded-[12px] bg-muted animate-pulse" />
+        <div className="h-12 rounded-xl bg-muted animate-pulse" />
       </div>
       <div className="mt-8 px-6 space-y-3">
         {Array.from({ length: 4 }).map((_, i) => (

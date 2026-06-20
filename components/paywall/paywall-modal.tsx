@@ -44,8 +44,8 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
         className="sm:max-w-md p-0 gap-0 overflow-hidden"
         showCloseButton={false}
       >
-        <div className="p-6 max-[400px]:p-4 space-y-5 max-[400px]:space-y-4">
-          <DialogHeader className="flex flex-col items-center justify-center text-center space-y-5 max-[400px]:space-y-3 gap-0">
+        <div className="p-6 space-y-5">
+          <DialogHeader className="flex flex-col items-center justify-center text-center space-y-5 gap-0">
             <div className="p-3 rounded-full bg-mint-green w-min mb-5">
               <LockKeyhole size={20} color="#FFFFFF" />
             </div>
@@ -60,7 +60,7 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
             </div>
           </DialogHeader>
 
-          <ul className="rounded-2xl bg-grey-c100 py-4 max-[400px]:py-2 px-3 space-y-3">
+          <ul className="rounded-2xl bg-grey-c100 py-4 px-3 space-y-3">
             {benefits.map((item) => (
               <li key={item.title} className="flex items-center gap-3">
                 <Check

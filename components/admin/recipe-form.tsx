@@ -268,10 +268,10 @@ export function RecipeForm({
                   )
                 }
                 className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                  checked
-                    ? "bg-mint-green text-white border-mint-green"
-                    : "bg-card border-border text-foreground hover:bg-muted"
-                }`}
+ checked
+ ? "bg-mint-green text-white border-mint-green"
+ : "bg-card border-border text-foreground hover:bg-muted"
+ }`}
               >
                 {t.name}
               </button>
@@ -291,10 +291,10 @@ export function RecipeForm({
                 key={d.slug}
                 onClick={() => set("drink_type", d.slug)}
                 className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                  checked
-                    ? "bg-mint-green text-white border-mint-green"
-                    : "bg-card border-border text-foreground hover:bg-muted"
-                }`}
+ checked
+ ? "bg-mint-green text-white border-mint-green"
+ : "bg-card border-border text-foreground hover:bg-muted"
+ }`}
               >
                 {d.name}
               </button>

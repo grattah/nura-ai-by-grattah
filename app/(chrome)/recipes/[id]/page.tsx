@@ -7,10 +7,7 @@ import { FollowUpSection } from "@/components/follow-up-section";
 import { buildRecipeContext } from "@/lib/recipe-context";
 import { PaywallGate } from "@/components/paywall/paywall-gate";
 import { ShareButton } from "@/components/share-button";
-import {
-  createClient,
-  createServiceRoleClient,
-} from "@/lib/supabase/server";
+import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { isBookmarked } from "@/actions/bookmark";
 import { BookmarkButton } from "@/components/bookmark-button";
 import BackButton from "@/components/back-button";
@@ -199,7 +196,7 @@ export default async function RecipeDetailPage({
         <div className="min-h-screen bg-background">
           {/* Sub-header */}
           <div className="flex items-center justify-between px-6 pt-5 pb-3">
-            <BackButton className="p-3 max-xs:p-2 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
+            <BackButton className="size-10 grid place-items-center rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
             <div className="flex items-center gap-2">
               <ShareButton
                 recipeId={recipe.id}
@@ -222,10 +219,10 @@ export default async function RecipeDetailPage({
 
             {/* Title + description */}
             <div className="px-6 mb-8">
-              <h1 className="text-2xl max-xs:text-base font-bold text-foreground mb-1.5 leading-tight">
+              <h1 className="text-2xl font-bold text-foreground mb-1.5 leading-tight">
                 {recipe.title}
               </h1>
-              <p className="text-base max-xs:text-sm font-medium text-subtle leading-relaxed">
+              <p className="text-base font-medium text-subtle leading-relaxed">
                 {recipe.short_description}
               </p>
             </div>
@@ -264,7 +261,7 @@ export default async function RecipeDetailPage({
 
               <div className="flex justify-between items-center gap-2 mt-8">
                 <div className="flex items-center gap-2 flex-1">
-                  <p className="text-subtle text-sm max-xs:text-xs max-2xs:text-[10.5px] text-nowrap">
+                  <p className="text-subtle text-sm text-nowrap">
                     Was this helpful?
                   </p>
                   <LikeButton
@@ -273,7 +270,7 @@ export default async function RecipeDetailPage({
                     isAuthenticated={!!user}
                   />
                 </div>
-                <p className="font-medium text-sm max-xs:text-xs max-2xs:text-[10.5px] flex-1 text-nowrap">
+                <p className="font-medium text-sm flex-1 text-nowrap">
                   {recipe.likes ?? 0}{" "}
                   {(recipe.likes ?? 0) > 1 ? "people" : "person"} found this
                   helpful

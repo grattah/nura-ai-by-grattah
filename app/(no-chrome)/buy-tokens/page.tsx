@@ -1,10 +1,7 @@
-import React from 'react'
-import BuyTokens from '@/components/tokens/BuyTokens'
+import BuyTokens from "@/components/tokens/BuyTokens";
 
 const page = () => {
-  return (
-	<BuyTokens />
-  )
-}
+  return <BuyTokens />;
+};
 
-export default page
+export default page;

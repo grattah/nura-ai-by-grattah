@@ -26,7 +26,7 @@ const WELLNESS_TIP = {
   title: "Chew a little longer",
   description:
     "Digestion begins in the mouth. Twenty unhurried chews per bite can noticeably reduce bloating.",
-  imageUrl: undefined as string | undefined,
+  imageUrl: "/daily-wtip.png" as string | undefined,
 };
 
 const getPopularRecipes = unstable_cache(
@@ -83,10 +83,10 @@ export default async function HomePage() {
 
   return (
     <div className="bg-background">
-      <main className="px-6 pt-2 max-xs:space-y-5 space-y-6">
+      <main className="px-mp pt-2 space-y-8">
         {/* Hero */}
-        <section className="max-xs:space-y-3 space-y-4">
-          <h1 className="max-2xs:text-lg max-xs:text-xl text-[1.75rem] font-semibold text-grey-c950 leading-snug">
+        <section className="space-y-4">
+          <h1 className="text-hero font-semibold text-grey-c950 leading-snug">
             Hello! what would you like to{" "}
             <span className="text-mint-green">improve</span> today?
           </h1>
@@ -96,25 +96,25 @@ export default async function HomePage() {
         {/* Popular Recipes */}
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="max-xs:text-base text-2xl leading-none font-semibold text-grey-c950">
+            <h2 className="text-title leading-none font-semibold text-grey-c950">
               Popular recipes
             </h2>
             <Link
               href="/popular"
-              className="max-xs:text-xs text-base font-semibold text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4"
+              className="text-base font-semibold text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4"
             >
               See all
             </Link>
           </div>
 
           <div className="">
-            <div className="flex max-xs:gap-x-2.5 gap-x-5 overflow-x-auto hide-scrollbar snap-x snap-mandatory">
+            <div className="flex gap-x-5 overflow-x-auto hide-scrollbar snap-x snap-mandatory">
               {popularRecipes.map((recipe, i) => {
                 const firstTag = recipe.recipe_tags?.[0]?.tags?.name;
                 return (
                   <div
                     key={recipe.id}
-                    className="shrink-0 max-xs:w-33 w-50 snap-start"
+                    className="shrink-0 w-[clamp(150px,46.5vw,200px)] snap-start"
                   >
                     <RecipeCardNew
                       id={recipe.id}

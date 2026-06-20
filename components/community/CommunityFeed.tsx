@@ -126,25 +126,26 @@ export function CommunityFeed({
           href={`/recipes/${item.recipe?.id}`}
           className="block"
         >
-          <div className="flex items-stretch gap-6 max-xs:gap-3 w-full">
-            <div className="flex gap-4 max-xs:gap-3 flex-1">
+          <div className="flex items-stretch gap-6 w-full">
+            <div className="flex gap-4 flex-1">
               <Image
                 src={item.profile?.avatar_url || profile}
                 alt={item.profile?.username || "unknown user"}
-                width={48}
-                height={48}
-                sizes="48px"
-                className="rounded-full object-cover size-12 max-xs:size-10 shrink-0"
+                width={44}
+                height={44}
+                className="rounded-full object-cover size-11 shrink-0"
               />
               <div className="flex flex-col gap-2.5">
-                <p className="text-subtle max-xs:text-sm">
+                <p className="text-subtle text-base">
                   <span className="font-semibold text-[#1B1D1D]">
                     {item.profile?.username || "unknown user"}
                   </span>{" "}
                   {item.action} {item.recipe?.title}
                 </p>
-                <p className="text-[#57605E] text-sm max-xs:text-xs">
-                  {formatRelativeTime(item.created_at)} ago
+                <p className="text-[#57605E] text-sm">
+                  {formatRelativeTime(item.created_at) === "now" ? "Just" : ""}{" "}
+                  {formatRelativeTime(item.created_at)}{" "}
+                  {formatRelativeTime(item.created_at) === "now" ? "" : "ago"}
                 </p>
               </div>
             </div>
@@ -181,7 +182,7 @@ export function CommunityFeed({
           ) : loadMoreError ? (
             <button
               onClick={retryLoadMore}
-              className="text-sm max-xs:text-xs font-semibold text-mint-green underline underline-offset-4 hover:opacity-75 transition-opacity active:scale-95"
+              className="text-sm font-semibold text-mint-green underline underline-offset-4 hover:opacity-75 transition-opacity active:scale-95"
             >
               Couldn&apos;t load more, retry
             </button>
@@ -190,7 +191,7 @@ export function CommunityFeed({
       )}
 
       {atEnd && activities.length >= ACTIVITIES_PAGE_SIZE && (
-        <p className="text-center text-sm max-xs:text-xs text-muted-foreground pb-2">
+        <p className="text-center text-sm text-muted-foreground pb-2">
           You&apos;ve reached the end.
         </p>
       )}

@@ -40,14 +40,14 @@ const HelpForm = ({ email, fullname }: { email: string; fullname: string }) => {
 
   return (
     <div className="bg-background pb-10">
-      <main className="px-6 max-xs:px-4">
+      <main className="px-6">
         <div className="flex items-center pt-5 pb-4 justify-between mb-2.5">
-          <BackButton className="p-3 max-[400px]:p-2 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
+          <BackButton className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
           <div className="flex flex-col gap-1.75 items-center justify-center">
-            <h1 className="text-center text-xl max-xs:text-lg font-semibold text-base-text">
+            <h1 className="text-center text-xl font-semibold text-base-text">
               Terms and Privacy
             </h1>
-            <p className="text-subtle text-center text-sm max-[400px]:text-xs font-medium">
+            <p className="text-subtle text-center text-sm font-medium">
               Submit your feedback
             </p>
           </div>
@@ -57,7 +57,7 @@ const HelpForm = ({ email, fullname }: { email: string; fullname: string }) => {
         <form onSubmit={handleSubmit}>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
-              <label className="text-subtle text-sm max-[400px]:text-xs font-medium">
+              <label className="text-subtle text-sm font-medium">
                 Your email address
               </label>
               <div className="relative w-full">
@@ -76,7 +76,7 @@ const HelpForm = ({ email, fullname }: { email: string; fullname: string }) => {
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-subtle text-sm max-[400px]:text-xs font-medium">
+              <label className="text-subtle text-sm font-medium">
                 Your full name
               </label>
               <div className="relative w-full">
@@ -95,7 +95,7 @@ const HelpForm = ({ email, fullname }: { email: string; fullname: string }) => {
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-subtle text-sm max-[400px]:text-xs font-medium">
+              <label className="text-subtle text-sm font-medium">
                 Your message
               </label>
               <FeedbackMessage value={message} onChange={setMessage} />

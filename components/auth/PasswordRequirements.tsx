@@ -47,18 +47,18 @@ export function PasswordRequirements({ password }: PasswordRequirementsProps) {
             <li key={req.label} className="flex items-center gap-2">
               <span
                 className={`flex items-center justify-center w-5 h-5 rounded-full shrink-0 transition-colors ${
-                  isMet
-                    ? "bg-mint-green"
-                    : "border-2 border-[#9CA5A3] bg-transparent"
-                }`}
+ isMet
+ ? "bg-mint-green"
+ : "border-2 border-[#9CA5A3] bg-transparent"
+ }`}
                 aria-hidden="true"
               >
                 {isMet && <Check size={12} color="#FFFFFF" strokeWidth={3} />}
               </span>
               <span
                 className={`text-sm transition-colors ${
-                  isMet ? "text-[#1A1A1A]" : "text-[#57605E]"
-                }`}
+ isMet ? "text-[#1A1A1A]" : "text-[#57605E]"
+ }`}
               >
                 {req.label}
               </span>
