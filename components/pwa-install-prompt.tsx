@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { X, Share, Plus, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useCredits } from "@/components/providers/credits-provider";
 import logo from "@/public/logo-outlined-nobg.svg";
 
 const STORAGE_KEY = "nura_pwa_prompt_dismissed";
@@ -58,33 +59,43 @@ interface BeforeInstallPromptEvent extends Event {
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 export function PWAInstallPrompt() {
+  const { hasAccess } = useCredits();
   const [mode, setMode] = useState<PromptMode>(null);
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
 
+  // Capture Chrome's native install signal regardless of payment, so it's ready
+  // the moment the user becomes eligible. Don't reveal the sheet here.
   useEffect(() => {
-    // Already installed or dismissed recently → do nothing
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      setMode("android");
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  // Only reveal the install drawer to paying (subscribed) users — and not if the
+  // app is already installed or the prompt was dismissed recently.
+  useEffect(() => {
+    if (!hasAccess) return;
     if (isStandalone() || wasDismissedRecently()) return;
 
-    // iOS Safari — show our custom modal with instructions
+    // iOS Safari — show our custom modal with instructions.
     if (isIOS() && isSafari()) {
       setMode("ios");
       setVisible(true);
       return;
     }
 
-    // Android / Chrome — intercept the browser's native prompt
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+    // Android / Chrome — show once we've captured the deferred native prompt.
+    if (deferredPrompt) {
       setMode("android");
       setVisible(true);
-    };
-
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
+    }
+  }, [hasAccess, deferredPrompt]);
 
   const dismiss = () => {
     setVisible(false);
