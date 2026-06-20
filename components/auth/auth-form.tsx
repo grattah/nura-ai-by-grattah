@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { ensureWelcomeEmail } from "@/actions/welcome";
 
 import loader from "@/public/loader.png";
 
@@ -402,6 +403,8 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
       if (error) throw error;
 
+      // New account fully created — send the one-time welcome (idempotent).
+      await ensureWelcomeEmail();
       await redirectAfterAuth(supabase);
     } catch (err: unknown) {
       setError(
@@ -416,6 +419,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
   const handleSkipProfile = async () => {
     const supabase = createClient();
+    await ensureWelcomeEmail();
     await redirectAfterAuth(supabase);
   };
 

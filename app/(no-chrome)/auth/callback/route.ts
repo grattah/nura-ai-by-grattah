@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { hasActiveSubscription } from "@/lib/subscription";
 import { sanitizeNext } from "@/lib/safe-redirect";
+import { ensureWelcomeEmail } from "@/actions/welcome";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -21,6 +22,8 @@ export async function GET(request: Request) {
       let destination = next;
 
       if (user) {
+        // First-time accounts (incl. Google sign-ups) get the welcome email once.
+        await ensureWelcomeEmail();
         const active = await hasActiveSubscription(supabase, user.id);
         destination = active ? next : "/checkout";
       }
