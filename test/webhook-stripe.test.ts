@@ -32,6 +32,9 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
 }));
 
+// Email sends are best-effort; stub so no real Resend call happens.
+vi.mock("@/lib/email/send", () => ({ sendEmail: vi.fn() }));
+
 import { POST } from "@/app/api/webhooks/stripe/route";
 
 const SECONDS = (daysFromNow: number) =>
