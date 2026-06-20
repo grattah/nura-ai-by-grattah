@@ -43,6 +43,7 @@ export function SearchSection() {
   const { hasAccess, isLoading } = useAccess();
   const router = useRouter();
   const [commonConcerns, setCommonConcerns] = useState<CommonConcerns[]>([]);
+  const [concernsLoading, setConcernsLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [isRouteLoading, setIsLoading] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
@@ -51,14 +52,15 @@ export function SearchSection() {
 
   useEffect(() => {
     const fetchTopConcerns = async () => {
-      const { data: topConcerns } = await supabase.rpc(
-        "top_searched_concerns",
-        {
-          result_limit: 6,
-        }
-      );
-      if (!topConcerns) return;
-      setCommonConcerns(topConcerns);
+      try {
+        const { data: topConcerns } = await supabase.rpc(
+          "top_searched_concerns",
+          { result_limit: 6 }
+        );
+        if (topConcerns) setCommonConcerns(topConcerns);
+      } finally {
+        setConcernsLoading(false);
+      }
     };
     fetchTopConcerns();
   }, []);
@@ -198,15 +200,18 @@ export function SearchSection() {
         </div>
 
         {/* Common concerns */}
+        {/* Common concerns */}
         <div>
           <p className="text-xs font-medium text-subtle uppercase tracking-wider mb-3">
             Common Concerns
           </p>
-          {commonConcerns.length > 0 && (
+          {concernsLoading ? (
+            <ConcernsSkeleton />
+          ) : commonConcerns.length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              {commonConcerns.map((concern, index) => (
+              {commonConcerns.map((concern) => (
                 <button
-                  key={index}
+                  key={concern.term}
                   onClick={() => handleBadgeClick(concern.term)}
                   className="px-6 py-2.5 rounded-full bg-badge text-sm text-base-text border border-badge-border hover:opacity-75 transition-opacity active:scale-95 capitalize"
                 >
@@ -214,11 +219,26 @@ export function SearchSection() {
                 </button>
               ))}
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 
       <PaywallModal open={paywallOpen} onOpenChange={setPaywallOpen} />
     </>
+  );
+}
+
+function ConcernsSkeleton() {
+  // Varied widths so the placeholders read as separate pills, not one bar.
+  const widths = ["w-20", "w-24", "w-16", "w-28", "w-20"];
+  return (
+    <div className="flex flex-wrap gap-2" aria-hidden="true">
+      {widths.map((w, i) => (
+        <div
+          key={i}
+          className={`${w} h-10 rounded-full bg-badge animate-pulse`}
+        />
+      ))}
+    </div>
   );
 }
