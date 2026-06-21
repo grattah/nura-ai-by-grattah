@@ -163,14 +163,14 @@ export function PopularRecipesList({
               {firstTag && (
                 <Link
                   href={`/recipes/${recipe.id}`}
-                  className="text-[#727E7A] text-xs font-medium font-redHatDisplay uppercase"
+                  className="text-[#727E7A] text-xs font-medium font-josefin uppercase"
                 >
                   {firstTag}
                 </Link>
               )}
               <Link
                 href={`/recipes/${recipe.id}`}
-                className="text-[#111312] font-medium text-base font-josefin"
+                className="text-[#111312] font-medium text-base font-josefin line-clamp-1"
               >
                 {truncateText(recipe.title, 3)}
               </Link>
