@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import {
-  Geist_Mono,
+  // Geist_Mono,
   Red_Hat_Text,
-  Josefin_Sans,
+  // Josefin_Sans,
   Red_Hat_Display,
 } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
@@ -14,10 +14,18 @@ import { CreditsProvider } from "@/components/providers/credits-provider";
 import { ChatCacheCleaner } from "@/components/chat-cache-cleaner";
 import { PerfProfiler } from "@/components/dev/perf-profiler";
 
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
-const _redHatText = Red_Hat_Text({ subsets: ["latin"] });
-const _josefinSans = Josefin_Sans({ subsets: ["latin"] });
-const _redHatDisplay = Red_Hat_Display({ subsets: ["latin"] });
+// const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const _redHatText = Red_Hat_Text({
+  subsets: ["latin"],
+  variable: "--font-redHatText",
+  display: "swap",
+});
+// const _josefinSans = Josefin_Sans({ subsets: ["latin"] });
+const _redHatDisplay = Red_Hat_Display({
+  subsets: ["latin"],
+  variable: "--font-redHatDisplay",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Nuko",
@@ -66,7 +74,11 @@ export default function RootLayout({
   return (
     // DARK MODE: to re-enable, restore className="dark" on <html> and revert
     // ThemeProvider to: defaultTheme="system" enableSystem disableTransitionOnChange
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${_redHatText.variable}`}
+    >
       <head>
         <meta name="apple-mobile-web-app-title" content="Nuko" />
         <meta name="mobile-web-app-capable" content="yes" />
