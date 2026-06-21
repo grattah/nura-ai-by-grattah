@@ -17,7 +17,7 @@ import { PerfProfiler } from "@/components/dev/perf-profiler";
 // const _geistMono = Geist_Mono({ subsets: ["latin"] });
 const _redHatText = Red_Hat_Text({
   subsets: ["latin"],
-  variable: "--font-sans",
+  variable: "--font-redHatText",
   display: "swap",
 });
 // const _josefinSans = Josefin_Sans({ subsets: ["latin"] });
@@ -77,7 +77,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${_redHatText.variable} ${_redHatDisplay.variable}`}
+      className={`${_redHatText.variable}`}
     >
       <head>
         <meta name="apple-mobile-web-app-title" content="Nuko" />
