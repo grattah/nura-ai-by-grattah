@@ -61,7 +61,7 @@ export function CategorySection({ hasAccess }: UpgradeBannerProps) {
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <h2 className="text-title leading-none font-semibold text-grey-c950">
-          Category
+          Categories
         </h2>
         {hasAccess ? (
           <Link
