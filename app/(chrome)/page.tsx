@@ -85,7 +85,7 @@ export default async function HomePage() {
         {/* Hero */}
         <section className="space-y-4">
           <h1 className="text-hero font-semibold text-grey-c950 leading-snug">
-            Hello! what would you like to{" "}
+            Hello! What would you like to{" "}
             <span className="text-mint-green">improve</span> today?
           </h1>
           <SearchSection />
