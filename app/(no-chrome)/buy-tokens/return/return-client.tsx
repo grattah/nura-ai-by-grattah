@@ -2,15 +2,17 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 // The "extra" token balance is topped up asynchronously by the Stripe webhook,
 // so we poll /api/credits a few times to let it land, then show the success
-// modal. The purchased amount is passed through the return URL for the copy.
-export function BuyTokensReturnClient() {
+// modal. `credits` is the Stripe-verified amount passed from the server.
+export function BuyTokensReturnClient({
+  credits,
+}: {
+  credits?: string | null;
+}) {
   const router = useRouter();
-  const params = useSearchParams();
-  const credits = params.get("credits");
   const [done, setDone] = useState(false);
   const started = useRef(false);
 

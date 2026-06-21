@@ -38,3 +38,5 @@ next-env.d.ts
 
 # sql query
 /supabase
+
+/SECURITY_AUDIT.md

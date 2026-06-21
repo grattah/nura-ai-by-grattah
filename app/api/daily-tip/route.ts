@@ -3,7 +3,7 @@ import { generateObject, generateText } from "ai";
 import { google } from "@ai-sdk/google";
 import { z } from "zod";
 import sharp from "sharp";
-import { createServiceRoleClient } from "@/lib/supabase/server";
+import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { utcDayKey, dailyTipsTable, type DailyTip } from "@/lib/daily-tip";
 
@@ -87,9 +87,28 @@ export async function GET(req: NextRequest) {
   const day = utcDayKey();
   const admin = createServiceRoleClient();
 
-  // Already generated today → return it (the common path).
+  // Already generated today → return it (the common path; public read).
   const existing = await readTip(admin, day);
   if (existing) return NextResponse.json(existing);
+
+  // Bound the expensive generation path (audit M4). When CRON_SECRET is set,
+  // only the Vercel cron (Authorization: Bearer <secret>) or an authenticated
+  // user (homepage self-heal) may trigger generation — anonymous callers can't.
+  // Back-compat: with no CRON_SECRET configured, behaviour is unchanged
+  // (rate-limit + per-day idempotency already bound abuse).
+  const cronSecret = process.env.CRON_SECRET;
+  if (cronSecret) {
+    const isCron =
+      req.headers.get("authorization") === `Bearer ${cronSecret}`;
+    if (!isCron) {
+      const {
+        data: { user },
+      } = await (await createClient()).auth.getUser();
+      if (!user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+    }
+  }
 
   // Generate text first (cheap/fast); clamp lengths so the card never overflows.
   let title: string;
