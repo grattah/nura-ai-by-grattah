@@ -9,6 +9,7 @@ import { PaywallModal } from "@/components/paywall/paywall-modal";
 import { saveRecentSearch } from "@/components/search/edit-search-sheet";
 import { logSearch } from "@/actions/log-search";
 import { createClient } from "@/lib/supabase/client";
+// import ConcernsSkeleton from "./concerns-skeleton";
 
 const COMMON_CONCERNS = [
   "Bloating",
@@ -42,28 +43,28 @@ export function SearchSection() {
   const supabase = createClient();
   const { hasAccess, isLoading } = useAccess();
   const router = useRouter();
-  const [commonConcerns, setCommonConcerns] = useState<CommonConcerns[]>([]);
-  const [concernsLoading, setConcernsLoading] = useState(true);
+  // const [commonConcerns, setCommonConcerns] = useState<CommonConcerns[]>([]);
+  // const [concernsLoading, setConcernsLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [isRouteLoading, setIsLoading] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
 
-  useEffect(() => {
-    const fetchTopConcerns = async () => {
-      try {
-        const { data: topConcerns } = await supabase.rpc(
-          "top_searched_concerns",
-          { result_limit: 6 }
-        );
-        if (topConcerns) setCommonConcerns(topConcerns);
-      } finally {
-        setConcernsLoading(false);
-      }
-    };
-    fetchTopConcerns();
-  }, []);
+  // useEffect(() => {
+  //   const fetchTopConcerns = async () => {
+  //     try {
+  //       const { data: topConcerns } = await supabase.rpc(
+  //         "top_searched_concerns",
+  //         { result_limit: 6 },
+  //       );
+  //       if (topConcerns) setCommonConcerns(topConcerns);
+  //     } finally {
+  //       setConcernsLoading(false);
+  //     }
+  //   };
+  //   fetchTopConcerns();
+  // }, []);
 
   const requireAccess = useCallback(
     (cb: () => void) => {
@@ -73,7 +74,7 @@ export function SearchSection() {
       }
       cb();
     },
-    [hasAccess, isLoading]
+    [hasAccess, isLoading],
   );
 
   const handleSubmit = useCallback(() => {
@@ -96,12 +97,12 @@ export function SearchSection() {
     }
   }, [hasAccess, isLoading]);
 
-  const handleBadgeClick = useCallback(
-    (concern: string) => {
-      requireAccess(() => setQuery(concern));
-    },
-    [requireAccess]
-  );
+  // const handleBadgeClick = useCallback(
+  //   (concern: string) => {
+  //     requireAccess(() => setQuery(concern));
+  //   },
+  //   [requireAccess],
+  // );
 
   const handleMic = useCallback(() => {
     requireAccess(() => {
@@ -128,7 +129,7 @@ export function SearchSection() {
       recognition.onresult = (e) => {
         const transcript = e.results[0]?.[0]?.transcript ?? "";
         setQuery((prev) =>
-          prev.trim() ? `${prev.trim()} ${transcript}` : transcript
+          prev.trim() ? `${prev.trim()} ${transcript}` : transcript,
         );
       };
 
@@ -205,10 +206,21 @@ export function SearchSection() {
           <p className="text-xs font-medium text-subtle uppercase tracking-wider mb-3">
             Common Concerns
           </p>
-          {concernsLoading ? (
+          <div className="flex flex-wrap gap-2 mx-3">
+            {COMMON_CONCERNS.map((concern) => (
+              <button
+                key={concern}
+                onClick={() => setQuery(concern)}
+                className="px-5 py-2.5 rounded-full bg-badge text-sm text-foreground border border-badge-border hover:opacity-75 transition-opacity active:scale-95"
+              >
+                {concern}
+              </button>
+            ))}
+          </div>
+          {/* {concernsLoading ? (
             <ConcernsSkeleton />
           ) : commonConcerns.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mx-3">
               {commonConcerns.map((concern) => (
                 <button
                   key={concern.term}
@@ -219,26 +231,11 @@ export function SearchSection() {
                 </button>
               ))}
             </div>
-          ) : null}
+          ) : null} */}
         </div>
       </div>
 
       <PaywallModal open={paywallOpen} onOpenChange={setPaywallOpen} />
     </>
-  );
-}
-
-function ConcernsSkeleton() {
-  // Varied widths so the placeholders read as separate pills, not one bar.
-  const widths = ["w-20", "w-24", "w-16", "w-28", "w-20"];
-  return (
-    <div className="flex flex-wrap gap-2" aria-hidden="true">
-      {widths.map((w, i) => (
-        <div
-          key={i}
-          className={`${w} h-10 rounded-full bg-badge animate-pulse`}
-        />
-      ))}
-    </div>
   );
 }

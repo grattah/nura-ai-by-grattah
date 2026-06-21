@@ -82,9 +82,7 @@ export function EditSearchSheet({
 
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-6 pb-4">
-          <h2 className="text-xl font-semibold text-foreground">
-            Edit search
-          </h2>
+          <h2 className="text-xl font-semibold text-foreground">Edit search</h2>
           <button
             onClick={() => onOpenChange(false)}
             className="w-9 h-9 rounded-full bg-card flex items-center justify-center hover:opacity-75 transition-opacity"
@@ -126,7 +124,7 @@ export function EditSearchSheet({
             <p className="text-xs font-medium text-subtle uppercase tracking-wider mb-3">
               Common Concerns
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mx-3">
               {COMMON_CONCERNS.map((concern) => (
                 <button
                   key={concern}
