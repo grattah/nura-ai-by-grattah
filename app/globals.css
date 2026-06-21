@@ -232,10 +232,10 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50 font-sans;
+    @apply border-border outline-ring/50 font-redHatDisplay;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-redHatDisplay;
   }
 
   button:not(:disabled):not([aria-disabled="true"]),

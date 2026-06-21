@@ -94,17 +94,15 @@ export default async function ManageSubscriptionPage() {
           href="/change-plan"
           className="flex items-center justify-between px-6 py-6 bg-[#E8E6DC] rounded-xl border border-[#E8E6DC] hover:opacity-80 transition-opacity active:scale-[0.98]"
         >
-          <p className="text-base font-medium text-[#333333CC]">
-            Change Plan
-          </p>
+          <p className="text-base font-medium text-[#333333CC]">Change Plan</p>
           <ChevronRight className="w-4 h-4 text-muted-foreground" />
         </Link>
 
         {/* Cancel / resume */}
-        <CancelSubscriptionButton
+        {/* <CancelSubscriptionButton
           cancelAtPeriodEnd={!!sub.cancel_at_period_end}
           accessUntil={nextBilling}
-        />
+        /> */}
 
         {/* Support */}
         <div className="pt-4 text-center mt-18">
