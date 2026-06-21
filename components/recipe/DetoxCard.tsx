@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { toShares, type SupportScore } from "@/lib/wellness-score";
+import { type SupportScore } from "@/lib/wellness-score";
 
 interface AssignedSupport {
   name: string;
@@ -56,17 +56,17 @@ export function DetoxCard({
   // Nothing to show (no tags / failed and uncached) — render nothing.
   if (!loading && scores.length === 0) return null;
 
-  // Normalize the independent strength scores into shares of a whole that sum to
-  // 100%, sorted strongest-first. The ring shows the top share.
-  const shares = toShares(scores);
-  const primary = shares[0];
+  // Each support keeps its own independent 0–100 strength (they don't sum to
+  // 100). Sort strongest-first; the ring shows the top support's own score.
+  const sorted = [...scores].sort((a, b) => b.score - a.score);
+  const primary = sorted[0];
 
   // Ring geometry
   const size = 82;
   const strokeWidth = 7;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const pct = primary?.share ?? 0;
+  const pct = primary?.score ?? 0;
   const offset = circumference - (pct / 100) * circumference;
 
   return (
@@ -120,17 +120,17 @@ export function DetoxCard({
           <div className="h-4 w-3/4 rounded-full bg-muted animate-pulse" />
         ) : (
           <p className="text-base">
-            {shares.map((s, i) => (
+            {sorted.map((s, i) => (
               <span key={s.slug}>
                 <span
                   className={
                     i === 0 ? "text-mint-green font-semibold" : "text-subtle"
                   }
                 >
-                  {s.share}% {s.support} support
+                  {s.score}% {s.support} support
                 </span>
-                {i < shares.length - 1
-                  ? i === shares.length - 2
+                {i < sorted.length - 1
+                  ? i === sorted.length - 2
                     ? ", and "
                     : ", "
                   : "."}
