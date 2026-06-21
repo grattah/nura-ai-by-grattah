@@ -1,11 +1,13 @@
-import Link from "next/link";
-import Image from "next/image";
+"use client";
+import { useState } from "react";
+import { PaywallModal } from "../paywall/paywall-modal";
 
 interface UpgradeBannerProps {
   hasAccess: boolean;
 }
 
 export function UpgradeBanner({ hasAccess }: UpgradeBannerProps) {
+  const [modalOpen, setModalOpen] = useState(false);
   if (hasAccess) {
     return;
     // return (
@@ -28,20 +30,23 @@ export function UpgradeBanner({ hasAccess }: UpgradeBannerProps) {
   }
 
   return (
-    <Link href="/checkout" className="block">
-      <div className="bg-orange-25 rounded-2xl p-4 flex gap-4 items-center hover:opacity-90 transition-opacity active:scale-[0.98]">
-        <div className="w-14 h-14 rounded-full bg-[#E8836A] shrink-0 flex items-center justify-center text-title">
-          🧘
+    <>
+      <button onClick={() => setModalOpen(true)} className="block text-left">
+        <div className="bg-orange-25 rounded-2xl p-4 flex gap-4 items-center hover:opacity-90 transition-opacity active:scale-[0.98]">
+          <div className="w-14 h-14 rounded-full bg-[#E8836A] shrink-0 flex items-center justify-center text-title">
+            🧘
+          </div>
+          <div>
+            <p className="font-semibold text-foreground">Unlock every recipe</p>
+            <p className="text-sm text-muted-foreground leading-snug mt-0.5">
+              Full methods, ingredients, personalized feedbacks, and daily
+              reminders. All for{" "}
+              <span className="font-bold text-foreground">$7 monthly!</span>
+            </p>
+          </div>
         </div>
-        <div>
-          <p className="font-semibold text-foreground">Unlock every recipe</p>
-          <p className="text-sm text-muted-foreground leading-snug mt-0.5">
-            Full methods, ingredients, personalized feedbacks, and daily
-            reminders. All for{" "}
-            <span className="font-bold text-foreground">$7 monthly!</span>
-          </p>
-        </div>
-      </div>
-    </Link>
+      </button>
+      <PaywallModal open={modalOpen} onOpenChange={setModalOpen} />
+    </>
   );
 }

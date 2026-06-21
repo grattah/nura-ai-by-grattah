@@ -302,6 +302,30 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_tips: {
+        Row: {
+          created_at: string
+          day: string
+          description: string
+          image_url: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          day: string
+          description: string
+          image_url?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          day?: string
+          description?: string
+          image_url?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       guides: {
         Row: {
           created_at: string
@@ -402,6 +426,7 @@ export type Database = {
           id: string
           is_admin: boolean
           username: string | null
+          welcomed_at: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -409,6 +434,7 @@ export type Database = {
           id: string
           is_admin?: boolean
           username?: string | null
+          welcomed_at?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -416,6 +442,7 @@ export type Database = {
           id?: string
           is_admin?: boolean
           username?: string | null
+          welcomed_at?: string | null
         }
         Relationships: []
       }
@@ -640,6 +667,27 @@ export type Database = {
           },
         ]
       }
+      search_logs: {
+        Row: {
+          created_at: string
+          id: string
+          term: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          term: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          term?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       stripe_webhook_events: {
         Row: {
           created: string
@@ -663,6 +711,7 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          cancel_at_period_end: boolean
           created_at: string | null
           expires_at: string | null
           id: string
@@ -675,6 +724,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cancel_at_period_end?: boolean
           created_at?: string | null
           expires_at?: string | null
           id?: string
@@ -687,6 +737,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cancel_at_period_end?: boolean
           created_at?: string | null
           expires_at?: string | null
           id?: string
@@ -782,6 +833,13 @@ export type Database = {
       token_state_json: {
         Args: { r: Database["public"]["Tables"]["credits"]["Row"] }
         Returns: Json
+      }
+      top_searched_concerns: {
+        Args: { result_limit?: number }
+        Returns: {
+          searchers: number
+          term: string
+        }[]
       }
     }
     Enums: {

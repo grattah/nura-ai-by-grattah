@@ -1,16 +1,46 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 interface WellnessTipCardProps {
   title: string;
   description: string;
   imageUrl?: string;
+  /** True when the server served the fallback (today's tip wasn't ready yet). */
+  stale?: boolean;
 }
 
 export function WellnessTipCard({
   title,
   description,
   imageUrl,
+  stale = false,
 }: WellnessTipCardProps) {
+  const [tip, setTip] = useState({ title, description, imageUrl });
+  const healed = useRef(false);
+
+  // Self-heal: if we got the fallback, fetch (and generate-on-miss) today's tip
+  // and swap it in. Runs once. No-op on cron-warmed days (stale=false).
+  useEffect(() => {
+    if (!stale || healed.current) return;
+    healed.current = true;
+    fetch("/api/daily-tip")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.title && data?.description) {
+          setTip({
+            title: data.title,
+            description: data.description,
+            imageUrl: data.imageUrl,
+          });
+        }
+      })
+      .catch(() => {
+        /* keep the fallback */
+      });
+  }, [stale]);
+
   return (
     <div className="bg-white border-grey-c100 rounded-xl flex gap-4">
       <div className="basis-2/3 min-w-0 p-3">
@@ -27,15 +57,15 @@ export function WellnessTipCard({
           </p>
         </div>
         <p className="text-base font-medium text-subtle leading-none mb-2">
-          {title}
+          {tip.title}
         </p>
-        <p className="text-xs text-subtle leading-relaxed">{description}</p>
+        <p className="text-xs text-subtle leading-relaxed">{tip.description}</p>
       </div>
-      {imageUrl && (
+      {tip.imageUrl && (
         <div className="basis-1/3 relative rounded-r-xl overflow-hidden shrink-0 bg-muted">
           <Image
-            src={imageUrl}
-            alt={title}
+            src={tip.imageUrl}
+            alt={tip.title}
             fill
             sizes="30vw"
             className="object-cover"
