@@ -116,7 +116,9 @@
 @theme inline {
   --breakpoint-xs: 22.5rem;
   --font-mono: "Geist Mono", "Geist Mono Fallback", monospace;
-  --font-sans: "Red Hat Text", "Red Hat Text Fallback", system-ui, sans-serif;
+  --font-serif: serif;
+  --font-redHatText:
+    "Red Hat Text", "Red Hat Text Fallback", system-ui, sans-serif;
   --font-josefin:
     "Josefin Sans", "Josefin Sans Fallback", system-ui, sans-serif;
   --font-redHatDisplay:
@@ -232,10 +234,10 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50 font-sans;
+    @apply border-border outline-ring/50 font-redHatText;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-redHatText;
   }
 
   button:not(:disabled):not([aria-disabled="true"]),
