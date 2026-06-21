@@ -14,10 +14,14 @@ export default async function BuyTokensReturnPage({
 
   // Credit the extra tokens synchronously so the purchase lands even if the
   // Stripe webhook is delayed/undelivered. Idempotent with the webhook.
+  // Read the credited amount from the verified Stripe session (not the URL
+  // param) so the success copy can't be spoofed (audit L4).
+  let credits: string | null = null;
   if (sessionId) {
     try {
       const session = await stripe.checkout.sessions.retrieve(sessionId);
       await creditTokenPurchaseFromSession(session);
+      credits = (session.metadata?.credits as string | undefined) ?? null;
     } catch (err) {
       console.error("[buy-tokens/return] credit failed", err);
     }
@@ -25,7 +29,7 @@ export default async function BuyTokensReturnPage({
 
   return (
     <Suspense fallback={<Fallback />}>
-      <BuyTokensReturnClient />
+      <BuyTokensReturnClient credits={credits} />
     </Suspense>
   );
 }
