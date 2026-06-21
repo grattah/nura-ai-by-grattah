@@ -11,8 +11,8 @@ const TokensModal = () => {
         <CoinAnimation />
       </div>
       <div className="flex flex-col gap-3.25 text-center">
-        <p className="font-semibold text-2xl text-[#1B1D1D] text-lg">
-          Need more token?
+        <p className="font-semibold text-title text-[#1B1D1D]">
+          Need more tokens?
         </p>
         <p className="font-medium text-subtle text-base">
           You can buy extra tokens to continue using this feature right away.

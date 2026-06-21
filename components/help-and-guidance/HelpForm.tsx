@@ -44,7 +44,7 @@ const HelpForm = ({ email, fullname }: { email: string; fullname: string }) => {
           <BackButton className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
           <div className="flex flex-col gap-1.75 items-center justify-center">
             <h1 className="text-center text-xl font-semibold text-base-text">
-              Terms and Privacy
+              Help and guidance
             </h1>
             <p className="text-subtle text-center text-sm font-medium">
               Submit your feedback
