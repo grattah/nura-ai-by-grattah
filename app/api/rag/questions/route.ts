@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { createClient } from "@/lib/supabase/server";
 
 export interface QuestionsRequestBody {
   contextId: string;
@@ -23,6 +24,17 @@ export async function POST(req: NextRequest) {
   );
   if (!success) {
     return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+  }
+
+  // Require auth — this is an LLM call; don't let unauthenticated callers burn
+  // Anthropic spend (audit H2). FollowUpSection falls back to static questions
+  // for guests.
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {

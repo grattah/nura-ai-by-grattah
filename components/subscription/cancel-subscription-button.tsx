@@ -75,7 +75,7 @@ export function CancelSubscriptionButton({
         <Button
           onClick={doResume}
           disabled={pending}
-          className="w-full rounded-full bg-mint-green text-white hover:opacity-90"
+          className="w-full rounded-full bg-mint-green text-white hover:opacity-90 h-auto py-4"
         >
           {pending ? "Resuming…" : "Resume subscription"}
         </Button>
