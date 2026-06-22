@@ -8,13 +8,12 @@ import BackButton from "@/components/back-button";
 import { FeedbackMessage } from "@/components/help-and-guidance/FeedbackMessage";
 import SuccessModal from "../SuccessModal";
 import { isValidEmail } from "@/lib/utils";
+import { SUPPORT_EMAIL } from "@/lib/email/config";
 
 const HelpForm = ({ email, fullname }: { email: string; fullname: string }) => {
   const [message, setMessage] = useState("");
   const [fullName, setFullName] = useState(fullname);
   const [success, setSuccess] = useState(false);
-
-  const CONTACT_EMAIL = process.env.SUPPORT_EMAIL!;
 
   const canSubmit = fullName.trim() && isValidEmail(email) && message.trim();
 
@@ -27,7 +26,7 @@ const HelpForm = ({ email, fullname }: { email: string; fullname: string }) => {
       const subject = `New enquiry from ${fullName}`;
       const body = `Name: ${fullName}\nEmail: ${email}\n\n${message}`;
 
-      window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
+      window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
         subject,
       )}&body=${encodeURIComponent(body)}`;
       setSuccess(true);
