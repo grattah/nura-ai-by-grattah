@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { WEEKLY_UNITS, LOW_WARN_PCT, type TokenState } from "@/lib/credits";
+import { createClient } from "@/lib/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -106,7 +107,24 @@ export function CreditsProvider({ children }: { children: React.ReactNode }) {
   const openTokenWall = useCallback(() => setWallOpen(true), []);
 
   useEffect(() => {
+    // Initial load.
     refresh();
+
+    // Re-fetch when the user signs in/out so credits + access don't go stale
+    // across account switches within a session (the root provider doesn't
+    // remount on client navigation). INITIAL_SESSION is handled by the call
+    // above; TOKEN_REFRESHED doesn't change access, so we skip both. Defer out
+    // of the callback so we never touch Supabase while it holds its auth lock.
+    const supabase = createClient();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        setTimeout(() => refresh(), 0);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [refresh]);
 
   const value = useMemo(
