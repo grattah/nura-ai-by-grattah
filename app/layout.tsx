@@ -83,6 +83,13 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Nuko" />
         <meta name="mobile-web-app-capable" content="yes" />
         <link rel="apple-touch-icon" href="/web-app-manifest-192x192.png" />
+        {/* Capture Chrome's install signal before hydration so the PWA prompt
+            never misses the (once-fired, early) beforeinstallprompt event. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){window.__nukoBip=null;addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__nukoBip=e;dispatchEvent(new Event('nuko:bip'));});addEventListener('appinstalled',function(){window.__nukoBip=null;dispatchEvent(new Event('nuko:installed'));});})();`,
+          }}
+        />
       </head>
       <body className="font-sans antialiased">
         <ThemeProvider
