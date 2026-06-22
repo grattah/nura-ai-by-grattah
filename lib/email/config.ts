@@ -5,9 +5,10 @@ export const APP_URL =
 
 // Sender identity, e.g. "Nuko <hello@mail.nukohealth.app>". Falls back to
 // Resend's shared onboarding sender for local/dev so nothing throws.
-export const EMAIL_FROM = process.env.EMAIL_FROM ?? "Nuko <onboarding@resend.dev>";
+export const EMAIL_FROM =
+  process.env.EMAIL_FROM ?? "Nuko <onboarding@resend.dev>";
 
-export const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL ?? "support@nuko.app";
+export const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL ?? "info@nuko.health";
 
 // Email clients can't render local SVGs — use a hosted PNG.
 export const EMAIL_LOGO_URL = `${APP_URL}/web-app-manifest-512x512.png`;
