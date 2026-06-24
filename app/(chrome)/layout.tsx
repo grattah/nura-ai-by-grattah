@@ -2,6 +2,7 @@ import { getCachedUser } from "@/lib/supabase/server";
 import { AppHeader } from "@/components/layout/app-header";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
+import { AuthSync } from "@/components/auth/auth-sync";
 
 export default async function ChromeLayout({
   children,
@@ -36,6 +37,7 @@ export default async function ChromeLayout({
 
   return (
     <div className="min-h-dvh flex flex-col">
+      <AuthSync serverAuthed={!!user} />
       <AppHeader user={headerUser} />
       <main className="flex-1 pb-16">{children}</main>
       <BottomNav />
