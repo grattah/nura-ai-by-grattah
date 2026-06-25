@@ -104,47 +104,53 @@ export function SearchSection() {
   //   [requireAccess],
   // );
 
-  const handleMic = useCallback(() => {
+  // const handleMic = useCallback(() => {
+  //   requireAccess(() => {
+  //     const w = window as unknown as Record<string, unknown>;
+  //     const RecognitionClass = (w.SpeechRecognition ??
+  //       w.webkitSpeechRecognition) as
+  //       | (new () => SpeechRecognitionLike)
+  //       | undefined;
+
+  //     if (!RecognitionClass) return;
+
+  //     // Toggle off if already recording
+  //     if (isRecording) {
+  //       recognitionRef.current?.stop();
+  //       return;
+  //     }
+
+  //     const recognition = new RecognitionClass();
+  //     recognition.continuous = false;
+  //     recognition.interimResults = false;
+  //     recognition.lang = "en-US";
+  //     recognitionRef.current = recognition;
+
+  //     recognition.onresult = (e) => {
+  //       const transcript = e.results[0]?.[0]?.transcript ?? "";
+  //       setQuery((prev) =>
+  //         prev.trim() ? `${prev.trim()} ${transcript}` : transcript,
+  //       );
+  //     };
+
+  //     recognition.onend = () => setIsRecording(false);
+  //     // onerror fires when mic is denied — silently stop; user can retry
+  //     recognition.onerror = () => setIsRecording(false);
+
+  //     try {
+  //       recognition.start();
+  //       setIsRecording(true);
+  //     } catch {
+  //       setIsRecording(false);
+  //     }
+  //   });
+  // }, [isRecording, requireAccess]);
+
+  const handleCommonConcerns = (concern: string) => {
     requireAccess(() => {
-      const w = window as unknown as Record<string, unknown>;
-      const RecognitionClass = (w.SpeechRecognition ??
-        w.webkitSpeechRecognition) as
-        | (new () => SpeechRecognitionLike)
-        | undefined;
-
-      if (!RecognitionClass) return;
-
-      // Toggle off if already recording
-      if (isRecording) {
-        recognitionRef.current?.stop();
-        return;
-      }
-
-      const recognition = new RecognitionClass();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = "en-US";
-      recognitionRef.current = recognition;
-
-      recognition.onresult = (e) => {
-        const transcript = e.results[0]?.[0]?.transcript ?? "";
-        setQuery((prev) =>
-          prev.trim() ? `${prev.trim()} ${transcript}` : transcript,
-        );
-      };
-
-      recognition.onend = () => setIsRecording(false);
-      // onerror fires when mic is denied — silently stop; user can retry
-      recognition.onerror = () => setIsRecording(false);
-
-      try {
-        recognition.start();
-        setIsRecording(true);
-      } catch {
-        setIsRecording(false);
-      }
+      setQuery(concern);
     });
-  }, [isRecording, requireAccess]);
+  };
 
   return (
     <>
@@ -170,21 +176,21 @@ export function SearchSection() {
             className="flex-1 bg-transparent text-base text-base-text outline-none placeholder:text-muted-2"
           />
 
-          {query.trim() ? (
-            <button
-              onClick={handleSubmit}
-              disabled={isRouteLoading}
-              className="size-7 rounded-full flex items-center justify-center shrink-0 disabled:opacity-70"
-              style={{ backgroundColor: "var(--mint-green)" }}
-              aria-label="Search"
-            >
-              {isRouteLoading ? (
-                <Loader2 className="size-4 text-white animate-spin" />
-              ) : (
-                <SendHorizontal className="size-4 text-white" />
-              )}
-            </button>
-          ) : (
+          {/* {query.trim() ? ( */}
+          <button
+            onClick={handleSubmit}
+            disabled={isRouteLoading}
+            className="size-7 rounded-full flex items-center justify-center shrink-0 disabled:opacity-70"
+            style={{ backgroundColor: "var(--mint-green)" }}
+            aria-label="Search"
+          >
+            {isRouteLoading ? (
+              <Loader2 className="size-4 text-white animate-spin" />
+            ) : (
+              <SendHorizontal className="size-4 text-white" />
+            )}
+          </button>
+          {/* ) : (
             <button
               onClick={handleMic}
               aria-label={isRecording ? "Stop recording" : "Voice search"}
@@ -197,7 +203,7 @@ export function SearchSection() {
                 strokeWidth={1.75}
               />
             </button>
-          )}
+          )} */}
         </div>
 
         {/* Common concerns */}
@@ -210,7 +216,7 @@ export function SearchSection() {
             {COMMON_CONCERNS.map((concern) => (
               <button
                 key={concern}
-                onClick={() => setQuery(concern)}
+                onClick={() => handleCommonConcerns(concern)}
                 className="px-5 py-2.5 rounded-full bg-badge text-sm text-foreground border border-badge-border hover:opacity-75 transition-opacity active:scale-95"
               >
                 {concern}
