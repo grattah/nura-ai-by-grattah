@@ -20,13 +20,13 @@ export function CategoryCard({ slug, name, config }: CategoryCardProps) {
         style={{ backgroundColor: config.bgColor }}
       >
         {/* Left: icon & text */}
-        <div className="flex-1 min-w-0 pr-3 flex items-center gap-3.25 my-7.75">
+        <div className="flex-1 min-w-0 pr-3 flex items-center gap-3 my-8">
           <Image
             src={config.iconUrl}
             alt={name}
             width={48}
             height={48}
-            className="object-contain"
+            className="object-contain size-12"
           />
           <div>
             <p className="text-base font-semibold text-foreground leading-snug">
@@ -45,6 +45,7 @@ export function CategoryCard({ slug, name, config }: CategoryCardProps) {
             alt={name}
             width={124}
             height={108.24}
+            sizes="(max-width: 430px) 28.8vw, 124px"
             className="object-cover"
           />
 
