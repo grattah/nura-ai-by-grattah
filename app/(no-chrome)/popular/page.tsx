@@ -1,26 +1,15 @@
 // app/popular/page.tsx (or wherever this lives)
 import Link from "next/link";
-import { ArrowLeft, MoveRight } from "lucide-react";
+import { MoveRight } from "lucide-react";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
-import { getBookmarkedIds } from "@/actions/bookmark";
-import { fetchPopularRecipesPage } from "@/lib/popular-recipes";
-import { PopularRecipesList } from "@/components/recipe/PopularRecipeList";
+import { truncateText } from "@/lib/truncate-text";
+import { fetchPopularRecipesOnePerCategory } from "@/lib/popular-recipes";
 import BackButton from "@/components/back-button";
 
 const page = async () => {
   const supabase = await createClient();
-
-  const [
-    initialRecipes,
-    {
-      data: { user },
-    },
-  ] = await Promise.all([
-    fetchPopularRecipesPage(supabase, 0),
-    supabase.auth.getUser(),
-  ]);
-
-  const bookmarkedSet = await getBookmarkedIds(initialRecipes.map((r) => r.id));
+  const recipes = await fetchPopularRecipesOnePerCategory(supabase, 20);
 
   return (
     <div className="bg-background pb-10">
@@ -31,11 +20,43 @@ const page = async () => {
           <div />
         </div>
 
-        <PopularRecipesList
-          initialRecipes={initialRecipes}
-          bookmarkedIds={Array.from(bookmarkedSet)}
-          isAuthenticated={!!user}
-        />
+        <div className="grid grid-cols-2 gap-3 space-y-3">
+          {recipes.map((recipe) => {
+            const firstTag = recipe.recipe_tags?.[0]?.tags?.name ?? null;
+            return (
+              <div key={recipe.id} className="flex flex-col gap-2">
+                {recipe.image_url && (
+                  <Link href={`/recipes/${recipe.id}`}>
+                    <div className="overflow-hidden rounded-2xl">
+                      <Image
+                        src={recipe.image_url}
+                        alt={recipe.title}
+                        className="w-[clamp(136px,42.6vw,183px)] h-[clamp(124px,38.8vw,167px)] object-cover transition-transform duration-300 hover:scale-110"
+                        width={183}
+                        height={167}
+                        sizes="(max-width: 430px) 42.6vw, 183px"
+                      />
+                    </div>
+                  </Link>
+                )}
+                {firstTag && (
+                  <Link
+                    href={`/recipes/${recipe.id}`}
+                    className="text-[#727E7A] text-xs font-medium font-josefin uppercase"
+                  >
+                    {firstTag}
+                  </Link>
+                )}
+                <Link
+                  href={`/recipes/${recipe.id}`}
+                  className="text-[#111312] font-medium text-base font-josefin line-clamp-1"
+                >
+                  {truncateText(recipe.title, 3)}
+                </Link>
+              </div>
+            );
+          })}
+        </div>
 
         <Link
           href="/find-recipe"

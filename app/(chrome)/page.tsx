@@ -37,11 +37,11 @@ const getPopularRecipes = unstable_cache(
         .order("weighted_score", { ascending: false })
         .order("last_engaged_at", { ascending: false, nullsFirst: false })
         .order("id", { ascending: false })
-        .limit(10)
+        .limit(30)
     );
   },
   ["home-popular-recipes"],
-  { revalidate: 300 },
+  { revalidate: 300 }
 );
 
 export default async function HomePage() {
@@ -57,10 +57,24 @@ export default async function HomePage() {
     withTiming("home:getDailyTip", () => getDailyTip(utcDayKey())),
   ]);
 
+  function oneRecipePerCategory(recipes: RecipeWithTags[]): RecipeWithTags[] {
+    const seenTags = new Set<string>();
+    const result: RecipeWithTags[] = [];
+    for (const recipe of recipes) {
+      const firstTag = recipe.recipe_tags?.[0]?.tags?.name ?? null;
+      if (firstTag !== null) {
+        if (seenTags.has(firstTag)) continue;
+        seenTags.add(firstTag);
+      }
+      result.push(recipe);
+    }
+    return result;
+  }
+
   const dailyTip = dailyTipRow ?? FALLBACK_TIP;
 
   const recipes = (rawRecipes ?? []) as unknown as RecipeWithTags[];
-  const popularRecipes = recipes.slice(0, 5);
+  const popularRecipes = oneRecipePerCategory(recipes).slice(0, 5);
 
   // Check subscription status server-side
   let hasAccess = false;
@@ -69,10 +83,10 @@ export default async function HomePage() {
     const supabase = await createClient();
     const [access, ids] = await Promise.all([
       withTiming("home:subscription", () =>
-        hasActiveSubscription(supabase, user.id),
+        hasActiveSubscription(supabase, user.id)
       ),
       withTiming("home:getBookmarkedIds", () =>
-        getBookmarkedIds(popularRecipes.map((r) => r.id)),
+        getBookmarkedIds(popularRecipes.map((r) => r.id))
       ),
     ]);
     hasAccess = access;
