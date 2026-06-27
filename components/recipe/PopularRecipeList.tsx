@@ -4,12 +4,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Heart } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
 import { truncateText } from "@/lib/truncate-text";
-import { BookmarkProvider } from "@/components/bookmark-provider";
-import { BookmarkButton } from "@/components/bookmark-button";
 import {
   fetchPopularRecipesPage,
   POPULAR_PAGE_SIZE,
