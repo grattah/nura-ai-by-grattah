@@ -64,7 +64,7 @@ export function PopularRecipesList({
       const rows = await fetchPopularRecipesPage(
         supabase,
         next,
-        controller.signal,
+        controller.signal
       );
       if (rows.length > 0) {
         pageRef.current = next;
@@ -105,11 +105,11 @@ export function PopularRecipesList({
         ([entry]) => {
           if (entry.isIntersecting) loadMore();
         },
-        { rootMargin: "200px" },
+        { rootMargin: "200px" }
       );
       observerRef.current.observe(node);
     },
-    [loadMore],
+    [loadMore]
   );
 
   useEffect(() => {
@@ -125,27 +125,7 @@ export function PopularRecipesList({
         {recipes.map((recipe) => {
           const firstTag = recipe.recipe_tags?.[0]?.tags?.name ?? null;
           return (
-            <div key={recipe.id} className="relative flex flex-col gap-2">
-              <div className="absolute flex justify-between px-2 top-3 left-0 right-0 z-10">
-                <button className="bg-black/75 flex items-center gap-1 rounded-full p-1.5 px-3 shrink-0">
-                  <Heart
-                    size={12}
-                    color="#FFFFFF"
-                    strokeWidth={2}
-                    className="size-3"
-                  />
-                  <span className="text-xs text-[#FFFFFF] opacity-100">
-                    {recipe.likes}
-                  </span>
-                </button>
-                <BookmarkProvider
-                  recipeId={recipe.id}
-                  initialBookmarked={bookmarkedSet.has(recipe.id)}
-                  isAuthenticated={isAuthenticated}
-                >
-                  <BookmarkButton text="" addText="" popularStyle="yes" />
-                </BookmarkProvider>
-              </div>
+            <div key={recipe.id} className="flex flex-col gap-2">
               {recipe.image_url && (
                 <Link href={`/recipes/${recipe.id}`}>
                   <div className="overflow-hidden rounded-2xl">
