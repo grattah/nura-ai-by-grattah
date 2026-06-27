@@ -4,9 +4,8 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Lock, Bookmark } from "lucide-react";
+import { Lock } from "lucide-react";
 import { getCloudinaryUrl } from "@/lib/cloudinary";
-import { toggleBookmark } from "@/actions/bookmark";
 import { PaywallModal } from "@/components/paywall/paywall-modal";
 import { useAccess } from "@/hooks/use-access";
 import { cn } from "@/lib/utils";
@@ -40,26 +39,6 @@ export function RecipeCardNew({
     ? getCloudinaryUrl(imageUrl, { width: 600, height: 600 })
     : undefined;
 
-  const handleBookmarkClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!isAuthenticated) {
-      router.push("/auth/login");
-      return;
-    }
-
-    setBookmarked((prev) => !prev);
-    startTransition(async () => {
-      const result = await toggleBookmark(id);
-      if (result.error) {
-        setBookmarked((prev) => !prev);
-      } else {
-        setBookmarked(result.bookmarked);
-      }
-    });
-  };
-
   const handleUnlockClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -83,23 +62,6 @@ export function RecipeCardNew({
                 unoptimized={!transformedUrl.includes("/upload/")}
               />
             )}
-
-            {/* Bookmark badge */}
-            <button
-              type="button"
-              onClick={handleBookmarkClick}
-              disabled={isPending}
-              aria-label={bookmarked ? "Remove bookmark" : "Bookmark recipe"}
-              className="absolute top-2.5 right-2.5 size-6 rounded-full bg-white flex items-center justify-center shadow-sm disabled:opacity-50"
-            >
-              <Bookmark
-                className={cn(
-                  "size-4 text-mint-green transition-all",
-                  bookmarked && "fill-mint-green",
-                )}
-                strokeWidth={1.5}
-              />
-            </button>
 
             {!isLoading && !hasAccess && (
               <button
