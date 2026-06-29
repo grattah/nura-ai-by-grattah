@@ -3,58 +3,17 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Lock } from "lucide-react";
-import Leaf from "../vectors/leaf";
-import Shield from "../vectors/shield";
-import Lightning from "../vectors/lightning";
 import { PaywallModal } from "../paywall/paywall-modal";
-import Hormones from "../vectors/horomones";
-import Beauty from "../vectors/beauty";
-import GutHealth from "../vectors/gutHealth";
-
-const CATEGORIES = [
-  {
-    label: "Detox",
-    icon: <Leaf className="size-4" />,
-    href: "/categories/detox",
-    iconBg: "#319F431F",
-  },
-  {
-    label: "Immunity",
-    icon: <Shield className="size-4" />,
-    href: "/categories/immunity",
-    iconBg: "#0D88F81F",
-  },
-  {
-    label: "Energy",
-    icon: <Lightning className="size-4" />,
-    href: "/categories/energy",
-    iconBg: "#F8BD001F",
-  },
-  {
-    label: "Gut health",
-    icon: <GutHealth className="size-4" />,
-    href: "/categories/gut-health",
-    iconBg: "#2C4FFF1F",
-  },
-  {
-    label: "Beauty",
-    icon: <Beauty className="size-4" />,
-    href: "/categories/beauty",
-    iconBg: "#9F31771F",
-  },
-  {
-    label: "Hormones",
-    icon: <Hormones className="size-4" />,
-    href: "/categories/hormones",
-    iconBg: "#EA43351F",
-  },
-];
+import type { Tag } from "@/lib/types";
+import { getCategoryConfig } from "@/lib/category-config";
+import { CategoryCard } from "../categories/category-card";
 
 interface UpgradeBannerProps {
   hasAccess: boolean;
+  categories: Tag[];
 }
 
-export function CategorySection({ hasAccess }: UpgradeBannerProps) {
+export function CategorySection({ hasAccess, categories }: UpgradeBannerProps) {
   const [modalOpen, setModalOpen] = useState(false);
 
   return (
@@ -80,38 +39,15 @@ export function CategorySection({ hasAccess }: UpgradeBannerProps) {
           </button>
         )}
       </div>
-      <div className="grid grid-cols-3 gap-2 w-full">
-        {CATEGORIES.map((cat) =>
-          hasAccess ? (
-            <Link
-              key={cat.label}
-              href={cat.href}
-              className="flex justify-center items-center w-full gap-2 p-3 h-fab rounded-lg bg-badge text-sm font-medium text-base-text border border-badge-border hover:opacity-80 transition-opacity active:scale-95"
-            >
-              <span
-                className="text-xs shrink-0 leading-none inline-flex items-center justify-center size-7 rounded-full"
-                style={{ backgroundColor: cat.iconBg }}
-              >
-                {cat.icon}
-              </span>
-              <span className="text-nowrap text-xs">{cat.label}</span>
-            </Link>
-          ) : (
-            <button
-              key={cat.label}
-              onClick={() => setModalOpen(true)}
-              className="flex justify-center items-center w-full gap-2 p-3 rounded-lg bg-badge text-sm font-medium text-foreground border border-badge-border hover:opacity-80 transition-opacity active:scale-95"
-            >
-              <span
-                className="text-sm shrink-0 leading-none -tracking-[2%] inline-flex items-center justify-center size-7 rounded-full"
-                style={{ backgroundColor: cat.iconBg }}
-              >
-                {cat.icon}
-              </span>
-              <span className="text-nowrap text-xs">{cat.label}</span>
-            </button>
-          ),
-        )}
+      <div className="grid grid-cols-1 gap-2 w-full">
+        {categories.slice(0, 3).map((tag) => (
+          <CategoryCard
+            key={tag.id}
+            slug={tag.slug}
+            name={tag.name}
+            config={getCategoryConfig(tag.slug)}
+          />
+        ))}
       </div>
 
       <PaywallModal open={modalOpen} onOpenChange={setModalOpen} />

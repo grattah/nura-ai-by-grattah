@@ -14,6 +14,7 @@ import { getBookmarkedIds } from "@/actions/bookmark";
 import { hasActiveSubscription } from "@/lib/subscription";
 import { withTiming } from "@/lib/perf";
 import { getDailyTip, utcDayKey, FALLBACK_TIP } from "@/lib/daily-tip";
+import { getCategories } from "@/actions/categories";
 
 type RecipeWithTags = {
   id: string;
@@ -93,6 +94,8 @@ export default async function HomePage() {
     ids.forEach((id) => bookmarkedIds.add(id));
   }
 
+  const categories = await getCategories();
+
   return (
     <div className="bg-background">
       <main className="px-mp pt-2 space-y-8">
@@ -147,7 +150,7 @@ export default async function HomePage() {
         />
 
         {/* Categories */}
-        <CategorySection hasAccess={hasAccess} />
+        <CategorySection hasAccess={hasAccess} categories={categories} />
 
         {/* Upgrade / Pending banner */}
         <UpgradeBanner hasAccess={hasAccess} />
