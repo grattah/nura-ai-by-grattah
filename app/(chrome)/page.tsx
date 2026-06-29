@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { unstable_cache } from "next/cache";
 import {
   createClient,
@@ -27,19 +28,15 @@ type RecipeWithTags = {
 const getPopularRecipes = unstable_cache(
   async () => {
     const supabase = createServiceRoleClient();
-    return (
-      supabase
-        .from("recipes")
-        .select("id, title, image_url, recipe_tags(tags(name, slug))")
-        // Service role bypasses RLS, so filter out pending recipes explicitly.
-        // `status` was added in migration 20260615120000 (not in generated types yet).
-        .eq("status" as never, "approved" as never)
-        .or("shares.gt.0, saves.gt.0, comments.gt.0, likes.gt.0")
-        .order("weighted_score", { ascending: false })
-        .order("last_engaged_at", { ascending: false, nullsFirst: false })
-        .order("id", { ascending: false })
-        .limit(30)
-    );
+    return supabase
+      .from("recipes")
+      .select("id, title, image_url, recipe_tags(tags(name, slug))")
+      .eq("status" as never, "approved" as never)
+      .or("shares.gt.0, saves.gt.0, comments.gt.0, likes.gt.0")
+      .order("weighted_score", { ascending: false })
+      .order("last_engaged_at", { ascending: false, nullsFirst: false })
+      .order("id", { ascending: false })
+      .limit(30);
   },
   ["home-popular-recipes"],
   { revalidate: 300 },
@@ -100,12 +97,18 @@ export default async function HomePage() {
     <div className="bg-background">
       <main className="px-mp pt-2 space-y-8">
         {/* Hero */}
-        <section className="space-y-4">
-          <h1 className="text-hero font-semibold text-grey-c950 leading-snug">
-            Hello! What would you like to{" "}
-            <span className="text-mint-green">improve</span> today?
+        <section className="space-y-4 relative">
+          <h1 className="text-title font-semibold text-grey-c950 leading-snug z-10 relative">
+            What’s bugging you today?
           </h1>
           <SearchSection />
+          <Image
+            src="/search-sec-flower.svg"
+            alt="flower"
+            width={86}
+            height={112}
+            className="absolute -right-2.5 -top-2.5 z-0"
+          />
         </section>
 
         {/* Popular Recipes */}
