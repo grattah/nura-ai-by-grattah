@@ -9,16 +9,8 @@ import { PaywallModal } from "@/components/paywall/paywall-modal";
 import { saveRecentSearch } from "@/components/search/edit-search-sheet";
 import { logSearch } from "@/actions/log-search";
 import { createClient } from "@/lib/supabase/client";
+import { COMMON_CONCERNS } from "@/constants";
 // import ConcernsSkeleton from "./concerns-skeleton";
-
-const COMMON_CONCERNS = [
-  "Bloating",
-  "Indigestion",
-  "Heartburn",
-  "Stress",
-  "Fatigue",
-  "Sleep",
-];
 
 interface CommonConcerns {
   searchers: number;
