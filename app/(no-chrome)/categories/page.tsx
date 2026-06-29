@@ -1,18 +1,11 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 import { CategoryCard } from "@/components/categories/category-card";
 import { getCategoryConfig } from "@/lib/category-config";
-import type { Tag } from "@/lib/types";
+import { getCategories } from "@/actions/categories";
 
 export default async function CategoriesPage() {
-  const supabase = await createClient();
-  const { data: tags } = await supabase
-    .from("tags")
-    .select("id, name, slug, display_order")
-    .order("display_order");
-
-  const categories = (tags ?? []) as Tag[];
+  const categories = await getCategories();
 
   return (
     <div className="min-h-dvh bg-background pb-8">

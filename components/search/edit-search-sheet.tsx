@@ -5,15 +5,7 @@ import { useRouter } from "next/navigation";
 import { Search, Clock, X, SendHorizontal } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-
-const COMMON_CONCERNS = [
-  "Bloating",
-  "Indigestion",
-  "Heartburn",
-  "Stress",
-  "Fatigue",
-  "Sleep",
-];
+import { COMMON_CONCERNS } from "@/constants";
 
 export const RECENT_SEARCHES_KEY = "nura_recent_searches";
 
