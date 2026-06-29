@@ -287,8 +287,9 @@ const page = () => {
   return (
     <div className="bg-background">
       <main className="">
-        <div className="px-6 py-5 mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A]">
+        <div className="px-6 py-5 mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A] flex flex-col gap-3">
           <p className="text-2xl font-semibold text-[#111312]">Find a recipe</p>
+          <p className="max-[400px]:text-sm text-subtle">Search for quality recipes made for your wellness</p>
         </div>
         <div className="mt-4 px-6">
           <div className="relative">
