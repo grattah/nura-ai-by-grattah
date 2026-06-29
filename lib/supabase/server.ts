@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { cache } from "react";
 import { createClient as createClientImport } from "@supabase/supabase-js";
 import { Database } from "../database.types";
+import { hasActiveSubscription } from "../subscription";
 
 /**
  * If using Fluid compute: Don't put this client in a global variable. Always create a new client within each
@@ -42,6 +43,27 @@ export const getCachedUser = cache(async () => {
   const supabase = await createClient();
   return supabase.auth.getUser();
 });
+
+/**
+ * Authoritative auth + subscription state for the current request, memoized per
+ * render (React `cache()`). This is the server source of truth that hydrates the
+ * client `useAccess` hook (see `AccessProvider`), so access checks react to
+ * server-action sign-out/sign-in instantly without a page reload.
+ */
+export const getCachedAccess = cache(
+  async (): Promise<{ isAuthenticated: boolean; hasAccess: boolean }> => {
+    const {
+      data: { user },
+    } = await getCachedUser();
+    if (!user) return { isAuthenticated: false, hasAccess: false };
+
+    const supabase = await createClient();
+    return {
+      isAuthenticated: true,
+      hasAccess: await hasActiveSubscription(supabase, user.id),
+    };
+  },
+);
 
 export function createServiceRoleClient() {
   return createClientImport<Database>(

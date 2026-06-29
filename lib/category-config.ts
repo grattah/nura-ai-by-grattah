@@ -5,9 +5,6 @@ export interface CategoryConfig {
   iconUrl: string;
 }
 
-// Maps tag slug → visual config for the category list and detail pages.
-// bgColor matches the card backgrounds in the Figma design.
-// imageUrl is a Cloudinary or public path; swap for real assets when ready.
 export const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
   beauty: {
     bgColor: "oklch(0.9484 0.0231 10.96)",
@@ -74,6 +71,24 @@ export const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
     subtitle: "Drink up, feel refreshed",
     imageUrl: "/hydration.webp",
     iconUrl: "/hydration-icon.svg",
+  },
+  heart: {
+    bgColor: "oklch(0.9093 0.0232 34.3)",
+    subtitle: "Drink up, feel refreshed",
+    imageUrl: "/heart.webp",
+    iconUrl: "/heart-icon.svg",
+  },
+  menopause: {
+    bgColor: "oklch(0.9174 0.0295 317.24)",
+    subtitle: "Drink up, feel refreshed",
+    imageUrl: "/menopause.webp",
+    iconUrl: "/menopause-icon.svg",
+  },
+  diabetes: {
+    bgColor: "oklch(0.9425 0.0177 253.34)",
+    subtitle: "Drink up, feel refreshed",
+    imageUrl: "/diabetes.webp",
+    iconUrl: "/diabetes-icon.svg",
   },
 };
 

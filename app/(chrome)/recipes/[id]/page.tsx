@@ -19,11 +19,11 @@ import LikeButton from "@/components/recipe/LikeButton";
 import { logRecipeView } from "@/actions/activity";
 import { isLiked } from "@/actions/likes";
 import type { Database } from "@/lib/database.types";
+import type { NutritionFacts } from "@/lib/types";
 import type { SupportScore } from "@/lib/wellness-score";
 import { BookmarkProvider } from "@/components/bookmark-provider";
 import PersonalizedTokenModal from "@/components/tokens/PersonalizedTokenModal";
 
-// support_scores isn't in the generated types yet; recipe_tags is a join.
 type RecipeRecord = Database["public"]["Tables"]["recipes"]["Row"] & {
   support_scores: SupportScore[] | null;
   recipe_tags: { tags: { name: string; slug: string } | null }[] | null;
@@ -46,11 +46,6 @@ interface Profile {
 
 const RECIPE_SELECT = "*, recipe_tags(tags(name, slug))";
 
-// Approved recipes are public and rarely change, so the row is cached across
-// requests/users (revalidated on edit/approve/delete via the `recipe-${id}` tag,
-// or after 5 min). Uses a no-cookie service-role client and filters to
-// `approved` so nothing private is ever cached. Pending/owned recipes are not
-// returned here — they fall through to the RLS-scoped read below.
 const getCachedApprovedRecipe = (id: string) =>
   unstable_cache(
     async () => {
@@ -73,8 +68,6 @@ const getRecipe = cache(async (id: string): Promise<RecipeRecord | null> => {
   const cached = await getCachedApprovedRecipe(id);
   if (cached) return cached;
 
-  // Not an approved recipe (e.g. the owner viewing their freshly generated,
-  // still-pending recipe) — read with the user's RLS-scoped session, uncached.
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("recipes")
@@ -178,6 +171,8 @@ export default async function RecipeDetailPage({
   const howToMake =
     (recipe.how_to_make as Array<{ step: string; instruction: string }>) ?? [];
 
+  const nutrition = (recipe.nutrition as NutritionFacts | null) ?? null;
+
   // The recipe's assigned wellness supports (its tags) for the DetoxCard.
   const assignedSupports = (recipe.recipe_tags ?? [])
     .map((rt: any) => rt.tags)
@@ -241,6 +236,7 @@ export default async function RecipeDetailPage({
                 recipe={recipe}
                 ingredients={ingredients}
                 howToMake={howToMake}
+                nutrition={nutrition}
               />
 
               {/* Follow-up questions + RAG chat */}

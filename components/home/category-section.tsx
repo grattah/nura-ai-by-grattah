@@ -7,13 +7,14 @@ import { PaywallModal } from "../paywall/paywall-modal";
 import type { Tag } from "@/lib/types";
 import { getCategoryConfig } from "@/lib/category-config";
 import { CategoryCard } from "../categories/category-card";
+import { useAccess } from "@/components/providers/access-provider";
 
-interface UpgradeBannerProps {
-  hasAccess: boolean;
+interface CategorySectionProps {
   categories: Tag[];
 }
 
-export function CategorySection({ hasAccess, categories }: UpgradeBannerProps) {
+export function CategorySection({ categories }: CategorySectionProps) {
+  const { hasAccess } = useAccess();
   const [modalOpen, setModalOpen] = useState(false);
 
   return (

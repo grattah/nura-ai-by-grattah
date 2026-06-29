@@ -11,6 +11,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { MobileGate } from "@/components/mobile-gate";
 import { AccessProvider } from "@/components/providers/access-provider";
 import { CreditsProvider } from "@/components/providers/credits-provider";
+import { getCachedAccess } from "@/lib/supabase/server";
 import { ChatCacheCleaner } from "@/components/chat-cache-cleaner";
 import { PerfProfiler } from "@/components/dev/perf-profiler";
 
@@ -66,11 +67,13 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { isAuthenticated, hasAccess } = await getCachedAccess();
+
   return (
     // DARK MODE: to re-enable, restore className="dark" on <html> and revert
     // ThemeProvider to: defaultTheme="system" enableSystem disableTransitionOnChange
@@ -98,7 +101,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <MobileGate>
-            <AccessProvider>
+            <AccessProvider
+              serverHasAccess={hasAccess}
+              serverIsAuthenticated={isAuthenticated}
+            >
               <CreditsProvider>{children}</CreditsProvider>
             </AccessProvider>
           </MobileGate>

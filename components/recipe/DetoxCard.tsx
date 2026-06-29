@@ -122,11 +122,7 @@ export function DetoxCard({
           <p className="text-base">
             {sorted.map((s, i) => (
               <span key={s.slug}>
-                <span
-                  className={
-                    i === 0 ? "text-mint-green font-semibold" : "text-subtle"
-                  }
-                >
+                <span className="text-mint-green font-semibold">
                   {s.score}% {s.support} support
                 </span>
                 {i < sorted.length - 1

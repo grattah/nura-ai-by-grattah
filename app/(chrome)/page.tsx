@@ -1,18 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { unstable_cache } from "next/cache";
-import {
-  createClient,
-  createServiceRoleClient,
-  getCachedUser,
-} from "@/lib/supabase/server";
+import { createServiceRoleClient, getCachedUser } from "@/lib/supabase/server";
 import { SearchSection } from "@/components/home/search-section";
 import { RecipeCardNew } from "@/components/home/recipe-card-new";
 import { WellnessTipCard } from "@/components/home/wellness-tip-card";
 import { CategorySection } from "@/components/home/category-section";
 import { UpgradeBanner } from "@/components/home/upgrade-banner";
 import { getBookmarkedIds } from "@/actions/bookmark";
-import { hasActiveSubscription } from "@/lib/subscription";
 import { withTiming } from "@/lib/perf";
 import { getDailyTip, utcDayKey, FALLBACK_TIP } from "@/lib/daily-tip";
 import { getCategories } from "@/actions/categories";
@@ -74,20 +69,11 @@ export default async function HomePage() {
   const recipes = (rawRecipes ?? []) as unknown as RecipeWithTags[];
   const popularRecipes = oneRecipePerCategory(recipes).slice(0, 4);
 
-  // Check subscription status server-side
-  let hasAccess = false;
   const bookmarkedIds = new Set<string>();
   if (user) {
-    const supabase = await createClient();
-    const [access, ids] = await Promise.all([
-      withTiming("home:subscription", () =>
-        hasActiveSubscription(supabase, user.id),
-      ),
-      withTiming("home:getBookmarkedIds", () =>
-        getBookmarkedIds(popularRecipes.map((r) => r.id)),
-      ),
-    ]);
-    hasAccess = access;
+    const ids = await withTiming("home:getBookmarkedIds", () =>
+      getBookmarkedIds(popularRecipes.map((r) => r.id)),
+    );
     ids.forEach((id) => bookmarkedIds.add(id));
   }
 
@@ -153,10 +139,10 @@ export default async function HomePage() {
         />
 
         {/* Categories */}
-        <CategorySection hasAccess={hasAccess} categories={categories} />
+        <CategorySection categories={categories} />
 
         {/* Upgrade / Pending banner */}
-        <UpgradeBanner hasAccess={hasAccess} />
+        <UpgradeBanner />
       </main>
     </div>
   );
