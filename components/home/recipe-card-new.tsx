@@ -30,7 +30,7 @@ export function RecipeCardNew({
   initialBookmarked = false,
 }: RecipeCardNewProps) {
   const router = useRouter();
-  const { hasAccess, isAuthenticated, isLoading } = useAccess();
+  const { hasAccess, isLoading } = useAccess();
   const [bookmarked, setBookmarked] = useState(initialBookmarked);
   const [isPending, startTransition] = useTransition();
   const [paywallOpen, setPaywallOpen] = useState(false);

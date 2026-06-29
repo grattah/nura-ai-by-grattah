@@ -19,8 +19,38 @@ const initialState: AccessState = {
 
 const AccessContext = createContext<AccessState>(initialState);
 
-export function AccessProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<AccessState>(initialState);
+interface AccessProviderProps {
+  children: React.ReactNode;
+  /**
+   * Authoritative state computed server-side (see `getCachedAccess`). The server
+   * is the source of truth: because sign-out/sign-in run as server actions that
+   * `revalidatePath`, these props re-render and the effect below re-syncs state
+   * instantly — no page reload needed.
+   */
+  serverHasAccess: boolean;
+  serverIsAuthenticated: boolean;
+}
+
+export function AccessProvider({
+  children,
+  serverHasAccess,
+  serverIsAuthenticated,
+}: AccessProviderProps) {
+  const [state, setState] = useState<AccessState>({
+    hasAccess: serverHasAccess,
+    isAuthenticated: serverIsAuthenticated,
+    isLoading: false,
+  });
+
+  // Server props are authoritative. Re-sync whenever they change — this is the
+  // channel that delivers server-action sign-out/sign-in to every consumer.
+  useEffect(() => {
+    setState({
+      hasAccess: serverHasAccess,
+      isAuthenticated: serverIsAuthenticated,
+      isLoading: false,
+    });
+  }, [serverHasAccess, serverIsAuthenticated]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -43,10 +73,7 @@ export function AccessProvider({ children }: { children: React.ReactNode }) {
       setState({ hasAccess: valid, isAuthenticated: true, isLoading: false });
     }
 
-    // Initial read — a single getSession call.
-    supabase.auth.getSession().then(({ data: { session } }) => evaluate(session));
-
-    // Re-check on auth changes using the session the event already provides
+    // Catch client-driven auth changes using the session the event already provides
     // (no extra getSession). Defer out of the callback so we never call Supabase
     // while it holds its auth lock — doing so can wedge the shared browser
     // client and make every later query hang until a full page reload.
