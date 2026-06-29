@@ -42,15 +42,12 @@ const AccordionSection = ({
   );
 
   return (
-    <Accordion
-      type="multiple"
-      defaultValue={nutrition ? ["nutritional-value"] : []}
-      className="space-y-3"
-    >
+    <Accordion type="multiple" defaultValue={[]} className="space-y-3">
       {/* 1 — Nutritional Value (free, no paywall) */}
       {nutrition && (
         <AccordionItem
           value="nutritional-value"
+          data-paywall-passthrough
           className="border-0 rounded-xl overflow-hidden bg-white"
         >
           <AccordionTrigger className="px-5 py-4 hover:no-underline min-h-14">
