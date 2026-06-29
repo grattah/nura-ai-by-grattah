@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { Search, Mic, SendHorizontal, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -8,63 +8,19 @@ import { useAccess } from "@/hooks/use-access";
 import { PaywallModal } from "@/components/paywall/paywall-modal";
 import { saveRecentSearch } from "@/components/search/edit-search-sheet";
 import { logSearch } from "@/actions/log-search";
-import { createClient } from "@/lib/supabase/client";
-// import ConcernsSkeleton from "./concerns-skeleton";
-
-const COMMON_CONCERNS = [
-  "Bloating",
-  "Indigestion",
-  "Heartburn",
-  "Stress",
-  "Fatigue",
-  "Sleep",
-];
+import { COMMON_CONCERNS } from "@/constants";
 
 interface CommonConcerns {
   searchers: number;
   term: string;
 }
 
-// Minimal interface — only what we actually call on the recognition instance
-interface SpeechRecognitionLike {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  onresult:
-    | ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void)
-    | null;
-  onend: (() => void) | null;
-  onerror: (() => void) | null;
-  start(): void;
-  stop(): void;
-}
-
 export function SearchSection() {
-  const supabase = createClient();
   const { hasAccess, isLoading } = useAccess();
   const router = useRouter();
-  // const [commonConcerns, setCommonConcerns] = useState<CommonConcerns[]>([]);
-  // const [concernsLoading, setConcernsLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [isRouteLoading, setIsLoading] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
-
-  // useEffect(() => {
-  //   const fetchTopConcerns = async () => {
-  //     try {
-  //       const { data: topConcerns } = await supabase.rpc(
-  //         "top_searched_concerns",
-  //         { result_limit: 6 },
-  //       );
-  //       if (topConcerns) setCommonConcerns(topConcerns);
-  //     } finally {
-  //       setConcernsLoading(false);
-  //     }
-  //   };
-  //   fetchTopConcerns();
-  // }, []);
 
   const requireAccess = useCallback(
     (cb: () => void) => {
@@ -97,55 +53,6 @@ export function SearchSection() {
     }
   }, [hasAccess, isLoading]);
 
-  // const handleBadgeClick = useCallback(
-  //   (concern: string) => {
-  //     requireAccess(() => setQuery(concern));
-  //   },
-  //   [requireAccess],
-  // );
-
-  // const handleMic = useCallback(() => {
-  //   requireAccess(() => {
-  //     const w = window as unknown as Record<string, unknown>;
-  //     const RecognitionClass = (w.SpeechRecognition ??
-  //       w.webkitSpeechRecognition) as
-  //       | (new () => SpeechRecognitionLike)
-  //       | undefined;
-
-  //     if (!RecognitionClass) return;
-
-  //     // Toggle off if already recording
-  //     if (isRecording) {
-  //       recognitionRef.current?.stop();
-  //       return;
-  //     }
-
-  //     const recognition = new RecognitionClass();
-  //     recognition.continuous = false;
-  //     recognition.interimResults = false;
-  //     recognition.lang = "en-US";
-  //     recognitionRef.current = recognition;
-
-  //     recognition.onresult = (e) => {
-  //       const transcript = e.results[0]?.[0]?.transcript ?? "";
-  //       setQuery((prev) =>
-  //         prev.trim() ? `${prev.trim()} ${transcript}` : transcript,
-  //       );
-  //     };
-
-  //     recognition.onend = () => setIsRecording(false);
-  //     // onerror fires when mic is denied — silently stop; user can retry
-  //     recognition.onerror = () => setIsRecording(false);
-
-  //     try {
-  //       recognition.start();
-  //       setIsRecording(true);
-  //     } catch {
-  //       setIsRecording(false);
-  //     }
-  //   });
-  // }, [isRecording, requireAccess]);
-
   const handleCommonConcerns = (concern: string) => {
     requireAccess(() => {
       setQuery(concern);
@@ -154,13 +61,13 @@ export function SearchSection() {
 
   return (
     <>
-      <div className="space-y-3">
+      <div className="space-y-3 z-10 relative">
         {/* Input row */}
         <div
           style={{
             border: query ? "1px solid var(--mint-green)" : "none",
           }}
-          className="flex items-center gap-3 bg-card rounded-xl px-3 h-sb shadow-none"
+          className="flex items-center gap-3 bg-card rounded-xl px-3 h-sb shadow-[0_4px_16px_2px_#0000000F]"
         >
           <Search
             className="size-4 text-muted-foreground shrink-0"
@@ -172,41 +79,26 @@ export function SearchSection() {
             onChange={(e) => setQuery(e.target.value)}
             onFocus={handleFocus}
             onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            placeholder="Bloating, constipation, low energy, hor..."
+            placeholder="Bloating, constipation, low energy, hormon..."
             className="flex-1 bg-transparent text-base text-base-text outline-none placeholder:text-muted-2"
           />
 
           {/* {query.trim() ? ( */}
-          <button
+          {/* <button
             onClick={handleSubmit}
             disabled={isRouteLoading}
-            className="size-7 rounded-full flex items-center justify-center shrink-0 disabled:opacity-70"
-            style={{ backgroundColor: "var(--mint-green)" }}
+            className="size-7 bg-transparent rounded-full flex items-center justify-center shrink-0 disabled:opacity-70"
             aria-label="Search"
-          >
-            {isRouteLoading ? (
-              <Loader2 className="size-4 text-white animate-spin" />
-            ) : (
-              <SendHorizontal className="size-4 text-white" />
-            )}
-          </button>
-          {/* ) : (
-            <button
-              onClick={handleMic}
-              aria-label={isRecording ? "Stop recording" : "Voice search"}
-              className="shrink-0"
-            >
-              <Mic
-                className={`size-4 text-mint-green ${
-                  isRecording ? "animate-pulse" : ""
-                }`}
-                strokeWidth={1.75}
-              />
-            </button>
-          )} */}
+          > */}
+          {
+            isRouteLoading ? (
+              <Loader2 className="size-4 text-mint-green animate-spin shrink-0" />
+            ) : null
+            // <SendHorizontal className="size-4 text-white" />
+          }
+          {/* </button> */}
         </div>
 
-        {/* Common concerns */}
         {/* Common concerns */}
         <div>
           <p className="text-xs font-medium text-subtle uppercase tracking-wider mb-3">

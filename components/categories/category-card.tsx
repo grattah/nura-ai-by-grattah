@@ -7,12 +7,19 @@ interface CategoryCardProps {
   slug: string;
   name: string;
   config: CategoryConfig;
+  onClick?: React.MouseEventHandler<HTMLAnchorElement>;
 }
 
-export function CategoryCard({ slug, name, config }: CategoryCardProps) {
+export function CategoryCard({
+  slug,
+  name,
+  config,
+  onClick,
+}: CategoryCardProps) {
   return (
     <Link
       href={`/categories/${slug}`}
+      onClick={onClick}
       className="block active:scale-[0.98] transition-transform"
     >
       <div
@@ -28,11 +35,11 @@ export function CategoryCard({ slug, name, config }: CategoryCardProps) {
             height={48}
             className="object-contain size-12"
           />
-          <div>
+          <div className="z-10 relative">
             <p className="text-base font-semibold text-foreground leading-snug">
               {name}
             </p>
-            <p className="text-sm text-muted-foreground leading-snug mt-0.5 line-clamp-2">
+            <p className="text-sm text-muted-foreground leading-snug mt-0.5 text-nowrap">
               {config.subtitle}
             </p>
           </div>
@@ -43,10 +50,10 @@ export function CategoryCard({ slug, name, config }: CategoryCardProps) {
           <Image
             src={config.imageUrl}
             alt={name}
-            width={124}
+            width={110}
             height={108.24}
-            sizes="(max-width: 430px) 28.8vw, 124px"
-            className="object-cover"
+            sizes="(max-width: 430px) 25.6vw, 110px"
+            className="object-cover z-0"
           />
 
           <div className="size-10 bg-white/70 backdrop-blur-xs rounded-full grid place-items-center absolute right-5 top-1/2 -translate-y-1/2">

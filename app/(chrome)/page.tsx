@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { unstable_cache } from "next/cache";
 import {
   createClient,
@@ -14,6 +15,7 @@ import { getBookmarkedIds } from "@/actions/bookmark";
 import { hasActiveSubscription } from "@/lib/subscription";
 import { withTiming } from "@/lib/perf";
 import { getDailyTip, utcDayKey, FALLBACK_TIP } from "@/lib/daily-tip";
+import { getCategories } from "@/actions/categories";
 
 type RecipeWithTags = {
   id: string;
@@ -26,22 +28,18 @@ type RecipeWithTags = {
 const getPopularRecipes = unstable_cache(
   async () => {
     const supabase = createServiceRoleClient();
-    return (
-      supabase
-        .from("recipes")
-        .select("id, title, image_url, recipe_tags(tags(name, slug))")
-        // Service role bypasses RLS, so filter out pending recipes explicitly.
-        // `status` was added in migration 20260615120000 (not in generated types yet).
-        .eq("status" as never, "approved" as never)
-        .or("shares.gt.0, saves.gt.0, comments.gt.0, likes.gt.0")
-        .order("weighted_score", { ascending: false })
-        .order("last_engaged_at", { ascending: false, nullsFirst: false })
-        .order("id", { ascending: false })
-        .limit(30)
-    );
+    return supabase
+      .from("recipes")
+      .select("id, title, image_url, recipe_tags(tags(name, slug))")
+      .eq("status" as never, "approved" as never)
+      .or("shares.gt.0, saves.gt.0, comments.gt.0, likes.gt.0")
+      .order("weighted_score", { ascending: false })
+      .order("last_engaged_at", { ascending: false, nullsFirst: false })
+      .order("id", { ascending: false })
+      .limit(30);
   },
   ["home-popular-recipes"],
-  { revalidate: 300 }
+  { revalidate: 300 },
 );
 
 export default async function HomePage() {
@@ -74,7 +72,7 @@ export default async function HomePage() {
   const dailyTip = dailyTipRow ?? FALLBACK_TIP;
 
   const recipes = (rawRecipes ?? []) as unknown as RecipeWithTags[];
-  const popularRecipes = oneRecipePerCategory(recipes).slice(0, 5);
+  const popularRecipes = oneRecipePerCategory(recipes).slice(0, 4);
 
   // Check subscription status server-side
   let hasAccess = false;
@@ -83,26 +81,34 @@ export default async function HomePage() {
     const supabase = await createClient();
     const [access, ids] = await Promise.all([
       withTiming("home:subscription", () =>
-        hasActiveSubscription(supabase, user.id)
+        hasActiveSubscription(supabase, user.id),
       ),
       withTiming("home:getBookmarkedIds", () =>
-        getBookmarkedIds(popularRecipes.map((r) => r.id))
+        getBookmarkedIds(popularRecipes.map((r) => r.id)),
       ),
     ]);
     hasAccess = access;
     ids.forEach((id) => bookmarkedIds.add(id));
   }
 
+  const categories = await getCategories();
+
   return (
     <div className="bg-background">
       <main className="px-mp pt-2 space-y-8">
         {/* Hero */}
-        <section className="space-y-4">
-          <h1 className="text-hero font-semibold text-grey-c950 leading-snug">
-            Hello! What would you like to{" "}
-            <span className="text-mint-green">improve</span> today?
+        <section className="space-y-4 relative">
+          <h1 className="text-title font-semibold text-grey-c950 leading-snug z-10 relative">
+            What’s bugging you today?
           </h1>
           <SearchSection />
+          <Image
+            src="/search-sec-flower.svg"
+            alt="flower"
+            width={86}
+            height={112}
+            className="absolute -right-2.5 -top-2.5 z-0"
+          />
         </section>
 
         {/* Popular Recipes */}
@@ -119,28 +125,22 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <div className="">
-            <div className="flex gap-x-5 overflow-x-auto hide-scrollbar snap-x snap-mandatory">
-              {popularRecipes.map((recipe, i) => {
-                const firstTag = recipe.recipe_tags?.[0]?.tags?.name;
-                return (
-                  <div
-                    key={recipe.id}
-                    className="shrink-0 w-[clamp(150px,46.5vw,200px)] snap-start"
-                  >
-                    <RecipeCardNew
-                      id={recipe.id}
-                      title={recipe.title}
-                      imageUrl={recipe.image_url ?? undefined}
-                      category={firstTag}
-                      href={`/recipes/${recipe.id}`}
-                      priority={i < 2}
-                      initialBookmarked={bookmarkedIds.has(recipe.id)}
-                    />
-                  </div>
-                );
-              })}
-            </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-8">
+            {popularRecipes.map((recipe, i) => {
+              const firstTag = recipe.recipe_tags?.[0]?.tags?.name;
+              return (
+                <RecipeCardNew
+                  key={recipe.id}
+                  id={recipe.id}
+                  title={recipe.title}
+                  imageUrl={recipe.image_url ?? undefined}
+                  category={firstTag}
+                  href={`/recipes/${recipe.id}`}
+                  priority={i < 2}
+                  initialBookmarked={bookmarkedIds.has(recipe.id)}
+                />
+              );
+            })}
           </div>
         </section>
 
@@ -153,7 +153,7 @@ export default async function HomePage() {
         />
 
         {/* Categories */}
-        <CategorySection hasAccess={hasAccess} />
+        <CategorySection hasAccess={hasAccess} categories={categories} />
 
         {/* Upgrade / Pending banner */}
         <UpgradeBanner hasAccess={hasAccess} />
