@@ -41,7 +41,7 @@ const getPopularRecipes = unstable_cache(
     );
   },
   ["home-popular-recipes"],
-  { revalidate: 300 }
+  { revalidate: 300 },
 );
 
 export default async function HomePage() {
@@ -74,7 +74,7 @@ export default async function HomePage() {
   const dailyTip = dailyTipRow ?? FALLBACK_TIP;
 
   const recipes = (rawRecipes ?? []) as unknown as RecipeWithTags[];
-  const popularRecipes = oneRecipePerCategory(recipes).slice(0, 5);
+  const popularRecipes = oneRecipePerCategory(recipes).slice(0, 4);
 
   // Check subscription status server-side
   let hasAccess = false;
@@ -83,10 +83,10 @@ export default async function HomePage() {
     const supabase = await createClient();
     const [access, ids] = await Promise.all([
       withTiming("home:subscription", () =>
-        hasActiveSubscription(supabase, user.id)
+        hasActiveSubscription(supabase, user.id),
       ),
       withTiming("home:getBookmarkedIds", () =>
-        getBookmarkedIds(popularRecipes.map((r) => r.id))
+        getBookmarkedIds(popularRecipes.map((r) => r.id)),
       ),
     ]);
     hasAccess = access;
@@ -119,28 +119,22 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <div className="">
-            <div className="flex gap-x-5 overflow-x-auto hide-scrollbar snap-x snap-mandatory">
-              {popularRecipes.map((recipe, i) => {
-                const firstTag = recipe.recipe_tags?.[0]?.tags?.name;
-                return (
-                  <div
-                    key={recipe.id}
-                    className="shrink-0 w-[clamp(150px,46.5vw,200px)] snap-start"
-                  >
-                    <RecipeCardNew
-                      id={recipe.id}
-                      title={recipe.title}
-                      imageUrl={recipe.image_url ?? undefined}
-                      category={firstTag}
-                      href={`/recipes/${recipe.id}`}
-                      priority={i < 2}
-                      initialBookmarked={bookmarkedIds.has(recipe.id)}
-                    />
-                  </div>
-                );
-              })}
-            </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-8">
+            {popularRecipes.map((recipe, i) => {
+              const firstTag = recipe.recipe_tags?.[0]?.tags?.name;
+              return (
+                <RecipeCardNew
+                  key={recipe.id}
+                  id={recipe.id}
+                  title={recipe.title}
+                  imageUrl={recipe.image_url ?? undefined}
+                  category={firstTag}
+                  href={`/recipes/${recipe.id}`}
+                  priority={i < 2}
+                  initialBookmarked={bookmarkedIds.has(recipe.id)}
+                />
+              );
+            })}
           </div>
         </section>
 

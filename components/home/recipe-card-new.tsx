@@ -50,13 +50,13 @@ export function RecipeCardNew({
       <Link href={href} className="block group">
         <div className="space-y-3">
           {/* Image + overlays */}
-          <div className="relative h-[clamp(124px,38.8vw,167px)] w-[clamp(148px,46.3vw,199px)] rounded-2xl overflow-hidden bg-grey-c500">
+          <div className="relative w-full aspect-183/167 rounded-2xl overflow-hidden bg-grey-c500">
             {transformedUrl && (
               <Image
                 src={transformedUrl}
                 alt={title}
                 fill
-                sizes="(max-width: 430px) 46vw, 199px"
+                sizes="(max-width: 430px) calc((100vw - 16px) / 2), 183px"
                 className="object-cover group-hover:scale-[1.02] transition-transform duration-300"
                 priority={priority}
                 unoptimized={!transformedUrl.includes("/upload/")}
