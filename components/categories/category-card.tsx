@@ -7,12 +7,19 @@ interface CategoryCardProps {
   slug: string;
   name: string;
   config: CategoryConfig;
+  onClick?: React.MouseEventHandler<HTMLAnchorElement>;
 }
 
-export function CategoryCard({ slug, name, config }: CategoryCardProps) {
+export function CategoryCard({
+  slug,
+  name,
+  config,
+  onClick,
+}: CategoryCardProps) {
   return (
     <Link
       href={`/categories/${slug}`}
+      onClick={onClick}
       className="block active:scale-[0.98] transition-transform"
     >
       <div

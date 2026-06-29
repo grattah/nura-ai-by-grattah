@@ -46,6 +46,12 @@ export function CategorySection({ hasAccess, categories }: UpgradeBannerProps) {
             slug={tag.slug}
             name={tag.name}
             config={getCategoryConfig(tag.slug)}
+            onClick={(e) => {
+              if (!hasAccess) {
+                e.preventDefault();
+                setModalOpen(true);
+              }
+            }}
           />
         ))}
       </div>
