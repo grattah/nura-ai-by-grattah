@@ -9,6 +9,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useAccess } from "@/hooks/use-access";
+import type { NutritionFacts } from "@/lib/types";
+import iconNutritionalValue from "@/public/iconNutritionalValue.svg";
 import iconIngredients from "@/public/ingredients.svg";
 import iconHTMI from "@/public/HTMI.svg";
 import iconWIW from "@/public/WIW.svg";
@@ -22,12 +24,14 @@ interface AccordionSectionProps {
   };
   ingredients: { label: string; emoji: string }[];
   howToMake: { step: string; instruction: string }[];
+  nutrition: NutritionFacts | null;
 }
 
 const AccordionSection = ({
   recipe,
   ingredients,
   howToMake,
+  nutrition,
 }: AccordionSectionProps) => {
   const { hasAccess, isLoading } = useAccess();
 
@@ -38,8 +42,51 @@ const AccordionSection = ({
   );
 
   return (
-    <Accordion type="multiple" defaultValue={[]} className="space-y-3">
-      {/* 1 — Ingredients */}
+    <Accordion
+      type="multiple"
+      defaultValue={nutrition ? ["nutritional-value"] : []}
+      className="space-y-3"
+    >
+      {/* 1 — Nutritional Value (free, no paywall) */}
+      {nutrition && (
+        <AccordionItem
+          value="nutritional-value"
+          className="border-0 rounded-xl overflow-hidden bg-white"
+        >
+          <AccordionTrigger className="px-5 py-4 hover:no-underline min-h-14">
+            <div className="flex items-center gap-2.5">
+              <Image src={iconNutritionalValue} alt="nutritional value icon" />
+              <p className="text-base font-medium text-base-text">
+                Nutritional value{" "}
+                <span className="text-xs text-subtle">(per serving)</span>
+              </p>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4 pt-0">
+            <div className="grid grid-cols-5 gap-1 rounded-xl bg-[#F2F6F5] px-3 py-4">
+              {[
+                { value: `${nutrition.kcal}`, label: "kcal" },
+                { value: `${nutrition.protein}g`, label: "Protein" },
+                { value: `${nutrition.fat}g`, label: "Fat" },
+                { value: `${nutrition.carbs}g`, label: "Carbs" },
+                { value: `${nutrition.fiber}g`, label: "Fiber" },
+              ].map((stat) => (
+                <div
+                  key={stat.label}
+                  className="flex flex-col items-center text-center"
+                >
+                  <span className="text-base font-semibold text-base-text">
+                    {stat.value}
+                  </span>
+                  <span className="text-sm text-subtle">{stat.label}</span>
+                </div>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      )}
+
+      {/* 2 — Ingredients */}
       <AccordionItem
         value="ingredients"
         className="border-0 rounded-xl overflow-hidden bg-white"
@@ -48,7 +95,7 @@ const AccordionSection = ({
           <div className="flex items-center justify-between flex-1">
             <div className="flex items-center gap-2.5">
               <Image src={iconIngredients} alt="ingredients icon" />
-              <span className="text-base font-medium text-black/80">
+              <span className="text-base font-medium text-base-text">
                 Ingredients
               </span>
             </div>
@@ -73,7 +120,7 @@ const AccordionSection = ({
         </AccordionContent>
       </AccordionItem>
 
-      {/* 2 — How to make it */}
+      {/* 3 — How to make it */}
       <AccordionItem
         value="how-to"
         className="border-0 rounded-xl overflow-hidden bg-[#FFFFFF]"
@@ -82,7 +129,7 @@ const AccordionSection = ({
           <div className="flex items-center justify-between flex-1">
             <div className="flex items-center gap-2.5">
               <Image src={iconHTMI} alt="HTMI icon" />
-              <span className="text-base font-medium text-foreground">
+              <span className="text-base font-medium text-base-text">
                 How to make it
               </span>
             </div>
@@ -96,7 +143,7 @@ const AccordionSection = ({
                 key={i}
                 className="flex gap-3 text-base leading-relaxed text-[#57605E]"
               >
-                <span className="text-foreground shrink-0 min-w-5">
+                <span className="text-base-text shrink-0 min-w-5">
                   {step.step}.
                 </span>
                 <span>{step.instruction}</span>
@@ -106,7 +153,7 @@ const AccordionSection = ({
         </AccordionContent>
       </AccordionItem>
 
-      {/* 3 — Why it works */}
+      {/* 4 — Why it works */}
       <AccordionItem
         value="why"
         className="border-0 rounded-xl overflow-hidden bg-[#FFFFFF]"
@@ -115,7 +162,7 @@ const AccordionSection = ({
           <div className="flex items-center justify-between flex-1">
             <div className="flex items-center gap-2.5">
               <Image src={iconWIW} alt="HTMI icon" />
-              <span className="text-base font-medium text-foreground">
+              <span className="text-base font-medium text-base-text">
                 Why it works
               </span>
             </div>
@@ -129,7 +176,7 @@ const AccordionSection = ({
         </AccordionContent>
       </AccordionItem>
 
-      {/* 4 — Inside Tip */}
+      {/* 5 — Inside Tip */}
       <AccordionItem
         value="tip"
         className="border-0 rounded-xl overflow-hidden bg-[#EEF4FB]"
