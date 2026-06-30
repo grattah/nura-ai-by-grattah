@@ -1,14 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { Lock } from "lucide-react";
 import { getCloudinaryUrl } from "@/lib/cloudinary";
 import { PaywallModal } from "@/components/paywall/paywall-modal";
 import { useAccess } from "@/hooks/use-access";
-import { cn } from "@/lib/utils";
+import { getCategoryConfig } from "@/lib/category-config";
 
 interface RecipeCardNewProps {
   id: string;
@@ -21,18 +20,13 @@ interface RecipeCardNewProps {
 }
 
 export function RecipeCardNew({
-  id,
   title,
   imageUrl,
   category,
   href = "#",
   priority = false,
-  initialBookmarked = false,
 }: RecipeCardNewProps) {
-  const router = useRouter();
   const { hasAccess, isLoading } = useAccess();
-  const [bookmarked, setBookmarked] = useState(initialBookmarked);
-  const [isPending, startTransition] = useTransition();
   const [paywallOpen, setPaywallOpen] = useState(false);
 
   const transformedUrl = imageUrl
@@ -44,6 +38,8 @@ export function RecipeCardNew({
     e.stopPropagation();
     setPaywallOpen(true);
   };
+
+  const catSlug = category?.toLowerCase();
 
   return (
     <>
@@ -80,9 +76,21 @@ export function RecipeCardNew({
           {/* Meta */}
           <div className="px-0.5">
             {category && (
-              <p className="text-xs text-grey-c500 uppercase tracking-wide mb-0.5">
+              <div
+                style={{
+                  backgroundColor: getCategoryConfig(catSlug!).bgColor,
+                  color: getCategoryConfig(catSlug!).textColor,
+                }}
+                className="text-xs w-fit text-grey-c500 uppercase tracking-wide mb-0.5 rounded-2xl py-1 px-2 flex items-center gap-1"
+              >
+                <span
+                  style={{
+                    backgroundColor: getCategoryConfig(catSlug!).textColor,
+                  }}
+                  className="rounded-full size-1.25"
+                />
                 {category}
-              </p>
+              </div>
             )}
             <p className="text-sm font-medium text-grey-c600 leading-snug line-clamp-1">
               {title}
