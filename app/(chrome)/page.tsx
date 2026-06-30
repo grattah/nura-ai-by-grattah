@@ -115,6 +115,7 @@ export default async function HomePage() {
           <div className="grid grid-cols-2 gap-x-4 gap-y-8">
             {popularRecipes.map((recipe, i) => {
               const firstTag = recipe.recipe_tags?.[0]?.tags?.name;
+              const catSlug = recipe.recipe_tags?.[0]?.tags?.slug;
               return (
                 <RecipeCardNew
                   key={recipe.id}
@@ -122,6 +123,7 @@ export default async function HomePage() {
                   title={recipe.title}
                   imageUrl={recipe.image_url ?? undefined}
                   category={firstTag}
+                  catSlug={catSlug}
                   href={`/recipes/${recipe.id}`}
                   priority={i < 2}
                   initialBookmarked={bookmarkedIds.has(recipe.id)}
