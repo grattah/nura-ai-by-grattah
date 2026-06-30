@@ -72,10 +72,10 @@ const page = async () => {
         </div>
 
         <Link
-          href="/find-recipe"
+          href="/categories"
           className="w-full flex items-center justify-center text-white gap-3 py-4 bg-mint-green hover:opacity-90 transition-opacity rounded-full font-medium"
         >
-          Find a recipe <MoveRight size={16} color="#FFFFFF" />
+          See all categories <MoveRight size={16} color="#FFFFFF" />
         </Link>
       </main>
     </div>
