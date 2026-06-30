@@ -297,7 +297,7 @@ const page = () => {
       <main className="">
         <div
           className={`px-6 py-5 mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A] ${
-            showSuggestions && "flex gap-11.75 items-center"
+            showSuggestions && "flex gap-11.75 max-[400px]:gap-5 items-center"
           }`}
         >
           {showSuggestions && (
