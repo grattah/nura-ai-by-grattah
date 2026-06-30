@@ -14,9 +14,6 @@ import { DRINK_TYPES } from "@/lib/drink-types";
 import type { CategoryRecipe } from "@/lib/types";
 
 const PAGE_SIZE = 8;
-// Safety net: if a request hasn't settled by this point (e.g. the shared
-// Supabase browser client's auth lock is wedged), abort it and surface a retry
-// instead of leaving the page stuck on the skeleton until a full page reload.
 const FETCH_TIMEOUT_MS = 15000;
 
 function isAbortError(e: unknown): boolean {
@@ -29,30 +26,26 @@ export default function CategoryDetailPage() {
   const slug = params.slug;
   const config = getCategoryConfig(slug);
 
-  // Hoisted so a new client isn't requested on every fetch.
   const supabase = useMemo(() => createClient(), []);
 
-  // Drink-type sub-sub-category filter ("all" = no filter, the default).
   const [activeType, setActiveType] = useState("all");
   const [availableTypes, setAvailableTypes] = useState<string[]>([]);
 
   const [recipes, setRecipes] = useState<CategoryRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [error, setError] = useState(false); // initial-load failure
-  const [loadMoreError, setLoadMoreError] = useState(false); // pagination failure
+  const [error, setError] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState(false);
   const [atEnd, setAtEnd] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
-  // Mutable cursor/guards in refs so `loadMore` (and the observer) stay stable.
   const pageRef = useRef(0);
   const hasMoreRef = useRef(true);
   const fetchingRef = useRef(false);
   const loadMoreErrorRef = useRef(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreControllerRef = useRef<AbortController | null>(null);
-  // Bumped on every slug change / reload; results from a stale epoch are dropped
-  // so an in-flight request from a previous category can't leak into a new one.
+
   const epochRef = useRef(0);
 
   const fetchPage = useCallback(
@@ -60,8 +53,6 @@ export default function CategoryDetailPage() {
       const start = pageNum * PAGE_SIZE;
       const end = start + PAGE_SIZE - 1;
 
-      // `display_order` then `id` is a total order, so OFFSET pagination can't
-      // return overlapping pages (recipes share display_order values).
       let query = supabase
         .from("recipes")
         .select(
@@ -70,7 +61,6 @@ export default function CategoryDetailPage() {
         .eq("recipe_tags.tags.slug", slug)
         .eq("status" as never, "approved" as never);
 
-      // Narrow to a single drink-type sub-sub-category when one is selected.
       if (activeType !== "all") {
         query = query.eq("drink_type" as never, activeType as never);
       }
@@ -90,8 +80,6 @@ export default function CategoryDetailPage() {
     [supabase, slug, activeType],
   );
 
-  // Append the next page. Stable within a slug (only dep is `fetchPage`), so the
-  // observer attached via the callback ref isn't recreated while scrolling.
   const loadMore = useCallback(async () => {
     if (
       fetchingRef.current ||
@@ -132,8 +120,6 @@ export default function CategoryDetailPage() {
     } catch (e) {
       if (myEpoch === epochRef.current && (timedOut || !isAbortError(e))) {
         console.error("Failed to load more category recipes:", e);
-        // Pause auto-firing (the sentinel may still be in view) but keep
-        // `hasMoreRef` so a manual retry can resume pagination.
         loadMoreErrorRef.current = true;
         setLoadMoreError(true);
       }
@@ -152,8 +138,6 @@ export default function CategoryDetailPage() {
     loadMore();
   }, [loadMore]);
 
-  // Callback ref: attach the observer the instant the sentinel mounts, detach on
-  // unmount (or when `loadMore` changes on a slug switch). No brittle effect.
   const sentinelRef = useCallback(
     (node: HTMLDivElement | null) => {
       observerRef.current?.disconnect();
@@ -169,7 +153,6 @@ export default function CategoryDetailPage() {
     [loadMore],
   );
 
-  // Reset + fetch the first page when the category (or retry key) changes.
   useEffect(() => {
     const epoch = ++epochRef.current;
     const controller = new AbortController();
@@ -179,7 +162,6 @@ export default function CategoryDetailPage() {
       controller.abort();
     }, FETCH_TIMEOUT_MS);
 
-    // Cancel a pagination request still in flight from the previous category.
     loadMoreControllerRef.current?.abort();
 
     pageRef.current = 0;
@@ -215,16 +197,16 @@ export default function CategoryDetailPage() {
     };
   }, [slug, fetchPage, reloadKey]);
 
-  // On category change: reset the pill to "All" and load which drink types are
-  // present in this category (so we only render pills that have recipes). Runs
-  // alongside the first-page fetch above.
   useEffect(() => {
     setActiveType("all");
     let cancelled = false;
     (async () => {
-      const { data } = await supabase.rpc("category_drink_types" as never, {
-        p_slug: slug,
-      } as never);
+      const { data } = await supabase.rpc(
+        "category_drink_types" as never,
+        {
+          p_slug: slug,
+        } as never,
+      );
       if (cancelled) return;
       const present = new Set(
         ((data as { drink_type: string }[] | null) ?? []).map(

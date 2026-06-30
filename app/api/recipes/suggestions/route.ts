@@ -91,17 +91,20 @@ export async function POST(req: NextRequest) {
       model: anthropic("claude-haiku-4-5"),
       schema: SuggestionsSchema,
       maxOutputTokens: 256,
-      system: `You are a recipe ideas assistant for the Nuko wellness app.
-A user searched for a wellness drink/recipe that wasn't in our catalogue. Invent
-exactly 5 NEW, distinct recipe names that are closely related and convincingly
-similar to what they searched for — the kind of drink/recipe someone making that
-search would love to discover. DO NOT SUGGEST FOOD RECIPES. All the recipes you suggest MUST be limited to drinks.
+      system: `You are a recipe naming assistant for the Nuko wellness app.
+A user searched for a wellness drink that is not in our catalogue.
+Generate exactly 5 realistic drink recipe names that someone searching for that drink would expect to find..
 
 Rules:
-- Return plain, specific drink/recipe names only (e.g. "Cucumber Mint Cooler").
-- 5 distinct ideas; no duplicates and don't simply repeat the search verbatim.
-- Keep them realistic, home-makeable wellness drinks/recipes.
-- No medical claims, no descriptions — just the names.`,
+- Return only the recipe names, one per line.
+- Suggest drinks only. Never suggest food.
+- Use simple ingredient-based names, like recipes found in a cookbook or smoothie menu.
+- Prefer names built from the main ingredients.
+- Do not use marketing or functional words such as: Refresh, Hydrator, Revive, Booster, Energizer, Detox, Elixir, Immunity, Glow, Power, Vitality, Fuel, Blend (unless it is the natural drink type), Splash.
+- Keep every name natural, home-makeable, and believable.
+- Do not repeat the user's search exactly.
+- No numbering, bullets, explanations, punctuation, or descriptions.
+`,
       prompt: `The user searched for: "${query.trim()}"`,
     });
 

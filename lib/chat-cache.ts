@@ -1,10 +1,14 @@
 import type { UIMessage } from "ai";
 
-// Per-context (recipe/guide) follow-up chat persistence in localStorage so the
-// conversation survives navigation. Cleared only on logout (see
-// components/chat-cache-cleaner.tsx).
-
 const PREFIX = "nura-chat:";
+
+// Maximum chat lifetime: 5 minutes since the last saved turn.
+const MAX_AGE_MS = 5 * 60 * 1000;
+
+interface StoredChat {
+  savedAt: number;
+  messages: UIMessage[];
+}
 
 function key(contextId: string): string {
   return `${PREFIX}${contextId}`;
@@ -12,11 +16,31 @@ function key(contextId: string): string {
 
 export function loadChat(contextId: string): UIMessage[] | null {
   if (typeof window === "undefined") return null;
+  const k = key(contextId);
   try {
-    const raw = window.localStorage.getItem(key(contextId));
+    const raw = window.localStorage.getItem(k);
     if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length ? (parsed as UIMessage[]) : null;
+
+    const parsed = JSON.parse(raw) as StoredChat | unknown;
+    // Reject legacy (bare array) or malformed entries.
+    if (
+      !parsed ||
+      typeof parsed !== "object" ||
+      typeof (parsed as StoredChat).savedAt !== "number" ||
+      !Array.isArray((parsed as StoredChat).messages)
+    ) {
+      window.localStorage.removeItem(k);
+      return null;
+    }
+
+    const { savedAt, messages } = parsed as StoredChat;
+    // Lazy expiry: drop anything past the 5-minute window.
+    if (Date.now() - savedAt > MAX_AGE_MS) {
+      window.localStorage.removeItem(k);
+      return null;
+    }
+
+    return messages.length ? messages : null;
   } catch {
     return null;
   }
@@ -25,10 +49,11 @@ export function loadChat(contextId: string): UIMessage[] | null {
 export function saveChat(contextId: string, messages: UIMessage[]): void {
   if (typeof window === "undefined") return;
   // Never overwrite a stored conversation with an empty one — clearing is the
-  // job of logout, not an empty render.
+  // job of expiry/logout, not an empty render.
   if (!messages.length) return;
   try {
-    window.localStorage.setItem(key(contextId), JSON.stringify(messages));
+    const payload: StoredChat = { savedAt: Date.now(), messages };
+    window.localStorage.setItem(key(contextId), JSON.stringify(payload));
   } catch {
     // Quota / serialization errors are non-critical.
   }

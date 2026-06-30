@@ -7,12 +7,19 @@ interface CategoryCardProps {
   slug: string;
   name: string;
   config: CategoryConfig;
+  onClick?: React.MouseEventHandler<HTMLAnchorElement>;
 }
 
-export function CategoryCard({ slug, name, config }: CategoryCardProps) {
+export function CategoryCard({
+  slug,
+  name,
+  config,
+  onClick,
+}: CategoryCardProps) {
   return (
     <Link
       href={`/categories/${slug}`}
+      onClick={onClick}
       className="block active:scale-[0.98] transition-transform"
     >
       <div
@@ -20,13 +27,13 @@ export function CategoryCard({ slug, name, config }: CategoryCardProps) {
         style={{ backgroundColor: config.bgColor }}
       >
         {/* Left: icon & text */}
-        <div className="flex-1 min-w-0 pr-3 flex items-center gap-3.25 my-7.75">
+        <div className="flex-1 min-w-0 pr-3 flex items-center gap-3 my-8">
           <Image
             src={config.iconUrl}
             alt={name}
             width={48}
             height={48}
-            className="object-contain"
+            className="object-contain size-12"
           />
           <div>
             <p className="text-base font-semibold text-foreground leading-snug">
@@ -43,8 +50,9 @@ export function CategoryCard({ slug, name, config }: CategoryCardProps) {
           <Image
             src={config.imageUrl}
             alt={name}
-            width={124}
+            width={110}
             height={108.24}
+            sizes="(max-width: 430px) 25.6vw, 110px"
             className="object-cover"
           />
 

@@ -14,7 +14,6 @@ interface CategoryCardProps {
 }
 
 export function CategoryCard({
-  id,
   title,
   imageUrl,
   className,

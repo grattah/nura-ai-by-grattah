@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Gveret+Levin&display=swap');
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "tailwindcss";
@@ -49,6 +51,7 @@
   --base-text: oklch(0.2286 0.003 196.94);
   --orange-25: oklch(0.9427 0.0271 56.76);
   --brown: oklch(0.3962 0.0221 58.94);
+  --green: oklch(0.526 0.1005 141.71);
 
   --grey-c100: oklch(96.34% 0.001 197.14);
   --grey-c300: oklch(0.8337 0.0071 174.34);
@@ -94,11 +97,15 @@
   --space-36: clamp(28px, 8.4vw, 36px);
   --space-40: clamp(32px, 9.3vw, 40px);
   --space-44: clamp(34px, 10.2vw, 44px);
+  --space-48: clamp(36px, 11.2vw, 48px);
   --space-56: clamp(46px, 13vw, 56px);
   --space-64: clamp(52px, 14.9vw, 64px);
   --space-80: clamp(64px, 18.6vw, 80px);
+  /* --space-88: clamp(70px, 20.5vw, 88px); */
   --space-96: clamp(76px, 22.3vw, 96px);
+  /* --space-116: clamp(93px, 27vw, 116px); */
 
+  --text-2xs: clamp(7.4px, 2.6vw, 11px);
   --text-xs: clamp(11px, 2.8vw, 12px);
   --text-sm: clamp(12px, 3.2vw, 14px);
   --text-base: clamp(14px, 3.7vw, 16px);
@@ -117,6 +124,7 @@
   --breakpoint-xs: 22.5rem;
   --font-mono: "Geist Mono", "Geist Mono Fallback", monospace;
   --font-serif: serif;
+  --font-alanSans: "Alan Sans", system-ui, sans-serif;
   --font-redHatText:
     "Red Hat Text", "Red Hat Text Fallback", system-ui, sans-serif;
   --font-josefin:
@@ -182,6 +190,7 @@
   --color-base-text: var(--base-text);
   --color-orange-25: var(--orange-25);
   --color-brown: var(--brown);
+  --color-green: var(--green);
 
   --color-grey-c100: var(--grey-c100);
   --color-grey-c300: var(--grey-c300);
@@ -202,6 +211,7 @@
   --text-base: var(--text-base);
   --text-sm: var(--text-sm);
   --text-xs: var(--text-xs);
+  --text-2xs: var(--text-2xs);
 
   /* Fluid spacing */
   --spacing-2: var(--space-8);
@@ -216,10 +226,13 @@
   --spacing-9: var(--space-36);
   --spacing-10: var(--space-40);
   --spacing-11: var(--space-44);
+  --spacing-12: var(--space-48);
   --spacing-14: var(--space-56);
   --spacing-16: var(--space-64);
   --spacing-20: var(--space-80);
+  /* --spacing-22: var(--space-88); */
   --spacing-24: var(--space-96);
+  /* --spacing-29: var(--space-116); */
 
   --spacing-mp: var(--mobile-padding);
   --spacing-sb: var(--searchbar-height);
@@ -321,4 +334,10 @@
 .liquid-glass > * {
   position: relative;
   z-index: 2;
+}
+
+.gveret-levin {
+  font-family: "Gveret Levin", cursive;
+  font-weight: 400;
+  font-style: normal;
 }

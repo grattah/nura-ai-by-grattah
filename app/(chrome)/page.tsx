@@ -1,19 +1,17 @@
 import Link from "next/link";
+import Image from "next/image";
 import { unstable_cache } from "next/cache";
-import {
-  createClient,
-  createServiceRoleClient,
-  getCachedUser,
-} from "@/lib/supabase/server";
+import { createServiceRoleClient, getCachedUser } from "@/lib/supabase/server";
 import { SearchSection } from "@/components/home/search-section";
 import { RecipeCardNew } from "@/components/home/recipe-card-new";
 import { WellnessTipCard } from "@/components/home/wellness-tip-card";
 import { CategorySection } from "@/components/home/category-section";
 import { UpgradeBanner } from "@/components/home/upgrade-banner";
 import { getBookmarkedIds } from "@/actions/bookmark";
-import { hasActiveSubscription } from "@/lib/subscription";
 import { withTiming } from "@/lib/perf";
 import { getDailyTip, utcDayKey, FALLBACK_TIP } from "@/lib/daily-tip";
+import { getCategories } from "@/actions/categories";
+import { MoveRight } from "lucide-react";
 
 type RecipeWithTags = {
   id: string;
@@ -26,19 +24,15 @@ type RecipeWithTags = {
 const getPopularRecipes = unstable_cache(
   async () => {
     const supabase = createServiceRoleClient();
-    return (
-      supabase
-        .from("recipes")
-        .select("id, title, image_url, recipe_tags(tags(name, slug))")
-        // Service role bypasses RLS, so filter out pending recipes explicitly.
-        // `status` was added in migration 20260615120000 (not in generated types yet).
-        .eq("status" as never, "approved" as never)
-        .or("shares.gt.0, saves.gt.0, comments.gt.0, likes.gt.0")
-        .order("weighted_score", { ascending: false })
-        .order("last_engaged_at", { ascending: false, nullsFirst: false })
-        .order("id", { ascending: false })
-        .limit(10)
-    );
+    return supabase
+      .from("recipes")
+      .select("id, title, image_url, recipe_tags(tags(name, slug))")
+      .eq("status" as never, "approved" as never)
+      .or("shares.gt.0, saves.gt.0, comments.gt.0, likes.gt.0")
+      .order("weighted_score", { ascending: false })
+      .order("last_engaged_at", { ascending: false, nullsFirst: false })
+      .order("id", { ascending: false })
+      .limit(30);
   },
   ["home-popular-recipes"],
   { revalidate: 300 },
@@ -57,38 +51,51 @@ export default async function HomePage() {
     withTiming("home:getDailyTip", () => getDailyTip(utcDayKey())),
   ]);
 
+  function oneRecipePerCategory(recipes: RecipeWithTags[]): RecipeWithTags[] {
+    const seenTags = new Set<string>();
+    const result: RecipeWithTags[] = [];
+    for (const recipe of recipes) {
+      const firstTag = recipe.recipe_tags?.[0]?.tags?.name ?? null;
+      if (firstTag !== null) {
+        if (seenTags.has(firstTag)) continue;
+        seenTags.add(firstTag);
+      }
+      result.push(recipe);
+    }
+    return result;
+  }
+
   const dailyTip = dailyTipRow ?? FALLBACK_TIP;
 
   const recipes = (rawRecipes ?? []) as unknown as RecipeWithTags[];
-  const popularRecipes = recipes.slice(0, 5);
+  const popularRecipes = oneRecipePerCategory(recipes).slice(0, 4);
 
-  // Check subscription status server-side
-  let hasAccess = false;
   const bookmarkedIds = new Set<string>();
   if (user) {
-    const supabase = await createClient();
-    const [access, ids] = await Promise.all([
-      withTiming("home:subscription", () =>
-        hasActiveSubscription(supabase, user.id),
-      ),
-      withTiming("home:getBookmarkedIds", () =>
-        getBookmarkedIds(popularRecipes.map((r) => r.id)),
-      ),
-    ]);
-    hasAccess = access;
+    const ids = await withTiming("home:getBookmarkedIds", () =>
+      getBookmarkedIds(popularRecipes.map((r) => r.id)),
+    );
     ids.forEach((id) => bookmarkedIds.add(id));
   }
+
+  const categories = await getCategories();
 
   return (
     <div className="bg-background">
       <main className="px-mp pt-2 space-y-8">
         {/* Hero */}
-        <section className="space-y-4">
-          <h1 className="text-hero font-semibold text-grey-c950 leading-snug">
-            Hello! What would you like to{" "}
-            <span className="text-mint-green">improve</span> today?
+        <section className="space-y-4 relative">
+          <h1 className="text-title font-semibold text-grey-c950 leading-snug z-10 relative">
+            What’s bugging you today?
           </h1>
           <SearchSection />
+          <Image
+            src="/search-sec-flower.svg"
+            alt="flower"
+            width={121}
+            height={159}
+            className="absolute -right-3.5 -top-12 z-0"
+          />
         </section>
 
         {/* Popular Recipes */}
@@ -105,44 +112,75 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <div className="">
-            <div className="flex gap-x-5 overflow-x-auto hide-scrollbar snap-x snap-mandatory">
-              {popularRecipes.map((recipe, i) => {
-                const firstTag = recipe.recipe_tags?.[0]?.tags?.name;
-                return (
-                  <div
-                    key={recipe.id}
-                    className="shrink-0 w-[clamp(150px,46.5vw,200px)] snap-start"
-                  >
-                    <RecipeCardNew
-                      id={recipe.id}
-                      title={recipe.title}
-                      imageUrl={recipe.image_url ?? undefined}
-                      category={firstTag}
-                      href={`/recipes/${recipe.id}`}
-                      priority={i < 2}
-                      initialBookmarked={bookmarkedIds.has(recipe.id)}
-                    />
-                  </div>
-                );
-              })}
-            </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-8">
+            {popularRecipes.map((recipe, i) => {
+              const firstTag = recipe.recipe_tags?.[0]?.tags?.name;
+              const catSlug = recipe.recipe_tags?.[0]?.tags?.slug;
+              return (
+                <RecipeCardNew
+                  key={recipe.id}
+                  id={recipe.id}
+                  title={recipe.title}
+                  imageUrl={recipe.image_url ?? undefined}
+                  category={firstTag}
+                  catSlug={catSlug}
+                  href={`/recipes/${recipe.id}`}
+                  priority={i < 2}
+                  initialBookmarked={bookmarkedIds.has(recipe.id)}
+                />
+              );
+            })}
           </div>
         </section>
 
+        <div className="border border-[#D3CCBD] rounded-3xl py-10 px-9 relative flex flex-col overflow-hidden">
+          <p className="text-base text-[#312817] font-alanSans z-10 relative">
+            Your energy dipped this week? A beef & ginger juice could lift the
+            afternoon slump - want the recipe?
+          </p>
+          <Link
+            href={`/recipes/2307da01-c7a9-4b35-a581-526ae8f5339c`}
+            className="z-10 relative bg-mint-green self-end w-fit text-white rounded-full px-3 py-2.5 flex items-center gap-x-1 transition-transform active:scale-[0.98]"
+          >
+            <span className="font-alanSans font-semibold text-sm">View</span>
+            <MoveRight className="size-3.5" />
+          </Link>
+          <Image
+            src="/bottom-right-flower.svg"
+            alt="flower"
+            width={101}
+            height={63}
+            className="absolute right-0 bottom-0 z-0"
+          />
+          <Image
+            src="/right-wellness-fruit.svg"
+            alt="flower"
+            width={25}
+            height={18}
+            className="absolute top-2 right-0 z-0"
+          />
+          <Image
+            src="/left-wellness-flower.svg"
+            alt="flower"
+            width={88}
+            height={115}
+            className="absolute -top-2.5 left-0 z-0 pointer-events-none"
+          />
+        </div>
+
         {/* Daily Wellness Tip */}
-        <WellnessTipCard
+        {/* <WellnessTipCard
           title={dailyTip.title}
           description={dailyTip.description}
           imageUrl={dailyTip.imageUrl}
           stale={!dailyTipRow}
-        />
+        /> */}
 
         {/* Categories */}
-        <CategorySection hasAccess={hasAccess} />
+        <CategorySection categories={categories} />
 
         {/* Upgrade / Pending banner */}
-        <UpgradeBanner hasAccess={hasAccess} />
+        <UpgradeBanner />
       </main>
     </div>
   );

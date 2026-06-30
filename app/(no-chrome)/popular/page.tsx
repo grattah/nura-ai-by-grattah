@@ -1,26 +1,15 @@
-// app/popular/page.tsx (or wherever this lives)
 import Link from "next/link";
-import { ArrowLeft, MoveRight } from "lucide-react";
+import { MoveRight } from "lucide-react";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
-import { getBookmarkedIds } from "@/actions/bookmark";
-import { fetchPopularRecipesPage } from "@/lib/popular-recipes";
-import { PopularRecipesList } from "@/components/recipe/PopularRecipeList";
+import { truncateText } from "@/lib/truncate-text";
+import { fetchPopularRecipesOnePerCategory } from "@/lib/popular-recipes";
 import BackButton from "@/components/back-button";
+import { getCategoryConfig } from "@/lib/category-config";
 
 const page = async () => {
   const supabase = await createClient();
-
-  const [
-    initialRecipes,
-    {
-      data: { user },
-    },
-  ] = await Promise.all([
-    fetchPopularRecipesPage(supabase, 0),
-    supabase.auth.getUser(),
-  ]);
-
-  const bookmarkedSet = await getBookmarkedIds(initialRecipes.map((r) => r.id));
+  const recipes = await fetchPopularRecipesOnePerCategory(supabase, 20);
 
   return (
     <div className="bg-background pb-10">
@@ -31,11 +20,56 @@ const page = async () => {
           <div />
         </div>
 
-        <PopularRecipesList
-          initialRecipes={initialRecipes}
-          bookmarkedIds={Array.from(bookmarkedSet)}
-          isAuthenticated={!!user}
-        />
+        <div className="grid grid-cols-2 gap-3 space-y-3">
+          {recipes.map((recipe) => {
+            const firstTag = recipe.recipe_tags?.[0]?.tags?.name ?? null;
+            const catSlug = recipe.recipe_tags?.[0]?.tags?.slug ?? null;
+            return (
+              <div key={recipe.id} className="flex flex-col gap-2">
+                {recipe.image_url && (
+                  <Link href={`/recipes/${recipe.id}`}>
+                    <div className="overflow-hidden rounded-2xl">
+                      <Image
+                        src={recipe.image_url}
+                        alt={recipe.title}
+                        className="w-[clamp(136px,42.6vw,183px)] h-[clamp(124px,38.8vw,167px)] object-cover transition-transform duration-300 hover:scale-110"
+                        width={183}
+                        height={167}
+                        sizes="(max-width: 430px) 42.6vw, 183px"
+                      />
+                    </div>
+                  </Link>
+                )}
+                <div className="space-y-1">
+                  {firstTag && (
+                    <div
+                      style={{
+                        backgroundColor: getCategoryConfig(catSlug!).bgColor,
+                        color: getCategoryConfig(catSlug!).textColor,
+                      }}
+                      className="text-xs w-fit text-grey-c500 uppercase tracking-wide mb-0.5 rounded-2xl py-1 px-2 flex items-center gap-1 font-josefin"
+                    >
+                      <span
+                        style={{
+                          backgroundColor: getCategoryConfig(catSlug!)
+                            .textColor,
+                        }}
+                        className="rounded-full size-1.25"
+                      />
+                      {firstTag}
+                    </div>
+                  )}
+                  <Link
+                    href={`/recipes/${recipe.id}`}
+                    className="text-[#111312] font-medium text-base font-josefin line-clamp-1"
+                  >
+                    {truncateText(recipe.title, 3)}
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
         <Link
           href="/find-recipe"
