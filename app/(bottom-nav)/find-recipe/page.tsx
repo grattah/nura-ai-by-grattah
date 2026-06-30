@@ -301,7 +301,15 @@ const page = () => {
           }`}
         >
           {showSuggestions && (
-            <BackButton className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
+            <button
+              onClick={() => {
+                setShowSuggestions(false);
+                setSearchTerm("");
+              }}
+              className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity"
+            >
+              <ArrowLeft size={16} color="#1B1D1D" />
+            </button>
           )}
           <div className="flex flex-col gap-3">
             <p
