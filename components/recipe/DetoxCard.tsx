@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { type SupportScore } from "@/lib/wellness-score";
+import { type SupportScore, MAX_SUPPORT_SCORES } from "@/lib/wellness-score";
 
 interface AssignedSupport {
   name: string;
@@ -58,7 +58,9 @@ export function DetoxCard({
 
   // Each support keeps its own independent 0–100 strength (they don't sum to
   // 100). Sort strongest-first; the ring shows the top support's own score.
-  const sorted = [...scores].sort((a, b) => b.score - a.score);
+  const sorted = [...scores]
+    .sort((a, b) => b.score - a.score)
+    .slice(0, MAX_SUPPORT_SCORES);
   const primary = sorted[0];
 
   // Ring geometry
