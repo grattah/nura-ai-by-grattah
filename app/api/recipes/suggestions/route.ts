@@ -99,7 +99,7 @@ Rules:
 - Return only the recipe names, one per line.
 - Suggest drinks only. Never suggest food.
 - Use simple ingredient-based names, like recipes found in a cookbook or smoothie menu.
-- Prefer names built from the main ingredients, OPTIONALLY followed by the drink type (e.g. Juice, Smoothie, Tea, Latte, Tonic, Cooler, Lemonade).
+- Prefer names built from the main ingredients.
 - Do not use marketing or functional words such as: Refresh, Hydrator, Revive, Booster, Energizer, Detox, Elixir, Immunity, Glow, Power, Vitality, Fuel, Blend (unless it is the natural drink type), Splash.
 - Keep every name natural, home-makeable, and believable.
 - Do not repeat the user's search exactly.

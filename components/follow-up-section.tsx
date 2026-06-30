@@ -53,9 +53,6 @@ export function FollowUpSection({
 
   const { applyState, openTokenWall, refresh: refreshCredits } = useCredits();
 
-  // Each user-asked follow-up meters tokens. Intercept the response to surface
-  // the out-of-tokens wall on 402 and refresh the balance after a successful
-  // answer (the server meters in onFinish once it completes).
   const interceptFetch = useCallback(
     async (
       reqInput: Parameters<typeof fetch>[0],
@@ -80,9 +77,6 @@ export function FollowUpSection({
     [applyState, openTokenWall, refreshCredits],
   );
 
-  // Memoize the transport so `useChat` isn't re-initialized on every render.
-  // The actual question flows through `sendMessage` (the message list); the body
-  // here only carries the stable per-context grounding fields.
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -260,10 +254,6 @@ interface ChatThreadProps {
 
 function ChatThread({ messages, isLoading }: ChatThreadProps) {
   const endRef = useRef<HTMLDivElement>(null);
-  // Track the message count so we scroll only when a NEW message is appended (or
-  // while a reply streams) — never on the initial restore of a saved conversation
-  // or on incidental re-renders where useChat returns a new array with the same
-  // messages (which previously yanked the view down to the chat).
   const prevCountRef = useRef<number | null>(null);
 
   useEffect(() => {
