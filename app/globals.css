@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Gveret+Levin&display=swap');
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "tailwindcss";
@@ -331,4 +333,10 @@
 .liquid-glass > * {
   position: relative;
   z-index: 2;
+}
+
+.gveret-levin {
+  font-family: "Gveret Levin", cursive;
+  font-weight: 400;
+  font-style: normal;
 }

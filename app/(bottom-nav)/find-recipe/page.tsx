@@ -23,6 +23,7 @@ import { WELLNESS_SOURCES } from "@/lib/wellness-sources";
 import BackButton from "@/components/back-button";
 import { PaywallModal } from "@/components/paywall/paywall-modal";
 import TokensModal from "@/components/tokens/TokensModal";
+import Arrow from "@/components/vectors/Arrow";
 
 interface RecipeSuggestion {
   title: string;
@@ -303,7 +304,11 @@ const page = () => {
             <BackButton className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
           )}
           <div className="flex flex-col gap-3">
-            <p className={`text-2xl font-semibold text-[#111312] ${showSuggestions && "max-[400px]:text-lg"}`}>
+            <p
+              className={`text-2xl font-semibold text-[#111312] ${
+                showSuggestions && "max-[400px]:text-lg"
+              }`}
+            >
               {showSuggestions ? "Get more suggestions" : "Find a recipe"}
             </p>
             {showSuggestions ? (
@@ -315,7 +320,7 @@ const page = () => {
             )}
           </div>
         </div>
-        <div className="mt-4 px-6">
+        <div className="mt-4 px-6 mb-4.5">
           <div className="relative">
             <button className="absolute top-1/2 -translate-y-1/2 left-3">
               <Search color="#82A198" size={16} className="size-4" />
@@ -350,6 +355,17 @@ const page = () => {
                 </button>
               </div>
             )} */}
+
+          {searchTerm.length === 0 && (
+            <div className="flex justify-center items-center">
+              <div className="flex flex-col">
+                <Arrow className="shrink-0" />
+                <div className="text-mint-green w-30 text-sm ml-10 -mt-1.5 gveret-levin">
+                  Start typing to discover recipes!
+                </div>
+              </div>
+            </div>
+          )}
 
           {showingLoading && <RecipesSpinner />}
 
