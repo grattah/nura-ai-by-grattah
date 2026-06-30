@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { truncateText } from "@/lib/truncate-text";
 import { fetchPopularRecipesOnePerCategory } from "@/lib/popular-recipes";
 import BackButton from "@/components/back-button";
+import { getCategoryConfig } from "@/lib/category-config";
 
 const page = async () => {
   const supabase = await createClient();
@@ -23,6 +24,7 @@ const page = async () => {
         <div className="grid grid-cols-2 gap-3 space-y-3">
           {recipes.map((recipe) => {
             const firstTag = recipe.recipe_tags?.[0]?.tags?.name ?? null;
+            const catSlug = firstTag.toLowerCase();
             return (
               <div key={recipe.id} className="flex flex-col gap-2">
                 {recipe.image_url && (
@@ -39,20 +41,32 @@ const page = async () => {
                     </div>
                   </Link>
                 )}
-                {firstTag && (
+                <div className="space-y-1">
+                  {firstTag && (
+                    <div
+                      style={{
+                        backgroundColor: getCategoryConfig(catSlug!).bgColor,
+                        color: getCategoryConfig(catSlug!).textColor,
+                      }}
+                      className="text-xs w-fit text-grey-c500 uppercase tracking-wide mb-0.5 rounded-2xl py-1 px-2 flex items-center gap-1 font-josefin"
+                    >
+                      <span
+                        style={{
+                          backgroundColor: getCategoryConfig(catSlug!)
+                            .textColor,
+                        }}
+                        className="rounded-full size-1.25"
+                      />
+                      {firstTag}
+                    </div>
+                  )}
                   <Link
                     href={`/recipes/${recipe.id}`}
-                    className="text-[#727E7A] text-xs font-medium font-josefin uppercase"
+                    className="text-[#111312] font-medium text-base font-josefin line-clamp-1"
                   >
-                    {firstTag}
+                    {truncateText(recipe.title, 3)}
                   </Link>
-                )}
-                <Link
-                  href={`/recipes/${recipe.id}`}
-                  className="text-[#111312] font-medium text-base font-josefin line-clamp-1"
-                >
-                  {truncateText(recipe.title, 3)}
-                </Link>
+                </div>
               </div>
             );
           })}

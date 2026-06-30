@@ -11,6 +11,7 @@ import { getBookmarkedIds } from "@/actions/bookmark";
 import { withTiming } from "@/lib/perf";
 import { getDailyTip, utcDayKey, FALLBACK_TIP } from "@/lib/daily-tip";
 import { getCategories } from "@/actions/categories";
+import { MoveRight } from "lucide-react";
 
 type RecipeWithTags = {
   id: string;
@@ -91,9 +92,9 @@ export default async function HomePage() {
           <Image
             src="/search-sec-flower.svg"
             alt="flower"
-            width={86}
-            height={112}
-            className="absolute -right-2.5 -top-2.5 z-0"
+            width={121}
+            height={159}
+            className="absolute -right-3.5 -top-12 z-0"
           />
         </section>
 
@@ -130,13 +131,48 @@ export default async function HomePage() {
           </div>
         </section>
 
+        <div className="border border-[#D3CCBD] rounded-3xl py-10 px-9 relative flex flex-col overflow-hidden">
+          <p className="text-base text-[#312817] font-alanSans z-10 relative">
+            Your energy dipped this week? A beef & ginger juice could lift the
+            afternoon slump - want the recipe?
+          </p>
+          <Link
+            href={`/recipes/2307da01-c7a9-4b35-a581-526ae8f5339c`}
+            className="z-10 relative bg-mint-green self-end w-fit text-white rounded-full px-3 py-2.5 flex items-center gap-x-1 transition-transform active:scale-[0.98]"
+          >
+            <span className="font-alanSans font-semibold text-sm">View</span>
+            <MoveRight className="size-3.5" />
+          </Link>
+          <Image
+            src="/bottom-right-flower.svg"
+            alt="flower"
+            width={101}
+            height={63}
+            className="absolute right-0 bottom-0 z-0"
+          />
+          <Image
+            src="/right-wellness-fruit.svg"
+            alt="flower"
+            width={25}
+            height={18}
+            className="absolute top-2 right-0 z-0"
+          />
+          <Image
+            src="/left-wellness-flower.svg"
+            alt="flower"
+            width={88}
+            height={115}
+            className="absolute -top-2.5 left-0 z-0 pointer-events-none"
+          />
+        </div>
+
         {/* Daily Wellness Tip */}
-        <WellnessTipCard
+        {/* <WellnessTipCard
           title={dailyTip.title}
           description={dailyTip.description}
           imageUrl={dailyTip.imageUrl}
           stale={!dailyTipRow}
-        />
+        /> */}
 
         {/* Categories */}
         <CategorySection categories={categories} />

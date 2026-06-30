@@ -1,10 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import {
-  // Geist_Mono,
-  Red_Hat_Text,
-  // Josefin_Sans,
-  Red_Hat_Display,
-} from "next/font/google";
+import { Red_Hat_Text, Red_Hat_Display } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -15,16 +10,9 @@ import { getCachedAccess } from "@/lib/supabase/server";
 import { ChatCacheCleaner } from "@/components/chat-cache-cleaner";
 import { PerfProfiler } from "@/components/dev/perf-profiler";
 
-// const _geistMono = Geist_Mono({ subsets: ["latin"] });
 const _redHatText = Red_Hat_Text({
   subsets: ["latin"],
   variable: "--font-redHatText",
-  display: "swap",
-});
-// const _josefinSans = Josefin_Sans({ subsets: ["latin"] });
-const _redHatDisplay = Red_Hat_Display({
-  subsets: ["latin"],
-  variable: "--font-redHatDisplay",
   display: "swap",
 });
 
