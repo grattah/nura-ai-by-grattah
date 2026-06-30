@@ -124,6 +124,7 @@
   --breakpoint-xs: 22.5rem;
   --font-mono: "Geist Mono", "Geist Mono Fallback", monospace;
   --font-serif: serif;
+  --font-alanSans: "Alan Sans", system-ui, sans-serif;
   --font-redHatText:
     "Red Hat Text", "Red Hat Text Fallback", system-ui, sans-serif;
   --font-josefin:

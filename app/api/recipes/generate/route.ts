@@ -44,6 +44,17 @@ const RecipeSchema = z.object({
       "2-3 plain sentences on the mechanism — why these ingredients help",
     ),
   inside_tip: z.string().describe("One practical preparation or usage tip"),
+  nutrition: z
+    .object({
+      kcal: z.number().describe("Approx. energy per serving (kilocalories)"),
+      protein: z.number().describe("Protein per serving (grams)"),
+      fat: z.number().describe("Fat per serving (grams)"),
+      carbs: z.number().describe("Carbohydrates per serving (grams)"),
+      fiber: z.number().describe("Dietary fiber per serving (grams)"),
+    })
+    .describe(
+      "Approximate per-serving nutrition, estimated from the ingredients and amounts",
+    ),
   follow_up_questions: z
     .array(z.string())
     .describe("3 short follow-up questions a curious user might ask"),
@@ -165,6 +176,10 @@ sources such as ${domainList}, then PubMed, NIH, NHS, CDC, and WHO. Avoid forums
 supplement-marketing, and sensationalist or unproven claims. Do not invent statistics or
 make strong clinical claims (e.g. "cures X").
 
+NUTRITION: Provide realistic per-serving nutrition (kcal, protein, fat, carbs, fiber)
+estimated from the actual ingredients and their amounts. Use sensible whole/round numbers;
+do not fabricate false precision.
+
 Available tag slugs (pick 1-3 that genuinely fit, slug on the left):
 ${tagList}`,
       prompt: `Create a recipe for: "${cleanName}".${
@@ -199,6 +214,7 @@ ${tagList}`,
     preview_ingredients: recipe.preview_ingredients,
     why_it_works: recipe.why_it_works,
     inside_tip: recipe.inside_tip,
+    nutrition: recipe.nutrition,
     follow_up_questions: recipe.follow_up_questions,
     image_url: null,
     source_url: "",

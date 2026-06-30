@@ -2,12 +2,10 @@
 import Image from "next/image";
 import { useState } from "react";
 import { PaywallModal } from "../paywall/paywall-modal";
+import { useAccess } from "@/components/providers/access-provider";
 
-interface UpgradeBannerProps {
-  hasAccess: boolean;
-}
-
-export function UpgradeBanner({ hasAccess }: UpgradeBannerProps) {
+export function UpgradeBanner() {
+  const { hasAccess } = useAccess();
   const [modalOpen, setModalOpen] = useState(false);
   if (hasAccess) {
     return;
