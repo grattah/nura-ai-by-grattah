@@ -3,10 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Lock } from "lucide-react";
 import { getCloudinaryUrl } from "@/lib/cloudinary";
 import { PaywallModal } from "@/components/paywall/paywall-modal";
-import { useAccess } from "@/hooks/use-access";
 import { getCategoryConfig } from "@/lib/category-config";
 
 interface RecipeCardNewProps {
@@ -28,18 +26,11 @@ export function RecipeCardNew({
   href = "#",
   priority = false,
 }: RecipeCardNewProps) {
-  const { hasAccess, isLoading } = useAccess();
   const [paywallOpen, setPaywallOpen] = useState(false);
 
   const transformedUrl = imageUrl
     ? getCloudinaryUrl(imageUrl, { width: 600, height: 600 })
     : undefined;
-
-  const handleUnlockClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setPaywallOpen(true);
-  };
 
   return (
     <>
@@ -57,19 +48,6 @@ export function RecipeCardNew({
                 priority={priority}
                 unoptimized={!transformedUrl.includes("/upload/")}
               />
-            )}
-
-            {!isLoading && !hasAccess && (
-              <button
-                type="button"
-                onClick={handleUnlockClick}
-                className="bg-black/60 px-3 py-2 flex items-center gap-1.5 absolute bottom-2.75 left-1.5 rounded-full"
-              >
-                <Lock className="size-3 text-white shrink-0" />
-                <span className="text-white text-2xs font-medium tracking-wide uppercase">
-                  Unlock Full Recipe
-                </span>
-              </button>
             )}
           </div>
 

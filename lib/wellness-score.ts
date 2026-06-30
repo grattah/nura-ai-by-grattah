@@ -8,6 +8,10 @@ import { z } from "zod";
 // The LLM supplies the two sub-scores (the DB has no structured nutrition or
 // ingredient-property data); this module owns the formula so it stays auditable.
 
+// Maximum number of support scores ever returned/shown for a recipe (top N by
+// final score).
+export const MAX_SUPPORT_SCORES = 2;
+
 export interface AssignedSupport {
   name: string;
   slug: string;
@@ -126,8 +130,10 @@ export async function scoreSupports(
     });
   }
 
-  // Preserve the recipe's assigned order; drop any the model failed to return.
+  // Drop any the model failed to return, then keep only the top N by final score.
   return supports
     .map((s) => scoredBySlug.get(s.slug))
-    .filter((x): x is SupportScore => !!x);
+    .filter((x): x is SupportScore => !!x)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, MAX_SUPPORT_SCORES);
 }
