@@ -368,7 +368,7 @@ const page = () => {
             <div className="flex justify-center items-center">
               <div className="flex flex-col">
                 <Arrow className="shrink-0" />
-                <div className="text-mint-green w-30 text-sm ml-10 -mt-1.5 gveret-levin">
+                <div className="text-mint-green w-30 text-sm ml-10 -mt-1.5 max-[330px]:ml-12 gveret-levin">
                   Start typing to discover recipes!
                 </div>
               </div>
