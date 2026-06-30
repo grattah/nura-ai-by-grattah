@@ -23,6 +23,7 @@ import { WELLNESS_SOURCES } from "@/lib/wellness-sources";
 import BackButton from "@/components/back-button";
 import { PaywallModal } from "@/components/paywall/paywall-modal";
 import TokensModal from "@/components/tokens/TokensModal";
+import Arrow from "@/components/vectors/Arrow";
 
 interface RecipeSuggestion {
   title: string;
@@ -42,12 +43,12 @@ const page = () => {
   const concernParam = searchParams.get("concern");
   const supabase = createClient();
   const [searchTerm, setSearchTerm] = React.useState(
-    query || generateParam || "",
+    query || generateParam || ""
   );
   const [results, setResults] = React.useState<RecipeHit[]>([]);
   const [searchLoading, setSearchLoading] = React.useState(false);
   const [suggestedRecipes, setSuggestedRecipes] = React.useState<RecipeHit[]>(
-    [],
+    []
   );
   const [pendingRecipe, setPendingRecipe] = React.useState<string | null>(null);
   const [generating, setGenerating] = React.useState(false);
@@ -56,7 +57,7 @@ const page = () => {
   const [paywallOpen, setPaywallOpen] = React.useState(false);
   const [tokenModalOpen, setTokenModalOpen] = React.useState(false);
   const [aiSuggestions, setAiSuggestions] = React.useState<RecipeSuggestion[]>(
-    [],
+    []
   );
   const [aiSuggestionsLoading, setAiSuggestionsLoading] = React.useState(false);
   const [aiSuggestionsError, setAiSuggestionsError] = React.useState<
@@ -65,8 +66,9 @@ const page = () => {
   const [showSuggestions, setShowSuggestions] = React.useState(false);
   const [showModalScreenLoader, setShowModalScreenLoader] =
     React.useState(false);
+  const [hasSearched, setHasSearched] = React.useState(false);
   const suggestionsCache = React.useRef<Map<string, RecipeSuggestion[]>>(
-    new Map(),
+    new Map()
   );
 
   const { recents, add: addRecent, clear: clearRecents } = useRecentSearches();
@@ -83,10 +85,12 @@ const page = () => {
     if (!term) {
       setResults([]);
       setSearchLoading(false);
+      setHasSearched(false);
       return;
     }
 
     setSearchLoading(true);
+    setHasSearched(false);
     const handle = setTimeout(async () => {
       const words = term.toLowerCase().split(/\s+/).filter(Boolean);
       let q = supabase
@@ -105,6 +109,7 @@ const page = () => {
         setResults((data ?? []) as unknown as RecipeHit[]);
       }
       setSearchLoading(false);
+      setHasSearched(true);
     }, 250);
 
     return () => clearTimeout(handle);
@@ -138,7 +143,7 @@ const page = () => {
 
       // Shuffle and take 3 so the user sees variety each visit
       const shuffled = ((data ?? []) as unknown as RecipeHit[]).sort(
-        () => Math.random() - 0.5,
+        () => Math.random() - 0.5
       );
       setSuggestedRecipes(shuffled.slice(0, 3));
     };
@@ -156,12 +161,15 @@ const page = () => {
     !showSuggestions && searchTerm.trim().length > 0 && results.length > 0;
   const showingEmpty =
     !showSuggestions &&
-    !searchLoading &&
+    hasSearched &&
     searchTerm.trim().length > 0 &&
     results.length === 0;
   const showingIdle = searchTerm.trim().length === 0 && !showSuggestions;
   const showingLoading =
-    searchLoading && searchTerm.trim().length > 0 && !showSuggestions;
+    searchLoading &&
+    searchTerm.trim().length > 0 &&
+    !showSuggestions &&
+    results.length === 0;
 
   const handleSearchTermChange = (value: string) => {
     setSearchTerm(value);
@@ -221,7 +229,7 @@ const page = () => {
         setGenerateError(true);
       }
     },
-    [router, applyState, refreshCredits],
+    [router, applyState, refreshCredits]
   );
 
   const autoTriggered = React.useRef(false);
@@ -287,10 +295,40 @@ const page = () => {
   return (
     <div className="bg-background">
       <main className="">
-        <div className="px-6 py-5 mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A]">
-          <p className="text-2xl font-semibold text-[#111312]">Find a recipe</p>
+        <div
+          className={`px-6 py-5 mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A] ${
+            showSuggestions && "flex gap-11.75 max-[400px]:gap-5 items-center"
+          }`}
+        >
+          {showSuggestions && (
+            <button
+              onClick={() => {
+                setShowSuggestions(false);
+                setSearchTerm("");
+              }}
+              className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity"
+            >
+              <ArrowLeft size={16} color="#1B1D1D" />
+            </button>
+          )}
+          <div className="flex flex-col gap-3">
+            <p
+              className={`text-2xl font-semibold text-[#111312] ${
+                showSuggestions && "max-[400px]:text-lg"
+              }`}
+            >
+              {showSuggestions ? "Get more suggestions" : "Find a recipe"}
+            </p>
+            {showSuggestions ? (
+              ""
+            ) : (
+              <p className="max-[400px]:text-sm text-subtle">
+                Search for quality recipes made for your wellness
+              </p>
+            )}
+          </div>
         </div>
-        <div className="mt-4 px-6">
+        <div className="mt-4 px-6 mb-4.5">
           <div className="relative">
             <button className="absolute top-1/2 -translate-y-1/2 left-3">
               <Search color="#82A198" size={16} className="size-4" />
@@ -325,6 +363,17 @@ const page = () => {
                 </button>
               </div>
             )} */}
+
+          {searchTerm.length === 0 && (
+            <div className="flex justify-center items-center">
+              <div className="flex flex-col">
+                <Arrow className="shrink-0" />
+                <div className="text-mint-green w-30 text-sm ml-10 -mt-1.5 gveret-levin">
+                  Start typing to discover recipes!
+                </div>
+              </div>
+            </div>
+          )}
 
           {showingLoading && <RecipesSpinner />}
 
@@ -424,7 +473,7 @@ const page = () => {
         </>
 
         {showingResults && (
-          <>
+          <div className={searchLoading ? "opacity-60 transition-opacity" : ""}>
             <div className="mt-8 flex flex-col gap-24 px-6">
               <div className="flex flex-col gap-5">
                 <div className="flex flex-col gap-2">
@@ -473,7 +522,7 @@ const page = () => {
                 </span>
               </button>
             </div>
-          </>
+          </div>
         )}
 
         {showSuggestions && (
@@ -511,7 +560,7 @@ const page = () => {
                         onClick={() =>
                           handleGenerate(
                             recipe.title,
-                            searchTerm.trim() || undefined,
+                            searchTerm.trim() || undefined
                           )
                         }
                         className="flex items-center gap-3 p-3 border-b hover:bg-[#E8E6DC] text-left transition-colors"
@@ -574,14 +623,14 @@ function RecipeLoadingScreen({
     <div className="bg-background min-h-screen">
       <main>
         <div
-          className={`px-6 py-4.75 mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A] ${generateParam && "flex gap-5 items-center"}`}
+          className={`px-6 py-4.75 mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A] ${
+            generateParam && "flex gap-5 items-center"
+          }`}
         >
           {generateParam && (
             <BackButton className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
           )}
-          <p className="text-2xl font-semibold text-[#111312]">
-            Find a recipe
-          </p>
+          <p className="text-2xl font-semibold text-[#111312]">Find a recipe</p>
         </div>
 
         <div className="mt-8 px-6">
