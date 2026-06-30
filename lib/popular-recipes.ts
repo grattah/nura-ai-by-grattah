@@ -6,7 +6,7 @@ export async function fetchPopularRecipesOnePerCategory(
 ) {
   const { data, error } = await supabase
     .from("recipes")
-    .select(`*, recipe_tags ( tags (id, name) )`)
+    .select(`*, recipe_tags ( tags (id, name, slug) )`)
     .eq("status", "approved")
     .or("shares.gt.0,saves.gt.0,comments.gt.0,likes.gt.0")
     .order("weighted_score", { ascending: false })

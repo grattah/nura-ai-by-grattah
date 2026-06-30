@@ -21,7 +21,7 @@ export const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
     imageUrl: "/detox.webp",
     iconUrl: "/detox-icon.svg",
   },
-  "weight loss": {
+  "weight-loss": {
     bgColor: "oklch(0.9635 0.0202 58.07)",
     textColor: "oklch(0.6906 0.1941 45.46)",
     subtitle: "Healthy meals, real results",
@@ -49,7 +49,7 @@ export const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
     imageUrl: "/energy.webp",
     iconUrl: "/energy-icon.svg",
   },
-  "gut health": {
+  "gut-health": {
     bgColor: "oklch(0.979 0.0245 91.61)",
     textColor: "oklch(0.5533 0.1325 148.72)",
     subtitle: "Nourish your gut, feel your best",
@@ -65,14 +65,14 @@ export const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
   },
   focus: {
     bgColor: "oklch(0.9648 0.0195 125.82)",
-    textColor: "oklch(0.8109 0.1651 78.61)",
+    textColor: "oklch(0.5033 0.0871 157.19)",
     subtitle: "Sharpen your mind, stay focused",
     imageUrl: "/focus.webp",
     iconUrl: "/focus-icon.svg",
   },
   immunity: {
     bgColor: "oklch(0.9484 0.0231 10.96)",
-    textColor: "oklch(0.7218 0.1487 20.45)",
+    textColor: "oklch(0.6557 0.154 19.36)",
     subtitle: "Build resistance, stay strong",
     imageUrl: "/immunity.webp",
     iconUrl: "/immunity-icon.svg",
@@ -87,21 +87,21 @@ export const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
   heart: {
     bgColor: "oklch(0.9093 0.0232 34.3)",
     textColor: "oklch(0.6247 0.1965 15.88)",
-    subtitle: "Drink up, feel refreshed",
+    subtitle: "Support a healthy heart.",
     imageUrl: "/heart.webp",
     iconUrl: "/heart-icon.svg",
   },
   menopause: {
     bgColor: "oklch(0.9174 0.0295 317.24)",
-    textColor: "oklch(0.5718 0.1161 307.06)",
-    subtitle: "Drink up, feel refreshed",
+    textColor: "oklch(0.5191 0.115 306.86)",
+    subtitle: "Ease everyday menopause symptoms.",
     imageUrl: "/menopause.webp",
     iconUrl: "/menopause-icon.svg",
   },
   diabetes: {
     bgColor: "oklch(0.9425 0.0177 253.34)",
     textColor: "oklch(0.5688 0.1385 246.48)",
-    subtitle: "Drink up, feel refreshed",
+    subtitle: "Support healthy blood sugar levels.",
     imageUrl: "/diabetes.webp",
     iconUrl: "/diabetes-icon.svg",
   },

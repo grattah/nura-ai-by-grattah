@@ -12,6 +12,7 @@ import { getCategoryConfig } from "@/lib/category-config";
 interface RecipeCardNewProps {
   id: string;
   title: string;
+  catSlug?: string;
   imageUrl?: string;
   category?: string;
   href?: string;
@@ -21,6 +22,7 @@ interface RecipeCardNewProps {
 
 export function RecipeCardNew({
   title,
+  catSlug,
   imageUrl,
   category,
   href = "#",
@@ -38,8 +40,6 @@ export function RecipeCardNew({
     e.stopPropagation();
     setPaywallOpen(true);
   };
-
-  const catSlug = category?.toLowerCase();
 
   return (
     <>

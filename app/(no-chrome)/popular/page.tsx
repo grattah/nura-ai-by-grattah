@@ -1,4 +1,3 @@
-// app/popular/page.tsx (or wherever this lives)
 import Link from "next/link";
 import { MoveRight } from "lucide-react";
 import Image from "next/image";
@@ -24,7 +23,7 @@ const page = async () => {
         <div className="grid grid-cols-2 gap-3 space-y-3">
           {recipes.map((recipe) => {
             const firstTag = recipe.recipe_tags?.[0]?.tags?.name ?? null;
-            const catSlug = firstTag.toLowerCase();
+            const catSlug = recipe.recipe_tags?.[0]?.tags?.slug ?? null;
             return (
               <div key={recipe.id} className="flex flex-col gap-2">
                 {recipe.image_url && (
