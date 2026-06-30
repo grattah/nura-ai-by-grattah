@@ -46,7 +46,7 @@ export function CategoryCard({
         </div>
 
         {/* Right: image + chevron */}
-        <div className="shrink-0 overflow-hidden">
+        <div className="shrink-0 overflow-hidden relative">
           <Image
             src={config.imageUrl}
             alt={name}
