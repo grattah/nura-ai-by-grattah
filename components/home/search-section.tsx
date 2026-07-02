@@ -104,12 +104,12 @@ export function SearchSection() {
           <p className="text-xs font-medium text-subtle uppercase tracking-wider mb-3">
             Common Concerns
           </p>
-          <div className="flex flex-wrap gap-2 mx-3">
+          <div className="flex gap-2">
             {COMMON_CONCERNS.map((concern) => (
               <button
                 key={concern}
                 onClick={() => handleCommonConcerns(concern)}
-                className="px-5 py-2.5 rounded-full bg-badge text-sm text-foreground border border-badge-border hover:opacity-75 transition-opacity active:scale-95"
+                className="px-5 py-2.5 w-full rounded-full bg-badge text-sm text-foreground border border-badge-border hover:opacity-75 transition-opacity active:scale-95"
               >
                 {concern}
               </button>
