@@ -51,12 +51,19 @@ describe("LLM endpoints require authentication (audit H2)", () => {
     expect(h.generateText).not.toHaveBeenCalled();
   });
 
-  it("recipes/suggestions returns 401 and skips the model when unauthenticated", async () => {
+  it("recipes/suggestions is PUBLIC — unauthenticated requests reach the model", async () => {
+    // Suggestions are a free feature; only generating a recipe from one is gated.
+    h.generateObject.mockResolvedValue({
+      object: { suggestions: [{ title: "Ginger Lemon Tea" }] },
+    });
     const res = await suggestionsPOST(
-      req({ query: "bloating" }, "http://test/api/recipes/suggestions"),
+      req(
+        { query: `unique-${Date.now()}` }, // avoid the module-level cache
+        "http://test/api/recipes/suggestions",
+      ),
     );
-    expect(res.status).toBe(401);
-    expect(h.generateObject).not.toHaveBeenCalled();
+    expect(res.status).not.toBe(401);
+    expect(h.generateObject).toHaveBeenCalledTimes(1);
   });
 
   it("rag/questions proceeds past the gate when authenticated", async () => {
