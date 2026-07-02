@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import {
   scoreSupports,
+  MAX_SUPPORT_SCORES,
   type SupportScore,
   type AssignedSupport,
 } from "@/lib/wellness-score";
@@ -80,9 +81,13 @@ export async function POST(req: NextRequest) {
 
   const recipe = data as unknown as RecipeRow;
 
-  // Fill-once: return the cached scores if present.
+  // Fill-once: return the cached scores if present. Legacy rows may hold up to 3
+  // entries, so cap to the top N by score here too.
   if (Array.isArray(recipe.support_scores) && recipe.support_scores.length) {
-    return NextResponse.json({ scores: recipe.support_scores });
+    const capped = [...recipe.support_scores]
+      .sort((a, b) => b.score - a.score)
+      .slice(0, MAX_SUPPORT_SCORES);
+    return NextResponse.json({ scores: capped });
   }
 
   const supports: AssignedSupport[] = (recipe.recipe_tags ?? [])
