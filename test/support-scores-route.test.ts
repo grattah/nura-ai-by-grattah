@@ -13,6 +13,7 @@ vi.mock("@/lib/supabase/server", () => ({
 vi.mock("@supabase/supabase-js", () => ({ createClient: vi.fn(() => h.admin!.client) }));
 vi.mock("@/lib/wellness-score", () => ({
   scoreSupports: (...a: unknown[]) => h.scoreSupports(...a),
+  MAX_SUPPORT_SCORES: 2,
 }));
 
 import { POST } from "@/app/api/recipes/support-scores/route";
