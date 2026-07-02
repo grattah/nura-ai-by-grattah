@@ -84,24 +84,24 @@ export function SearchSection() {
           />
 
           {/* {query.trim() ? ( */}
-          {/* <button
+          <button
             onClick={handleSubmit}
             disabled={isRouteLoading}
-            className="size-7 bg-transparent rounded-full flex items-center justify-center shrink-0 disabled:opacity-70"
+            className={`size-7 rounded-full flex items-center justify-center shrink-0 disabled:opacity-70 ${query.length === 0 ? "opacity-50": ""}`}
+            style={{ backgroundColor: "var(--mint-green)" }}
             aria-label="Search"
-          > */}
-          {
-            isRouteLoading ? (
-              <Loader2 className="size-4 text-mint-green animate-spin shrink-0" />
-            ) : null
-            // <SendHorizontal className="size-4 text-white" />
-          }
-          {/* </button> */}
+          >
+            {isRouteLoading ? (
+              <Loader2 className="size-4 text-white animate-spin" />
+            ) : (
+              <SendHorizontal className="size-4 text-white" />
+            )}
+          </button>
         </div>
 
         {/* Common concerns */}
         <div>
-          <p className="text-xs font-medium text-subtle uppercase tracking-wider mb-3">
+          <p className="text-xs font-medium text-subtle uppercase tracking-wider mb-3 mt-[23.06px]">
             Common Concerns
           </p>
           <div className="flex gap-2">
