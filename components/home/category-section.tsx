@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Lock } from "lucide-react";
 import { PaywallModal } from "../paywall/paywall-modal";
 import type { Tag } from "@/lib/types";
 import { getCategoryConfig } from "@/lib/category-config";
@@ -23,22 +22,12 @@ export function CategorySection({ categories }: CategorySectionProps) {
         <h2 className="text-title leading-none font-semibold text-grey-c950">
           Categories
         </h2>
-        {hasAccess ? (
-          <Link
-            href="/categories"
-            className="flex items-center gap-1 text-base text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4 font-semibold"
-          >
-            See all
-          </Link>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setModalOpen(true)}
-            className="flex items-center gap-1 text-base text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4 font-semibold"
-          >
-            See all <Lock className="size-3" />
-          </button>
-        )}
+        <Link
+          href="/categories"
+          className="flex items-center gap-1 text-base text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4 font-semibold"
+        >
+          See all
+        </Link>
       </div>
       <div className="grid grid-cols-1 gap-2 w-full">
         {categories.slice(0, 3).map((tag) => (

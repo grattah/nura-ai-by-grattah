@@ -1,8 +1,8 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { CategoryCard } from "@/components/categories/category-card";
-import { getCategoryConfig } from "@/lib/category-config";
 import { getCategories } from "@/actions/categories";
+import CategoriesList from "@/components/categories/categories-list";
+
 
 export default async function CategoriesPage() {
   const categories = await getCategories();
@@ -25,16 +25,7 @@ export default async function CategoriesPage() {
       </div>
 
       {/* Category list */}
-      <div className="px-6 space-y-3">
-        {categories.map((tag) => (
-          <CategoryCard
-            key={tag.id}
-            slug={tag.slug}
-            name={tag.name}
-            config={getCategoryConfig(tag.slug)}
-          />
-        ))}
-      </div>
+      <CategoriesList categories={categories} />
     </div>
   );
 }
