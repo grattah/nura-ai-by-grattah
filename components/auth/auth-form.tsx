@@ -651,36 +651,36 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 </div>
                 {email.length === 0 && (
                   <div className="flex justify-between items-center bg-[#ECECE1] mt-13 py-3 px-6 rounded-3xl">
-                    <div className="flex flex-col gap-0.75 text-center items-center">
+                    <div className="flex flex-col gap-0.75 text-center items-center px-2">
                       <Leaflet />
-                      <p className="text-[#103E2A] font-semibold text-[11.89px] max-[400px]:text-[9px]">
+                      <p className="text-[#103E2A] font-semibold text-sm max-[400px]:xs text-nowrap">
                         Made for you
                       </p>
-                      <p className="text-[10px] max-[400px]:text-[8px]">
+                      <p className="text-xs max-[400px]:text-2xs">
                         Personalised wellness tips
                       </p>
                     </div>
 
-                    <div className="w-13 h-inherit bg-[#E2DDD4]" />
+                    <div className="w-px h-16 self-end bg-[#E2DDD4]" />
 
-                    <div className="flex flex-col gap-0.75 text-center items-center">
+                    <div className="flex flex-col gap-0.75 text-center items-center px-2">
                       <ShieldMark />
-                      <p className="text-[#103E2A] font-semibold text-[11.89px] max-[400px]:text-[9px] text-nowrap">
+                      <p className="text-[#103E2A] font-semibold text-sm max-[400px]:xs text-nowrap">
                         Your privacy
                       </p>
-                      <p className="text-[10px] max-[400px]:text-[8px]">
+                      <p className="text-xs max-[400px]:text-2xs">
                         We keep your data safe
                       </p>
                     </div>
 
-                    <div className="w-13 h-inherit bg-[#E2DDD4]" />
+                    <div className="w-px h-16 self-end bg-[#E2DDD4]" />
 
-                    <div className="flex flex-col gap-0.75 text-center items-center">
-                      <FaHeart color="#678954" size={20} />
-                      <p className="text-[#103E2A] font-semibold text-[11.89px] max-[400px]:text-[9px]">
+                    <div className="flex flex-col gap-0.75 text-center items-center px-2">
+                      <FaHeart color="#678954" size={18} />
+                      <p className="text-[#103E2A] font-semibold text-sm max-[400px]:text-xs">
                         Worth It
                       </p>
-                      <p className="text-[10px] max-[400px]:text-[8px]">
+                      <p className="text-xs max-[400px]:text-2xs">
                         Premium features, real benefits
                       </p>
                     </div>

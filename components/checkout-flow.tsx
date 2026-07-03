@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, X, Mail, KeyRound } from "lucide-react";
 import { HiSparkles } from "react-icons/hi";
-import { FaBookOpen, FaBookmark } from "react-icons/fa";
+import { FaBookOpen, FaBookmark, FaHeart } from "react-icons/fa";
 import CoinStack from "./vectors/CoinStack";
 import FilledLock from "@/components/vectors/filled-lock";
 import { createClient } from "@/lib/supabase/client";
@@ -66,10 +66,9 @@ const FEATURES = [
     subtitle: "Save your remedies for whenever you need them",
   },
   {
-    icon: CoinStack,
-    title: "Free weekly tokens",
-    subtitle:
-      "Enjoy complimentary weekly tokens for personalized insights and wellness feedback.",
+    icon: FaHeart,
+    title: "Community insights",
+    subtitle: "Real time reviews from users",
   },
 ];
 
@@ -236,37 +235,36 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
             </div>
 
             {/* Feature list */}
-            <div className="grid grid-cols-2 bg-[#ECECE1] rounded-3xl p-6">
-              {FEATURES.map((f, i) => {
+            <div className="relative grid grid-cols-2 bg-[#ECECE1] rounded-3xl p-6">
+              {FEATURES.map((f) => {
                 const Icon = f.icon;
-                // Index positions in a 2x2:
-                // 0 = top-left, 1 = top-right, 2 = bottom-left, 3 = bottom-right
-                const borders = [
-                  "border-r border-b border-[#D8D8CC]", // top-left: line on its right + bottom
-                  "border-b border-[#D8D8CC]", // top-right: line on its bottom only
-                  "border-r border-[#D8D8CC]", // bottom-left: line on its right only
-                  "", // bottom-right: no borders
-                ];
                 return (
                   <div
                     key={f.title}
-                    className={`flex flex-col items-center text-center gap-3 px-4 py-6 ${borders[i]}`}
+                    className="flex flex-col items-center text-center gap-3 px-4 py-6"
                   >
                     <Icon
                       className="size-6"
                       style={{ color: "var(--mint-green)" }}
                     />
                     <div className="space-y-1">
-                      <p className="text-base font-semibold text-base-text">
+                      <p className="font-semibold text-[#103E2A] text-sm">
                         {f.title}
                       </p>
-                      <p className="text-sm text-subtle font-medium">
-                        {f.subtitle}
-                      </p>
+                      <p className="font-medium text-xs">{f.subtitle}</p>
                     </div>
                   </div>
                 );
               })}
+
+              {/* Horizontal divider: one continuous line across the middle */}
+              <div className="pointer-events-none absolute top-1/2 left-6 right-6 -translate-y-1/2 h-px bg-[#D8D8CC]" />
+
+              {/* Vertical divider, top segment: stops 6px above the horizontal line */}
+              <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-6 bottom-[calc(50%+6px)] w-px bg-[#D8D8CC]" />
+
+              {/* Vertical divider, bottom segment: starts 6px below the horizontal line */}
+              <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-[calc(50%+6px)] bottom-6 w-px bg-[#D8D8CC]" />
             </div>
 
             {/* Plan options */}
@@ -326,7 +324,7 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
             </div>
 
             {/* Continue */}
-            <div className="space-y-2 pt-2">
+            <div className="space-y-2">
               <button
                 type="button"
                 onClick={handleContinueFromPlan}
