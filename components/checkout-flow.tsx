@@ -63,7 +63,7 @@ const FEATURES = [
   {
     icon: FaBookmark,
     title: "Keep your remedies closed",
-    subtitle: "Save your remedies for whenever you need them",
+    subtitle: "Save your recipes for whenever you need them",
   },
   {
     icon: FaHeart,
@@ -212,7 +212,7 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
       {/* ── Step: plan selection ── */}
       {step === "plan" && (
         <>
-          <div className="flex justify-end px-4 pt-5 pb-6">
+          <div className="flex justify-end px-6 pt-5">
             <button
               onClick={() => router.push("/")}
               className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
@@ -222,12 +222,12 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
             </button>
           </div>
 
-          <div className="px-4 flex flex-col gap-[40px]">
+          <div className="px-6 flex flex-col gap-10">
             <div className="flex flex-col gap-3 items-center">
-              <p className="font-semibold text-2xl">Get full access</p>
-              <p className="lateef-bold font-semibold text-[40px] leading-10 text-center w-74.5">
+              <p className="font-semibold text-xl">Get full access</p>
+              <p className="lateef-bold font-semibold text-40 leading-8 text-center max-w-74.5">
                 Your body deserves the{" "}
-                <span className="text-[#227B6F] lateef-bold">
+                <span className="text-mint-green lateef-bold">
                   VIP treatment
                 </span>
               </p>
@@ -235,36 +235,45 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
             </div>
 
             {/* Feature list */}
-            <div className="relative grid grid-cols-2 bg-[#ECECE1] rounded-3xl p-6">
-              {FEATURES.map((f) => {
-                const Icon = f.icon;
-                return (
-                  <div
-                    key={f.title}
-                    className="flex flex-col items-center text-center gap-3 px-4 py-6"
-                  >
-                    <Icon
-                      className="size-6"
-                      style={{ color: "var(--mint-green)" }}
-                    />
-                    <div className="space-y-1">
-                      <p className="font-semibold text-[#103E2A] text-sm">
-                        {f.title}
-                      </p>
-                      <p className="font-medium text-xs">{f.subtitle}</p>
+            <div className="grid grid-cols-1 divide-y divide-[#E2DDD4] bg-[#ECECE1] rounded-3xl px-6 py-4">
+              <div className="grid grid-cols-2 divide-x pb-4.5 pt-2">
+                {FEATURES.slice(0, 2).map((f, i) => {
+                  const Icon = f.icon;
+                  return (
+                    <div
+                      key={f.title}
+                      className={`flex flex-col items-center text-center gap-3 px-5 ${i % 2 === 0 ? "pr-8.5" : "pl-8.5"}`}
+                    >
+                      <Icon className="size-6 -mt-2 text-mint-green" />
+                      <div className="space-y-1 -mb-2">
+                        <p className="font-semibold text-[#103E2A] text-xs text-balance">
+                          {f.title}
+                        </p>
+                        <p className="text-balance text-[10px]">{f.subtitle}</p>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-
-              {/* Horizontal divider: one continuous line across the middle */}
-              <div className="pointer-events-none absolute top-1/2 left-6 right-6 -translate-y-1/2 h-px bg-[#D8D8CC]" />
-
-              {/* Vertical divider, top segment: stops 6px above the horizontal line */}
-              <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-6 bottom-[calc(50%+6px)] w-px bg-[#D8D8CC]" />
-
-              {/* Vertical divider, bottom segment: starts 6px below the horizontal line */}
-              <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-[calc(50%+6px)] bottom-6 w-px bg-[#D8D8CC]" />
+                  );
+                })}
+              </div>
+              <div className="grid grid-cols-2 divide-x pt-4.5 pb-2">
+                {FEATURES.slice(2, 4).map((f, i) => {
+                  const Icon = f.icon;
+                  return (
+                    <div
+                      key={f.title}
+                      className={`flex flex-col items-center text-center gap-3 px-5 ${i % 2 === 0 ? "pr-8.5" : "pl-8.5"}`}
+                    >
+                      <Icon className="size-6 -mt-2 text-mint-green" />
+                      <div className="space-y-1 -mb-2">
+                        <p className="font-semibold text-[#103E2A] text-xs text-balance">
+                          {f.title}
+                        </p>
+                        <p className="text-balance text-[10px]">{f.subtitle}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Plan options */}
@@ -344,7 +353,7 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
       {/* ── Step: email (guests only) ── */}
       {step === "email" && (
         <>
-          <div className="flex items-center justify-between px-4 pt-5 pb-4">
+          <div className="flex items-center justify-between px-6 pt-5 pb-4">
             <button
               onClick={() => setStep("plan")}
               className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
@@ -427,7 +436,7 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
       {/* ── Step: OTP (guests only) ── */}
       {step === "otp" && (
         <>
-          <div className="flex items-center justify-between px-4 pt-5 pb-4">
+          <div className="flex items-center justify-between px-6 pt-5 pb-4">
             <button
               onClick={() => setStep("email")}
               className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
@@ -511,7 +520,7 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
       {/* ── Step: payment ── */}
       {step === "payment" && (
         <>
-          <div className="flex items-center justify-between px-4 pt-5 pb-4 mb-7">
+          <div className="flex items-center justify-between px-6 pt-5 pb-4 mb-7">
             <button
               onClick={handlePaymentBack}
               className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
@@ -534,7 +543,7 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
             </button>
           </div>
 
-          <div className="px-4 space-y-4">
+          <div className="px-6 space-y-4">
             {/* Plan summary */}
             <div
               className="flex items-center justify-between px-4 py-3 rounded-2xl border"
