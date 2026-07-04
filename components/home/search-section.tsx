@@ -16,7 +16,7 @@ interface CommonConcerns {
 }
 
 export function SearchSection() {
-  const { hasAccess, isLoading } = useAccess();
+  const { hasAccess, isLoading, isAuthenticated } = useAccess();
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [isRouteLoading, setIsLoading] = useState(false);
@@ -24,13 +24,16 @@ export function SearchSection() {
 
   const requireAccess = useCallback(
     (cb: () => void) => {
-      if (!isLoading && !hasAccess) {
+      if(!isAuthenticated) {
+        router.push("/auth/login");
+        return;
+      } else if (isAuthenticated && !isLoading && !hasAccess) {
         setPaywallOpen(true);
         return;
       }
       cb();
     },
-    [hasAccess, isLoading],
+    [hasAccess, isLoading, isAuthenticated, router],
   );
 
   const handleSubmit = useCallback(() => {
@@ -48,10 +51,12 @@ export function SearchSection() {
   }, [query, requireAccess, router, isLoading]);
 
   const handleFocus = useCallback(() => {
-    if (!isLoading && !hasAccess) {
+    if(!isAuthenticated) {
+      router.push("/auth/login");
+    }else if (isAuthenticated && !isLoading && !hasAccess) {
       setPaywallOpen(true);
     }
-  }, [hasAccess, isLoading]);
+  }, [hasAccess, isLoading, isAuthenticated]);
 
   const handleCommonConcerns = (concern: string) => {
     requireAccess(() => {
@@ -101,7 +106,7 @@ export function SearchSection() {
 
         {/* Common concerns */}
         <div>
-          <p className="text-xs font-medium text-subtle uppercase tracking-wider mb-3 mt-[23.06px]">
+          <p className="text-xs font-medium text-subtle uppercase tracking-wider mb-3 mt-6">
             Common Concerns
           </p>
           <div className="flex gap-2">

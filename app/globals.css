@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Gveret+Levin&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Gveret+Levin&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Lateef:wght@200;300;400;500;600;700;800&display=swap");
 
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -93,7 +94,9 @@
   --space-20: clamp(16px, 4.7vw, 20px);
   --space-24: clamp(16px, 5.6vw, 24px);
   --space-28: clamp(22px, 6.5vw, 28px);
+  --space-30: clamp(24px, 7vw, 30px);
   --space-32: clamp(24px, 7.4vw, 32px);
+  --space-34: clamp(26px, 7.9vw, 34px);
   --space-36: clamp(28px, 8.4vw, 36px);
   --space-40: clamp(32px, 9.3vw, 40px);
   --space-44: clamp(34px, 10.2vw, 44px);
@@ -105,6 +108,7 @@
   --space-96: clamp(76px, 22.3vw, 96px);
   /* --space-116: clamp(93px, 27vw, 116px); */
 
+  --text-3xs: clamp(6.7px, 2.3vw, 10px);
   --text-2xs: clamp(7.4px, 2.6vw, 11px);
   --text-xs: clamp(11px, 2.8vw, 12px);
   --text-sm: clamp(12px, 3.2vw, 14px);
@@ -112,6 +116,7 @@
   --text-xl: clamp(16px, 4.7vw, 20px);
   --text-title: clamp(20px, 5.6vw, 24px);
   --text-hero: clamp(24px, 6.5vw, 28px);
+  --text-40: clamp(34px, 9.3vw, 40px);
 
   --nrounded-sm: clamp(6px, 1.9vw, 8px);
   --nrounded-md: clamp(10px, 2.8vw, 12px);
@@ -212,6 +217,8 @@
   --text-sm: var(--text-sm);
   --text-xs: var(--text-xs);
   --text-2xs: var(--text-2xs);
+  --text-3xs: var(--text-3xs);
+  --text-40: var(--text-40);
 
   /* Fluid spacing */
   --spacing-2: var(--space-8);
@@ -223,6 +230,7 @@
   --spacing-6: var(--space-24);
   --spacing-7: var(--space-28);
   --spacing-8: var(--space-32);
+  --spacing-8.5: var(--space-34);
   --spacing-9: var(--space-36);
   --spacing-10: var(--space-40);
   --spacing-11: var(--space-44);
@@ -339,5 +347,10 @@
 .gveret-levin {
   font-family: "Gveret Levin", cursive;
   font-weight: 400;
+  font-style: normal;
+}
+
+.lateef-bold {
+  font-family: "Lateef", serif;
   font-style: normal;
 }

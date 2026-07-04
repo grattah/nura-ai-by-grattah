@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useAccess } from "@/hooks/use-access";
 import { PaywallModal } from "./paywall-modal";
@@ -9,7 +10,8 @@ interface PaywallGateProps {
 }
 
 export function PaywallGate({ children }: PaywallGateProps) {
-  const { hasAccess, isLoading } = useAccess();
+  const router = useRouter();
+  const { hasAccess, isLoading, isAuthenticated } = useAccess();
   const [modalOpen, setModalOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -27,7 +29,11 @@ export function PaywallGate({ children }: PaywallGateProps) {
 
       e.stopImmediatePropagation();
       e.preventDefault();
-      setModalOpen(true);
+      if (!isAuthenticated) {
+        router.push("/auth/login"); // logged out → send to login
+      } else {
+        setModalOpen(true); // logged in, no subscription → upgrade modal
+      }
     };
 
     el.addEventListener("click", handleCapture, true);

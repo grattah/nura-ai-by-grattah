@@ -4,16 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import {
-  ArrowLeft,
-  X,
-  Mail,
-  KeyRound,
-  BookOpen,
-  Sparkles,
-  Bookmark,
-  Bell,
-} from "lucide-react";
+import { ArrowLeft, X, Mail, KeyRound } from "lucide-react";
+import { HiSparkles } from "react-icons/hi";
+import { FaBookOpen, FaBookmark, FaHeart } from "react-icons/fa";
 import CoinStack from "./vectors/CoinStack";
 import FilledLock from "@/components/vectors/filled-lock";
 import { createClient } from "@/lib/supabase/client";
@@ -21,6 +14,7 @@ import { initiateCheckout } from "@/actions/checkout";
 import { fetchClientSecretForPlan } from "@/actions/stripe";
 import { CheckoutEmbed } from "@/components/checkout-embed";
 import { NuraLogo } from "@/components/nura-logo";
+import image from "@/public/planImage.webp";
 
 type Plan = "annual" | "monthly";
 type Step = "plan" | "email" | "otp" | "payment";
@@ -57,24 +51,24 @@ const PLANS: {
 
 const FEATURES = [
   {
-    icon: BookOpen,
+    icon: FaBookOpen,
     title: "The full premium library",
     subtitle: "10,000+ curated carefully by experts.",
   },
   {
-    icon: Sparkles,
+    icon: HiSparkles,
     title: "Personalized nutrient guidance",
     subtitle: "Tailored to you and your concerns",
   },
   {
-    icon: Bookmark,
+    icon: FaBookmark,
     title: "Keep your remedies closed",
-    subtitle: "Save your remedies for whenever you need them",
+    subtitle: "Save your recipes for whenever you need them",
   },
   {
-    icon: CoinStack,
-    title: "Free weekly tokens",
-    subtitle: "Enjoy complimentary weekly tokens for personalized insights and wellness feedback.",
+    icon: FaHeart,
+    title: "Community insights",
+    subtitle: "Real time reviews from users",
   },
 ];
 
@@ -218,18 +212,7 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
       {/* ── Step: plan selection ── */}
       {step === "plan" && (
         <>
-          <div className="flex items-center justify-between px-4 pt-5 pb-6">
-            <Link href="/" className="flex items-center gap-1">
-              <Image
-                src="/logo-outlined.svg"
-                alt="Nuko Logo"
-                width={32}
-                height={32}
-              />
-              <span className="text-lg font-semibold text-brown tracking-tight">
-                Nuko
-              </span>
-            </Link>
+          <div className="flex justify-end px-6 pt-5">
             <button
               onClick={() => router.push("/")}
               className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
@@ -239,38 +222,58 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
             </button>
           </div>
 
-          <div className="px-4 space-y-6">
-            <h1 className="text-3xl font-semibold text-foreground leading-tight">
-              Your natural path,
-              <br />
-              <span className="italic" style={{ color: "var(--mint-green)" }}>
-                fully unlocked!
-              </span>
-            </h1>
+          <div className="px-6 flex flex-col gap-10">
+            <div className="flex flex-col gap-3 items-center">
+              <p className="font-semibold text-xl">Get full access</p>
+              <p className="lateef-bold font-semibold text-40 leading-8 text-center max-w-74.5">
+                Your body deserves the{" "}
+                <span className="text-mint-green lateef-bold">
+                  VIP treatment
+                </span>
+              </p>
+              <Image src={image} alt="image" width={150} height={76} />
+            </div>
 
             {/* Feature list */}
-            <div className="space-y-3 mb-14">
-              {FEATURES.map((f) => {
-                const Icon = f.icon;
-                return (
-                  <div key={f.title} className="flex items-center gap-3">
-                    <div className="size-10 shrink-0 rounded-lg bg-mint-green/10 flex items-center justify-center">
-                      <Icon
-                        className="size-5"
-                        style={{ color: "var(--mint-green)" }}
-                      />
+            <div className="grid grid-cols-1 divide-y divide-[#E2DDD4] bg-[#ECECE1] rounded-3xl px-6 py-4">
+              <div className="grid grid-cols-2 divide-x pb-4.5 pt-2">
+                {FEATURES.slice(0, 2).map((f, i) => {
+                  const Icon = f.icon;
+                  return (
+                    <div
+                      key={f.title}
+                      className={`flex flex-col items-center text-center gap-3 px-5 ${i % 2 === 0 ? "pr-8.5" : "pl-8.5"}`}
+                    >
+                      <Icon className="size-6 -mt-2 text-mint-green" />
+                      <div className="space-y-1 -mb-2">
+                        <p className="font-semibold text-[#103E2A] text-xs text-balance">
+                          {f.title}
+                        </p>
+                        <p className="text-balance text-[10px]">{f.subtitle}</p>
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-semibold text-base-text">
-                        {f.title}
-                      </p>
-                      <p className="text-xs text-subtle font-medium">
-                        {f.subtitle}
-                      </p>
+                  );
+                })}
+              </div>
+              <div className="grid grid-cols-2 divide-x pt-4.5 pb-2">
+                {FEATURES.slice(2, 4).map((f, i) => {
+                  const Icon = f.icon;
+                  return (
+                    <div
+                      key={f.title}
+                      className={`flex flex-col items-center text-center gap-3 px-5 ${i % 2 === 0 ? "pr-8.5" : "pl-8.5"}`}
+                    >
+                      <Icon className="size-6 -mt-2 text-mint-green" />
+                      <div className="space-y-1 -mb-2">
+                        <p className="font-semibold text-[#103E2A] text-xs text-balance">
+                          {f.title}
+                        </p>
+                        <p className="text-balance text-[10px]">{f.subtitle}</p>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
 
             {/* Plan options */}
@@ -291,15 +294,15 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
                       type="button"
                       onClick={() => setSelectedPlan(plan.id)}
                       className={`w-full z-10 relative text-left rounded-2xl p-4 border-2 bg-card transition-all ${
- isSelected ? "border-mint-green" : "border-border"
- }`}
+                        isSelected ? "border-mint-green" : "border-border"
+                      }`}
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
                           <div
                             className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
- isSelected ? "border-mint-green" : "border-border"
- }`}
+                              isSelected ? "border-mint-green" : "border-border"
+                            }`}
                           >
                             {isSelected && (
                               <div className="w-2.5 h-2.5 rounded-full bg-mint-green" />
@@ -330,7 +333,7 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
             </div>
 
             {/* Continue */}
-            <div className="space-y-2 pt-2">
+            <div className="space-y-2">
               <button
                 type="button"
                 onClick={handleContinueFromPlan}
@@ -350,7 +353,7 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
       {/* ── Step: email (guests only) ── */}
       {step === "email" && (
         <>
-          <div className="flex items-center justify-between px-4 pt-5 pb-4">
+          <div className="flex items-center justify-between px-6 pt-5 pb-4">
             <button
               onClick={() => setStep("plan")}
               className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
@@ -433,7 +436,7 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
       {/* ── Step: OTP (guests only) ── */}
       {step === "otp" && (
         <>
-          <div className="flex items-center justify-between px-4 pt-5 pb-4">
+          <div className="flex items-center justify-between px-6 pt-5 pb-4">
             <button
               onClick={() => setStep("email")}
               className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
@@ -517,7 +520,7 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
       {/* ── Step: payment ── */}
       {step === "payment" && (
         <>
-          <div className="flex items-center justify-between px-4 pt-5 pb-4 mb-7">
+          <div className="flex items-center justify-between px-6 pt-5 pb-4 mb-7">
             <button
               onClick={handlePaymentBack}
               className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
@@ -540,7 +543,7 @@ export function CheckoutFlow({ user }: CheckoutFlowProps) {
             </button>
           </div>
 
-          <div className="px-4 space-y-4">
+          <div className="px-6 space-y-4">
             {/* Plan summary */}
             <div
               className="flex items-center justify-between px-4 py-3 rounded-2xl border"

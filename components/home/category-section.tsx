@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
 import { PaywallModal } from "../paywall/paywall-modal";
 import type { Tag } from "@/lib/types";
 import { getCategoryConfig } from "@/lib/category-config";
@@ -13,7 +15,8 @@ interface CategorySectionProps {
 }
 
 export function CategorySection({ categories }: CategorySectionProps) {
-  const { hasAccess } = useAccess();
+  const router = useRouter();
+  const { hasAccess, isAuthenticated } = useAccess();
   const [modalOpen, setModalOpen] = useState(false);
 
   return (
@@ -37,7 +40,10 @@ export function CategorySection({ categories }: CategorySectionProps) {
             name={tag.name}
             config={getCategoryConfig(tag.slug)}
             onClick={(e) => {
-              if (!hasAccess) {
+              if (!isAuthenticated) {
+                e.preventDefault();
+                router.push("/auth/login");
+              } else if (isAuthenticated && !hasAccess) {
                 e.preventDefault();
                 setModalOpen(true);
               }
