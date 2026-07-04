@@ -99,17 +99,6 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
           >
             Get full access
           </button>
-
-          <div className="text-center space-y-1">
-            <Link
-              href="/auth/login"
-              className="block text-xs text-[#57605E]"
-              onClick={() => onOpenChange(false)}
-            >
-              Have an account?{" "}
-              <span className="font-semibold text-[#227B6F]">Sign in</span>
-            </Link>
-          </div>
         </div>
       </DialogContent>
     </Dialog>

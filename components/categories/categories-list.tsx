@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 
 import { CategoryCard } from "@/components/categories/category-card";
 import { getCategoryConfig } from "@/lib/category-config";
@@ -15,7 +16,8 @@ interface Categories {
 }
 
 const CategoriesList = ({ categories }: { categories: Categories[] }) => {
-  const { hasAccess } = useAccess();
+  const router = useRouter();
+  const { hasAccess, isAuthenticated } = useAccess();
   const [modalOpen, setModalOpen] = React.useState(false);
 
   return (
@@ -28,7 +30,10 @@ const CategoriesList = ({ categories }: { categories: Categories[] }) => {
             name={tag.name}
             config={getCategoryConfig(tag.slug)}
             onClick={(e) => {
-              if (!hasAccess) {
+              if (!isAuthenticated) {
+                e.preventDefault();
+                router.push("/auth/login");
+              } else if (isAuthenticated && !hasAccess) {
                 e.preventDefault();
                 setModalOpen(true);
               }
