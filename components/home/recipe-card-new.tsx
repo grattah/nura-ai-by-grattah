@@ -70,7 +70,7 @@ export function RecipeCardNew({
                 {category}
               </div>
             )}
-            <p className="text-sm font-medium text-[#57605E] leading-snug line-clamp-1">
+            <p className="text-sm font-medium text-subtle leading-snug line-clamp-1">
               {title}
             </p>
           </div>

@@ -101,7 +101,7 @@ export function SearchSection() {
 
         {/* Common concerns */}
         <div>
-          <p className="text-xs font-medium text-subtle uppercase tracking-wider mb-3 mt-[23.06px]">
+          <p className="text-xs font-medium text-subtle uppercase tracking-wider mb-3 mt-6">
             Common Concerns
           </p>
           <div className="flex gap-2">
