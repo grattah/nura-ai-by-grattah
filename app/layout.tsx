@@ -9,6 +9,7 @@ import { CreditsProvider } from "@/components/providers/credits-provider";
 import { getCachedAccess } from "@/lib/supabase/server";
 import { ChatCacheCleaner } from "@/components/chat-cache-cleaner";
 import { PerfProfiler } from "@/components/dev/perf-profiler";
+import { LiquidGlassFilter } from "@/components/liquid-glass-filter";
 
 const _redHatText = Red_Hat_Text({
   subsets: ["latin"],
@@ -97,6 +98,7 @@ export default async function RootLayout({
             </AccessProvider>
           </MobileGate>
         </ThemeProvider>
+        <LiquidGlassFilter />
         <ChatCacheCleaner />
         <Analytics />
         {process.env.NODE_ENV === "development" && <PerfProfiler />}
