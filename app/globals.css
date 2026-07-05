@@ -323,8 +323,14 @@
   position: relative;
   isolation: isolate;
 
+  /* Fallback frosted glass — works everywhere. Safari/iOS keep this because
+     they reject url() in backdrop-filter and drop the override below. */
   backdrop-filter: blur(8px) saturate(120%);
   -webkit-backdrop-filter: blur(8px) saturate(120%);
+
+  /* Chromium: refract the backdrop through the feDisplacementMap filter
+     (see components/liquid-glass-filter.tsx) for a real liquid-glass bend. */
+  backdrop-filter: url(#liquid-glass) blur(6px) saturate(140%) brightness(1.05);
 
   background: rgba(255, 255, 255, 0.2);
 
