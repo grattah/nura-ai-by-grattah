@@ -6,10 +6,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Sparkles, LockKeyhole, Check } from "lucide-react";
-import Link from "next/link";
+import { Check, X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import FilledLock from "../vectors/filled-lock";
+import { Plan, PLANS } from "@/constants";
+import { useState } from "react";
+import Time from "../vectors/time";
 
 interface PaywallModalProps {
   open: boolean;
@@ -19,48 +22,63 @@ interface PaywallModalProps {
 export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
   const router = useRouter();
 
+  // Plan chooser only — payment renders on the checkout page for the selected
+  // plan (passed via ?plan=).
+  const [selectedPlan, setSelectedPlan] = useState<Plan>("annual");
+
   const handleClose = (val: boolean) => {
     onOpenChange(val);
   };
 
   const benefits = [
     {
-      title: "See the highest-scoring recipes",
-      subtitle: "Based on your needs",
-    },
-    {
-      title: "10,000+ wellness recipes",
-      subtitle: "with expert tips",
+      title: "The full premium library",
+      subtitle: "10,000+ curated recipes by experts.",
     },
     {
       title: "Personalized nutrient guidance",
-      subtitle: "Tailored to you",
+      subtitle: "Tailored to you and your concerns",
+    },
+    {
+      title: "Keep your remedies closed",
+      subtitle: "Save your recipes for whenever you need them",
     },
   ];
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent
-        className="sm:max-w-md p-0 gap-0 overflow-hidden"
+        className="sm:max-w-md p-0 gap-0 overflow-hidden rounded-2xl"
         showCloseButton={false}
       >
-        <div className="p-6 space-y-5">
-          <DialogHeader className="flex flex-col items-center justify-center text-center space-y-5 gap-0">
-            <div className="p-3 rounded-full bg-mint-green w-min mb-5">
-              <LockKeyhole size={20} color="#FFFFFF" />
+        <div className="p-6 space-y-6 mt-8">
+          <button
+            onClick={() => handleClose(false)}
+            className="absolute top-4 right-6 size-10 rounded-full bg-grey-c100 p-2 grid place-items-center hover:opacity-75 transition-opacity"
+          >
+            <X className="size-6 text-grey-c600" />
+          </button>
+          <DialogHeader className="flex flex-col items-center justify-center text-center space-y-6 gap-0">
+            <div className="py-1.5 px-2 rounded-lg bg-warning-c100 flex items-center gap-x-1">
+              <Time />
+              <span className="text-warning-c900 text-xs font-semibold">
+                Your free trial has ended
+              </span>
             </div>
             <div className="space-y-3">
               <DialogTitle className="text-2xl max-[350px]:text-xl font-semibold text-black mb-3">
-                A premium remedy
+                Get Nuko+
               </DialogTitle>
-              <p className="text-subtle max-[350px]:text-sm">
-                Unlock the full method, ingredients and gain full access to all
-                Nuko’s recipes
-              </p>
+              <Image
+                alt="nuko+"
+                src="/planImage.webp"
+                width={150}
+                height={76}
+              />
             </div>
           </DialogHeader>
 
-          <ul className="rounded-2xl bg-grey-c100 py-4 px-3 space-y-3">
+          <ul className="rounded-2xl bg-grey-c100 py-4 px-3 space-y-3 mb-9">
             {benefits.map((item) => (
               <li key={item.title} className="flex items-center gap-3">
                 <Check
@@ -80,25 +98,77 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
             ))}
           </ul>
 
-          <div className="rounded-xl bg-[#F2F3F3] p-4 max-[350px]:p-3">
-            <p className="text-sm font-medium text-[#57605E]">Monthly</p>
-            <p className="mt-1">
-              <span className="text-xl max-[350px]:text-lg font-semibold text-[#1A1A1A]">
-                £7.99
-              </span>
-              <span className="text-sm text-[#57605E]"> / month</span>
-            </p>
+          <div className="space-y-3 pt-2">
+            {PLANS.map((plan) => {
+              const isSelected = selectedPlan === plan.id;
+              return (
+                <div className="relative" key={plan.id}>
+                  {plan.badge && (
+                    <span
+                      className="text-xs font-semibold px-3 z-0 py-1 pb-3.5 rounded-t-md text-white absolute -top-5 left-0"
+                      style={{ backgroundColor: "var(--mint-green)" }}
+                    >
+                      {plan.badge}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPlan(plan.id)}
+                    className={`w-full z-10 relative text-left rounded-xl p-3 border transition-all ${
+                      isSelected
+                        ? "border-mint-green bg-[#E6ECEA]"
+                        : "border-grey-c200 bg-grey-c100"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                            isSelected ? "border-mint-green" : "border-border"
+                          }`}
+                        >
+                          {isSelected && (
+                            <div className="w-2.5 h-2.5 rounded-full bg-mint-green" />
+                          )}
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm font-semibold text-base-text leading-5">
+                            {plan.label}
+                          </p>
+                          <p className="text-xs text-subtle leading-5">
+                            {plan.description}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0 flex flex-col space-y-1">
+                        <span className="text-xl font-semibold text-base-text leading-5">
+                          {plan.price}
+                        </span>
+                        <span className="text-xs text-subtle leading-5">
+                          {plan.per}
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              );
+            })}
           </div>
 
-          <button
-            className="w-full py-4 max-[350px]:py-3 rounded-4xl bg-[#227B6F] text-[#FFFFFF] font-medium"
-            onClick={() => {
-              onOpenChange(false);
-              router.push("/checkout");
-            }}
-          >
-            Get full access
-          </button>
+          <div className="space-y-2">
+            <button
+              className="w-full py-4 max-[350px]:py-3 rounded-4xl bg-[#227B6F] text-[#FFFFFF] font-medium"
+              onClick={() => {
+                onOpenChange(false);
+                router.push(`/checkout?plan=${selectedPlan}`);
+              }}
+            >
+              Get full access
+            </button>
+            <div className="flex items-center justify-center text-sm text-subtle gap-2">
+              <FilledLock /> <span>Secure checkout • Cancel anytime</span>
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
