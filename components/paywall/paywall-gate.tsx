@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useAccess } from "@/hooks/use-access";
 import { PaywallModal } from "./paywall-modal";
+import { SignInModal } from "@/components/auth/SignInModal";
 
 interface PaywallGateProps {
   children: React.ReactNode;
@@ -13,6 +14,7 @@ export function PaywallGate({ children }: PaywallGateProps) {
   const router = useRouter();
   const { hasAccess, isLoading, isAuthenticated } = useAccess();
   const [modalOpen, setModalOpen] = useState(false);
+  const [showSignInModal, setShowSignInModal] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const showOverlay = !isLoading && !hasAccess;
@@ -30,9 +32,11 @@ export function PaywallGate({ children }: PaywallGateProps) {
       e.stopImmediatePropagation();
       e.preventDefault();
       if (!isAuthenticated) {
-        router.push("/auth/login"); // logged out → send to login
+        setShowSignInModal(true);
+        setModalOpen(false); // logged out → send to login
       } else {
-        setModalOpen(true); // logged in, no subscription → upgrade modal
+        setModalOpen(true);
+        setShowSignInModal(false); // logged in, no subscription → upgrade modal
       }
     };
 
@@ -49,6 +53,14 @@ export function PaywallGate({ children }: PaywallGateProps) {
           <div className="absolute bottom-0 left-0 right-0 h-32 bg-linear-to-t from-background to-transparent pointer-events-none" />
         )}
       </div>
+
+      {showSignInModal && (
+        <SignInModal
+          onClose={() => {
+            setShowSignInModal(false);
+          }}
+        />
+      )}
 
       {/* Fixed: was onOpenChange={() => setModalOpen(true)} which never closed */}
       <PaywallModal open={modalOpen} onOpenChange={setModalOpen} />

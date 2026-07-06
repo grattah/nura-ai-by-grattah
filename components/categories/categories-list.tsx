@@ -7,6 +7,7 @@ import { CategoryCard } from "@/components/categories/category-card";
 import { getCategoryConfig } from "@/lib/category-config";
 import { useAccess } from "@/components/providers/access-provider";
 import { PaywallModal } from "../paywall/paywall-modal";
+import { SignInModal } from "@/components/auth/SignInModal";
 
 interface Categories {
   display_order: number;
@@ -19,6 +20,7 @@ const CategoriesList = ({ categories }: { categories: Categories[] }) => {
   const router = useRouter();
   const { hasAccess, isAuthenticated } = useAccess();
   const [modalOpen, setModalOpen] = React.useState(false);
+  const [showSignInModal, setShowSignInModal] = React.useState(false);
 
   return (
     <>
@@ -32,15 +34,25 @@ const CategoriesList = ({ categories }: { categories: Categories[] }) => {
             onClick={(e) => {
               if (!isAuthenticated) {
                 e.preventDefault();
-                router.push("/auth/login");
+                setShowSignInModal(true);
+                setModalOpen(false);
               } else if (isAuthenticated && !hasAccess) {
                 e.preventDefault();
                 setModalOpen(true);
+                setShowSignInModal(false);
               }
             }}
           />
         ))}
       </div>
+
+      {showSignInModal && (
+        <SignInModal
+          onClose={() => {
+            setShowSignInModal(false);
+          }}
+        />
+      )}
 
       <PaywallModal open={modalOpen} onOpenChange={setModalOpen} />
     </>
