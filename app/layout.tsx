@@ -61,7 +61,8 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { isAuthenticated, hasAccess } = await getCachedAccess();
+  const { isAuthenticated, hasAccess, hasEverSubscribed } =
+    await getCachedAccess();
 
   return (
     // DARK MODE: to re-enable, restore className="dark" on <html> and revert
@@ -93,6 +94,7 @@ export default async function RootLayout({
             <AccessProvider
               serverHasAccess={hasAccess}
               serverIsAuthenticated={isAuthenticated}
+              serverHasEverSubscribed={hasEverSubscribed}
             >
               <CreditsProvider>{children}</CreditsProvider>
             </AccessProvider>

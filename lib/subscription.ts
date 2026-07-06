@@ -34,6 +34,24 @@ export async function hasActiveSubscription(
 }
 
 /**
+ * True when the user has EVER had a subscription row (any status: active,
+ * canceled, expired…). Distinguishes an "old" lapsed subscriber from a brand-new
+ * user, which drives the paywall copy (new users see "Your free trial has ended";
+ * old users don't) and the personalized-search lock overlay.
+ */
+export async function hasEverSubscribed(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+): Promise<boolean> {
+  const { data } = await supabase
+    .from("subscriptions")
+    .select("id")
+    .eq("user_id", userId)
+    .limit(1);
+  return !!data?.length;
+}
+
+/**
  * Returns a user-facing message if `requestedPlan` should be blocked given an
  * existing active subscription, or `null` if the change is allowed.
  *

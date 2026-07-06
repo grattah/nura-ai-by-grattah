@@ -8,6 +8,7 @@ import image from "@/public/freeTokenImage.webp";
 import cash from "@/public/cash.webp";
 import LineUp from "@/components/vectors/LineUp";
 import CoinStack from "../vectors/CoinStack";
+import { FREE_UNITS } from "@/lib/credits";
 
 const FreeTokens = ({ onClose }: { onClose: () => void }) => {
   const router = useRouter();
@@ -45,7 +46,7 @@ const FreeTokens = ({ onClose }: { onClose: () => void }) => {
           <Image src={cash} alt="cash" width={48} height={48} />
           <div className="flex flex-col gap-0.75">
             <p className="text-[#103E2A] font-semibold max-[400px]:text-sm">
-              You got free credits!
+              You got free tokens!
             </p>
             <p className="text-sm max-[400px]:text-xs w-10/12 max-[400px]:w-full">
               Use them to explore, connect and feel good.
@@ -53,8 +54,10 @@ const FreeTokens = ({ onClose }: { onClose: () => void }) => {
           </div>
           <div className="relative">
             <div className="flex flex-col text-center text-white bg-[#3E6C4C] rounded-full py-4 px-6">
-              <p className="font-bold text-title max-[400px]:text-xl">25</p>
-              <p className="text-xs max-[400px]:text-2xs">FREE CREDITS</p>
+              <p className="font-bold text-title max-[400px]:text-xl">
+                {FREE_UNITS}
+              </p>
+              <p className="text-xs max-[400px]:text-2xs">FREE TOKENS</p>
             </div>
             <div className="absolute -top-1 -right-1">
               <LineUp />
@@ -73,7 +76,7 @@ const FreeTokens = ({ onClose }: { onClose: () => void }) => {
           </button>
           <p className="text-subtle text-sm flex items-center">
             <CoinStack />
-            Your free credits are ready to use
+            Your free tokens are ready to use
           </p>
         </div>
       </div>
