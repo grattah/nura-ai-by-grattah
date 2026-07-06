@@ -1,10 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { X } from "lucide-react";
 
-import avatar from "@/public/signInModal.png";
+import SignInModalImage from "../vectors/SignInModalImage";
 
 export function SignInModal({ onClose }: { onClose?: () => void }) {
   const router = useRouter();
@@ -30,7 +29,7 @@ export function SignInModal({ onClose }: { onClose?: () => void }) {
           </button>
         </div>
 
-        <Image src={avatar} alt="image" width={77} height={70} />
+        <SignInModalImage />
 
         <div className="flex flex-col gap-2 items-center mt-4.25 mb-3.5">
           <p className="font-semibold text-modaltitle text-black leading-6 lateef-bold max-w-49.25">
