@@ -32,7 +32,7 @@ export function SignInModal({ onClose }: { onClose?: () => void }) {
         <SignInModalImage />
 
         <div className="flex flex-col gap-2 items-center mt-4.25 mb-3.5">
-          <p className="font-semibold text-modaltitle text-black leading-6 lateef-bold max-w-49.25">
+          <p className="font-semibold text-modaltitle text-black leading-6 font-lateef max-w-49.25">
             Sign in to continue using the app
           </p>
           <p className="text-xs text-subtle">
