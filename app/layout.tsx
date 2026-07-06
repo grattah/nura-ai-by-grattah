@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Red_Hat_Text, Red_Hat_Display } from "next/font/google";
+import { Red_Hat_Text, Red_Hat_Display, Lateef } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -14,6 +14,13 @@ import { LiquidGlassFilter } from "@/components/liquid-glass-filter";
 const _redHatText = Red_Hat_Text({
   subsets: ["latin"],
   variable: "--font-redHatText",
+  display: "swap",
+});
+
+const _lateef = Lateef({
+  subsets: ["latin"],
+  variable: "--font-lateef",
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 

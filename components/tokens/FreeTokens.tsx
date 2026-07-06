@@ -26,7 +26,7 @@ const FreeTokens = ({ onClose }: { onClose: () => void }) => {
 
       <div className="px-6 w-full flex flex-col items-center justify-center">
         <div className="mt-8.25 flex flex-col gap-3 items-center">
-          <p className="font-semibold lateef-bold text-[40px] leading-8.5">
+          <p className="font-semibold font-lateef text-[40px] leading-8.5">
             Welcome to Nuko+
           </p>
           <p className="font-medium text-subtle">We’re so happy you’re here.</p>

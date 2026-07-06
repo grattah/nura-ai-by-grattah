@@ -555,7 +555,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
               <div className="mt-2">
                 {email.length === 0 && (
                   <div className="flex flex-col gap-1.75 text-center">
-                    <p className="lateef-bold font-bold text-[40px] max-[370px]:text-3xl">
+                    <p className="font-lateef font-bold text-[40px] max-[370px]:text-3xl">
                       Hey there! 👋
                     </p>
                     <div className="items-center flex flex-col">
