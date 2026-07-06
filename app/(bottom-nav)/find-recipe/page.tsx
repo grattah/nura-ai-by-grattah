@@ -24,6 +24,7 @@ import BackButton from "@/components/back-button";
 import { PaywallModal } from "@/components/paywall/paywall-modal";
 import TokensModal from "@/components/tokens/TokensModal";
 import Arrow from "@/components/vectors/Arrow";
+import { SignInModal } from "@/components/auth/SignInModal";
 
 interface RecipeSuggestion {
   title: string;
@@ -56,6 +57,7 @@ const page = () => {
   // Gated-response modals: paywall (guest / no subscription), token top-up (out of tokens).
   const [paywallOpen, setPaywallOpen] = React.useState(false);
   const [tokenModalOpen, setTokenModalOpen] = React.useState(false);
+  const [showSignInModal, setShowSignInModal] = React.useState(false);
   const [aiSuggestions, setAiSuggestions] = React.useState<RecipeSuggestion[]>(
     []
   );
@@ -214,12 +216,14 @@ const page = () => {
         if (res.status === 401) {
           setGenerating(false);
           setPendingRecipe(null);
-          router.push("/auth/login");
+          setShowSignInModal(true);
+          setPaywallOpen(false);
           return;
         } else if (res.status === 403) {
           setGenerating(false);
           setPendingRecipe(null);
           setPaywallOpen(true);
+          setShowSignInModal(false);
           return;
         }
 
@@ -595,6 +599,14 @@ const page = () => {
       </main>
       {showModalScreenLoader && (
         <ModalLoadingScreen message="Fetching your recipe..." />
+      )}
+
+      {showSignInModal && (
+        <SignInModal
+          onClose={() => {
+            setShowSignInModal(false);
+          }}
+        />
       )}
 
       {/* Guest / non-subscriber tried to generate → sign-up / subscribe modal. */}
