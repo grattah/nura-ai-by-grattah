@@ -211,12 +211,18 @@ const page = () => {
         }
         // Guest (401) or no active subscription (403): show the paywall/sign-up
         // modal rather than the generic red error.
-        if (res.status === 401 || res.status === 403) {
+        if (res.status === 401) {
+          setGenerating(false);
+          setPendingRecipe(null);
+          router.push("/auth/login");
+          return;
+        } else if (res.status === 403) {
           setGenerating(false);
           setPendingRecipe(null);
           setPaywallOpen(true);
           return;
         }
+
         if (!res.ok) throw new Error("generate failed");
         const data = await res.json();
         if (!data?.id) throw new Error("no id returned");
