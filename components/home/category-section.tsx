@@ -2,22 +2,22 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import { PaywallModal } from "../paywall/paywall-modal";
 import type { Tag } from "@/lib/types";
 import { getCategoryConfig } from "@/lib/category-config";
 import { CategoryCard } from "../categories/category-card";
 import { useAccess } from "@/components/providers/access-provider";
+import { SignInModal } from "@/components/auth/SignInModal";
 
 interface CategorySectionProps {
   categories: Tag[];
 }
 
 export function CategorySection({ categories }: CategorySectionProps) {
-  const router = useRouter();
   const { hasAccess, isAuthenticated } = useAccess();
   const [modalOpen, setModalOpen] = useState(false);
+  const [showSignInModal, setShowSignInModal] = useState(false);
 
   return (
     <div className="space-y-2">
@@ -42,15 +42,25 @@ export function CategorySection({ categories }: CategorySectionProps) {
             onClick={(e) => {
               if (!isAuthenticated) {
                 e.preventDefault();
-                router.push("/auth/login");
+                setShowSignInModal(true);
+                setModalOpen(false);
               } else if (isAuthenticated && !hasAccess) {
                 e.preventDefault();
                 setModalOpen(true);
+                setShowSignInModal(false);
               }
             }}
           />
         ))}
       </div>
+
+      {showSignInModal && (
+        <SignInModal
+          onClose={() => {
+            setShowSignInModal(false);
+          }}
+        />
+      )}
 
       <PaywallModal open={modalOpen} onOpenChange={setModalOpen} />
     </div>
