@@ -3,18 +3,21 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { hasActiveSubscription } from "@/lib/subscription";
 
 interface AccessState {
   hasAccess: boolean;
   isAuthenticated: boolean;
   isLoading: boolean;
+  /** Whether the user has ever had a subscription (any status) — drives the
+   * paywall "free trial ended" copy and the personalized-search lock overlay. */
+  hasEverSubscribed: boolean;
 }
 
 const initialState: AccessState = {
   hasAccess: false,
   isAuthenticated: false,
   isLoading: true,
+  hasEverSubscribed: false,
 };
 
 const AccessContext = createContext<AccessState>(initialState);
@@ -29,17 +32,20 @@ interface AccessProviderProps {
    */
   serverHasAccess: boolean;
   serverIsAuthenticated: boolean;
+  serverHasEverSubscribed: boolean;
 }
 
 export function AccessProvider({
   children,
   serverHasAccess,
   serverIsAuthenticated,
+  serverHasEverSubscribed,
 }: AccessProviderProps) {
   const [state, setState] = useState<AccessState>({
     hasAccess: serverHasAccess,
     isAuthenticated: serverIsAuthenticated,
     isLoading: false,
+    hasEverSubscribed: serverHasEverSubscribed,
   });
 
   // Server props are authoritative. Re-sync whenever they change — this is the
@@ -49,8 +55,9 @@ export function AccessProvider({
       hasAccess: serverHasAccess,
       isAuthenticated: serverIsAuthenticated,
       isLoading: false,
+      hasEverSubscribed: serverHasEverSubscribed,
     });
-  }, [serverHasAccess, serverIsAuthenticated]);
+  }, [serverHasAccess, serverIsAuthenticated, serverHasEverSubscribed]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -63,14 +70,37 @@ export function AccessProvider({
             hasAccess: false,
             isAuthenticated: false,
             isLoading: false,
+            hasEverSubscribed: false,
           });
         return;
       }
 
-      const valid = await hasActiveSubscription(supabase, session.user.id);
+      // Access is subscription OR free-trial units, and we also need the
+      // ever-subscribed flag — /api/credits computes both server-side, so read
+      // it rather than checking the subscription alone. Seed from the
+      // authoritative server props so a failed/lagging read never DOWNGRADES a
+      // genuinely-entitled user to "no access" (only a successful read moves it).
+      let hasAccess = serverHasAccess;
+      let everSubscribed = serverHasEverSubscribed;
+      try {
+        const res = await fetch("/api/credits", { cache: "no-store" });
+        if (res.ok) {
+          const body = await res.json();
+          hasAccess = !!body.hasAccess;
+          if (typeof body.hasEverSubscribed === "boolean")
+            everSubscribed = body.hasEverSubscribed;
+        }
+      } catch {
+        // Network hiccup — keep the server-seeded access rather than forcing false.
+      }
 
       if (!active) return;
-      setState({ hasAccess: valid, isAuthenticated: true, isLoading: false });
+      setState({
+        hasAccess,
+        isAuthenticated: true,
+        isLoading: false,
+        hasEverSubscribed: everSubscribed,
+      });
     }
 
     // Catch client-driven auth changes using the session the event already provides

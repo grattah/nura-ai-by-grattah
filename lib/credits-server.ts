@@ -20,6 +20,9 @@ interface RawState {
   extraPurchased: number;
   extraUsed: number;
   extraBalance: number;
+  freeGranted: number;
+  freeUsed: number;
+  freeRemaining: number;
   totalRemaining: number;
   resetAt: string | null;
   lastPurchaseAt: string | null;
@@ -33,6 +36,9 @@ function toState(raw: RawState | null): TokenState {
     extraPurchased: 0,
     extraUsed: 0,
     extraBalance: 0,
+    freeGranted: 0,
+    freeUsed: 0,
+    freeRemaining: 0,
     totalRemaining: WEEKLY_UNITS,
     resetAt: null,
     lastPurchaseAt: null,
