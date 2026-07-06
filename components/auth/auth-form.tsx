@@ -237,15 +237,11 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         // Not subscribed: send to free-tokens only if they've never seen it.
         // This RPC atomically checks-and-sets the flag, so it returns true
         // exactly once per user, ever.
-        const { data: shouldSeeFreeTokens } = await supabase.rpc(
-          "claim_free_tokens_redirect"
-        );
-        destination = shouldSeeFreeTokens ? "/free-tokens" : "/";
+        destination = "/";
       }
     }
   
     router.push(destination);
-    router.refresh();
   };
 
   // ─── OTP Form submit ──────────────────────────────────────────────────────
