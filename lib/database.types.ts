@@ -274,6 +274,8 @@ export type Database = {
           created_at: string
           extra_purchased: number
           extra_used: number
+          free_granted: number
+          free_used: number
           last_purchase_at: string | null
           updated_at: string
           user_id: string
@@ -284,6 +286,8 @@ export type Database = {
           created_at?: string
           extra_purchased?: number
           extra_used?: number
+          free_granted?: number
+          free_used?: number
           last_purchase_at?: string | null
           updated_at?: string
           user_id: string
@@ -294,6 +298,8 @@ export type Database = {
           created_at?: string
           extra_purchased?: number
           extra_used?: number
+          free_granted?: number
+          free_used?: number
           last_purchase_at?: string | null
           updated_at?: string
           user_id?: string
@@ -423,6 +429,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string | null
+          has_seen_free_tokens: boolean
           id: string
           is_admin: boolean
           username: string | null
@@ -431,6 +438,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
+          has_seen_free_tokens?: boolean
           id: string
           is_admin?: boolean
           username?: string | null
@@ -439,6 +447,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string | null
+          has_seen_free_tokens?: boolean
           id?: string
           is_admin?: boolean
           username?: string | null
@@ -796,6 +805,7 @@ export type Database = {
           has_password: boolean
         }[]
       }
+      claim_free_tokens_redirect: { Args: never; Returns: boolean }
       get_token_state: { Args: { p_user: string }; Returns: Json }
       increment_recipe_shares: { Args: { rid: string }; Returns: undefined }
       match_embeddings: {

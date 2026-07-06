@@ -220,8 +220,9 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-
+  
     let destination = "/";
+  
     if (user) {
       const { data: sub } = await supabase
         .from("subscriptions")
@@ -229,12 +230,18 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         .eq("user_id", user.id)
         .eq("status", "active")
         .maybeSingle();
-
-      destination = sub ? "/" : "/checkout";
+  
+      if (sub) {
+        destination = "/";
+      } else {
+        // Not subscribed: send to free-tokens only if they've never seen it.
+        // This RPC atomically checks-and-sets the flag, so it returns true
+        // exactly once per user, ever.
+        destination = "/";
+      }
     }
-
+  
     router.push(destination);
-    router.refresh();
   };
 
   // ─── OTP Form submit ──────────────────────────────────────────────────────

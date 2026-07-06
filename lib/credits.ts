@@ -19,6 +19,9 @@ export interface TokenState {
   extraUsed: number;
   extraBalance: number;
   extraPct: number; // 0–100, share of purchased extra used
+  freeGranted: number;
+  freeUsed: number;
+  freeRemaining: number; // one-time trial units left (spent before weekly/extra)
   totalRemaining: number;
   resetAt: string | null; // ISO; when the weekly bucket next resets
   lastPurchaseAt: string | null;
@@ -27,6 +30,11 @@ export interface TokenState {
 // Free weekly allowance for subscribers (units). Keep in sync with the SQL
 // constant in the tokens migration.
 export const WEEKLY_UNITS = 50;
+
+// One-time free-trial units granted to a new (never-subscribed) user on their
+// first home visit. Keep in sync with the SQL constant in the free-credits
+// migration (claim_free_tokens_redirect).
+export const FREE_UNITS = 25;
 
 // Claude tokens per 1 unit. Calibrated so a typical action (~1–3k real tokens)
 // costs ~1–2 units. Output tokens dominate; MAX_OUTPUT_TOKENS bounds the worst case.

@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { cache } from "react";
 import { createClient as createClientImport } from "@supabase/supabase-js";
 import { Database } from "../database.types";
-import { hasActiveSubscription } from "../subscription";
+import { hasActiveSubscription, hasEverSubscribed } from "../subscription";
 
 /**
  * If using Fluid compute: Don't put this client in a global variable. Always create a new client within each
@@ -51,16 +51,43 @@ export const getCachedUser = cache(async () => {
  * server-action sign-out/sign-in instantly without a page reload.
  */
 export const getCachedAccess = cache(
-  async (): Promise<{ isAuthenticated: boolean; hasAccess: boolean }> => {
+  async (): Promise<{
+    isAuthenticated: boolean;
+    hasAccess: boolean;
+    hasEverSubscribed: boolean;
+  }> => {
     const {
       data: { user },
     } = await getCachedUser();
-    if (!user) return { isAuthenticated: false, hasAccess: false };
+    if (!user)
+      return {
+        isAuthenticated: false,
+        hasAccess: false,
+        hasEverSubscribed: false,
+      };
 
     const supabase = await createClient();
+    // Access = active subscription OR unspent free-trial units. Read the free
+    // balance directly (RLS lets a user read their own credits row) to avoid a
+    // circular import with credits-server, which imports from this module.
+    const [activeSub, everSubscribed, { data: creditRow }] = await Promise.all([
+      hasActiveSubscription(supabase, user.id),
+      hasEverSubscribed(supabase, user.id),
+      supabase
+        .from("credits")
+        .select("free_granted, free_used")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+    ]);
+
+    const freeRemaining = creditRow
+      ? Math.max(0, creditRow.free_granted - creditRow.free_used)
+      : 0;
+
     return {
       isAuthenticated: true,
-      hasAccess: await hasActiveSubscription(supabase, user.id),
+      hasAccess: activeSub || freeRemaining > 0,
+      hasEverSubscribed: everSubscribed,
     };
   },
 );

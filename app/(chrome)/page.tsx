@@ -1,7 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { unstable_cache } from "next/cache";
-import { createServiceRoleClient, getCachedUser } from "@/lib/supabase/server";
+import {
+  createServiceRoleClient,
+  getCachedUser,
+  createClient,
+} from "@/lib/supabase/server";
 import { SearchSection } from "@/components/home/search-section";
 import { RecipeCardNew } from "@/components/home/recipe-card-new";
 import { WellnessTipCard } from "@/components/home/wellness-tip-card";
@@ -12,6 +16,7 @@ import { withTiming } from "@/lib/perf";
 import { getDailyTip, utcDayKey, FALLBACK_TIP } from "@/lib/daily-tip";
 import { getCategories } from "@/actions/categories";
 import { MoveRight } from "lucide-react";
+import { FreeTokensModal } from "@/components/tokens/FreeTokensModal";
 
 type RecipeWithTags = {
   id: string;
@@ -39,6 +44,12 @@ const getPopularRecipes = unstable_cache(
 );
 
 export default async function HomePage() {
+  const supabase = await createClient();
+
+  const { data: showFreeTokens } = await supabase.rpc(
+    "claim_free_tokens_redirect",
+  );
+
   const [
     {
       data: { user },
@@ -133,16 +144,16 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <div className="border border-[#D3CCBD] rounded-3xl py-10 px-9 relative flex flex-col overflow-hidden">
-          <p className="text-base text-[#312817] font-alanSans z-10 relative">
+        <div className="border border-[#D3CCBD] rounded-3xl pt-12.5 pb-16 pl-10 pr-9 relative flex flex-col overflow-hidden">
+          <p className="text-base text-[#312817] alan-sans z-10 relative max-w-69.5">
             Your energy dipped this week? A beef & ginger juice could lift the
             afternoon slump - want the recipe?
           </p>
           <Link
             href={`/recipes/2307da01-c7a9-4b35-a581-526ae8f5339c`}
-            className="z-10 relative bg-mint-green self-end w-fit text-white rounded-full px-3 py-2.5 flex items-center gap-x-1 transition-transform active:scale-[0.98]"
+            className="z-10 absolute right-6 bottom-6 bg-mint-green self-end w-fit text-white rounded-full px-6 py-3 flex items-center gap-x-1 transition-transform active:scale-[0.98]"
           >
-            <span className="font-alanSans font-semibold text-sm">View</span>
+            <span className="alan-sans font-semibold text-sm">View</span>
             <MoveRight className="size-3.5" />
           </Link>
           <Image
@@ -182,6 +193,7 @@ export default async function HomePage() {
         {/* Upgrade / Pending banner */}
         <UpgradeBanner />
       </main>
+      {showFreeTokens && <FreeTokensModal />}
     </div>
   );
 }

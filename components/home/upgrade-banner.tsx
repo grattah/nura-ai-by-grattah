@@ -2,18 +2,32 @@
 import Image from "next/image";
 import { useState } from "react";
 import { PaywallModal } from "../paywall/paywall-modal";
+import { SignInModal } from "@/components/auth/SignInModal";
 import { useAccess } from "@/components/providers/access-provider";
 
 export function UpgradeBanner() {
-  const { hasAccess } = useAccess();
+  const { hasAccess, isAuthenticated } = useAccess();
   const [modalOpen, setModalOpen] = useState(false);
+  const [showSignInModal, setShowSignInModal] = useState(false);
+
   if (hasAccess) {
     return;
   }
 
   return (
     <>
-      <button onClick={() => setModalOpen(true)} className="block text-left">
+      <button
+        onClick={() => {
+          if (!isAuthenticated) {
+            setShowSignInModal(true);
+            setModalOpen(false);
+            return;
+          }
+          setModalOpen(true);
+          setShowSignInModal(false);
+        }}
+        className="block text-left"
+      >
         <div className="bg-green/12 rounded-2xl pr-3 flex gap-5 items-center relative h-29">
           <div className="shrink-0 flex items-center justify-center bg-no-repeat bg-[url('/shape-set.png')] w-22 h-29 absolute left-0 inset-y-0 rounded-l-2xl">
             <Image src="/3davatar.png" alt="3D Avatar" width={64} height={64} />
@@ -30,6 +44,15 @@ export function UpgradeBanner() {
           </div>
         </div>
       </button>
+
+      {showSignInModal && (
+        <SignInModal
+          onClose={() => {
+            setShowSignInModal(false);
+          }}
+        />
+      )}
+
       <PaywallModal open={modalOpen} onOpenChange={setModalOpen} />
     </>
   );
