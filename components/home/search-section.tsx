@@ -9,6 +9,7 @@ import { PaywallModal } from "@/components/paywall/paywall-modal";
 import { saveRecentSearch } from "@/components/search/edit-search-sheet";
 import { logSearch } from "@/actions/log-search";
 import { COMMON_CONCERNS } from "@/constants";
+import { SignInModal } from "@/components/auth/SignInModal";
 
 interface CommonConcerns {
   searchers: number;
@@ -21,19 +22,22 @@ export function SearchSection() {
   const [query, setQuery] = useState("");
   const [isRouteLoading, setIsLoading] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
+  const [showSignInModal, setShowSignInModal] = useState(false);
 
   const requireAccess = useCallback(
     (cb: () => void) => {
-      if(!isAuthenticated) {
-        router.push("/auth/login");
+      if (!isAuthenticated) {
+        setShowSignInModal(true);
+        setPaywallOpen(false);
         return;
       } else if (isAuthenticated && !isLoading && !hasAccess) {
         setPaywallOpen(true);
+        setShowSignInModal(false);
         return;
       }
       cb();
     },
-    [hasAccess, isLoading, isAuthenticated, router],
+    [hasAccess, isLoading, isAuthenticated, router]
   );
 
   const handleSubmit = useCallback(() => {
@@ -51,10 +55,12 @@ export function SearchSection() {
   }, [query, requireAccess, router, isLoading]);
 
   const handleFocus = useCallback(() => {
-    if(!isAuthenticated) {
-      router.push("/auth/login");
-    }else if (isAuthenticated && !isLoading && !hasAccess) {
+    if (!isAuthenticated) {
+      setShowSignInModal(true);
+      setPaywallOpen(false);
+    } else if (isAuthenticated && !isLoading && !hasAccess) {
       setPaywallOpen(true);
+      setShowSignInModal(false);
     }
   }, [hasAccess, isLoading, isAuthenticated]);
 
@@ -92,7 +98,9 @@ export function SearchSection() {
           <button
             onClick={handleSubmit}
             disabled={isRouteLoading}
-            className={`size-7 rounded-full flex items-center justify-center shrink-0 disabled:opacity-70 ${query.length === 0 ? "opacity-50": ""}`}
+            className={`size-7 rounded-full flex items-center justify-center shrink-0 disabled:opacity-70 ${
+              query.length === 0 ? "opacity-50" : ""
+            }`}
             style={{ backgroundColor: "var(--mint-green)" }}
             aria-label="Search"
           >
@@ -137,6 +145,14 @@ export function SearchSection() {
           ) : null} */}
         </div>
       </div>
+
+      {showSignInModal && (
+        <SignInModal
+          onClose={() => {
+            setShowSignInModal(false);
+          }}
+        />
+      )}
 
       <PaywallModal open={paywallOpen} onOpenChange={setPaywallOpen} />
     </>
