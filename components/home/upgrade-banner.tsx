@@ -1,11 +1,13 @@
 "use client";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PaywallModal } from "../paywall/paywall-modal";
 import { useAccess } from "@/components/providers/access-provider";
 
 export function UpgradeBanner() {
-  const { hasAccess } = useAccess();
+  const router = useRouter();
+  const { hasAccess, isAuthenticated } = useAccess();
   const [modalOpen, setModalOpen] = useState(false);
   if (hasAccess) {
     return;
@@ -13,7 +15,13 @@ export function UpgradeBanner() {
 
   return (
     <>
-      <button onClick={() => setModalOpen(true)} className="block text-left">
+      <button onClick={() => {
+        if (!isAuthenticated) {
+          router.push("/auth/login");
+          return;
+        }
+        setModalOpen(true);
+        }} className="block text-left">
         <div className="bg-green/12 rounded-2xl pr-3 flex gap-5 items-center relative h-29">
           <div className="shrink-0 flex items-center justify-center bg-no-repeat bg-[url('/shape-set.png')] w-22 h-29 absolute left-0 inset-y-0 rounded-l-2xl">
             <Image src="/3davatar.png" alt="3D Avatar" width={64} height={64} />

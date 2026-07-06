@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { unstable_cache } from "next/cache";
-import { createServiceRoleClient, getCachedUser } from "@/lib/supabase/server";
+import { createServiceRoleClient, getCachedUser, createClient } from "@/lib/supabase/server";
 import { SearchSection } from "@/components/home/search-section";
 import { RecipeCardNew } from "@/components/home/recipe-card-new";
 import { WellnessTipCard } from "@/components/home/wellness-tip-card";
@@ -12,6 +12,7 @@ import { withTiming } from "@/lib/perf";
 import { getDailyTip, utcDayKey, FALLBACK_TIP } from "@/lib/daily-tip";
 import { getCategories } from "@/actions/categories";
 import { MoveRight } from "lucide-react";
+import { FreeTokensModal } from "@/components/tokens/FreeTokensModal";
 
 type RecipeWithTags = {
   id: string;
@@ -39,6 +40,12 @@ const getPopularRecipes = unstable_cache(
 );
 
 export default async function HomePage() {
+  const supabase = await createClient();
+
+  const { data: showFreeTokens } = await supabase.rpc(
+    "claim_free_tokens_redirect"
+  );
+
   const [
     {
       data: { user },
@@ -182,6 +189,7 @@ export default async function HomePage() {
         {/* Upgrade / Pending banner */}
         <UpgradeBanner />
       </main>
+      { showFreeTokens && <FreeTokensModal /> }
     </div>
   );
 }
