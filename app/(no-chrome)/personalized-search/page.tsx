@@ -18,6 +18,8 @@ import { useAccess } from "@/hooks/use-access";
 import { useCredits } from "@/components/providers/credits-provider";
 import PersonalizedTokenModal from "@/components/tokens/PersonalizedTokenModal";
 import { EditSearchSheet } from "@/components/search/edit-search-sheet";
+import { UpgradeOverlay } from "@/components/paywall/upgrade-overlay";
+import { PaywallModal } from "@/components/paywall/paywall-modal";
 import type { PersonalizedSearchResult } from "@/app/api/personalized-search/route";
 import Cup from "@/components/vectors/cup";
 
@@ -85,12 +87,17 @@ function PersonalizedSearchContent() {
   const params = useSearchParams();
   const query = params.get("q") ?? "";
 
-  const { hasAccess, isLoading: accessLoading } = useAccess();
+  const { hasAccess, isLoading: accessLoading, hasEverSubscribed } = useAccess();
   const { applyState, openTokenWall, refresh: refreshCredits } = useCredits();
   const [result, setResult] = useState<PersonalizedSearchResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  // Set when access is denied (free trial exhausted / lapsed subscriber). Old
+  // users (ever subscribed) see the lock overlay; new users see the paywall.
+  const [blocked, setBlocked] = useState<{ everSubscribed: boolean } | null>(
+    null,
+  );
   const [feedback, setFeedback] = useState<"helpful" | "not_helpful" | null>(
     null,
   );
@@ -118,6 +125,14 @@ function PersonalizedSearchContent() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ query: q }),
         });
+        if (res.status === 403) {
+          // Out of access — free trial exhausted or lapsed subscriber. Re-sync
+          // server access state, then show the right wall (overlay vs paywall).
+          const body = await res.json().catch(() => ({}));
+          setBlocked({ everSubscribed: !!body.hasEverSubscribed });
+          router.refresh();
+          return;
+        }
         if (res.status === 402) {
           const body = await res.json().catch(() => ({}));
           if (body.state) applyState(body.state);
@@ -138,7 +153,7 @@ function PersonalizedSearchContent() {
         setLoading(false);
       }
     },
-    [applyState, openTokenWall, refreshCredits],
+    [applyState, openTokenWall, refreshCredits, router],
   );
 
   // Render a cached result instantly, independent of the access check —
@@ -158,7 +173,9 @@ function PersonalizedSearchContent() {
   useEffect(() => {
     if (accessLoading) return;
     if (!hasAccess) {
-      router.replace("/");
+      // No access: brand-new users out of credits get the paywall modal; lapsed
+      // subscribers get the "Upgrade to Nuko+" lock overlay.
+      setBlocked({ everSubscribed: hasEverSubscribed });
       return;
     }
     if (!query) {
@@ -166,7 +183,20 @@ function PersonalizedSearchContent() {
       return;
     }
     fetchResult(query);
-  }, [query, hasAccess, accessLoading, router, fetchResult]);
+  }, [query, hasAccess, accessLoading, hasEverSubscribed, router, fetchResult]);
+
+  if (blocked) {
+    return blocked.everSubscribed ? (
+      <UpgradeOverlay />
+    ) : (
+      <PaywallModal
+        open
+        onOpenChange={(o) => {
+          if (!o) router.back();
+        }}
+      />
+    );
+  }
 
   if (!result && (accessLoading || loading)) return <LoadingModal />;
 

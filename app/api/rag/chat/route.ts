@@ -17,7 +17,7 @@ import { retrieve, formatContext } from "@/lib/rag";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 import { getTokenState, meter } from "@/lib/credits-server";
-import { hasActiveSubscription } from "@/lib/subscription";
+import { hasActiveSubscription, hasEverSubscribed } from "@/lib/subscription";
 import { MAX_OUTPUT_TOKENS } from "@/lib/credits";
 
 // Extract total token usage from an AI SDK usage object (v5 shape).
@@ -147,11 +147,17 @@ export async function POST(req: NextRequest) {
 
   // Access + token state are independent reads — fetch them together. The token
   // state is only consulted when the turn is actually metered (below).
-  const [hasAccess, state] = await Promise.all([
+  const [activeSub, state] = await Promise.all([
     hasActiveSubscription(supabase, user.id),
     getTokenState(user.id),
   ]);
-  if (!hasAccess) return jsonError("Subscription required", 403);
+  // Access = active subscription OR unspent free-trial units.
+  if (!activeSub && state.freeRemaining <= 0) {
+    const everSubscribed = await hasEverSubscribed(supabase, user.id);
+    return jsonError("Subscription required", 403, {
+      hasEverSubscribed: everSubscribed,
+    });
+  }
 
   try {
     const {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ChevronRight, SendHorizontal, Loader2, Bot } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
@@ -51,6 +52,7 @@ export function FollowUpSection({
 
   const [input, setInput] = useState("");
 
+  const router = useRouter();
   const { applyState, openTokenWall, refresh: refreshCredits } = useCredits();
 
   const interceptFetch = useCallback(
@@ -59,7 +61,12 @@ export function FollowUpSection({
       init?: Parameters<typeof fetch>[1],
     ) => {
       const res = await fetch(reqInput, init);
-      if (res.status === 402) {
+      if (res.status === 403) {
+        // Out of access — a trial user just exhausted their free credits. Re-sync
+        // server access so the surrounding PaywallGate re-engages and blocks the
+        // section (new users then see the paywall modal on next interaction).
+        router.refresh();
+      } else if (res.status === 402) {
         res
           .clone()
           .json()
@@ -74,7 +81,7 @@ export function FollowUpSection({
       }
       return res;
     },
-    [applyState, openTokenWall, refreshCredits],
+    [applyState, openTokenWall, refreshCredits, router],
   );
 
   const transport = useMemo(

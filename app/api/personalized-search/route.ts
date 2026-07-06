@@ -4,7 +4,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getTokenState, meter } from "@/lib/credits-server";
-import { hasActiveSubscription } from "@/lib/subscription";
+import { hasActiveSubscription, hasEverSubscribed } from "@/lib/subscription";
 import { MAX_OUTPUT_TOKENS } from "@/lib/credits";
 
 export const maxDuration = 30;
@@ -56,16 +56,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Access + token state are independent reads — fetch them together to save a
-  // round-trip on the common (authorized) path.
-  const [hasAccess, state] = await Promise.all([
+  // Access = active subscription OR unspent free-trial units. Fetch the reads
+  // together to save round-trips on the common (authorized) path.
+  const [activeSub, state] = await Promise.all([
     hasActiveSubscription(supabase, user.id),
     getTokenState(user.id),
   ]);
 
+  const hasAccess = activeSub || state.freeRemaining > 0;
+
   if (!hasAccess) {
+    // Out of access: signal whether the user ever subscribed so the client can
+    // pick the right wall (new → paywall modal w/ "trial ended"; old → overlay).
+    const everSubscribed = await hasEverSubscribed(supabase, user.id);
     return NextResponse.json(
-      { error: "Subscription required" },
+      { error: "Subscription required", hasEverSubscribed: everSubscribed },
       { status: 403 },
     );
   }

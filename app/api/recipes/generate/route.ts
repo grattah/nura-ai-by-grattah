@@ -5,7 +5,7 @@ import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { WELLNESS_SOURCES } from "@/lib/wellness-sources";
 import { getTokenState, meter } from "@/lib/credits-server";
-import { hasActiveSubscription } from "@/lib/subscription";
+import { hasActiveSubscription, hasEverSubscribed } from "@/lib/subscription";
 import { MAX_OUTPUT_TOKENS } from "@/lib/credits";
 import { classifyDrinkType } from "@/lib/drink-types";
 
@@ -75,11 +75,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const hasAccess = await hasActiveSubscription(supabase, user.id);
+  // Access = active subscription OR unspent free-trial units.
+  const [activeSub, state] = await Promise.all([
+    hasActiveSubscription(supabase, user.id),
+    getTokenState(user.id),
+  ]);
 
-  if (!hasAccess) {
+  if (!activeSub && state.freeRemaining <= 0) {
+    const everSubscribed = await hasEverSubscribed(supabase, user.id);
     return NextResponse.json(
-      { error: "Subscription required" },
+      { error: "Subscription required", hasEverSubscribed: everSubscribed },
       { status: 403 },
     );
   }
@@ -146,9 +151,9 @@ export async function POST(req: NextRequest) {
   const tagList = (tags ?? []).map((t) => `${t.slug} | ${t.name}`).join("\n");
 
   // Gate now that we're actually generating (reused/matched recipes above are
-  // free). The real Claude usage is metered after success; the hero image is
-  // metered separately by the image route (fixed IMAGE_UNITS).
-  const state = await getTokenState(user.id);
+  // free). `state` was read up-front for the access check; a subscriber can pass
+  // that gate yet still be out of tokens here. The real Claude usage is metered
+  // after success; the hero image is metered separately by the image route.
   if (state.totalRemaining <= 0) {
     return NextResponse.json(
       { error: "insufficient_tokens", state },
