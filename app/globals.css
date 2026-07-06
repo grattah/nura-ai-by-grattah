@@ -55,10 +55,15 @@
   --green: oklch(0.526 0.1005 141.71);
 
   --grey-c100: oklch(96.34% 0.001 197.14);
+  --grey-c200: oklch(0.9173 0.0022 197.12);
   --grey-c300: oklch(0.8337 0.0071 174.34);
   --grey-c500: oklch(0.5819 0.0154 173.79);
+  --grey-c600: oklch(0.4806 0.0116 181.01);
   --grey-c700: oklch(0.387 0.0098 176.81);
   --grey-c950: oklch(0.1841 0.0038 164.6);
+
+  --warning-c100: oklch(0.9529 0.0148 70.89);
+  --warning-c900: oklch(0.3006 0.0544 66.94);
 
   --error-c500: oklch(0.5751 0.2171 27.55);
   --error-c700: oklch(0.3909 0.132 25.78);
@@ -198,10 +203,15 @@
   --color-green: var(--green);
 
   --color-grey-c100: var(--grey-c100);
+  --color-grey-c200: var(--grey-c200);
   --color-grey-c300: var(--grey-c300);
   --color-grey-c500: var(--grey-c500);
+  --color-grey-c600: var(--grey-c600);
   --color-grey-c700: var(--grey-c700);
   --color-grey-c950: var(--grey-c950);
+
+  --color-warning-c100: var(--warning-c100);
+  --color-warning-c900: var(--warning-c900);
 
   --color-error-c500: var(--error-c500);
   --color-error-c700: var(--error-c700);
@@ -313,8 +323,14 @@
   position: relative;
   isolation: isolate;
 
+  /* Fallback frosted glass — works everywhere. Safari/iOS keep this because
+     they reject url() in backdrop-filter and drop the override below. */
   backdrop-filter: blur(8px) saturate(120%);
   -webkit-backdrop-filter: blur(8px) saturate(120%);
+
+  /* Chromium: refract the backdrop through the feDisplacementMap filter
+     (see components/liquid-glass-filter.tsx) for a real liquid-glass bend. */
+  backdrop-filter: url(#liquid-glass) blur(6px) saturate(140%) brightness(1.05);
 
   background: rgba(255, 255, 255, 0.2);
 
