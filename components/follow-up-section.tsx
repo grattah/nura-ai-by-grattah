@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { ChevronRight, SendHorizontal, Loader2, Bot } from "lucide-react";
+import { PaywallModal } from "@/components/paywall/paywall-modal";
+import { SignInModal } from "@/components/auth/SignInModal";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { Card, CardContent } from "@/components/ui/card";
@@ -52,8 +53,9 @@ export function FollowUpSection({
 
   const [input, setInput] = useState("");
 
-  const router = useRouter();
   const { applyState, openTokenWall, refresh: refreshCredits } = useCredits();
+  const [paywallOpen, setPaywallOpen] = useState(false);
+  const [signInOpen, setSignInOpen] = useState(false);
 
   const interceptFetch = useCallback(
     async (
@@ -61,11 +63,12 @@ export function FollowUpSection({
       init?: Parameters<typeof fetch>[1],
     ) => {
       const res = await fetch(reqInput, init);
-      if (res.status === 403) {
-        // Out of access — a trial user just exhausted their free credits. Re-sync
-        // server access so the surrounding PaywallGate re-engages and blocks the
-        // section (new users then see the paywall modal on next interaction).
-        router.refresh();
+      if (res.status === 401) {
+        // Guest (normally caught upstream by AuthGate) → sign-in modal.
+        setSignInOpen(true);
+      } else if (res.status === 403) {
+        // Out of free chat replies → Get Nuko+.
+        setPaywallOpen(true);
       } else if (res.status === 402) {
         res
           .clone()
@@ -81,7 +84,7 @@ export function FollowUpSection({
       }
       return res;
     },
-    [applyState, openTokenWall, refreshCredits, router],
+    [applyState, openTokenWall, refreshCredits],
   );
 
   const transport = useMemo(
@@ -202,6 +205,12 @@ export function FollowUpSection({
         onChange={setInput}
         onSend={handleSend}
       />
+
+      {signInOpen && <SignInModal onClose={() => setSignInOpen(false)} />}
+
+      {/* Opens in place on this recipe page (no navigation) — closing just
+          dismisses it and stays put. */}
+      <PaywallModal open={paywallOpen} onOpenChange={setPaywallOpen} />
     </div>
   );
 }

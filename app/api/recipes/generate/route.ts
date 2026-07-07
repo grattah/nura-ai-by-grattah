@@ -5,9 +5,12 @@ import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { WELLNESS_SOURCES } from "@/lib/wellness-sources";
 import { getTokenState, meter } from "@/lib/credits-server";
+import { tryConsumeFreeView } from "@/lib/free-trial-server";
 import { hasActiveSubscription, hasEverSubscribed } from "@/lib/subscription";
-import { MAX_OUTPUT_TOKENS } from "@/lib/credits";
+import { MAX_OUTPUT_TOKENS, FREE_SURFACES } from "@/lib/credits";
 import { classifyDrinkType } from "@/lib/drink-types";
+
+const SURFACE = FREE_SURFACES.recipeGenerate;
 
 export const maxDuration = 60;
 
@@ -75,16 +78,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Access = active subscription OR unspent free-trial units.
-  const [activeSub, state] = await Promise.all([
+  // Access model: subscribers use the token system; new (never-subscribed) users
+  // get FREE_USES_PER_SURFACE free recipe generations; lapsed subscribers blocked.
+  const [activeSub, everSubscribed] = await Promise.all([
     hasActiveSubscription(supabase, user.id),
-    getTokenState(user.id),
+    hasEverSubscribed(supabase, user.id),
   ]);
 
-  if (!activeSub && state.freeRemaining <= 0) {
-    const everSubscribed = await hasEverSubscribed(supabase, user.id);
+  if (!activeSub && everSubscribed) {
     return NextResponse.json(
-      { error: "Subscription required", hasEverSubscribed: everSubscribed },
+      { error: "Subscription required", hasEverSubscribed: true },
       { status: 403 },
     );
   }
@@ -103,6 +106,19 @@ export async function POST(req: NextRequest) {
   }
   const cleanName = name.trim();
   const norm = cleanName.toLowerCase();
+
+  if (!activeSub) {
+    // New user in free trial — count this distinct recipe (deduped by name) up
+    // front, so an "existing recipe" dedup hit below still consumes a use. The
+    // 3rd distinct recipe is blocked; re-requesting a counted one is free.
+    const allowed = await tryConsumeFreeView(user.id, SURFACE, norm);
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Subscription required", hasEverSubscribed: false },
+        { status: 403 },
+      );
+    }
+  }
 
   // Trusted sources to ground generation (passed from the page; clamped here).
   const domains = (
@@ -151,14 +167,17 @@ export async function POST(req: NextRequest) {
   const tagList = (tags ?? []).map((t) => `${t.slug} | ${t.name}`).join("\n");
 
   // Gate now that we're actually generating (reused/matched recipes above are
-  // free). `state` was read up-front for the access check; a subscriber can pass
-  // that gate yet still be out of tokens here. The real Claude usage is metered
-  // after success; the hero image is metered separately by the image route.
-  if (state.totalRemaining <= 0) {
-    return NextResponse.json(
-      { error: "insufficient_tokens", state },
-      { status: 402 },
-    );
+  // free). Subscribers can pass the access gate yet still be out of tokens here;
+  // new users are bounded by their free-use count instead. The real Claude usage
+  // is metered after success; the hero image is metered separately.
+  if (activeSub) {
+    const state = await getTokenState(user.id);
+    if (state.totalRemaining <= 0) {
+      return NextResponse.json(
+        { error: "insufficient_tokens", state },
+        { status: 402 },
+      );
+    }
   }
 
   // 2. Generate the recipe content.
@@ -201,13 +220,16 @@ ${tagList}`,
     );
   }
 
-  // Meter the real Claude usage now that generation succeeded.
-  await meter(
-    user.id,
-    recipeUsage?.totalTokens ??
-      (recipeUsage?.inputTokens ?? 0) + (recipeUsage?.outputTokens ?? 0),
-    cleanName,
-  );
+  // Subscribers meter real token usage; new users already consumed their free
+  // use above (deduped by recipe name, before the dedup lookups).
+  if (activeSub) {
+    await meter(
+      user.id,
+      recipeUsage?.totalTokens ??
+        (recipeUsage?.inputTokens ?? 0) + (recipeUsage?.outputTokens ?? 0),
+      cleanName,
+    );
+  }
 
   // 3. Insert the recipe (pending, owned by the requesting user).
   const insertPayload = {

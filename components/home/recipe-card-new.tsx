@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { getCloudinaryUrl } from "@/lib/cloudinary";
-import { PaywallModal } from "@/components/paywall/paywall-modal";
 import { getCategoryConfig } from "@/lib/category-config";
 
 interface RecipeCardNewProps {
@@ -26,15 +24,12 @@ export function RecipeCardNew({
   href = "#",
   priority = false,
 }: RecipeCardNewProps) {
-  const [paywallOpen, setPaywallOpen] = useState(false);
-
   const transformedUrl = imageUrl
     ? getCloudinaryUrl(imageUrl, { width: 600, height: 600 })
     : undefined;
 
   return (
-    <>
-      <Link href={href} className="block group">
+    <Link href={href} className="block group">
         <div className="space-y-3">
           {/* Image + overlays */}
           <div className="relative w-full aspect-183/167 rounded-2xl overflow-hidden bg-grey-c500">
@@ -75,9 +70,6 @@ export function RecipeCardNew({
             </p>
           </div>
         </div>
-      </Link>
-
-      <PaywallModal open={paywallOpen} onOpenChange={setPaywallOpen} />
-    </>
+    </Link>
   );
 }
