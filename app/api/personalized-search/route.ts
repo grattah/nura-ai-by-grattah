@@ -4,8 +4,11 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getTokenState, meter } from "@/lib/credits-server";
+import { tryConsumeFreeView } from "@/lib/free-trial-server";
 import { hasActiveSubscription, hasEverSubscribed } from "@/lib/subscription";
-import { MAX_OUTPUT_TOKENS } from "@/lib/credits";
+import { MAX_OUTPUT_TOKENS, FREE_SURFACES } from "@/lib/credits";
+
+const SURFACE = FREE_SURFACES.personalizedSearch;
 
 export const maxDuration = 30;
 
@@ -56,21 +59,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Access = active subscription OR unspent free-trial units. Fetch the reads
-  // together to save round-trips on the common (authorized) path.
-  const [activeSub, state] = await Promise.all([
+  // Access model: subscribers use the token system; brand-new (never-subscribed)
+  // users get FREE_USES_PER_SURFACE free uses of this surface; lapsed subscribers
+  // are blocked. Determine which the caller is.
+  const [activeSub, everSubscribed] = await Promise.all([
     hasActiveSubscription(supabase, user.id),
-    getTokenState(user.id),
+    hasEverSubscribed(supabase, user.id),
   ]);
 
-  const hasAccess = activeSub || state.freeRemaining > 0;
-
-  if (!hasAccess) {
-    // Out of access: signal whether the user ever subscribed so the client can
-    // pick the right wall (new → paywall modal w/ "trial ended"; old → overlay).
-    const everSubscribed = await hasEverSubscribed(supabase, user.id);
+  if (!activeSub && everSubscribed) {
+    // Lapsed subscriber → no free trial. Client shows the personalized-search
+    // lock overlay for old users.
     return NextResponse.json(
-      { error: "Subscription required", hasEverSubscribed: everSubscribed },
+      { error: "Subscription required", hasEverSubscribed: true },
       { status: 403 },
     );
   }
@@ -86,13 +87,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Query is required" }, { status: 400 });
   }
 
-  // Gate before the call; we meter the real usage after it succeeds (cache hits
-  // never reach the route).
-  if (state.totalRemaining <= 0) {
-    return NextResponse.json(
-      { error: "insufficient_tokens", state },
-      { status: 402 },
-    );
+  if (!activeSub) {
+    // New user in free trial — count this distinct query (deduped by the same
+    // normalized key the client caches under, so a cached result also consumes a
+    // use). Re-searching an already-counted query is free; the 3rd distinct
+    // query is blocked.
+    const queryKey = query.trim().toLowerCase();
+    const allowed = await tryConsumeFreeView(user.id, SURFACE, queryKey);
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Subscription required", hasEverSubscribed: false },
+        { status: 403 },
+      );
+    }
+  }
+
+  // Subscribers: gate on token balance before the call (metered after success).
+  if (activeSub) {
+    const state = await getTokenState(user.id);
+    if (state.totalRemaining <= 0) {
+      return NextResponse.json(
+        { error: "insufficient_tokens", state },
+        { status: 402 },
+      );
+    }
   }
 
   try {
@@ -145,11 +163,14 @@ Rules:
 Provide personalized wellness guidance for this concern.`,
     });
 
-    // Meter the real Claude usage now that it succeeded.
-    const tokens =
-      usage?.totalTokens ??
-      (usage?.inputTokens ?? 0) + (usage?.outputTokens ?? 0);
-    await meter(user.id, tokens, "personalized-search");
+    // Subscribers meter real token usage; new users already consumed their free
+    // use above (deduped by query, so failed/cached retries don't double-count).
+    if (activeSub) {
+      const tokens =
+        usage?.totalTokens ??
+        (usage?.inputTokens ?? 0) + (usage?.outputTokens ?? 0);
+      await meter(user.id, tokens, "personalized-search");
+    }
 
     return NextResponse.json(object);
   } catch (err) {

@@ -10,7 +10,7 @@ const page = async () => {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if(!user) return;
+  if (!user) return null; // guest → RouteAuthGuard sign-in overlay
 
   return <HelpForm email={user?.email || ""} fullname={user.user_metadata.full_name || ""} />;
 };

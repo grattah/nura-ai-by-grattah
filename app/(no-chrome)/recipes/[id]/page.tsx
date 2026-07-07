@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 
 import { FollowUpSection } from "@/components/follow-up-section";
 import { buildRecipeContext } from "@/lib/recipe-context";
-import { PaywallGate } from "@/components/paywall/paywall-gate";
+import { AuthGate } from "@/components/auth/auth-gate";
 import { ShareButton } from "@/components/share-button";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { isBookmarked } from "@/actions/bookmark";
@@ -181,8 +181,11 @@ export default async function RecipeDetailPage({
 
   const shareDisabled = (recipe as { status?: string }).status !== "approved";
 
+  // Recipe detail is a public page; its premium components (ingredients, how-to,
+  // share, bookmark, comments, follow-up…) gate GUESTS to the sign-in modal via
+  // AuthGate. Authenticated users view freely — only the follow-up chat is paid.
   return (
-    <PaywallGate>
+    <AuthGate>
       <BookmarkProvider
         recipeId={recipe.id}
         initialBookmarked={bookmarked}
@@ -302,6 +305,6 @@ export default async function RecipeDetailPage({
           </main>
         </div>
       </BookmarkProvider>
-    </PaywallGate>
+    </AuthGate>
   );
 }

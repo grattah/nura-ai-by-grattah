@@ -32,9 +32,25 @@ export interface TokenState {
 export const WEEKLY_UNITS = 50;
 
 // One-time free-trial units granted to a new (never-subscribed) user on their
-// first home visit. Keep in sync with the SQL constant in the free-credits
-// migration (claim_free_tokens_redirect).
+// first home visit. Now purely cosmetic — drives the FreeTokensModal's "25"
+// copy. Real gating is the per-surface free-use model below.
 export const FREE_UNITS = 25;
+
+// Free-trial v2: a brand-new (never-subscribed) user gets this many successful
+// uses of EACH paywalled surface, tracked independently. Keep in sync with the
+// SQL cap in the free_trial_per_surface migration.
+export const FREE_USES_PER_SURFACE = 2;
+
+// Paid surfaces gated by the per-surface free-use model (LLM requests only —
+// content viewing is auth-gated, not paid). Values are the `surface` keys stored
+// in public.free_trial_usage.
+export const FREE_SURFACES = {
+  personalizedSearch: "personalized_search",
+  recipeGenerate: "recipe_generate",
+  followupChat: "followup_chat",
+} as const;
+
+export type FreeSurface = (typeof FREE_SURFACES)[keyof typeof FREE_SURFACES];
 
 // Claude tokens per 1 unit. Calibrated so a typical action (~1–3k real tokens)
 // costs ~1–2 units. Output tokens dominate; MAX_OUTPUT_TOKENS bounds the worst case.

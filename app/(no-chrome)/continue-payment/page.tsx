@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ContinuePaymentClient } from "./continue-payment-client";
 
@@ -8,7 +7,8 @@ export default async function ContinuePaymentPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/auth/login");
+  // Guests: land here and get the sign-in overlay from RouteAuthGuard.
+  if (!user) return null;
 
   return <ContinuePaymentClient />;
 }
