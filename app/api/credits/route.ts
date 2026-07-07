@@ -37,28 +37,31 @@ export async function GET() {
       authenticated: false,
       hasAccess: false,
       hasEverSubscribed: false,
+      isSubscriber: false,
       isLow: false,
       isOut: true,
       state: EMPTY,
     });
   }
 
-  const [activeSub, everSubscribed, state] = await Promise.all([
+  const [activeSub, everSubscribed] = await Promise.all([
     hasActiveSubscription(supabase, user.id),
     hasEverSubscribed(supabase, user.id),
-    getTokenState(user.id),
   ]);
 
-  // Access holds while subscribed OR while free-trial units remain. When those
-  // are exhausted the caller falls through to the paywall / lock overlay.
-  const hasAccess = activeSub || state.freeRemaining > 0;
+  // Global access = active subscriber OR a brand-new user still in their free
+  // trial; per-surface caps are enforced at the surfaces. Token state is a
+  // subscriber concept (buy-tokens UI) — new users get EMPTY.
+  const hasAccess = activeSub || !everSubscribed;
+  const state = activeSub ? await getTokenState(user.id) : EMPTY;
 
   return NextResponse.json({
     authenticated: true,
     hasAccess,
     hasEverSubscribed: everSubscribed,
-    isLow: isLowState(state),
-    isOut: state.totalRemaining <= 0,
+    isSubscriber: activeSub,
+    isLow: activeSub ? isLowState(state) : false,
+    isOut: activeSub ? state.totalRemaining <= 0 : false,
     state,
   });
 }

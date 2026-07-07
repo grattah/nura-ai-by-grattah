@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { redirect } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -70,8 +69,29 @@ export default async function NotificationsPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  // Guests: show the empty shell behind the sign-in overlay (no user to fetch for).
   if (error || !data?.claims || !user) {
-    redirect("/auth/login");
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="flex items-center gap-3 px-4 pt-5 pb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="p-0 h-auto min-h-11 min-w-11 text-foreground hover:opacity-70 transition-opacity gap-1 font-normal"
+          >
+            <Link href="/">
+              <ChevronLeft className="w-5 h-5" />
+              <span className="text-sm">Back</span>
+            </Link>
+          </Button>
+          <h1 className="text-xl font-bold text-foreground">Notifications</h1>
+        </div>
+        <main className="px-4 pb-10">
+          <EmptyNotifications />
+        </main>
+      </div>
+    );
   }
 
   const notifications = await getNotifications();

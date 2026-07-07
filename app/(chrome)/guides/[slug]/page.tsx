@@ -8,7 +8,6 @@ import { Separator } from "@/components/ui/separator";
 import { FollowUpSection } from "@/components/follow-up-section";
 import { dummyGuides, dummyRiskItems, RiskItem } from "@/lib/nura-dummy-data";
 import { cn } from "@/lib/utils";
-import { PaywallGate } from "@/components/paywall/paywall-gate";
 import BackButton from "@/components/back-button";
 import Image from "next/image";
 
@@ -70,8 +69,7 @@ export default function GuidesPage() {
   const staticQuestions = guide?.followUpQuestions ?? [];
 
   return (
-    <PaywallGate>
-      <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
         {/* ── Header ──────────────────────────────────────────────────────────── */}
         <header className="px-4 pt-12 pb-3">
           <BackButton className="p-0 h-auto text-foreground hover:opacity-70 transition-opacity gap-1 font-normal mb-4" />
@@ -134,7 +132,6 @@ export default function GuidesPage() {
           </div>
         </main>
       </div>
-    </PaywallGate>
   );
 }
 

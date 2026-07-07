@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Bookmark } from "lucide-react";
@@ -13,8 +12,20 @@ export default async function BookmarksPage() {
   const { data, error } = await withTiming("bookmarks:getClaims", () =>
     supabase.auth.getClaims(),
   );
+  // Guests: show the empty shell behind the sign-in overlay (no user to fetch for).
   if (error || !data?.claims) {
-    redirect("/auth/login");
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="px-8 py-4.75 mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A]">
+          <h1 className="text-2xl font-semibold text-[#111312]">
+            Saved Recipes
+          </h1>
+        </div>
+        <main className="px-6 pb-10">
+          <EmptyBookmarks />
+        </main>
+      </div>
+    );
   }
 
   const userId = data.claims.sub;
