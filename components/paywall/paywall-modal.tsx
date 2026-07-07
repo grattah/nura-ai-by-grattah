@@ -165,7 +165,6 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
             <button
               className="w-full py-4 max-[350px]:py-3 rounded-4xl bg-[#227B6F] text-[#FFFFFF] font-medium"
               onClick={() => {
-                onOpenChange(false);
                 router.push(`/checkout?plan=${selectedPlan}`);
               }}
             >

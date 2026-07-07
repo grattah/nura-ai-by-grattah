@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Red_Hat_Text, Red_Hat_Display } from "next/font/google";
+import { Red_Hat_Text, Red_Hat_Display, Lateef } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -7,6 +7,7 @@ import { MobileGate } from "@/components/mobile-gate";
 import { AccessProvider } from "@/components/providers/access-provider";
 import { CreditsProvider } from "@/components/providers/credits-provider";
 import { getCachedAccess } from "@/lib/supabase/server";
+import { RouteAuthGuard } from "@/components/auth/route-auth-guard";
 import { ChatCacheCleaner } from "@/components/chat-cache-cleaner";
 import { PerfProfiler } from "@/components/dev/perf-profiler";
 import { LiquidGlassFilter } from "@/components/liquid-glass-filter";
@@ -14,6 +15,13 @@ import { LiquidGlassFilter } from "@/components/liquid-glass-filter";
 const _redHatText = Red_Hat_Text({
   subsets: ["latin"],
   variable: "--font-redHatText",
+  display: "swap",
+});
+
+const _lateef = Lateef({
+  subsets: ["latin"],
+  variable: "--font-lateef",
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -61,7 +69,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { isAuthenticated, hasAccess, hasEverSubscribed } =
+  const { isAuthenticated, hasAccess, hasEverSubscribed, isSubscriber } =
     await getCachedAccess();
 
   return (
@@ -95,8 +103,10 @@ export default async function RootLayout({
               serverHasAccess={hasAccess}
               serverIsAuthenticated={isAuthenticated}
               serverHasEverSubscribed={hasEverSubscribed}
+              serverIsSubscriber={isSubscriber}
             >
               <CreditsProvider>{children}</CreditsProvider>
+              <RouteAuthGuard />
             </AccessProvider>
           </MobileGate>
         </ThemeProvider>

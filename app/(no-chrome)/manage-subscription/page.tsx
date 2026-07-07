@@ -11,7 +11,7 @@ export default async function ManageSubscriptionPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/auth/login");
+  if (!user) return null; // guest → RouteAuthGuard sign-in overlay
 
   // limit(1), not maybeSingle(): a user may have >1 active row, which would make
   // maybeSingle() error and wrongly bounce a subscribed user to /checkout.

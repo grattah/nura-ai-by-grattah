@@ -17,8 +17,15 @@ import { retrieve, formatContext } from "@/lib/rag";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 import { getTokenState, meter } from "@/lib/credits-server";
+import { freeUseCount, recordFreeUse } from "@/lib/free-trial-server";
 import { hasActiveSubscription, hasEverSubscribed } from "@/lib/subscription";
-import { MAX_OUTPUT_TOKENS } from "@/lib/credits";
+import {
+  MAX_OUTPUT_TOKENS,
+  FREE_SURFACES,
+  FREE_USES_PER_SURFACE,
+} from "@/lib/credits";
+
+const SURFACE = FREE_SURFACES.followupChat;
 
 // Extract total token usage from an AI SDK usage object (v5 shape).
 function usageTokens(u: {
@@ -145,18 +152,14 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return jsonError("Unauthorized", 401);
 
-  // Access + token state are independent reads — fetch them together. The token
-  // state is only consulted when the turn is actually metered (below).
-  const [activeSub, state] = await Promise.all([
+  // Access model: subscribers use the token system; new (never-subscribed) users
+  // get FREE_USES_PER_SURFACE free chat replies; lapsed subscribers are blocked.
+  const [activeSub, everSubscribed] = await Promise.all([
     hasActiveSubscription(supabase, user.id),
-    getTokenState(user.id),
+    hasEverSubscribed(supabase, user.id),
   ]);
-  // Access = active subscription OR unspent free-trial units.
-  if (!activeSub && state.freeRemaining <= 0) {
-    const everSubscribed = await hasEverSubscribed(supabase, user.id);
-    return jsonError("Subscription required", 403, {
-      hasEverSubscribed: everSubscribed,
-    });
+  if (!activeSub && everSubscribed) {
+    return jsonError("Subscription required", 403, { hasEverSubscribed: true });
   }
 
   try {
@@ -191,11 +194,24 @@ export async function POST(req: NextRequest) {
     const typeLabel = contextType === "recipe" ? "recipe" : "health guide";
     const domainList = safeDomains.map((d) => `site:${d}`).join(" OR ");
 
-    // Meter only a genuine user-asked question (the last message is from the
-    // user). Gate before streaming; deduct the real usage in onFinish.
+    // Meter/consume only a genuine user-asked question (last message from the
+    // user). Gate before streaming; record the use in onFinish.
     const shouldMeter = lastMessage?.role === "user" && !!userQuestion.trim();
-    if (shouldMeter && state.totalRemaining <= 0) {
-      return jsonError("insufficient_tokens", 402, { state });
+    if (shouldMeter) {
+      if (activeSub) {
+        const state = await getTokenState(user.id);
+        if (state.totalRemaining <= 0) {
+          return jsonError("insufficient_tokens", 402, { state });
+        }
+      } else {
+        // New user free trial — gate on this surface's remaining free uses.
+        const used = await freeUseCount(user.id, SURFACE);
+        if (used >= FREE_USES_PER_SURFACE) {
+          return jsonError("Subscription required", 403, {
+            hasEverSubscribed: false,
+          });
+        }
+      }
     }
     const onFinish = shouldMeter
       ? ({
@@ -208,7 +224,9 @@ export async function POST(req: NextRequest) {
           };
         }) => {
           // Fire-and-forget; the stream has already completed for the client.
-          void meter(user.id, usageTokens(totalUsage), "follow-up");
+          // Subscribers meter real tokens; new users consume one free chat use.
+          if (activeSub) void meter(user.id, usageTokens(totalUsage), "follow-up");
+          else void recordFreeUse(user.id, SURFACE);
         }
       : undefined;
 

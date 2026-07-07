@@ -55,6 +55,7 @@ export const getCachedAccess = cache(
     isAuthenticated: boolean;
     hasAccess: boolean;
     hasEverSubscribed: boolean;
+    isSubscriber: boolean;
   }> => {
     const {
       data: { user },
@@ -64,30 +65,23 @@ export const getCachedAccess = cache(
         isAuthenticated: false,
         hasAccess: false,
         hasEverSubscribed: false,
+        isSubscriber: false,
       };
 
     const supabase = await createClient();
-    // Access = active subscription OR unspent free-trial units. Read the free
-    // balance directly (RLS lets a user read their own credits row) to avoid a
-    // circular import with credits-server, which imports from this module.
-    const [activeSub, everSubscribed, { data: creditRow }] = await Promise.all([
+    // Global browse access = active subscriber OR a brand-new (never-subscribed)
+    // user still in their free trial. Lapsed subscribers are blocked. Per-surface
+    // free-use limits are enforced at the paywalled surfaces themselves.
+    const [activeSub, everSubscribed] = await Promise.all([
       hasActiveSubscription(supabase, user.id),
       hasEverSubscribed(supabase, user.id),
-      supabase
-        .from("credits")
-        .select("free_granted, free_used")
-        .eq("user_id", user.id)
-        .maybeSingle(),
     ]);
-
-    const freeRemaining = creditRow
-      ? Math.max(0, creditRow.free_granted - creditRow.free_used)
-      : 0;
 
     return {
       isAuthenticated: true,
-      hasAccess: activeSub || freeRemaining > 0,
+      hasAccess: activeSub || !everSubscribed,
       hasEverSubscribed: everSubscribed,
+      isSubscriber: activeSub,
     };
   },
 );
