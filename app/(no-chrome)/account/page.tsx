@@ -1,10 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import Tokens from "@/components/vectors/Tokens";
-import { ArrowLeft, Crown, HelpCircle, Shield, LogOut } from "lucide-react";
+import { ArrowLeft, Crown, HelpCircle, Shield } from "lucide-react";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { SettingsRow } from "@/components/account/settings-row";
-import { signOut } from "@/actions/auth";
+import { LogoutButton } from "@/components/auth/logout-button";
 import BackButton from "@/components/back-button";
 
 export default async function AccountPage() {
@@ -174,21 +174,7 @@ export default async function AccountPage() {
             label="Terms and privacy"
             href="/terms-and-privacy"
           />
-          <form action={signOut}>
-            <button
-              type="submit"
-              className="w-full flex items-center justify-between px-4 py-4 min-h-14 bg-card rounded-2xl hover:opacity-80 transition-opacity active:scale-[0.98] text-left"
-            >
-              <div className="flex items-center gap-3">
-                <div className="size-10 rounded-full bg-[#F3F1E8] flex items-center justify-center shrink-0">
-                  <LogOut className="size-4 text-error-c700" strokeWidth={2} />
-                </div>
-                <span className="text-base font-medium text-error-c500">
-                  Log out
-                </span>
-              </div>
-            </button>
-          </form>
+          <LogoutButton />
         </div>
       </div>
     </div>

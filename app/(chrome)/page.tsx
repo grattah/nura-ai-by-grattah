@@ -46,10 +46,6 @@ const getPopularRecipes = unstable_cache(
 export default async function HomePage() {
   const supabase = await createClient();
 
-  const { data: showFreeTokens } = await supabase.rpc(
-    "claim_free_tokens_redirect",
-  );
-
   const [
     {
       data: { user },
@@ -87,6 +83,19 @@ export default async function HomePage() {
       getBookmarkedIds(popularRecipes.map((r) => r.id)),
     );
     ids.forEach((id) => bookmarkedIds.add(id));
+  }
+
+  // Non-mutating read: whether to offer the one-time welcome modal. The flag is
+  // flipped by the modal on the client (real mount), never during this render —
+  // so prefetch/background renders can't consume it.
+  let showFreeTokens = false;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("has_seen_free_tokens")
+      .eq("id", user.id)
+      .maybeSingle();
+    showFreeTokens = !!profile && !profile.has_seen_free_tokens;
   }
 
   const categories = await getCategories();
@@ -193,7 +202,7 @@ export default async function HomePage() {
         {/* Upgrade / Pending banner */}
         <UpgradeBanner />
       </main>
-      {showFreeTokens && <FreeTokensModal />}
+      {showFreeTokens && user && <FreeTokensModal userId={user.id} />}
     </div>
   );
 }
