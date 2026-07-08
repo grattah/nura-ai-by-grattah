@@ -1,27 +1,64 @@
-import { getCachedUser, getCachedAccess } from "@/lib/supabase/server";
+import { headers } from "next/headers";
+import { getCachedUser, getCachedAccess, createClient } from "@/lib/supabase/server";
 import { freeUseCount } from "@/lib/free-trial-server";
 import { FREE_SURFACES, FREE_USES_PER_SURFACE } from "@/lib/credits";
+import { runPersonalizedSearch } from "@/lib/personalized-search-server";
 import { PersonalizedSearchClient } from "./personalized-search-client";
 
-// Decide "out of free searches" on the server so the route commits straight to
-// the upgrade lock overlay — no client fetch / blank-page loader in between.
-// (The home→search navigation runs inside a transition that holds the homepage
-// loader until this render is ready.)
-export default async function PersonalizedSearchPage() {
+export const maxDuration = 30;
+
+// Generate the search on the server (no caching, fresh every time) so the
+// home→search transition holds the homepage loader through generation and
+// commits straight to the result — never a loader over a blank route.
+export default async function PersonalizedSearchPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const query = ((await searchParams).q ?? "").trim();
   const {
     data: { user },
   } = await getCachedUser();
 
-  let serverBlocked = false;
-  if (user) {
-    const access = await getCachedAccess();
-    if (access.isAuthenticated && !access.isSubscriber) {
-      serverBlocked = access.hasEverSubscribed
-        ? true // lapsed subscriber — locked
-        : (await freeUseCount(user.id, FREE_SURFACES.personalizedSearch)) >=
-          FREE_USES_PER_SURFACE;
-    }
+  // Guests: RouteAuthGuard overlays the sign-in modal; the client renders the
+  // skeleton behind it.
+  if (!user) {
+    return <PersonalizedSearchClient query={query} serverBlocked={false} />;
   }
 
-  return <PersonalizedSearchClient serverBlocked={serverBlocked} />;
+  // Out of free searches / lapsed → lock overlay (decided without generating).
+  const access = await getCachedAccess();
+  let serverBlocked = false;
+  if (access.isAuthenticated && !access.isSubscriber) {
+    serverBlocked = access.hasEverSubscribed
+      ? true
+      : (await freeUseCount(user.id, FREE_SURFACES.personalizedSearch)) >=
+        FREE_USES_PER_SURFACE;
+  }
+
+  if (serverBlocked || !query) {
+    return (
+      <PersonalizedSearchClient query={query} serverBlocked={serverBlocked} />
+    );
+  }
+
+  // Skip the (metered) generation on link prefetch — only real navigations run it.
+  const isPrefetch = (await headers()).get("next-router-prefetch") === "1";
+  if (isPrefetch) {
+    return <PersonalizedSearchClient query={query} serverBlocked={false} />;
+  }
+
+  const supabase = await createClient();
+  const outcome = await runPersonalizedSearch(supabase, user.id, query);
+
+  return (
+    <PersonalizedSearchClient
+      query={query}
+      serverBlocked={outcome.status === "blocked"}
+      result={outcome.status === "ok" ? outcome.result : undefined}
+      outOfTokens={outcome.status === "out_of_tokens"}
+      tokenState={outcome.status === "out_of_tokens" ? outcome.state : undefined}
+      genError={outcome.status === "error"}
+    />
+  );
 }
