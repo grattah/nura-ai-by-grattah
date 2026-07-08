@@ -120,8 +120,8 @@ export function PWAInstallPrompt() {
     const timer = setTimeout(() => {
       setMode(iosEligible ? "ios" : "android");
       setVisible(true);
-    }, 10_000);
-    
+    }, 30_000);
+
     return () => clearTimeout(timer);
   }, [isLoading, deferredPrompt, isSubscriber]);
 
