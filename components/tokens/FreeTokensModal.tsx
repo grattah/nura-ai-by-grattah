@@ -2,27 +2,37 @@
 
 import { useEffect, useState } from "react";
 import FreeTokens from "@/components/tokens/FreeTokens";
+import { createClient } from "@/lib/supabase/client";
 
-// Show the welcome modal at most once per device, ever. The server flag
-// (has_seen_free_tokens via claim_free_tokens_redirect) is the cross-device
-// guard, but the home RSC is replayed from the App Router cache on back-nav,
-// which would remount this modal open — so persist a local "seen" flag too.
-const SEEN_KEY = "nuko_free_tokens_seen";
+// Show the welcome modal once per NEW user. The server flag
+// (profiles.has_seen_free_tokens) is the authoritative cross-device guard — the
+// home page reads it (non-mutating) to render this modal, and this component
+// flips it on mount. A per-user localStorage key dedups RSC-cache remounts on
+// this device without blocking other users who sign in here.
+const seenKey = (userId: string) => `nuko_free_tokens_seen_${userId}`;
 
-export function FreeTokensModal() {
+export function FreeTokensModal({ userId }: { userId: string }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
+    let alreadySeen = false;
     try {
-      if (!localStorage.getItem(SEEN_KEY)) {
-        localStorage.setItem(SEEN_KEY, String(Date.now()));
-        setOpen(true);
-      }
-    } catch {
-      // localStorage unavailable — fall back to showing once this mount.
-      setOpen(true);
-    }
-  }, []);
+      alreadySeen = !!localStorage.getItem(seenKey(userId));
+    } catch {}
+    if (alreadySeen) return;
+
+    try {
+      localStorage.setItem(seenKey(userId), String(Date.now()));
+    } catch {}
+    setOpen(true);
+
+    // Flip the server flag now that the modal has actually mounted for the user
+    // (never during the page render, so prefetch can't consume it).
+    createClient()
+      .rpc("claim_free_tokens_redirect")
+      .then(() => {})
+      .then(undefined, () => {});
+  }, [userId]);
 
   if (!open) return null;
 

@@ -1,56 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateObject, generateText } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
-import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { getTokenState, meter } from "@/lib/credits-server";
-import { tryConsumeFreeView } from "@/lib/free-trial-server";
-import { hasActiveSubscription, hasEverSubscribed } from "@/lib/subscription";
-import { MAX_OUTPUT_TOKENS, FREE_SURFACES } from "@/lib/credits";
+import { runPersonalizedSearch } from "@/lib/personalized-search-server";
 
-const SURFACE = FREE_SURFACES.personalizedSearch;
+// Type re-export for existing importers.
+export type { PersonalizedSearchResult } from "@/lib/personalized-search-server";
 
 export const maxDuration = 30;
 
-// Flat schema (no nested objects / arrays-of-objects) so smaller models like
-// Haiku can fill it reliably via the AI SDK's structured-output mode.
-const PersonalizedSearchSchema = z.object({
-  summary: z
-    .string()
-    .describe(
-      "2 warm sentences acknowledging the concern and briefly previewing what was found",
-    ),
-  whatToTryTitle: z
-    .string()
-    .describe(
-      "A short, specific action title starting with a verb, e.g. 'Try peppermint or ginger support'",
-    ),
-  whatToTryDescription: z
-    .string()
-    .describe(
-      "2 plain sentences explaining the benefit of the single top recommendation, e.g. 'Peppermint may help relax digestive muscles and reduce trapped gas. Ginger may support digestion and help reduce inflammation.'",
-    ),
-  whyItWorks: z
-    .array(z.string())
-    .describe(
-      "3 plain-text points explaining the science or reasoning behind the recommendations",
-    ),
-  drinksToTry: z
-    .array(z.string())
-    .describe("Up to 5 specific named drinks or beverages to try (names only)"),
-  tryTheseToo: z
-    .array(z.string())
-    .describe(
-      "Up to 3 complementary non-drink lifestyle practices, each a short plain sentence with its benefit, e.g. 'Gentle walking after meals to help move trapped gas'",
-    ),
-});
-
-export type PersonalizedSearchResult = z.infer<typeof PersonalizedSearchSchema>;
-
+// Kept for compatibility; the personalized-search page now generates server-side
+// (no caching, on the fly) via the same shared helper.
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
-  // Use getUser() (revalidates with the auth server) rather than getSession()
-  // for server-side authorization (audit M3).
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -59,125 +19,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Access model: subscribers use the token system; brand-new (never-subscribed)
-  // users get FREE_USES_PER_SURFACE free uses of this surface; lapsed subscribers
-  // are blocked. Determine which the caller is.
-  const [activeSub, everSubscribed] = await Promise.all([
-    hasActiveSubscription(supabase, user.id),
-    hasEverSubscribed(supabase, user.id),
-  ]);
-
-  if (!activeSub && everSubscribed) {
-    // Lapsed subscriber → no free trial. Client shows the personalized-search
-    // lock overlay for old users.
-    return NextResponse.json(
-      { error: "Subscription required", hasEverSubscribed: true },
-      { status: 403 },
-    );
-  }
-
   let query: string;
   try {
     ({ query } = await req.json());
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
-
   if (!query?.trim()) {
     return NextResponse.json({ error: "Query is required" }, { status: 400 });
   }
 
-  if (!activeSub) {
-    // New user in free trial — count this distinct query (deduped by the same
-    // normalized key the client caches under, so a cached result also consumes a
-    // use). Re-searching an already-counted query is free; the 3rd distinct
-    // query is blocked.
-    const queryKey = query.trim().toLowerCase();
-    const allowed = await tryConsumeFreeView(user.id, SURFACE, queryKey);
-    if (!allowed) {
+  const outcome = await runPersonalizedSearch(supabase, user.id, query);
+  switch (outcome.status) {
+    case "ok":
+      return NextResponse.json(outcome.result);
+    case "blocked":
       return NextResponse.json(
-        { error: "Subscription required", hasEverSubscribed: false },
+        { error: "Subscription required" },
         { status: 403 },
       );
-    }
-  }
-
-  // Subscribers: gate on token balance before the call (metered after success).
-  if (activeSub) {
-    const state = await getTokenState(user.id);
-    if (state.totalRemaining <= 0) {
+    case "out_of_tokens":
       return NextResponse.json(
-        { error: "insufficient_tokens", state },
+        { error: "insufficient_tokens", state: outcome.state },
         { status: 402 },
       );
-    }
-  }
-
-  try {
-    const { object, usage } = await generateObject({
-      model: anthropic("claude-haiku-4-5"),
-      // model: anthropic("claude-sonnet-4-6"),
-      maxOutputTokens: MAX_OUTPUT_TOKENS.search,
-      schema: PersonalizedSearchSchema,
-      // One-shot repair: if the model returns malformed/partial output (Haiku can
-      // leak tool-call XML or drop fields), do a single corrective pass that
-      // coerces it into valid JSON for the schema before the SDK re-validates.
-      experimental_repairText: async ({ text, error }) => {
-        try {
-          const { text: repaired } = await generateText({
-            model: anthropic("claude-haiku-4-5"),
-            maxOutputTokens: MAX_OUTPUT_TOKENS.search,
-            system:
-              "You fix malformed JSON. Output ONLY valid minified JSON — no prose, no markdown, no code fences, no XML tags.",
-            prompt: `This was meant to be JSON matching exactly this shape:
-{ "summary": string, "whatToTryTitle": string, "whatToTryDescription": string, "whyItWorks": string[], "drinksToTry": string[], "tryTheseToo": string[] }
-
-Return corrected JSON with every field present (infer sensible values from the rest if a field is missing or malformed). Strip any stray XML/tool tags.
-
-Validation error:
-${error.message}
-
-Broken output:
-${text}`,
-          });
-          return repaired.trim();
-        } catch {
-          return null; // give up — generateObject surfaces the original error
-        }
-      },
-      system: `You are a warm, knowledgeable health and wellness assistant for the Nuko app.
-A user has shared a personal health concern. Provide personalized, evidence-based
-wellness guidance focused on drinks and beverages that may help, alongside
-complementary lifestyle practices.
-
-Rules:
-- Be warm, empathetic, and conversational — acknowledge their specific concern
-- "whatToTryTitle" + "whatToTryDescription" are the single most actionable top-line recommendation — the one thing to try first; the title starts with a verb ("Try...", "Add...", "Sip...")
-- "drinksToTry" must be specific named beverages as plain strings (e.g. "Ginger Lemon Tea", "Aloe Vera Detox Juice", "Peppermint Tea")
-- "tryTheseToo" must be non-drink lifestyle practices as plain strings (gentle movement, massage, breathing, etc.)
-- "whyItWorks" should explain the mechanism — why the ingredients or practices help
-- All strings must be plain prose: no markdown, no asterisks, no bullet prefixes, no headers
-- Keep everything warm and specific to what the user shared, not generic`,
-      prompt: `The user shared: "${query.trim()}"
-
-Provide personalized wellness guidance for this concern.`,
-    });
-
-    // Subscribers meter real token usage; new users already consumed their free
-    // use above (deduped by query, so failed/cached retries don't double-count).
-    if (activeSub) {
-      const tokens =
-        usage?.totalTokens ??
-        (usage?.inputTokens ?? 0) + (usage?.outputTokens ?? 0);
-      await meter(user.id, tokens, "personalized-search");
-    }
-
-    return NextResponse.json(object);
-  } catch (err) {
-    console.error("[personalized-search]", err);
-    return NextResponse.json(
-      { error: "Failed to generate response" },
-      { status: 500 },
-    );
+    default:
+      return NextResponse.json(
+        { error: "Failed to generate response" },
+        { status: 500 },
+      );
   }
 }
