@@ -65,7 +65,7 @@ declare global {
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 export function PWAInstallPrompt() {
-  const { hasAccess, isLoading } = useAccess();
+  const { hasAccess, isLoading, isSubscriber } = useAccess();
   const [mode, setMode] = useState<PromptMode>(null);
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
@@ -108,22 +108,22 @@ export function PWAInstallPrompt() {
 
   useEffect(() => {
     if (isLoading) return;
-    if (!hasAccess || isStandalone() || wasDismissedRecently()) {
+    if (!isSubscriber || isStandalone() || wasDismissedRecently()) {
       setVisible(false);
       return;
     }
 
-    if (isIOS() && isSafari()) {
-      setMode("ios");
-      setVisible(true);
-      return;
-    }
+    const iosEligible = isIOS() && isSafari();
+    const androidEligible = !!deferredPrompt;
+    if (!iosEligible && !androidEligible) return;
 
-    if (deferredPrompt) {
-      setMode("android");
+    const timer = setTimeout(() => {
+      setMode(iosEligible ? "ios" : "android");
       setVisible(true);
-    }
-  }, [hasAccess, isLoading, deferredPrompt]);
+    }, 10_000);
+    
+    return () => clearTimeout(timer);
+  }, [isLoading, deferredPrompt, isSubscriber]);
 
   const dismiss = () => {
     setVisible(false);
