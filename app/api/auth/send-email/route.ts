@@ -24,9 +24,14 @@ interface SendEmailPayload {
 }
 
 function buildEmail(data: SendEmailPayload["email_data"]): EmailContent {
-  const { token, token_hash, redirect_to, email_action_type, site_url } = data;
+  const { token, token_hash, redirect_to, email_action_type } = data;
+
+  // Use the app's own domain, not the payload's site_url (which resolves to
+  // the API/Supabase domain and has no /auth/confirm route).
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://nukohealth.app";
+
   const confirmUrl = (type: string) => {
-    const u = new URL("/auth/confirm", site_url);
+    const u = new URL("/auth/confirm", appUrl);
     u.searchParams.set("token_hash", token_hash);
     u.searchParams.set("type", type);
     if (redirect_to) u.searchParams.set("next", redirect_to);
@@ -38,12 +43,10 @@ function buildEmail(data: SendEmailPayload["email_data"]): EmailContent {
     case "signup":
     case "email":
     case "reauthentication":
-      // The app verifies an 8-digit code via verifyOtp({ type: "email" }).
       return otpEmail({ code: token });
     case "recovery":
       return recoveryEmail({ url: confirmUrl("recovery") });
     default:
-      // email_change*, invite, and any future types — a safe confirm link.
       return genericAuthEmail({ url: confirmUrl(email_action_type) });
   }
 }
