@@ -113,6 +113,7 @@
   --space-50: clamp(40px, 11.7vw, 50px);
   --space-56: clamp(46px, 13vw, 56px);
   --space-64: clamp(52px, 14.9vw, 64px);
+  --space-72: clamp(58px, 16.7vw, 72px);
   --space-80: clamp(64px, 18.6vw, 80px);
   /* --space-88: clamp(70px, 20.5vw, 88px); */
   --space-96: clamp(76px, 22.3vw, 96px);
@@ -147,8 +148,7 @@
     "Josefin Sans", "Josefin Sans Fallback", system-ui, sans-serif;
   --font-redHatDisplay:
     "Red Hat Display", "Red Hat Display Fallback", system-ui, sans-serif;
-    --font-lateef:
-    "Lateef", "Lateef Fallback", system-ui, sans-serif;
+  --font-lateef: "Lateef", "Lateef Fallback", system-ui, sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -259,6 +259,7 @@
   --spacing-12.5: var(--space-50);
   --spacing-14: var(--space-56);
   --spacing-16: var(--space-64);
+  --spacing-18: var(--space-72);
   --spacing-20: var(--space-80);
   /* --spacing-22: var(--space-88); */
   --spacing-24: var(--space-96);
