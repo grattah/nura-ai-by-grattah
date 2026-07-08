@@ -21,7 +21,7 @@ export function UpgradeOverlay({ onUpgrade }: UpgradeOverlayProps) {
         className="absolute inset-0 z-10 flex items-center justify-center px-8"
       >
         <div className="flex flex-col items-center gap-2">
-          <div className="size-12 rounded-full p-3 bg-white">
+          <div className="size-12 rounded-full p-3 bg-white grid place-items-center">
             <FilledLock2 />
           </div>
           <span className="text-xl font-semibold text-mint-green">

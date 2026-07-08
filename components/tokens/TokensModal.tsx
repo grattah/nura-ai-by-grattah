@@ -1,4 +1,3 @@
-import React from "react";
 import { Zap } from "lucide-react";
 
 import { CoinAnimation } from "./CoinAnimation";
@@ -7,7 +6,7 @@ import Link from "next/link";
 const TokensModal = () => {
   return (
     <div className="bg-white rounded-2xl py-6.25 px-6 flex flex-col gap-5.5 items-center">
-      <div className="bg-[#FFF7EC] rounded-full">
+      <div className="bg-[#FFF7EC] rounded-full size-18 grid place-items-center">
         <CoinAnimation />
       </div>
       <div className="flex flex-col gap-3.25 text-center">
