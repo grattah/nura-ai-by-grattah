@@ -1,15 +1,13 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useTransition } from "react";
 import { Search, Mic, SendHorizontal, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { useAccess } from "@/hooks/use-access";
-import { PaywallModal } from "@/components/paywall/paywall-modal";
 import { saveRecentSearch } from "@/components/search/edit-search-sheet";
 import { logSearch } from "@/actions/log-search";
 import { COMMON_CONCERNS } from "@/constants";
-import { SignInModal } from "@/components/auth/SignInModal";
+import { SearchLoading } from "@/components/search/search-loading";
 
 interface CommonConcerns {
   searchers: number;
@@ -17,61 +15,31 @@ interface CommonConcerns {
 }
 
 export function SearchSection() {
-  const { hasAccess, isLoading, isAuthenticated } = useAccess();
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const [isRouteLoading, setIsLoading] = useState(false);
-  const [paywallOpen, setPaywallOpen] = useState(false);
-  const [showSignInModal, setShowSignInModal] = useState(false);
-
-  const requireAccess = useCallback(
-    (cb: () => void) => {
-      if (!isAuthenticated) {
-        setShowSignInModal(true);
-        setPaywallOpen(false);
-        return;
-      } else if (isAuthenticated && !isLoading && !hasAccess) {
-        setPaywallOpen(true);
-        setShowSignInModal(false);
-        return;
-      }
-      cb();
-    },
-    [hasAccess, isLoading, isAuthenticated, router]
-  );
+  // Navigate inside a transition so the current (home) UI stays mounted while
+  // /personalized-search loads — the loader shows over the blurred homepage.
+  const [isRouteLoading, startTransition] = useTransition();
 
   const handleSubmit = useCallback(() => {
     const trimmed = query.trim();
-    if (!trimmed || isLoading) return;
+    if (!trimmed || isRouteLoading) return;
 
-    requireAccess(() => {
-      setIsLoading(true);
-
-      saveRecentSearch(trimmed);
-      logSearch(trimmed).finally(() => {
-        router.push(`/personalized-search?q=${encodeURIComponent(trimmed)}`);
-      });
+    saveRecentSearch(trimmed);
+    void logSearch(trimmed);
+    startTransition(() => {
+      router.push(`/personalized-search?q=${encodeURIComponent(trimmed)}`);
     });
-  }, [query, requireAccess, router, isLoading]);
-
-  const handleFocus = useCallback(() => {
-    if (!isAuthenticated) {
-      setShowSignInModal(true);
-      setPaywallOpen(false);
-    } else if (isAuthenticated && !isLoading && !hasAccess) {
-      setPaywallOpen(true);
-      setShowSignInModal(false);
-    }
-  }, [hasAccess, isLoading, isAuthenticated]);
+  }, [query, router, isRouteLoading]);
 
   const handleCommonConcerns = (concern: string) => {
-    requireAccess(() => {
-      setQuery(concern);
-    });
+    setQuery(concern);
   };
 
   return (
     <>
+      {isRouteLoading && <SearchLoading />}
+
       <div className="space-y-3 z-10 relative">
         {/* Input row */}
         <div
@@ -88,7 +56,6 @@ export function SearchSection() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onFocus={handleFocus}
             onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
             placeholder="Bloating, constipation, low energy, hormon..."
             className="flex-1 bg-transparent text-base text-base-text outline-none placeholder:text-muted-2"
@@ -145,16 +112,6 @@ export function SearchSection() {
           ) : null} */}
         </div>
       </div>
-
-      {showSignInModal && (
-        <SignInModal
-          onClose={() => {
-            setShowSignInModal(false);
-          }}
-        />
-      )}
-
-      <PaywallModal open={paywallOpen} onOpenChange={setPaywallOpen} />
     </>
   );
 }

@@ -1,5 +1,3 @@
-import { redirect } from "next/navigation";
-
 import { createClient } from "@/lib/supabase/server";
 import { getTokenState } from "@/lib/credits-server";
 import { hasActiveSubscription } from "@/lib/subscription";
@@ -12,7 +10,7 @@ export default async function TokensPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login?next=/tokens");
+  if (!user) return null; // guest → RouteAuthGuard sign-in overlay
 
   // Access + token state are independent — fetch them together.
   const [hasAccess, tokenState] = await Promise.all([

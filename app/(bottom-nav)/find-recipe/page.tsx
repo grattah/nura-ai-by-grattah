@@ -44,12 +44,12 @@ const page = () => {
   const concernParam = searchParams.get("concern");
   const supabase = createClient();
   const [searchTerm, setSearchTerm] = React.useState(
-    query || generateParam || ""
+    query || generateParam || "",
   );
   const [results, setResults] = React.useState<RecipeHit[]>([]);
   const [searchLoading, setSearchLoading] = React.useState(false);
   const [suggestedRecipes, setSuggestedRecipes] = React.useState<RecipeHit[]>(
-    []
+    [],
   );
   const [pendingRecipe, setPendingRecipe] = React.useState<string | null>(null);
   const [generating, setGenerating] = React.useState(false);
@@ -59,7 +59,7 @@ const page = () => {
   const [tokenModalOpen, setTokenModalOpen] = React.useState(false);
   const [showSignInModal, setShowSignInModal] = React.useState(false);
   const [aiSuggestions, setAiSuggestions] = React.useState<RecipeSuggestion[]>(
-    []
+    [],
   );
   const [aiSuggestionsLoading, setAiSuggestionsLoading] = React.useState(false);
   const [aiSuggestionsError, setAiSuggestionsError] = React.useState<
@@ -70,7 +70,7 @@ const page = () => {
     React.useState(false);
   const [hasSearched, setHasSearched] = React.useState(false);
   const suggestionsCache = React.useRef<Map<string, RecipeSuggestion[]>>(
-    new Map()
+    new Map(),
   );
 
   const { recents, add: addRecent, clear: clearRecents } = useRecentSearches();
@@ -145,7 +145,7 @@ const page = () => {
 
       // Shuffle and take 3 so the user sees variety each visit
       const shuffled = ((data ?? []) as unknown as RecipeHit[]).sort(
-        () => Math.random() - 0.5
+        () => Math.random() - 0.5,
       );
       setSuggestedRecipes(shuffled.slice(0, 3));
     };
@@ -239,7 +239,7 @@ const page = () => {
         setGenerateError(true);
       }
     },
-    [router, applyState, refreshCredits]
+    [router, applyState, refreshCredits],
   );
 
   const autoTriggered = React.useRef(false);
@@ -306,7 +306,7 @@ const page = () => {
     <div className="bg-background">
       <main className="">
         <div
-          className={`px-6 py-5 mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A] ${
+          className={`px-6 py-5 relative mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A] ${
             showSuggestions && "flex gap-11.75 max-[400px]:gap-5 items-center"
           }`}
         >
@@ -316,15 +316,15 @@ const page = () => {
                 setShowSuggestions(false);
                 setSearchTerm("");
               }}
-              className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity"
+              className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity absolute left-6"
             >
               <ArrowLeft size={16} color="#1B1D1D" />
             </button>
           )}
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 w-full">
             <p
-              className={`text-2xl font-semibold text-[#111312] ${
-                showSuggestions && "max-[400px]:text-lg"
+              className={`text-2xl font-semibold text-base-text ${
+                showSuggestions && "max-[400px]:text-lg text-center"
               }`}
             >
               {showSuggestions ? "Get more suggestions" : "Find a recipe"}
@@ -570,7 +570,7 @@ const page = () => {
                         onClick={() =>
                           handleGenerate(
                             recipe.title,
-                            searchTerm.trim() || undefined
+                            searchTerm.trim() || undefined,
                           )
                         }
                         className="flex items-center gap-3 p-3 border-b hover:bg-[#E8E6DC] text-left transition-colors"
@@ -609,7 +609,8 @@ const page = () => {
         />
       )}
 
-      {/* Guest / non-subscriber tried to generate → sign-up / subscribe modal. */}
+      {/* Out of free generations → Get Nuko+. The modal opens in place (no
+          navigation), so closing just dismisses it and stays on this page. */}
       <PaywallModal open={paywallOpen} onOpenChange={setPaywallOpen} />
 
       {/* Subscriber out of tokens → "Need more token?" modal on a blurred page. */}

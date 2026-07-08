@@ -3,12 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import { fetchActivitiesPage } from "@/lib/activities";
 import { CommunityFeed } from "@/components/community/CommunityFeed";
 
-import { SignInModalGate } from "@/components/SignInModalGate";
-
 const page = async () => {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getSession();
 
+  // Guests land here and get the sign-in overlay (RouteAuthGuard) over this
+  // content — RLS returns an empty feed for them, so nothing leaks.
   const initialActivities = await fetchActivitiesPage(supabase, 0);
 
   return (
@@ -24,7 +23,6 @@ const page = async () => {
         </div>
       </main>
 
-      {!data.session && <SignInModalGate />}
     </div>
   );
 };

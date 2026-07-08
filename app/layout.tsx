@@ -7,6 +7,7 @@ import { MobileGate } from "@/components/mobile-gate";
 import { AccessProvider } from "@/components/providers/access-provider";
 import { CreditsProvider } from "@/components/providers/credits-provider";
 import { getCachedAccess } from "@/lib/supabase/server";
+import { RouteAuthGuard } from "@/components/auth/route-auth-guard";
 import { ChatCacheCleaner } from "@/components/chat-cache-cleaner";
 import { PerfProfiler } from "@/components/dev/perf-profiler";
 import { LiquidGlassFilter } from "@/components/liquid-glass-filter";
@@ -68,7 +69,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { isAuthenticated, hasAccess, hasEverSubscribed } =
+  const { isAuthenticated, hasAccess, hasEverSubscribed, isSubscriber } =
     await getCachedAccess();
 
   return (
@@ -102,8 +103,10 @@ export default async function RootLayout({
               serverHasAccess={hasAccess}
               serverIsAuthenticated={isAuthenticated}
               serverHasEverSubscribed={hasEverSubscribed}
+              serverIsSubscriber={isSubscriber}
             >
               <CreditsProvider>{children}</CreditsProvider>
+              <RouteAuthGuard />
             </AccessProvider>
           </MobileGate>
         </ThemeProvider>

@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ChangePlanClient } from "./change-plan-client";
 
@@ -8,7 +7,7 @@ export default async function ChangePlanPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/auth/login");
+  if (!user) return null; // guest → RouteAuthGuard sign-in overlay
 
   return <ChangePlanClient />;
 }
