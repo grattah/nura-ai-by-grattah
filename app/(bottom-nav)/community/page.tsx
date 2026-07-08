@@ -22,6 +22,7 @@ const page = async () => {
           <CommunityFeed initialActivities={initialActivities} />
         </div>
       </main>
+
     </div>
   );
 };

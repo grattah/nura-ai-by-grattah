@@ -5,9 +5,11 @@ import { Bookmark } from "lucide-react";
 import { withTiming } from "@/lib/perf";
 import { fetchBookmarksPage } from "@/lib/bookmark-fetch";
 import { BookmarksList } from "@/components/bookmarks/BookmarkList";
+import { SignInModalGate } from "@/components/SignInModalGate";
 
 export default async function BookmarksPage() {
   const supabase = await createClient();
+  let showSignInModal = false;
 
   const { data, error } = await withTiming("bookmarks:getClaims", () =>
     supabase.auth.getClaims(),
@@ -28,11 +30,13 @@ export default async function BookmarksPage() {
     );
   }
 
-  const userId = data.claims.sub;
+  const userId = data?.claims?.sub;
 
-  const initialBookmarks = await withTiming("bookmarks:getBookmarks", () =>
-    fetchBookmarksPage(supabase, userId, 0),
-  );
+  const initialBookmarks = userId
+    ? await withTiming("bookmarks:getBookmarks", () =>
+        fetchBookmarksPage(supabase, userId, 0),
+      )
+    : [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -42,11 +46,13 @@ export default async function BookmarksPage() {
 
       <main className="px-6 pb-10">
         {initialBookmarks.length > 0 ? (
-          <BookmarksList initialBookmarks={initialBookmarks} userId={userId} />
+          <BookmarksList initialBookmarks={initialBookmarks} userId={userId || ""} />
         ) : (
           <EmptyBookmarks />
         )}
       </main>
+
+      {showSignInModal && <SignInModalGate />}
     </div>
   );
 }
