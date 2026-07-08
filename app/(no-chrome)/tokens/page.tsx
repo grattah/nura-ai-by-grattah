@@ -4,6 +4,9 @@ import { hasActiveSubscription } from "@/lib/subscription";
 import TokensCard from "@/components/tokens/TokensCard";
 import TokensModal from "@/components/tokens/TokensModal";
 import BackButton from "@/components/back-button";
+import { CoinAnimation } from "@/components/tokens/CoinAnimation";
+import { PaywallModal } from "@/components/paywall/paywall-modal";
+import NoTokensYet from "@/components/tokens/NoTokensYet";
 
 export default async function TokensPage() {
   const supabase = await createClient();
@@ -38,9 +41,7 @@ export default async function TokensPage() {
         </div>
 
         {!state ? (
-          <div className="rounded-2xl bg-white p-6 text-center text-subtle">
-            Subscribe to receive free weekly tokens.
-          </div>
+          <NoTokensYet />
         ) : (
           <div className="flex flex-col gap-8">
             <TokensCard variant="weekly" state={state} />
