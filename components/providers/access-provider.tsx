@@ -94,6 +94,7 @@ export function AccessProvider({
       // server-side, so read it rather than checking the subscription alone. Seed
       // from the authoritative server props so a failed/lagging read never
       // DOWNGRADES a genuinely-entitled user (only a successful read moves it).
+      let authenticated = true;
       let hasAccess = serverHasAccess;
       let everSubscribed = serverHasEverSubscribed;
       let subscriber = serverIsSubscriber;
@@ -101,7 +102,11 @@ export function AccessProvider({
         const res = await fetch("/api/credits", { cache: "no-store" });
         if (res.ok) {
           const body = await res.json();
-          hasAccess = !!body.hasAccess;
+          // Trust the SERVER's view of auth: a stale client session must not keep
+          // the user "authenticated" after their cookie was cleared (e.g. logout).
+          if (typeof body.authenticated === "boolean")
+            authenticated = body.authenticated;
+          hasAccess = authenticated && !!body.hasAccess;
           if (typeof body.hasEverSubscribed === "boolean")
             everSubscribed = body.hasEverSubscribed;
           if (typeof body.isSubscriber === "boolean")
@@ -112,6 +117,16 @@ export function AccessProvider({
       }
 
       if (!active) return;
+      if (!authenticated) {
+        setState({
+          hasAccess: false,
+          isAuthenticated: false,
+          isLoading: false,
+          hasEverSubscribed: false,
+          isSubscriber: false,
+        });
+        return;
+      }
       setState({
         hasAccess,
         isAuthenticated: true,
