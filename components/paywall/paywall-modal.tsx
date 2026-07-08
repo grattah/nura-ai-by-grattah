@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Check, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import FilledLock from "../vectors/filled-lock";
 import { Plan, PLANS } from "@/constants";
@@ -22,9 +22,11 @@ interface PaywallModalProps {
 
 export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
   const router = useRouter();
+  const pathname = usePathname();
   // Only brand-new users (never subscribed) see the "free trial has ended"
   // badge; lapsed subscribers just see the plan chooser.
   const { hasEverSubscribed } = useAccess();
+  const isTokensPage = pathname === "/tokens";
 
   // Plan chooser only — payment renders on the checkout page for the selected
   // plan (passed via ?plan=).
@@ -63,7 +65,7 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
             <X className="size-6 text-grey-c600" />
           </button>
           <DialogHeader className="flex flex-col items-center justify-center text-center space-y-6 gap-0">
-            {!hasEverSubscribed && (
+            {!hasEverSubscribed && !isTokensPage && (
               <div className="py-1.5 px-2 rounded-lg bg-warning-c100 flex items-center gap-x-1">
                 <Time />
                 <span className="text-warning-c900 text-xs font-semibold">
