@@ -8,7 +8,7 @@ const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 
 export function CoinAnimation() {
   return (
-    <div style={{ width: 40, height: 40, overflow: "hidden" }}>
+    <div style={{ width: 72, height: 72, overflow: "hidden" }}>
       <Lottie
         animationData={coinAnimation}
         loop
