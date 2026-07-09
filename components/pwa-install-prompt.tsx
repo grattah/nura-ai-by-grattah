@@ -8,7 +8,7 @@ import { useAccess } from "@/components/providers/access-provider";
 import logo from "@/public/logo-outlined-nobg.svg";
 
 const STORAGE_KEY = "nura_pwa_prompt_dismissed";
-const DISMISS_TTL_DAYS = 30;
+const DISMISS_TTL_DAYS = 2;
 
 function isIOS(): boolean {
   if (typeof navigator === "undefined") return false;
@@ -65,7 +65,7 @@ declare global {
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 export function PWAInstallPrompt() {
-  const { hasAccess, isLoading } = useAccess();
+  const { hasAccess, isLoading, isSubscriber } = useAccess();
   const [mode, setMode] = useState<PromptMode>(null);
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
@@ -108,22 +108,22 @@ export function PWAInstallPrompt() {
 
   useEffect(() => {
     if (isLoading) return;
-    if (!hasAccess || isStandalone() || wasDismissedRecently()) {
+    if (!isSubscriber || isStandalone() || wasDismissedRecently()) {
       setVisible(false);
       return;
     }
 
-    if (isIOS() && isSafari()) {
-      setMode("ios");
-      setVisible(true);
-      return;
-    }
+    const iosEligible = isIOS() && isSafari();
+    const androidEligible = !!deferredPrompt;
+    if (!iosEligible && !androidEligible) return;
 
-    if (deferredPrompt) {
-      setMode("android");
+    const timer = setTimeout(() => {
+      setMode(iosEligible ? "ios" : "android");
       setVisible(true);
-    }
-  }, [hasAccess, isLoading, deferredPrompt]);
+    }, 30_000);
+
+    return () => clearTimeout(timer);
+  }, [isLoading, deferredPrompt, isSubscriber]);
 
   const dismiss = () => {
     setVisible(false);
