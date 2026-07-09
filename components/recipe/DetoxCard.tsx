@@ -3,30 +3,22 @@
 import { useEffect, useState } from "react";
 import { type SupportScore, MAX_SUPPORT_SCORES } from "@/lib/wellness-score";
 
-interface AssignedSupport {
-  name: string;
-  slug: string;
-}
-
 interface DetoxCardProps {
   recipeId: string;
-  supports: AssignedSupport[];
   initialScores?: SupportScore[] | null;
 }
 
-export function DetoxCard({
-  recipeId,
-  supports,
-  initialScores,
-}: DetoxCardProps) {
+export function DetoxCard({ recipeId, initialScores }: DetoxCardProps) {
   const hasInitial = !!initialScores?.length;
   const [scores, setScores] = useState<SupportScore[]>(
     hasInitial ? initialScores! : [],
   );
-  const [loading, setLoading] = useState(!hasInitial && supports.length > 0);
+  const [loading, setLoading] = useState(!hasInitial);
 
   useEffect(() => {
-    if (hasInitial || supports.length === 0) return;
+    // Every recipe is scorable against the fixed support set, so always fetch
+    // when there are no server-provided scores.
+    if (hasInitial) return;
 
     let cancelled = false;
     setLoading(true);
@@ -125,7 +117,7 @@ export function DetoxCard({
             {sorted.map((s, i) => (
               <span key={s.slug}>
                 <span className="text-mint-green font-semibold">
-                  {s.score}% {s.support} support
+                  {s.score}% {s.support}
                 </span>
                 {i < sorted.length - 1
                   ? i === sorted.length - 2
