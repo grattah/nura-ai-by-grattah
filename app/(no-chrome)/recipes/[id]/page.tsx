@@ -173,12 +173,6 @@ export default async function RecipeDetailPage({
 
   const nutrition = (recipe.nutrition as NutritionFacts | null) ?? null;
 
-  // The recipe's assigned wellness supports (its tags) for the DetoxCard.
-  const assignedSupports = (recipe.recipe_tags ?? [])
-    .map((rt: any) => rt.tags)
-    .filter((t: any): t is { name: string; slug: string } => !!t)
-    .map((t: any) => ({ name: t.name, slug: t.slug }));
-
   const shareDisabled = (recipe as { status?: string }).status !== "approved";
 
   // Recipe detail is a public page; its premium components (ingredients, how-to,
@@ -228,7 +222,6 @@ export default async function RecipeDetailPage({
             <div className="px-6 mb-8">
               <DetoxCard
                 recipeId={recipe.id}
-                supports={assignedSupports}
                 initialScores={recipe.support_scores}
               />
             </div>

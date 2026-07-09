@@ -5,8 +5,8 @@ import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import {
   scoreSupports,
   MAX_SUPPORT_SCORES,
+  WELLNESS_SUPPORTS,
   type SupportScore,
-  type AssignedSupport,
 } from "@/lib/wellness-score";
 
 export const maxDuration = 30;
@@ -20,7 +20,6 @@ interface RecipeRow {
   ingredients: unknown;
   why_it_works: string | null;
   support_scores: SupportScore[] | null;
-  recipe_tags: { tags: { name: string; slug: string } | null }[] | null;
 }
 
 function recipesAdmin() {
@@ -66,7 +65,7 @@ export async function POST(req: NextRequest) {
   const { data, error } = await admin
     .from("recipes")
     .select(
-      "id, title, short_description, ingredients, why_it_works, support_scores, recipe_tags(tags(name, slug))",
+      "id, title, short_description, ingredients, why_it_works, support_scores",
     )
     .eq("id", recipeId)
     .maybeSingle();
@@ -90,18 +89,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ scores: capped });
   }
 
-  const supports: AssignedSupport[] = (recipe.recipe_tags ?? [])
-    .map((rt) => rt.tags)
-    .filter((t): t is { name: string; slug: string } => !!t)
-    .map((t) => ({ name: t.name, slug: t.slug }));
-
-  if (!supports.length) {
-    return NextResponse.json({ scores: [] });
-  }
-
+  // Every recipe is scored against the same fixed 23 wellness supports.
   let scores: SupportScore[];
   try {
-    scores = await scoreSupports(recipe, supports);
+    scores = await scoreSupports(recipe, WELLNESS_SUPPORTS);
   } catch (err) {
     console.error("[support-scores] generate", err);
     return NextResponse.json({ error: "Failed to score" }, { status: 500 });
