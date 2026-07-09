@@ -17,6 +17,35 @@ export interface AssignedSupport {
   slug: string;
 }
 
+// Fixed set of wellness supports every recipe is scored against (replaces the
+// per-recipe category tags). The top MAX_SUPPORT_SCORES by final score are shown.
+// Keep in sync with the inlined copy in scripts/score-supports.mjs.
+export const WELLNESS_SUPPORTS: AssignedSupport[] = [
+  { name: "Antioxidant & Cellular Protection", slug: "antioxidant-cellular-protection" },
+  { name: "Inflammation Support", slug: "inflammation-support" },
+  { name: "Immune Support", slug: "immune-support" },
+  { name: "Natural Defense Support", slug: "natural-defense-support" },
+  { name: "Heart & Circulation Support", slug: "heart-circulation-support" },
+  { name: "Cholesterol & Lipid Balance", slug: "cholesterol-lipid-balance" },
+  { name: "Blood Sugar Support", slug: "blood-sugar-support" },
+  { name: "Weight & Metabolic Support", slug: "weight-metabolic-support" },
+  { name: "Gut & Digestive Support", slug: "gut-digestive-support" },
+  { name: "Microbiome Support", slug: "microbiome-support" },
+  { name: "Liver & Detox Support", slug: "liver-detox-support" },
+  { name: "Kidney & Fluid Balance Support", slug: "kidney-fluid-balance-support" },
+  { name: "Brain & Cognitive Support", slug: "brain-cognitive-support" },
+  { name: "Mood & Emotional Balance", slug: "mood-emotional-balance" },
+  { name: "Stress Resilience Support", slug: "stress-resilience-support" },
+  { name: "Sleep & Relaxation Support", slug: "sleep-relaxation-support" },
+  { name: "Pain & Comfort Support", slug: "pain-comfort-support" },
+  { name: "Temperature Balance Support", slug: "temperature-balance-support" },
+  { name: "Hormonal Balance Support", slug: "hormonal-balance-support" },
+  { name: "Bone & Joint Support", slug: "bone-joint-support" },
+  { name: "Skin Health Support", slug: "skin-health-support" },
+  { name: "Healthy Aging Support", slug: "healthy-aging-support" },
+  { name: "Cellular Wellness Support", slug: "cellular-wellness-support" },
+];
+
 export interface SupportScore {
   slug: string;
   support: string;
@@ -110,6 +139,8 @@ export async function scoreSupports(
 
   const { object } = await generateObject({
     model: anthropic("claude-haiku-4-5"),
+    // Enough headroom to score the full support set (23) without truncation.
+    maxOutputTokens: 6000,
     schema: scoreSchema,
     system: SCORING_SYSTEM,
     prompt: buildScoringPrompt(recipe, supports),
