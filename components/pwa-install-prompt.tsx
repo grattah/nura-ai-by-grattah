@@ -8,7 +8,7 @@ import { useAccess } from "@/components/providers/access-provider";
 import logo from "@/public/logo-outlined-nobg.svg";
 
 const STORAGE_KEY = "nura_pwa_prompt_dismissed";
-const DISMISS_TTL_DAYS = 30;
+const DISMISS_TTL_DAYS = 2;
 
 function isIOS(): boolean {
   if (typeof navigator === "undefined") return false;
