@@ -6,7 +6,7 @@ export async function fetchPopularRecipesOnePerCategory(
 ) {
   const { data, error } = await supabase
     .from("recipes")
-    .select(`*, recipe_tags ( tags (id, name, slug) )`)
+    .select(`*, recipe_categories ( score, categories (id, name, slug) )`)
     .eq("status", "approved")
     .or("shares.gt.0,saves.gt.0,comments.gt.0,likes.gt.0")
     .order("weighted_score", { ascending: false })
@@ -16,11 +16,16 @@ export async function fetchPopularRecipesOnePerCategory(
   if (error) throw new Error(error.message);
 
   // Walk the popularity-sorted list, keep the first (most popular) recipe
-  // per first-tag. Recipes with no tag are kept as-is.
+  // per top category. Recipes with no category are kept as-is.
   const seenTags = new Set<string>();
   const result = [];
   for (const recipe of data ?? []) {
-    const firstTag = recipe.recipe_tags?.[0]?.tags?.name ?? null;
+    const firstTag =
+      [...(recipe.recipe_categories ?? [])]
+        .filter((rc: { categories: unknown }) => rc.categories)
+        .sort(
+          (a: { score: number }, b: { score: number }) => b.score - a.score,
+        )[0]?.categories?.name ?? null;
     if (firstTag !== null) {
       if (seenTags.has(firstTag)) continue;
       seenTags.add(firstTag);

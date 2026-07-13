@@ -61,11 +61,6 @@ const RecipeSchema = z.object({
   follow_up_questions: z
     .array(z.string())
     .describe("3 short follow-up questions a curious user might ask"),
-  tagSlugs: z
-    .array(z.string())
-    .describe(
-      "1-3 slugs chosen ONLY from the provided tag list that best match this recipe",
-    ),
 });
 
 export async function POST(req: NextRequest) {
@@ -153,18 +148,14 @@ export async function POST(req: NextRequest) {
 
   const admin = createServiceRoleClient();
 
-  // Last display_order (to append uniquely) and the tag list are independent.
-  const [{ data: lastOrder }, { data: tags }] = await Promise.all([
-    admin
-      .from("recipes")
-      .select("display_order")
-      .order("display_order", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    admin.from("tags").select("id, name, slug"),
-  ]);
+  // Last display_order, to append uniquely.
+  const { data: lastOrder } = await admin
+    .from("recipes")
+    .select("display_order")
+    .order("display_order", { ascending: false })
+    .limit(1)
+    .maybeSingle();
   const nextDisplayOrder = (lastOrder?.display_order ?? 0) + 1;
-  const tagList = (tags ?? []).map((t) => `${t.slug} | ${t.name}`).join("\n");
 
   // Gate now that we're actually generating (reused/matched recipes above are
   // free). Subscribers can pass the access gate yet still be out of tokens here;
@@ -202,10 +193,7 @@ make strong clinical claims (e.g. "cures X").
 
 NUTRITION: Provide realistic per-serving nutrition (kcal, protein, fat, carbs, fiber)
 estimated from the actual ingredients and their amounts. Use sensible whole/round numbers;
-do not fabricate false precision.
-
-Available tag slugs (pick 1-3 that genuinely fit, slug on the left):
-${tagList}`,
+do not fabricate false precision.`,
       prompt: `Create a recipe for: "${cleanName}".${
         concern ? `\nThe user's wellness concern was: "${concern}".` : ""
       }\n\nKeep it realistic and easy to make at home.`,
@@ -283,14 +271,8 @@ ${tagList}`,
     recipeId = inserted.id;
   }
 
-  // 4. Link tags (skip any slug that doesn't resolve to a real tag).
-  const tagIds = (tags ?? [])
-    .filter((t) => recipe.tagSlugs.includes(t.slug))
-    .map((t) => ({ recipe_id: recipeId, tag_id: t.id }));
-  if (tagIds.length) {
-    const { error: tagErr } = await admin.from("recipe_tags").insert(tagIds);
-    if (tagErr) console.error("[recipes/generate] tags", tagErr);
-  }
+  // Bioactivity scores + category membership are populated later by the batch
+  // script (scripts/score-supports.mjs); generation no longer assigns tags.
 
   // The hero image is generated lazily on first view of the detail page
   // (POST /api/recipes/[id]/image) — reliable on serverless, unlike `after()`.

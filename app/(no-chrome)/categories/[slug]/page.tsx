@@ -53,21 +53,22 @@ export default function CategoryDetailPage() {
       const start = pageNum * PAGE_SIZE;
       const end = start + PAGE_SIZE - 1;
 
+      // Rank recipes within the category by their computed CategoryScore
+      // (recipe_categories.score), highest first.
       let query = supabase
-        .from("recipes")
+        .from("recipe_categories")
         .select(
-          "id, title, image_url, display_order, recipe_tags!inner(tags!inner(slug))",
+          "score, recipes!inner(id, title, image_url, display_order, status, drink_type), categories!inner(slug)",
         )
-        .eq("recipe_tags.tags.slug", slug)
-        .eq("status" as never, "approved" as never);
+        .eq("categories.slug", slug)
+        .eq("recipes.status" as never, "approved" as never);
 
       if (activeType !== "all") {
-        query = query.eq("drink_type" as never, activeType as never);
+        query = query.eq("recipes.drink_type" as never, activeType as never);
       }
 
       const { data, error } = await query
-        .order("display_order", { ascending: true })
-        .order("id", { ascending: true })
+        .order("score", { ascending: false })
         .range(start, end)
         .abortSignal(signal);
 
@@ -75,7 +76,9 @@ export default function CategoryDetailPage() {
         if (signal.aborted) throw new DOMException("Aborted", "AbortError");
         throw new Error(error.message);
       }
-      return (data as unknown as CategoryRecipe[]) ?? [];
+      return (
+        (data as unknown as { recipes: CategoryRecipe }[]) ?? []
+      ).map((row) => row.recipes);
     },
     [supabase, slug, activeType],
   );

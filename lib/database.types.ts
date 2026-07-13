@@ -148,6 +148,30 @@ export type Database = {
           },
         ]
       }
+      categories: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       comment_likes: {
         Row: {
           comment_id: string
@@ -332,6 +356,27 @@ export type Database = {
         }
         Relationships: []
       }
+      free_trial_usage: {
+        Row: {
+          created_at: string
+          item_id: string
+          surface: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          item_id: string
+          surface: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          item_id?: string
+          surface?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       guides: {
         Row: {
           created_at: string
@@ -470,6 +515,45 @@ export type Database = {
         }
         Relationships: []
       }
+      recipe_categories: {
+        Row: {
+          category_id: string
+          created_at: string
+          recipe_id: string
+          score: number
+          via_trace: boolean
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          recipe_id: string
+          score: number
+          via_trace?: boolean
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          recipe_id?: string
+          score?: number
+          via_trace?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_categories_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recipe_likes: {
         Row: {
           created_at: string | null
@@ -509,14 +593,17 @@ export type Database = {
       recipe_tags: {
         Row: {
           recipe_id: string
+          score: number | null
           tag_id: string
         }
         Insert: {
           recipe_id: string
+          score?: number | null
           tag_id: string
         }
         Update: {
           recipe_id?: string
+          score?: number | null
           tag_id?: string
         }
         Relationships: [
@@ -538,6 +625,7 @@ export type Database = {
       }
       recipes: {
         Row: {
+          category_overrides: Json | null
           comments: number
           created_at: string
           created_by: string | null
@@ -561,13 +649,13 @@ export type Database = {
           short_description: string
           source_url: string
           status: string
-          support_scores: Json | null
           title: string
           updated_at: string
           weighted_score: number
           why_it_works: string
         }
         Insert: {
+          category_overrides?: Json | null
           comments?: number
           created_at?: string
           created_by?: string | null
@@ -591,13 +679,13 @@ export type Database = {
           short_description: string
           source_url?: string
           status?: string
-          support_scores?: Json | null
           title: string
           updated_at?: string
           weighted_score?: number
           why_it_works: string
         }
         Update: {
+          category_overrides?: Json | null
           comments?: number
           created_at?: string
           created_by?: string | null
@@ -621,7 +709,6 @@ export type Database = {
           short_description?: string
           source_url?: string
           status?: string
-          support_scores?: Json | null
           title?: string
           updated_at?: string
           weighted_score?: number
@@ -806,6 +893,10 @@ export type Database = {
         }[]
       }
       claim_free_tokens_redirect: { Args: never; Returns: boolean }
+      free_use_count: {
+        Args: { p_surface: string; p_user: string }
+        Returns: number
+      }
       get_token_state: { Args: { p_user: string }; Returns: Json }
       increment_recipe_shares: { Args: { rid: string }; Returns: undefined }
       match_embeddings: {
@@ -832,6 +923,10 @@ export type Database = {
         }
         Returns: Json
       }
+      record_free_use: {
+        Args: { p_item?: string; p_surface: string; p_user: string }
+        Returns: number
+      }
       refresh_recipe_scores: { Args: never; Returns: undefined }
       spend_tokens: {
         Args: {
@@ -853,6 +948,15 @@ export type Database = {
           searchers: number
           term: string
         }[]
+      }
+      try_free_view: {
+        Args: {
+          p_cap: number
+          p_item: string
+          p_surface: string
+          p_user: string
+        }
+        Returns: boolean
       }
     }
     Enums: {

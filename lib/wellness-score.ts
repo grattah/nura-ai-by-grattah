@@ -2,14 +2,13 @@ import { generateObject } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 
-// AI wellness-support scoring (DetoxCard PRD). Each recipe's assigned wellness
-// supports (its tags) get a 0–100% strength score from a hybrid model:
-//   final = 0.7 * NutritionScore + 0.3 * IngredientIntelligenceScore
-// The LLM supplies the two sub-scores (the DB has no structured nutrition or
-// ingredient-property data); this module owns the formula so it stays auditable.
+// AI bioactivity scoring (DetoxCard). Each recipe is scored against a fixed set
+// of predefined bioactivity categories; the LLM returns ONE 0–100 bioactivityScore
+// per category (effects driven by non-nutritive bioactive compounds — distinct
+// from nutrition). That score is used directly as the final strength shown.
 
 // Maximum number of support scores ever returned/shown for a recipe (top N by
-// final score).
+// score).
 export const MAX_SUPPORT_SCORES = 2;
 
 export interface AssignedSupport {
@@ -49,8 +48,6 @@ export const WELLNESS_SUPPORTS: AssignedSupport[] = [
 export interface SupportScore {
   slug: string;
   support: string;
-  nutritionScore: number;
-  ingredientScore: number;
   score: number;
 }
 
@@ -64,41 +61,61 @@ export interface ScorableRecipe {
 export const scoreSchema = z.object({
   supports: z.array(
     z.object({
-      slug: z.string().describe("The exact slug of one assigned support"),
-      nutritionScore: z
+      slug: z.string().describe("The exact slug of one assigned bioactivity"),
+      bioactivityScore: z
         .number()
         .min(0)
         .max(100)
         .describe(
-          "0–100: how strongly the nutritional content (ingredient types and quantities for one serving) supports this goal",
+          "0–100: how strongly the recipe supports THIS bioactivity, blending potency, mechanism strength, and evidence tier",
         ),
-      ingredientScore: z
-        .number()
-        .min(0)
-        .max(100)
-        .describe(
-          "0–100: how strongly the ingredients' known wellness properties support this goal",
-        ),
-      nutritionRationale: z.string(),
-      ingredientRationale: z.string(),
     }),
   ),
 });
 
-export const SCORING_SYSTEM = `You are a clinical nutrition assistant for the Nuko wellness app.
-You score how strongly a single recipe supports specific, predefined wellness goals.
+export const SCORING_SYSTEM = `You are a clinical bioactivity assistant for the Nuko wellness app. You score how strongly a single recipe supports specific, predefined BIOACTIVITY categories. Bioactivities are effects driven by non-nutritive bioactive compounds (e.g. polyphenols, flavonoids, glucosinolates, allicin, curcuminoids, catechins, terpenes, alkaloids) — this is distinct from nutrition scoring (macro/micronutrient content), which is handled separately.
 
-For EACH assigned support you are given, output two independent 0–100 sub-scores:
-- nutritionScore: judged from the ingredient TYPES and QUANTITIES for one serving — the
-  macro/micronutrient profile and how relevant those nutrients are to THIS goal.
-- ingredientScore: judged from the recognised wellness PROPERTIES of the ingredients and how
-  relevant they are to THIS goal.
+For EACH assigned bioactivity you are given, output ONE 0–100 bioactivityScore.
+
+To arrive at that single score, internally weigh these factors (do not output them separately):
+- Potency: how much bioactive material relevant to THIS bioactivity the recipe actually delivers in one serving — based on ingredient identity, compound class, quantity, and preparation method (raw vs. cooked, fresh vs. dried, presence of bioavailability enhancers like piperine or fat, or degraders like prolonged high heat).
+- Mechanism strength: how well-established the biological mechanism of action is for the compounds present, specifically as it relates to THIS bioactivity — independent of dose.
+- Evidence tier: weight compounds with human clinical trial (RCT) evidence more heavily than compounds supported only by traditional/folk use, animal studies, or in-vitro data. A well-studied compound with modest potency can outscore a traditionally-used compound with higher potency but thin evidence.
+
+A recipe with a small amount of a compound with a strong, well-established, clinically-backed mechanism for a bioactivity can outscore a recipe with a large amount of a compound only weakly or traditionally linked to that bioactivity. Blend all factors into the single final score.
+
+Bioactivity categories (score ONLY the ones provided, using their exact slug):
+- antioxidant-cellular-protection
+- inflammation-support
+- immune-support
+- natural-defense-support
+- heart-circulation-support
+- cholesterol-lipid-balance
+- blood-sugar-support
+- weight-metabolic-support
+- gut-digestive-support
+- microbiome-support
+- liver-detox-support
+- kidney-fluid-balance-support
+- brain-cognitive-support
+- mood-emotional-balance
+- stress-resilience-support
+- sleep-relaxation-support
+- pain-comfort-support
+- temperature-balance-support
+- hormonal-balance-support
+- bone-joint-support
+- skin-health-support
+- healthy-aging-support
+- cellular-wellness-support
 
 Rules:
-- Score ONLY the supports provided, identified by their exact slug. Never add other supports.
-- Use the full 0–100 range and be discriminating: a recipe can support one goal strongly and
-  another only weakly. Avoid clustering everything near the same value.
-- Base scores on the actual ingredients and amounts, not the recipe's name or marketing.`;
+- Score ONLY the bioactivities provided, identified by their exact slug. Never add others.
+- Do NOT score based on nutrition (calories, macros, vitamin/mineral RDAs) — that is a separate scoring process.
+- Use the full 0–100 range and be discriminating: a recipe can score high on one bioactivity and low on another depending on which compound classes it actually contains. Avoid clustering scores near the same value.
+- If a recipe contains negligible or no compounds relevant to a given bioactivity, score it low (0–20) rather than omitting it — but only include bioactivities you were explicitly assigned.
+- Base scores on the actual ingredients, quantities, and prep method — not the recipe's name, marketing copy, or intended use case.
+- Output format: return only the bioactivityScore per slug, nothing else.`;
 
 function formatIngredients(ingredients: unknown): string {
   if (!Array.isArray(ingredients)) return "(none listed)";
@@ -121,15 +138,13 @@ ${recipe.short_description ? `Summary: ${recipe.short_description}\n` : ""}
 Ingredients (quantities are for one serving as written):
 ${formatIngredients(recipe.ingredients)}
 ${recipe.why_it_works ? `\nWhy it works: ${recipe.why_it_works}\n` : ""}
-Score the recipe for these assigned supports only:
+Score the recipe for these assigned bioactivities only:
 ${supportList}`;
 }
 
-export function computeFinal(nutrition: number, ingredient: number): number {
-  const v = Math.round(0.7 * nutrition + 0.3 * ingredient);
-  return Math.max(0, Math.min(100, v));
+function clampScore(v: number): number {
+  return Math.max(0, Math.min(100, Math.round(v)));
 }
-
 
 export async function scoreSupports(
   recipe: ScorableRecipe,
@@ -139,8 +154,8 @@ export async function scoreSupports(
 
   const { object } = await generateObject({
     model: anthropic("claude-haiku-4-5"),
-    // Enough headroom to score the full support set (23) without truncation.
-    maxOutputTokens: 6000,
+    // One small number per assigned bioactivity — headroom for all 23.
+    maxOutputTokens: 1500,
     schema: scoreSchema,
     system: SCORING_SYSTEM,
     prompt: buildScoringPrompt(recipe, supports),
@@ -150,14 +165,12 @@ export async function scoreSupports(
   const scoredBySlug = new Map<string, SupportScore>();
 
   for (const s of object.supports) {
-    // Keep only assigned slugs (never invent supports) and ignore duplicates.
+    // Keep only assigned slugs (never invent bioactivities) and ignore duplicates.
     if (!nameBySlug.has(s.slug) || scoredBySlug.has(s.slug)) continue;
     scoredBySlug.set(s.slug, {
       slug: s.slug,
       support: nameBySlug.get(s.slug)!,
-      nutritionScore: s.nutritionScore,
-      ingredientScore: s.ingredientScore,
-      score: computeFinal(s.nutritionScore, s.ingredientScore),
+      score: clampScore(s.bioactivityScore),
     });
   }
 
