@@ -22,8 +22,14 @@ const page = async () => {
 
         <div className="grid grid-cols-2 gap-3 space-y-3">
           {recipes.map((recipe) => {
-            const firstTag = recipe.recipe_tags?.[0]?.tags?.name ?? null;
-            const catSlug = recipe.recipe_tags?.[0]?.tags?.slug ?? null;
+            const topCat = [...(recipe.recipe_categories ?? [])]
+              .filter((rc: { categories: unknown }) => rc.categories)
+              .sort(
+                (a: { score: number }, b: { score: number }) =>
+                  b.score - a.score,
+              )[0]?.categories;
+            const firstTag = topCat?.name ?? null;
+            const catSlug = topCat?.slug ?? null;
             return (
               <div key={recipe.id} className="flex flex-col gap-2">
                 {recipe.image_url && (

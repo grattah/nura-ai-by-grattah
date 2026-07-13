@@ -61,7 +61,9 @@ function SearchCategoryContent() {
       let queryBuilder = supabase
         .from("recipes")
         .select(
-          "id, title, image_url, display_order, recipe_tags!inner(tags!inner(slug))",
+          categorySlug
+            ? "id, title, image_url, display_order, recipe_categories!inner(categories!inner(slug))"
+            : "id, title, image_url, display_order",
         )
         .eq("status" as never, "approved" as never)
         .ilike("title", `%${q.trim()}%`)
@@ -69,7 +71,10 @@ function SearchCategoryContent() {
         .limit(20);
 
       if (categorySlug) {
-        queryBuilder = queryBuilder.eq("recipe_tags.tags.slug", categorySlug);
+        queryBuilder = queryBuilder.eq(
+          "recipe_categories.categories.slug",
+          categorySlug,
+        );
       }
 
       const { data } = await queryBuilder;
