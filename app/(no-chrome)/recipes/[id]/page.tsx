@@ -25,8 +25,9 @@ import { BookmarkProvider } from "@/components/bookmark-provider";
 import PersonalizedTokenModal from "@/components/tokens/PersonalizedTokenModal";
 
 type RecipeRecord = Database["public"]["Tables"]["recipes"]["Row"] & {
-  support_scores: SupportScore[] | null;
-  recipe_tags: { tags: { name: string; slug: string } | null }[] | null;
+  recipe_tags:
+    | { score: number | null; tags: { name: string; slug: string } | null }[]
+    | null;
 };
 
 interface Comment {
@@ -44,7 +45,21 @@ interface Profile {
   avatar_url: string;
 }
 
-const RECIPE_SELECT = "*, recipe_tags(tags(name, slug))";
+const RECIPE_SELECT = "*, recipe_tags(score, tags(name, slug))";
+
+// The recipe's strongest bioactivities (from recipe_tags) for the DetoxCard.
+function topBioactivities(
+  recipeTags: RecipeRecord["recipe_tags"],
+): SupportScore[] {
+  return (recipeTags ?? [])
+    .flatMap((rt) =>
+      rt.tags && rt.score != null
+        ? [{ slug: rt.tags.slug, support: rt.tags.name, score: rt.score }]
+        : [],
+    )
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 2);
+}
 
 const getCachedApprovedRecipe = (id: string) =>
   unstable_cache(
@@ -220,10 +235,7 @@ export default async function RecipeDetailPage({
             </div>
 
             <div className="px-6 mb-8">
-              <DetoxCard
-                recipeId={recipe.id}
-                initialScores={recipe.support_scores}
-              />
+              <DetoxCard initialScores={topBioactivities(recipe.recipe_tags)} />
             </div>
 
             {/* Accordion sections */}

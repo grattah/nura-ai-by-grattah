@@ -127,17 +127,16 @@ async function nextDisplayOrder(
   return ((data?.display_order as number | undefined) ?? 0) + 1;
 }
 
+// No-op: recipe_tags now holds computed bioactivity scores (populated by
+// scripts/score-supports.mjs), not manually-assigned category tags. Admin
+// category editing is a follow-up; leaving this in place avoids clobbering the
+// scored rows on every admin save.
 async function syncTags(
-  admin: ReturnType<typeof createServiceRoleClient>,
-  recipeId: string,
-  tagIds: string[],
+  _admin: ReturnType<typeof createServiceRoleClient>,
+  _recipeId: string,
+  _tagIds: string[],
 ) {
-  await admin.from("recipe_tags").delete().eq("recipe_id", recipeId);
-  if (tagIds.length) {
-    await admin
-      .from("recipe_tags")
-      .insert(tagIds.map((tag_id) => ({ recipe_id: recipeId, tag_id })));
-  }
+  return;
 }
 
 // Best-effort vectorization: never block an approval/edit on an embedding hiccup
