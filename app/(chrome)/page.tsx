@@ -22,8 +22,21 @@ type RecipeWithTags = {
   id: string;
   title: string;
   image_url: string | null;
-  recipe_tags: Array<{ tags: { name: string; slug: string } | null }>;
+  recipe_categories: Array<{
+    score: number;
+    categories: { name: string; slug: string } | null;
+  }>;
 };
+
+// The recipe's strongest category (highest CategoryScore) for the card label.
+function topCategory(
+  recipe: RecipeWithTags,
+): { name: string; slug: string } | null {
+  const top = [...(recipe.recipe_categories ?? [])]
+    .filter((rc) => rc.categories)
+    .sort((a, b) => b.score - a.score)[0];
+  return top?.categories ?? null;
+}
 
 // Static wellness tip — swap for a DB-driven fetch when ready
 const getPopularRecipes = unstable_cache(
@@ -31,7 +44,7 @@ const getPopularRecipes = unstable_cache(
     const supabase = createServiceRoleClient();
     return supabase
       .from("recipes")
-      .select("id, title, image_url, recipe_tags(tags(name, slug))")
+      .select("id, title, image_url, recipe_categories(score, categories(name, slug))")
       .eq("status" as never, "approved" as never)
       .or("shares.gt.0, saves.gt.0, comments.gt.0, likes.gt.0")
       .order("weighted_score", { ascending: false })
@@ -62,7 +75,7 @@ export default async function HomePage() {
     const seenTags = new Set<string>();
     const result: RecipeWithTags[] = [];
     for (const recipe of recipes) {
-      const firstTag = recipe.recipe_tags?.[0]?.tags?.name ?? null;
+      const firstTag = topCategory(recipe)?.name ?? null;
       if (firstTag !== null) {
         if (seenTags.has(firstTag)) continue;
         seenTags.add(firstTag);
@@ -134,8 +147,9 @@ export default async function HomePage() {
 
           <div className="grid grid-cols-2 gap-x-4 gap-y-8">
             {popularRecipes.map((recipe, i) => {
-              const firstTag = recipe.recipe_tags?.[0]?.tags?.name;
-              const catSlug = recipe.recipe_tags?.[0]?.tags?.slug;
+              const cat = topCategory(recipe);
+              const firstTag = cat?.name;
+              const catSlug = cat?.slug;
               return (
                 <RecipeCardNew
                   key={recipe.id}

@@ -1,55 +1,17 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import { type SupportScore, MAX_SUPPORT_SCORES } from "@/lib/wellness-score";
 
 interface DetoxCardProps {
-  recipeId: string;
+  /** Precomputed bioactivity scores (from recipe_tags). Card hides if empty. */
   initialScores?: SupportScore[] | null;
 }
 
-export function DetoxCard({ recipeId, initialScores }: DetoxCardProps) {
-  const hasInitial = !!initialScores?.length;
-  const [scores, setScores] = useState<SupportScore[]>(
-    hasInitial ? initialScores! : [],
-  );
-  const [loading, setLoading] = useState(!hasInitial);
+export function DetoxCard({ initialScores }: DetoxCardProps) {
+  const scores = initialScores ?? [];
+  // Nothing scored yet (e.g. a freshly generated recipe) — render nothing.
+  if (scores.length === 0) return null;
 
-  useEffect(() => {
-    // Every recipe is scorable against the fixed support set, so always fetch
-    // when there are no server-provided scores.
-    if (hasInitial) return;
-
-    let cancelled = false;
-    setLoading(true);
-
-    fetch("/api/recipes/support-scores", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ recipeId }),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (!cancelled && Array.isArray(data?.scores)) setScores(data.scores);
-      })
-      .catch(() => {
-        /* leave empty — card hides gracefully */
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recipeId]);
-
-  // Nothing to show (no tags / failed and uncached) — render nothing.
-  if (!loading && scores.length === 0) return null;
-
-  // Each support keeps its own independent 0–100 strength (they don't sum to
-  // 100). Sort strongest-first; the ring shows the top support's own score.
+  // Each bioactivity keeps its own independent 0–100 strength (they don't sum to
+  // 100). Sort strongest-first; the ring shows the top one's own score.
   const sorted = [...scores]
     .sort((a, b) => b.score - a.score)
     .slice(0, MAX_SUPPORT_SCORES);
@@ -80,54 +42,40 @@ export function DetoxCard({ recipeId, initialScores }: DetoxCardProps) {
             stroke="#D6EFE2"
             strokeWidth={strokeWidth}
           />
-          {!loading && (
-            <circle
-              cx={size / 2}
-              cy={size / 2}
-              r={radius}
-              fill="#E6F4EB"
-              stroke="#1BAB51"
-              strokeWidth={strokeWidth}
-              strokeLinecap="round"
-              strokeDasharray={circumference}
-              strokeDashoffset={offset}
-              className="transition-all duration-700 ease-out"
-            />
-          )}
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="#E6F4EB"
+            stroke="#1BAB51"
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            className="transition-all duration-700 ease-out"
+          />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          {loading ? (
-            <span className="h-6 w-10 rounded-full bg-muted animate-pulse" />
-          ) : (
-            <span className="text-2xl font-semibold text-[#19803F]">
-              {pct}%
-            </span>
-          )}
+          <span className="text-2xl font-semibold text-[#19803F]">{pct}%</span>
         </div>
       </div>
 
       <div className="flex-1 space-y-2">
-        <p className="text-base text-black font-semibold">
-          This recipe contains
-        </p>
-        {loading ? (
-          <div className="h-4 w-3/4 rounded-full bg-muted animate-pulse" />
-        ) : (
-          <p className="text-base">
-            {sorted.map((s, i) => (
-              <span key={s.slug}>
-                <span className="text-mint-green font-semibold">
-                  {s.score}% {s.support}
-                </span>
-                {i < sorted.length - 1
-                  ? i === sorted.length - 2
-                    ? ", and "
-                    : ", "
-                  : "."}
+        <p className="text-base text-black font-semibold">This recipe contains</p>
+        <p className="text-base">
+          {sorted.map((s, i) => (
+            <span key={s.slug}>
+              <span className="text-mint-green font-semibold">
+                {s.score}% {s.support}
               </span>
-            ))}
-          </p>
-        )}
+              {i < sorted.length - 1
+                ? i === sorted.length - 2
+                  ? ", and "
+                  : ", "
+                : "."}
+            </span>
+          ))}
+        </p>
       </div>
     </div>
   );
