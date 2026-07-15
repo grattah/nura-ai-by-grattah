@@ -6,7 +6,7 @@ export async function fetchPopularRecipesOnePerCategory(
 ) {
   const { data, error } = await supabase
     .from("recipes")
-    .select(`*, recipe_categories ( score, categories (id, name, slug) )`)
+    .select(`*, recipe_categories ( score, qualified, categories (id, name, slug) )`)
     .eq("status", "approved")
     .or("shares.gt.0,saves.gt.0,comments.gt.0,likes.gt.0")
     .order("weighted_score", { ascending: false })
@@ -22,7 +22,10 @@ export async function fetchPopularRecipesOnePerCategory(
   for (const recipe of data ?? []) {
     const firstTag =
       [...(recipe.recipe_categories ?? [])]
-        .filter((rc: { categories: unknown }) => rc.categories)
+        .filter(
+          (rc: { categories: unknown; qualified?: boolean }) =>
+            rc.qualified && rc.categories,
+        )
         .sort(
           (a: { score: number }, b: { score: number }) => b.score - a.score,
         )[0]?.categories?.name ?? null;

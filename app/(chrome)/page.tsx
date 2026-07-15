@@ -24,16 +24,18 @@ type RecipeWithTags = {
   image_url: string | null;
   recipe_categories: Array<{
     score: number;
+    qualified: boolean;
     categories: { name: string; slug: string } | null;
   }>;
 };
 
-// The recipe's strongest category (highest CategoryScore) for the card label.
+// The recipe's strongest QUALIFYING category (highest CategoryScore) for the
+// card label. Recipes that qualify for nothing get no badge.
 function topCategory(
   recipe: RecipeWithTags,
 ): { name: string; slug: string } | null {
   const top = [...(recipe.recipe_categories ?? [])]
-    .filter((rc) => rc.categories)
+    .filter((rc) => rc.qualified && rc.categories)
     .sort((a, b) => b.score - a.score)[0];
   return top?.categories ?? null;
 }
@@ -44,7 +46,7 @@ const getPopularRecipes = unstable_cache(
     const supabase = createServiceRoleClient();
     return supabase
       .from("recipes")
-      .select("id, title, image_url, recipe_categories(score, categories(name, slug))")
+      .select("id, title, image_url, recipe_categories(score, qualified, categories(name, slug))")
       .eq("status" as never, "approved" as never)
       .or("shares.gt.0, saves.gt.0, comments.gt.0, likes.gt.0")
       .order("weighted_score", { ascending: false })

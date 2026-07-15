@@ -61,6 +61,7 @@ export default function CategoryDetailPage() {
           "score, recipes!inner(id, title, image_url, display_order, status, drink_type), categories!inner(slug)",
         )
         .eq("categories.slug", slug)
+        .eq("qualified" as never, true as never)
         .eq("recipes.status" as never, "approved" as never);
 
       if (activeType !== "all") {

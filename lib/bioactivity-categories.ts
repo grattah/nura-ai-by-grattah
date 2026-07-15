@@ -29,7 +29,7 @@ export type CategorySlug = (typeof CATEGORY_SLUGS)[number];
 // A bioactivity contributes to a category when its relevance is ≥ this.
 export const RELEVANCE_THRESHOLD = 50;
 // A recipe qualifies for a category when its CategoryScore is ≥ this.
-export const QUALIFY_THRESHOLD = 50;
+export const QUALIFY_THRESHOLD = 40;
 // Minimum LLM override confidence for the trace exception to admit a recipe.
 export const TRACE_OVERRIDE_CONFIDENCE = 80;
 
@@ -85,6 +85,7 @@ export interface TraceOverride {
 export interface CategoryResult {
   category: CategorySlug;
   score: number; // 0–100, rounded
+  qualified: boolean;
   viaTrace: boolean;
 }
 
@@ -112,12 +113,14 @@ export function calculateCategoryScore(
 }
 
 /**
- * The categories a recipe qualifies for: CategoryScore ≥ QUALIFY_THRESHOLD, or
- * below it when a trace override for that category clears TRACE_OVERRIDE_CONFIDENCE.
- * Score is the real (possibly sub-threshold) CategoryScore, so trace-admitted
- * recipes rank below the regular qualifiers.
+ * All 14 categories with the recipe's CategoryScore and flags:
+ * - `viaTrace`: below `QUALIFY_THRESHOLD` but admitted by a trace override
+ *   clearing `TRACE_OVERRIDE_CONFIDENCE`.
+ * - `qualified`: `score ≥ QUALIFY_THRESHOLD` OR `viaTrace`.
+ * Scores are the real (possibly sub-threshold) values, so trace-admitted recipes
+ * rank below regular qualifiers. Non-qualifying scores are retained for future use.
  */
-export function computeRecipeCategories(
+export function computeAllCategoryScores(
   scoresBySlug: Record<string, number>,
   overrides: TraceOverride[] = [],
 ): CategoryResult[] {
@@ -128,15 +131,27 @@ export function computeRecipeCategories(
     overrideByCategory.set(o.category, Math.max(prev, o.confidence ?? 0));
   }
 
-  const results: CategoryResult[] = [];
-  for (const category of CATEGORY_SLUGS) {
+  return CATEGORY_SLUGS.map((category) => {
     const raw = calculateCategoryScore(scoresBySlug, category);
-    const qualifies = raw >= QUALIFY_THRESHOLD;
-    const overrideConf = overrideByCategory.get(category) ?? 0;
-    const viaTrace = !qualifies && overrideConf >= TRACE_OVERRIDE_CONFIDENCE;
-    if (qualifies || viaTrace) {
-      results.push({ category, score: Math.round(raw), viaTrace });
-    }
-  }
-  return results;
+    const passesScore = raw >= QUALIFY_THRESHOLD;
+    const viaTrace =
+      !passesScore &&
+      (overrideByCategory.get(category) ?? 0) >= TRACE_OVERRIDE_CONFIDENCE;
+    return {
+      category,
+      score: Math.round(raw),
+      qualified: passesScore || viaTrace,
+      viaTrace,
+    };
+  });
+}
+
+/** Only the categories a recipe qualifies for (subset of computeAllCategoryScores). */
+export function computeRecipeCategories(
+  scoresBySlug: Record<string, number>,
+  overrides: TraceOverride[] = [],
+): CategoryResult[] {
+  return computeAllCategoryScores(scoresBySlug, overrides).filter(
+    (c) => c.qualified,
+  );
 }

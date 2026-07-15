@@ -23,7 +23,10 @@ const page = async () => {
         <div className="grid grid-cols-2 gap-3 space-y-3">
           {recipes.map((recipe) => {
             const topCat = [...(recipe.recipe_categories ?? [])]
-              .filter((rc: { categories: unknown }) => rc.categories)
+              .filter(
+                (rc: { categories: unknown; qualified?: boolean }) =>
+                  rc.qualified && rc.categories,
+              )
               .sort(
                 (a: { score: number }, b: { score: number }) =>
                   b.score - a.score,
