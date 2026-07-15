@@ -1,28 +1,18 @@
-import { type SupportScore, MAX_SUPPORT_SCORES } from "@/lib/wellness-score";
-
 interface DetoxCardProps {
-  /** Precomputed bioactivity scores (from recipe_tags). Card hides if empty. */
-  initialScores?: SupportScore[] | null;
+  /** The recipe's Base Nutrition Score (final_score, 0–100). Card hides if null. */
+  finalScore?: number | null;
 }
 
-export function DetoxCard({ initialScores }: DetoxCardProps) {
-  const scores = initialScores ?? [];
-  // Nothing scored yet (e.g. a freshly generated recipe) — render nothing.
-  if (scores.length === 0) return null;
+export function DetoxCard({ finalScore }: DetoxCardProps) {
+  if (finalScore == null) return null;
 
-  // Each bioactivity keeps its own independent 0–100 strength (they don't sum to
-  // 100). Sort strongest-first; the ring shows the top one's own score.
-  const sorted = [...scores]
-    .sort((a, b) => b.score - a.score)
-    .slice(0, MAX_SUPPORT_SCORES);
-  const primary = sorted[0];
+  const pct = Math.max(0, Math.min(100, Math.round(finalScore)));
 
   // Ring geometry
   const size = 82;
   const strokeWidth = 7;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const pct = primary?.score ?? 0;
   const offset = circumference - (pct / 100) * circumference;
 
   return (
@@ -60,21 +50,15 @@ export function DetoxCard({ initialScores }: DetoxCardProps) {
         </div>
       </div>
 
-      <div className="flex-1 space-y-2">
-        <p className="text-base text-black font-semibold">This recipe contains</p>
-        <p className="text-base">
-          {sorted.map((s, i) => (
-            <span key={s.slug}>
-              <span className="text-mint-green font-semibold">
-                {s.score}% {s.support}
-              </span>
-              {i < sorted.length - 1
-                ? i === sorted.length - 2
-                  ? ", and "
-                  : ", "
-                : "."}
-            </span>
-          ))}
+      <div className="flex-1 space-y-1">
+        <p className="text-base text-black">
+          This recipe is{" "}
+          <span className="font-semibold">{pct}% healthy</span> for a normal,
+          healthy person without any health conditions.
+        </p>
+        <p className="text-sm text-subtle">
+          For personalized suitability, please complete your health profile to
+          see your compatibility score.
         </p>
       </div>
     </div>
