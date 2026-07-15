@@ -12,6 +12,7 @@ import { isBookmarked } from "@/actions/bookmark";
 import { BookmarkButton } from "@/components/bookmark-button";
 import BackButton from "@/components/back-button";
 import { DetoxCard } from "@/components/recipe/DetoxCard";
+import { RecipeSupports } from "@/components/recipe/RecipeSupports";
 import { RecipeHeroImage } from "@/components/recipe/RecipeHeroImage";
 import Comment from "@/components/recipe/Comment";
 import AccordionSection from "@/components/recipe/AccordionSection";
@@ -47,9 +48,10 @@ interface Profile {
 
 const RECIPE_SELECT = "*, recipe_tags(score, tags(name, slug))";
 
-// The recipe's strongest bioactivities (from recipe_tags) for the DetoxCard.
+// The recipe's strongest bioactivities (from recipe_tags) for the supports card.
 function topBioactivities(
   recipeTags: RecipeRecord["recipe_tags"],
+  count = 5,
 ): SupportScore[] {
   return (recipeTags ?? [])
     .flatMap((rt) =>
@@ -58,7 +60,7 @@ function topBioactivities(
         : [],
     )
     .sort((a, b) => b.score - a.score)
-    .slice(0, 2);
+    .slice(0, count);
 }
 
 const getCachedApprovedRecipe = (id: string) =>
@@ -234,8 +236,9 @@ export default async function RecipeDetailPage({
               </p>
             </div>
 
-            <div className="px-6 mb-8">
-              <DetoxCard initialScores={topBioactivities(recipe.recipe_tags)} />
+            <div className="px-6 mb-8 space-y-4">
+              <RecipeSupports supports={topBioactivities(recipe.recipe_tags, 5)} />
+              <DetoxCard finalScore={recipe.final_score ?? null} />
             </div>
 
             {/* Accordion sections */}
