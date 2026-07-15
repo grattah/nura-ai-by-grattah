@@ -2,22 +2,35 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { X, Share, Plus, Download } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { X, Share, Ellipsis } from "lucide-react";
+import { HiOutlineMenuAlt2 } from "react-icons/hi";
+
 import { useAccess } from "@/components/providers/access-provider";
-import logo from "@/public/logo-outlined-nobg.svg";
+import AppIcon from "./vectors/AppIcon";
+import findInHomeScreen from "@/public/findInHomeScreen.webp";
+import allSetImage from "@/public/allSetModal.webp";
+import toolBar from "@/public/toolBarSafari.webp";
+import shareButtonSafari from "@/public/shareButtonSafari.webp";
+import shareButtonChrome from "@/public/shareButtonChrome.webp";
+import addHomeScreen from "@/public/addToHomeScreen.webp";
+import SuccessAnimation from "@/components/SuccessAnimation";
 
 const STORAGE_KEY = "nura_pwa_prompt_dismissed";
 const DISMISS_TTL_DAYS = 2;
 
-function isIOS(): boolean {
-  if (typeof navigator === "undefined") return false;
-  return /iphone|ipad|ipod/i.test(navigator.userAgent);
-}
+type IOSBrowser = "safari" | "crios" | "fxios" | "edgios" | "other";
 
-function isSafari(): boolean {
-  if (typeof navigator === "undefined") return false;
-  return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+function getIOSBrowser(): IOSBrowser {
+  if (typeof navigator === "undefined") return "other";
+  const ua = navigator.userAgent;
+  if (!/iphone|ipad|ipod/i.test(ua)) return "other";
+
+  if (/CriOS\//i.test(ua)) return "crios";
+  if (/FxiOS\//i.test(ua)) return "fxios";
+  if (/EdgiOS\//i.test(ua)) return "edgios";
+  // Real Safari: has Safari/ but none of the third-party tokens above.
+  if (/Safari\//i.test(ua)) return "safari";
+  return "other";
 }
 
 function isStandalone(): boolean {
@@ -49,7 +62,7 @@ function markDismissed() {
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
-type PromptMode = "ios" | "android" | null;
+type PromptMode = "ios-safari" | "ios-chrome" | "android" | null;
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -70,6 +83,7 @@ export function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     if (window.__nukoBip) {
@@ -113,12 +127,19 @@ export function PWAInstallPrompt() {
       return;
     }
 
-    const iosEligible = isIOS() && isSafari();
+    const browser = getIOSBrowser();
+    const iosEligible = browser === "safari" || browser === "crios";
     const androidEligible = !!deferredPrompt;
     if (!iosEligible && !androidEligible) return;
 
     const timer = setTimeout(() => {
-      setMode(iosEligible ? "ios" : "android");
+      setMode(
+        browser === "safari"
+          ? "ios-safari"
+          : browser === "crios"
+          ? "ios-chrome"
+          : "android"
+      );
       setVisible(true);
     }, 30_000);
 
@@ -136,8 +157,12 @@ export function PWAInstallPrompt() {
     if (!deferredPrompt) return;
     await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === "accepted" || outcome === "dismissed") {
+    if (outcome === "dismissed") {
       setVisible(false);
+      markDismissed();
+    } else if (outcome === "accepted") {
+      setVisible(false);
+      setModalOpen(true);
       markDismissed();
     }
     setDeferredPrompt(null);
@@ -147,140 +172,297 @@ export function PWAInstallPrompt() {
   if (!visible || !mode) return null;
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+    <div className="fixed inset-0 h-dvh z-50 flex items-center justify-center px-6">
+      <button
+        type="button"
+        aria-label="Close"
+        className="absolute inset-0 bg-black/20 backdrop-blur-xs"
         onClick={closeForNow}
-        aria-hidden="true"
       />
 
-      {/* Bottom sheet */}
-      <div
-        role="dialog"
-        aria-label="Install Nuko app"
-        className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-3xl px-5 pt-5 pb-10 shadow-2xl border-t border-border animate-in slide-in-from-bottom duration-300"
-      >
-        {/* Drag handle */}
-        <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-muted" />
+      <div className="relative w-full max-w-96.5 bg-white rounded-3xl px-6 pt-4 pb-6 flex flex-col items-center">
+        <div className="absolute top-2 right-2.5">
+          <button
+            onClick={dismiss}
+            className="size-7.5 rounded-full bg-grey-c100 flex items-center justify-center hover:opacity-75 transition-opacity"
+            aria-label="Close"
+          >
+            <X className="size-4.5 text-foreground" />
+          </button>
+        </div>
 
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3 p-2">
-            <div className="rounded-full shrink-0 bg-mint-green size-9 grid place-items-center">
-              <Image
-                src={logo}
-                alt="logo"
-                width={20}
-                height={20}
-                className="w-5 h-5"
-              />
-            </div>
-            <div>
-              <p className="text-base font-bold text-foreground leading-tight">
-                Install Nuko
+        <AppIcon />
+
+        {/* Mode-specific instructions / CTA */}
+        {mode === "ios-safari" && (
+          <div className="flex flex-col gap-4 mt-4">
+            <div className="flex flex-col gap-1 text-center">
+              <p className="text-hero leading-6.5 font-semibold">
+                Add Nuko to your home screen
               </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Add to your home screen for the best experience
+              <p className="text-subtle text-sm font-medium">
+                Add Nuko to your home screen in 4 steps
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-4.25">
+              <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
+                <div className="flex items-start gap-2 pt-3">
+                  <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
+                    1
+                  </p>
+                  <div className="flex flex-col gap-1">
+                    <p className="font-medium text-sm">
+                      Open the Safari toolbar
+                    </p>
+                    <p className="font-medium text-subtle text-xs">
+                      Tap the three dots{" "}
+                      <span className="p-1 bg-white rounded-md inline-flex items-center align-middle">
+                        <Ellipsis
+                          size={12}
+                          color="#227B6F"
+                          strokeWidth={1.25}
+                        />
+                      </span>{" "}
+                      or menu icon{" "}
+                      <span className="p-1 bg-white rounded-md inline-flex items-center align-middle">
+                        <HiOutlineMenuAlt2
+                          size={12}
+                          color="#227B6F"
+                          strokeWidth={1.25}
+                        />
+                      </span>{" "}
+                      next to the Safari bar showing “nuko.health
+                    </p>
+                  </div>
+                </div>
+                <Image src={toolBar} alt="icon image" className="w-32" />
+              </div>
+
+              <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
+                <div className="flex items-start gap-2 pt-3">
+                  <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
+                    2
+                  </p>
+                  <div className="flex flex-col gap-1">
+                    <p className="font-medium text-sm">Tap the Share icon</p>
+                    <p className="font-medium text-subtle text-xs">
+                      Tap the Share{" "}
+                      <span className="p-1 bg-white rounded-md inline-flex items-center align-middle">
+                        <Share size={12} color="#227B6F" strokeWidth={1.25} />
+                      </span>{" "}
+                      button in the toolbar.
+                    </p>
+                  </div>
+                </div>
+                <Image
+                  src={shareButtonSafari}
+                  alt="icon image"
+                  className="w-32"
+                />
+              </div>
+
+              <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
+                <div className="flex items-start gap-2 pt-3">
+                  <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
+                    3
+                  </p>
+                  <div className="flex flex-col gap-1">
+                    <p className="font-medium text-sm">
+                      Select “Add to Home Screen”
+                    </p>
+                    <p className="font-medium text-subtle text-xs">
+                      Scroll down and tap on “Add to Home Screen”.
+                    </p>
+                  </div>
+                </div>
+                <Image src={addHomeScreen} alt="icon image" className="w-32" />
+              </div>
+
+              <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
+                <div className="flex items-start gap-2 pt-3">
+                  <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
+                    4
+                  </p>
+                  <div className="flex flex-col gap-1">
+                    <p className="font-medium text-sm">
+                      Find Nuko on your homescreen
+                    </p>
+                    <p className="font-medium text-subtle text-xs">
+                      Nuko has been added! You can now find and open it from
+                      your homescreen.
+                    </p>
+                  </div>
+                </div>
+                <Image
+                  src={findInHomeScreen}
+                  alt="icon image"
+                  className="w-32"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <button
+                className="text-white py-3 rounded-full bg-mint-green font-medium text-sm"
+                onClick={dismiss}
+              >
+                Got it!
+              </button>
+              <p className="text-xs font-medium text-subtle text-center">
+                💚 Thanks for using Nuko!
               </p>
             </div>
           </div>
+        )}
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={dismiss}
-            className="w-9 h-9 rounded-full bg-muted text-muted-foreground hover:opacity-70 -mt-1 -mr-1 shrink-0"
-            aria-label="Dismiss"
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-
-        {/* Benefits list */}
-        <ul className="space-y-2 mb-5">
-          {[
-            "Works offline — access recipes anytime",
-            "Instant launch from your home screen",
-            "Full-screen experience, no browser chrome",
-          ].map((benefit) => (
-            <li
-              key={benefit}
-              className="flex items-center gap-2.5 text-sm text-muted-foreground"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-nura-peach shrink-0" />
-              {benefit}
-            </li>
-          ))}
-        </ul>
-
-        {/* Mode-specific instructions / CTA */}
-        {mode === "ios" && (
-          <div className="space-y-3">
-            {/* Step-by-step iOS instructions */}
-            <div className="bg-muted rounded-2xl p-4 space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">
-                How to install
+        {mode === "ios-chrome" && (
+          <div className="flex flex-col gap-4 mt-4">
+            <div className="flex flex-col gap-1 text-center">
+              <p className="text-hero leading-6.5 font-semibold">
+                Add Nuko to your home screen
               </p>
-              {[
-                {
-                  icon: <Share className="w-4 h-4 text-foreground/70" />,
-                  text: (
-                    <>
-                      Tap the{" "}
-                      <Share className="w-3.5 h-3.5 inline-block relative -top-px" />{" "}
-                      <strong>Share</strong> icon in Safari's toolbar
-                    </>
-                  ),
-                },
-                {
-                  icon: <Plus className="w-4 h-4 text-foreground/70" />,
-                  text: (
-                    <>
-                      Scroll down and tap <strong>"Add to Home Screen"</strong>
-                    </>
-                  ),
-                },
-              ].map((step, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <span className="w-6 h-6 rounded-full bg-foreground/10 flex items-center justify-center shrink-0 text-xs font-bold text-foreground/60">
-                    {i + 1}
-                  </span>
-                  <p className="text-sm text-foreground/80 leading-snug">
-                    {step.text}
-                  </p>
-                </div>
-              ))}
+              <p className="text-subtle text-sm font-medium">
+                Add Nuko to your home screen in 3 steps
+              </p>
             </div>
-            <Button
-              onClick={dismiss}
-              variant="ghost"
-              className="w-full rounded-full h-12 text-sm text-muted-foreground hover:opacity-70"
-            >
-              Maybe later
-            </Button>
+
+            <div className="flex flex-col gap-4.25">
+              <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
+                <div className="flex items-start gap-2 pt-3">
+                  <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
+                    1
+                  </p>
+                  <div className="flex flex-col gap-1">
+                    <p className="font-medium text-sm">
+                    Tap the Share icon
+                    </p>
+                    <p className="font-medium text-subtle text-xs">
+                    Tap the Share{" "}
+                      <span className="p-1 bg-white rounded-md inline-flex items-center align-middle">
+                        <Share size={12} color="#227B6F" strokeWidth={1.25} />
+                      </span>{" "}
+                      button in the toolbar.
+                    </p>
+                  </div>
+                </div>
+                <Image src={shareButtonChrome} alt="icon image" className="w-32" />
+              </div>
+
+              <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
+                <div className="flex items-start gap-2 pt-3">
+                  <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
+                    2
+                  </p>
+                  <div className="flex flex-col gap-1">
+                    <p className="font-medium text-sm">Select “Add to Home Screen”</p>
+                    <p className="font-medium text-subtle text-xs">
+                    Scroll down and tap on “Add to Home Screen”.
+                    </p>
+                  </div>
+                </div>
+                <Image
+                  src={addHomeScreen}
+                  alt="icon image"
+                  className="w-32"
+                />
+              </div>
+
+              <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
+                <div className="flex items-start gap-2 pt-3">
+                  <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
+                    3
+                  </p>
+                  <div className="flex flex-col gap-1">
+                    <p className="font-medium text-sm">
+                    Find Nuko on your homescreen
+                    </p>
+                    <p className="font-medium text-subtle text-xs">
+                    Nuko has been added! You can now find and open it from your  homescreen.
+                    </p>
+                  </div>
+                </div>
+                <Image src={findInHomeScreen} alt="icon image" className="w-32" />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <button
+                className="text-white py-3 rounded-full bg-mint-green font-medium text-sm"
+                onClick={dismiss}
+              >
+                Got it!
+              </button>
+              <p className="text-xs font-medium text-subtle text-center">
+                💚 Thanks for using Nuko!
+              </p>
+            </div>
           </div>
         )}
 
         {mode === "android" && (
-          <div className="space-y-3">
-            <Button
+          <div className="flex flex-col gap-4 mt-4">
+            <div className="flex flex-col gap-1 text-center">
+              <p className="text-hero leading-6.5 font-semibold">
+                Install Nuko
+              </p>
+              <p className="text-subtle text-sm font-medium">
+                Add Nuko to your home screen for the best experience
+              </p>
+            </div>
+            <button
               onClick={handleAndroidInstall}
-              className="w-full rounded-full h-13 text-base font-semibold bg-nura-cream text-nura-forest hover:opacity-90 transition-opacity border-0 shadow-none flex items-center gap-2"
+              className="w-full rounded-full py-3 bg-mint-green text-white font-medium text-sm"
             >
-              <Download className="w-4.5 h-4.5" />
-              Add to Home Screen
-            </Button>
-            <Button
-              onClick={dismiss}
-              variant="ghost"
-              className="w-full rounded-full h-11 text-sm text-muted-foreground hover:opacity-70"
-            >
-              Not now
-            </Button>
+              Add to home screen
+            </button>
           </div>
         )}
       </div>
-    </>
+
+      {modalOpen && (
+        <div className="fixed inset-0 h-dvh z-50 flex items-center justify-center px-6">
+          <button
+            type="button"
+            aria-label="Close"
+            className="absolute inset-0 bg-black/20 backdrop-blur-xs"
+            onClick={closeForNow}
+          />
+
+          <div className="relative w-full max-w-96.5 bg-white rounded-3xl px-6 pt-4 pb-6 flex flex-col items-center">
+            <div className="absolute top-2 right-2.5">
+              <button
+                onClick={dismiss}
+                className="size-7.5 rounded-full bg-grey-c100 flex items-center justify-center hover:opacity-75 transition-opacity"
+                aria-label="Close"
+              >
+                <X className="size-4.5 text-foreground" />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-4 mt-4">
+              <div className="flex justify-center items-center text-center">
+                <SuccessAnimation />
+              </div>
+              <div className="flex flex-col gap-2 text-center">
+                <p className="text-hero leading-6.5 font-semibold">
+                  You’re all set!
+                </p>
+                <p className="text-subtle text-sm font-medium">
+                  Nuko is now on your home screen.
+                </p>
+              </div>
+              <Image src={allSetImage} alt="image" className="" />
+              <button
+                className="text-white py-3 rounded-full bg-mint-green font-medium text-sm"
+                onClick={dismiss}
+              >
+                Got it!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
