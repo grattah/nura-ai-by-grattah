@@ -183,8 +183,8 @@ export function PWAInstallPrompt() {
             onClick={closeForNow}
           />
 
-          <div className="relative w-full max-w-96.5 bg-white rounded-3xl px-6 pt-4 pb-6 flex flex-col items-center">
-            <div className="absolute top-2 right-2.5">
+          <div className="relative w-full max-w-96.5 bg-white rounded-3xl px-6 pt-4 pb-6 max-[400px]:pt-2 max-[400px]:px-4 max-[400px]:pb-4 flex flex-col items-center">
+            <div className="absolute top-2 right-2.5 max-[400px]:top-1.5 max-[400px]:right-1.5">
               <button
                 onClick={dismiss}
                 className="size-7.5 rounded-full bg-grey-c100 flex items-center justify-center hover:opacity-75 transition-opacity"
@@ -198,27 +198,27 @@ export function PWAInstallPrompt() {
 
             {/* Mode-specific instructions / CTA */}
             {mode === "ios-safari" && (
-              <div className="flex flex-col gap-4 mt-4">
+              <div className="flex flex-col gap-4 mt-4 max-[400px]:gap-2 max-[400px]:mt-2">
                 <div className="flex flex-col gap-1 text-center">
-                  <p className="text-hero leading-6.5 font-semibold">
+                  <p className="text-hero leading-6.5 font-semibold max-[400px]:text-modaltitle">
                     Add Nuko to your home screen
                   </p>
-                  <p className="text-subtle text-sm font-medium">
+                  <p className="text-subtle text-sm font-medium max-[400px]:text-xs">
                     Add Nuko to your home screen in 4 steps
                   </p>
                 </div>
 
-                <div className="flex flex-col gap-4.25">
-                  <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
-                    <div className="flex items-start gap-2 pt-3">
-                      <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
+                <div className="flex flex-col gap-4.25 max-[400px]:gap-1.75">
+                  <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl max-[400px]:px-2 max-[400px]:pb-2">
+                    <div className="flex items-start gap-2 pt-3 max-[400px]:pt-2">
+                      <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm max-[400px]:text-xs max-[400px]:px-2.5">
                         1
                       </p>
                       <div className="flex flex-col gap-1">
-                        <p className="font-medium text-sm">
+                        <p className="font-medium text-sm max-[400px]:text-xs">
                           Open the Safari toolbar
                         </p>
-                        <p className="font-medium text-subtle text-xs">
+                        <p className="font-medium text-subtle text-xs max-[400px]:text-2xs">
                           Tap the three dots{" "}
                           <span className="p-1 bg-white rounded-md inline-flex items-center align-middle">
                             <Ellipsis
@@ -239,19 +239,19 @@ export function PWAInstallPrompt() {
                         </p>
                       </div>
                     </div>
-                    <Image src={toolBar} alt="icon image" className="w-32" />
+                    <Image src={toolBar} alt="icon image" className="w-32 max-[400px]:w-28" />
                   </div>
 
-                  <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
-                    <div className="flex items-start gap-2 pt-3">
-                      <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
+                  <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl max-[400px]:px-2 max-[400px]:pb-2">
+                    <div className="flex items-start gap-2 pt-3 max-[400px]:pt-2">
+                      <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm max-[400px]:text-xs max-[400px]:px-2.5">
                         2
                       </p>
                       <div className="flex flex-col gap-1">
-                        <p className="font-medium text-sm">
+                        <p className="font-medium text-sm max-[400px]:text-xs">
                           Tap the Share icon
                         </p>
-                        <p className="font-medium text-subtle text-xs">
+                        <p className="font-medium text-subtle text-xs max-[400px]:text-2xs">
                           Tap the Share{" "}
                           <span className="p-1 bg-white rounded-md inline-flex items-center align-middle">
                             <Share
@@ -267,20 +267,20 @@ export function PWAInstallPrompt() {
                     <Image
                       src={shareButtonSafari}
                       alt="icon image"
-                      className="w-32"
+                      className="w-32 max-[400px]:w-28"
                     />
                   </div>
 
-                  <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
-                    <div className="flex items-start gap-2 pt-3">
-                      <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
+                  <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl max-[400px]:px-2 max-[400px]:pb-2">
+                    <div className="flex items-start gap-2 pt-3 max-[400px]:pt-2">
+                      <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm max-[400px]:text-xs max-[400px]:px-2.5">
                         3
                       </p>
                       <div className="flex flex-col gap-1">
-                        <p className="font-medium text-sm">
+                        <p className="font-medium text-sm max-[400px]:text-xs">
                           Select “Add to Home Screen”
                         </p>
-                        <p className="font-medium text-subtle text-xs">
+                        <p className="font-medium text-subtle text-xs max-[400px]:text-2xs">
                           Scroll down and tap on “Add to Home Screen”.
                         </p>
                       </div>
@@ -288,20 +288,20 @@ export function PWAInstallPrompt() {
                     <Image
                       src={addHomeScreen}
                       alt="icon image"
-                      className="w-32"
+                      className="w-32 max-[400px]:w-28"
                     />
                   </div>
 
-                  <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
-                    <div className="flex items-start gap-2 pt-3">
-                      <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
+                  <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl max-[400px]:px-2 max-[400px]:pb-2">
+                    <div className="flex items-start gap-2 pt-3 max-[400px]:pt-2">
+                      <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm max-[400px]:text-xs max-[400px]:px-2.5">
                         4
                       </p>
                       <div className="flex flex-col gap-1">
-                        <p className="font-medium text-sm">
+                        <p className="font-medium text-sm max-[400px]:text-xs">
                           Find Nuko on your homescreen
                         </p>
-                        <p className="font-medium text-subtle text-xs">
+                        <p className="font-medium text-subtle text-xs max-[400px]:text-2xs">
                           Nuko has been added! You can now find and open it from
                           your homescreen.
                         </p>
@@ -310,7 +310,7 @@ export function PWAInstallPrompt() {
                     <Image
                       src={findInHomeScreen}
                       alt="icon image"
-                      className="w-32"
+                      className="w-32 max-[400px]:w-28"
                     />
                   </div>
                 </div>
@@ -330,27 +330,27 @@ export function PWAInstallPrompt() {
             )}
 
             {mode === "ios-chrome" && (
-              <div className="flex flex-col gap-4 mt-4">
+              <div className="flex flex-col gap-4 mt-4 max-[400px]:gap-2 max-[400px]:mt-2">
                 <div className="flex flex-col gap-1 text-center">
-                  <p className="text-hero leading-6.5 font-semibold">
+                  <p className="text-hero leading-6.5 font-semibold max-[400px]:text-modaltitle">
                     Add Nuko to your home screen
                   </p>
-                  <p className="text-subtle text-sm font-medium">
+                  <p className="text-subtle text-sm font-medium max-[400px]:text-xs">
                     Add Nuko to your home screen in 3 steps
                   </p>
                 </div>
 
-                <div className="flex flex-col gap-4.25">
-                  <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
-                    <div className="flex items-start gap-2 pt-3">
-                      <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
+                <div className="flex flex-col gap-4.25 max-[400px]:gap-1.75">
+                  <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl max-[400px]:px-2 max-[400px]:pb-2">
+                    <div className="flex items-start gap-2 pt-3 max-[400px]:pt-2">
+                      <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm max-[400px]:text-xs max-[400px]:px-2.5">
                         1
                       </p>
                       <div className="flex flex-col gap-1">
-                        <p className="font-medium text-sm">
+                        <p className="font-medium text-sm max-[400px]:text-xs">
                           Tap the Share icon
                         </p>
-                        <p className="font-medium text-subtle text-xs">
+                        <p className="font-medium text-subtle text-xs max-[400px]:text-2xs">
                           Tap the Share{" "}
                           <span className="p-1 bg-white rounded-md inline-flex items-center align-middle">
                             <Share
@@ -366,20 +366,20 @@ export function PWAInstallPrompt() {
                     <Image
                       src={shareButtonChrome}
                       alt="icon image"
-                      className="w-32"
+                      className="w-32 max-[400px]:w-28"
                     />
                   </div>
 
-                  <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
-                    <div className="flex items-start gap-2 pt-3">
-                      <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
+                  <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl max-[400px]:px-2 max-[400px]:pb-2">
+                    <div className="flex items-start gap-2 pt-3 max-[400px]:pt-2">
+                      <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm max-[400px]:text-xs max-[400px]:px-2.5">
                         2
                       </p>
                       <div className="flex flex-col gap-1">
-                        <p className="font-medium text-sm">
+                        <p className="font-medium text-sm max-[400px]:text-xs">
                           Select “Add to Home Screen”
                         </p>
-                        <p className="font-medium text-subtle text-xs">
+                        <p className="font-medium text-subtle text-xs max-[400px]:text-2xs">
                           Scroll down and tap on “Add to Home Screen”.
                         </p>
                       </div>
@@ -387,20 +387,20 @@ export function PWAInstallPrompt() {
                     <Image
                       src={addHomeScreen}
                       alt="icon image"
-                      className="w-32"
+                      className="w-32 max-[400px]:w-28"
                     />
                   </div>
 
-                  <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
-                    <div className="flex items-start gap-2 pt-3">
-                      <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
+                  <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl max-[400px]:px-2 max-[400px]:pb-2">
+                    <div className="flex items-start gap-2 pt-3 max-[400px]:pt-2">
+                      <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm max-[400px]:text-xs max-[400px]:px-2.5">
                         3
                       </p>
                       <div className="flex flex-col gap-1">
-                        <p className="font-medium text-sm">
+                        <p className="font-medium text-sm max-[400px]:text-xs">
                           Find Nuko on your homescreen
                         </p>
-                        <p className="font-medium text-subtle text-xs">
+                        <p className="font-medium text-subtle text-xs max-[400px]:text-2xs">
                           Nuko has been added! You can now find and open it from
                           your homescreen.
                         </p>
@@ -409,7 +409,7 @@ export function PWAInstallPrompt() {
                     <Image
                       src={findInHomeScreen}
                       alt="icon image"
-                      className="w-32"
+                      className="w-32 max-[400px]:w-28"
                     />
                   </div>
                 </div>
