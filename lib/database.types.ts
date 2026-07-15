@@ -642,6 +642,10 @@ export type Database = {
           last_engaged_at: string | null
           likes: number | null
           nutrition: Json | null
+          nutrition_score: number | null
+          ingredient_score: number | null
+          final_score: number | null
+          nutrition_rating: string | null
           preview_ingredients: string[]
           recipe_section_title: string
           saves: number
@@ -672,6 +676,10 @@ export type Database = {
           last_engaged_at?: string | null
           likes?: number | null
           nutrition?: Json | null
+          nutrition_score?: number | null
+          ingredient_score?: number | null
+          final_score?: number | null
+          nutrition_rating?: string | null
           preview_ingredients?: string[]
           recipe_section_title: string
           saves?: number
@@ -702,6 +710,10 @@ export type Database = {
           last_engaged_at?: string | null
           likes?: number | null
           nutrition?: Json | null
+          nutrition_score?: number | null
+          ingredient_score?: number | null
+          final_score?: number | null
+          nutrition_rating?: string | null
           preview_ingredients?: string[]
           recipe_section_title?: string
           saves?: number
