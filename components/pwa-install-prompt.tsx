@@ -107,6 +107,7 @@ export function PWAInstallPrompt() {
       window.__nukoBip = null;
       setDeferredPrompt(null);
       setVisible(false);
+      // setModalOpen(true);
     };
     window.addEventListener("nuko:bip", onBip);
     window.addEventListener("beforeinstallprompt", onDirect);
@@ -169,258 +170,11 @@ export function PWAInstallPrompt() {
     window.__nukoBip = null;
   };
 
-  if (!visible || !mode) return null;
+  if (!visible && !modalOpen) return null;
 
   return (
-    <div className="fixed inset-0 h-dvh z-50 flex items-center justify-center px-6">
-      <button
-        type="button"
-        aria-label="Close"
-        className="absolute inset-0 bg-black/20 backdrop-blur-xs"
-        onClick={closeForNow}
-      />
-
-      <div className="relative w-full max-w-96.5 bg-white rounded-3xl px-6 pt-4 pb-6 flex flex-col items-center">
-        <div className="absolute top-2 right-2.5">
-          <button
-            onClick={dismiss}
-            className="size-7.5 rounded-full bg-grey-c100 flex items-center justify-center hover:opacity-75 transition-opacity"
-            aria-label="Close"
-          >
-            <X className="size-4.5 text-foreground" />
-          </button>
-        </div>
-
-        <AppIcon />
-
-        {/* Mode-specific instructions / CTA */}
-        {mode === "ios-safari" && (
-          <div className="flex flex-col gap-4 mt-4">
-            <div className="flex flex-col gap-1 text-center">
-              <p className="text-hero leading-6.5 font-semibold">
-                Add Nuko to your home screen
-              </p>
-              <p className="text-subtle text-sm font-medium">
-                Add Nuko to your home screen in 4 steps
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-4.25">
-              <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
-                <div className="flex items-start gap-2 pt-3">
-                  <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
-                    1
-                  </p>
-                  <div className="flex flex-col gap-1">
-                    <p className="font-medium text-sm">
-                      Open the Safari toolbar
-                    </p>
-                    <p className="font-medium text-subtle text-xs">
-                      Tap the three dots{" "}
-                      <span className="p-1 bg-white rounded-md inline-flex items-center align-middle">
-                        <Ellipsis
-                          size={12}
-                          color="#227B6F"
-                          strokeWidth={1.25}
-                        />
-                      </span>{" "}
-                      or menu icon{" "}
-                      <span className="p-1 bg-white rounded-md inline-flex items-center align-middle">
-                        <HiOutlineMenuAlt2
-                          size={12}
-                          color="#227B6F"
-                          strokeWidth={1.25}
-                        />
-                      </span>{" "}
-                      next to the Safari bar showing “nuko.health
-                    </p>
-                  </div>
-                </div>
-                <Image src={toolBar} alt="icon image" className="w-32" />
-              </div>
-
-              <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
-                <div className="flex items-start gap-2 pt-3">
-                  <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
-                    2
-                  </p>
-                  <div className="flex flex-col gap-1">
-                    <p className="font-medium text-sm">Tap the Share icon</p>
-                    <p className="font-medium text-subtle text-xs">
-                      Tap the Share{" "}
-                      <span className="p-1 bg-white rounded-md inline-flex items-center align-middle">
-                        <Share size={12} color="#227B6F" strokeWidth={1.25} />
-                      </span>{" "}
-                      button in the toolbar.
-                    </p>
-                  </div>
-                </div>
-                <Image
-                  src={shareButtonSafari}
-                  alt="icon image"
-                  className="w-32"
-                />
-              </div>
-
-              <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
-                <div className="flex items-start gap-2 pt-3">
-                  <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
-                    3
-                  </p>
-                  <div className="flex flex-col gap-1">
-                    <p className="font-medium text-sm">
-                      Select “Add to Home Screen”
-                    </p>
-                    <p className="font-medium text-subtle text-xs">
-                      Scroll down and tap on “Add to Home Screen”.
-                    </p>
-                  </div>
-                </div>
-                <Image src={addHomeScreen} alt="icon image" className="w-32" />
-              </div>
-
-              <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
-                <div className="flex items-start gap-2 pt-3">
-                  <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
-                    4
-                  </p>
-                  <div className="flex flex-col gap-1">
-                    <p className="font-medium text-sm">
-                      Find Nuko on your homescreen
-                    </p>
-                    <p className="font-medium text-subtle text-xs">
-                      Nuko has been added! You can now find and open it from
-                      your homescreen.
-                    </p>
-                  </div>
-                </div>
-                <Image
-                  src={findInHomeScreen}
-                  alt="icon image"
-                  className="w-32"
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <button
-                className="text-white py-3 rounded-full bg-mint-green font-medium text-sm"
-                onClick={dismiss}
-              >
-                Got it!
-              </button>
-              <p className="text-xs font-medium text-subtle text-center">
-                💚 Thanks for using Nuko!
-              </p>
-            </div>
-          </div>
-        )}
-
-        {mode === "ios-chrome" && (
-          <div className="flex flex-col gap-4 mt-4">
-            <div className="flex flex-col gap-1 text-center">
-              <p className="text-hero leading-6.5 font-semibold">
-                Add Nuko to your home screen
-              </p>
-              <p className="text-subtle text-sm font-medium">
-                Add Nuko to your home screen in 3 steps
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-4.25">
-              <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
-                <div className="flex items-start gap-2 pt-3">
-                  <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
-                    1
-                  </p>
-                  <div className="flex flex-col gap-1">
-                    <p className="font-medium text-sm">
-                    Tap the Share icon
-                    </p>
-                    <p className="font-medium text-subtle text-xs">
-                    Tap the Share{" "}
-                      <span className="p-1 bg-white rounded-md inline-flex items-center align-middle">
-                        <Share size={12} color="#227B6F" strokeWidth={1.25} />
-                      </span>{" "}
-                      button in the toolbar.
-                    </p>
-                  </div>
-                </div>
-                <Image src={shareButtonChrome} alt="icon image" className="w-32" />
-              </div>
-
-              <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
-                <div className="flex items-start gap-2 pt-3">
-                  <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
-                    2
-                  </p>
-                  <div className="flex flex-col gap-1">
-                    <p className="font-medium text-sm">Select “Add to Home Screen”</p>
-                    <p className="font-medium text-subtle text-xs">
-                    Scroll down and tap on “Add to Home Screen”.
-                    </p>
-                  </div>
-                </div>
-                <Image
-                  src={addHomeScreen}
-                  alt="icon image"
-                  className="w-32"
-                />
-              </div>
-
-              <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
-                <div className="flex items-start gap-2 pt-3">
-                  <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
-                    3
-                  </p>
-                  <div className="flex flex-col gap-1">
-                    <p className="font-medium text-sm">
-                    Find Nuko on your homescreen
-                    </p>
-                    <p className="font-medium text-subtle text-xs">
-                    Nuko has been added! You can now find and open it from your  homescreen.
-                    </p>
-                  </div>
-                </div>
-                <Image src={findInHomeScreen} alt="icon image" className="w-32" />
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <button
-                className="text-white py-3 rounded-full bg-mint-green font-medium text-sm"
-                onClick={dismiss}
-              >
-                Got it!
-              </button>
-              <p className="text-xs font-medium text-subtle text-center">
-                💚 Thanks for using Nuko!
-              </p>
-            </div>
-          </div>
-        )}
-
-        {mode === "android" && (
-          <div className="flex flex-col gap-4 mt-4">
-            <div className="flex flex-col gap-1 text-center">
-              <p className="text-hero leading-6.5 font-semibold">
-                Install Nuko
-              </p>
-              <p className="text-subtle text-sm font-medium">
-                Add Nuko to your home screen for the best experience
-              </p>
-            </div>
-            <button
-              onClick={handleAndroidInstall}
-              className="w-full rounded-full py-3 bg-mint-green text-white font-medium text-sm"
-            >
-              Add to home screen
-            </button>
-          </div>
-        )}
-      </div>
-
-      {modalOpen && (
+    <>
+      {visible && mode && (
         <div className="fixed inset-0 h-dvh z-50 flex items-center justify-center px-6">
           <button
             type="button"
@@ -433,6 +187,282 @@ export function PWAInstallPrompt() {
             <div className="absolute top-2 right-2.5">
               <button
                 onClick={dismiss}
+                className="size-7.5 rounded-full bg-grey-c100 flex items-center justify-center hover:opacity-75 transition-opacity"
+                aria-label="Close"
+              >
+                <X className="size-4.5 text-foreground" />
+              </button>
+            </div>
+
+            <AppIcon />
+
+            {/* Mode-specific instructions / CTA */}
+            {mode === "ios-safari" && (
+              <div className="flex flex-col gap-4 mt-4">
+                <div className="flex flex-col gap-1 text-center">
+                  <p className="text-hero leading-6.5 font-semibold">
+                    Add Nuko to your home screen
+                  </p>
+                  <p className="text-subtle text-sm font-medium">
+                    Add Nuko to your home screen in 4 steps
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-4.25">
+                  <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
+                    <div className="flex items-start gap-2 pt-3">
+                      <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
+                        1
+                      </p>
+                      <div className="flex flex-col gap-1">
+                        <p className="font-medium text-sm">
+                          Open the Safari toolbar
+                        </p>
+                        <p className="font-medium text-subtle text-xs">
+                          Tap the three dots{" "}
+                          <span className="p-1 bg-white rounded-md inline-flex items-center align-middle">
+                            <Ellipsis
+                              size={12}
+                              color="#227B6F"
+                              strokeWidth={1.25}
+                            />
+                          </span>{" "}
+                          or menu icon{" "}
+                          <span className="p-1 bg-white rounded-md inline-flex items-center align-middle">
+                            <HiOutlineMenuAlt2
+                              size={12}
+                              color="#227B6F"
+                              strokeWidth={1.25}
+                            />
+                          </span>{" "}
+                          next to the Safari bar showing “nuko.health
+                        </p>
+                      </div>
+                    </div>
+                    <Image src={toolBar} alt="icon image" className="w-32" />
+                  </div>
+
+                  <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
+                    <div className="flex items-start gap-2 pt-3">
+                      <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
+                        2
+                      </p>
+                      <div className="flex flex-col gap-1">
+                        <p className="font-medium text-sm">
+                          Tap the Share icon
+                        </p>
+                        <p className="font-medium text-subtle text-xs">
+                          Tap the Share{" "}
+                          <span className="p-1 bg-white rounded-md inline-flex items-center align-middle">
+                            <Share
+                              size={12}
+                              color="#227B6F"
+                              strokeWidth={1.25}
+                            />
+                          </span>{" "}
+                          button in the toolbar.
+                        </p>
+                      </div>
+                    </div>
+                    <Image
+                      src={shareButtonSafari}
+                      alt="icon image"
+                      className="w-32"
+                    />
+                  </div>
+
+                  <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
+                    <div className="flex items-start gap-2 pt-3">
+                      <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
+                        3
+                      </p>
+                      <div className="flex flex-col gap-1">
+                        <p className="font-medium text-sm">
+                          Select “Add to Home Screen”
+                        </p>
+                        <p className="font-medium text-subtle text-xs">
+                          Scroll down and tap on “Add to Home Screen”.
+                        </p>
+                      </div>
+                    </div>
+                    <Image
+                      src={addHomeScreen}
+                      alt="icon image"
+                      className="w-32"
+                    />
+                  </div>
+
+                  <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
+                    <div className="flex items-start gap-2 pt-3">
+                      <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
+                        4
+                      </p>
+                      <div className="flex flex-col gap-1">
+                        <p className="font-medium text-sm">
+                          Find Nuko on your homescreen
+                        </p>
+                        <p className="font-medium text-subtle text-xs">
+                          Nuko has been added! You can now find and open it from
+                          your homescreen.
+                        </p>
+                      </div>
+                    </div>
+                    <Image
+                      src={findInHomeScreen}
+                      alt="icon image"
+                      className="w-32"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <button
+                    className="text-white py-3 rounded-full bg-mint-green font-medium text-sm"
+                    onClick={dismiss}
+                  >
+                    Got it!
+                  </button>
+                  <p className="text-xs font-medium text-subtle text-center">
+                    💚 Thanks for using Nuko!
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {mode === "ios-chrome" && (
+              <div className="flex flex-col gap-4 mt-4">
+                <div className="flex flex-col gap-1 text-center">
+                  <p className="text-hero leading-6.5 font-semibold">
+                    Add Nuko to your home screen
+                  </p>
+                  <p className="text-subtle text-sm font-medium">
+                    Add Nuko to your home screen in 3 steps
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-4.25">
+                  <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
+                    <div className="flex items-start gap-2 pt-3">
+                      <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
+                        1
+                      </p>
+                      <div className="flex flex-col gap-1">
+                        <p className="font-medium text-sm">
+                          Tap the Share icon
+                        </p>
+                        <p className="font-medium text-subtle text-xs">
+                          Tap the Share{" "}
+                          <span className="p-1 bg-white rounded-md inline-flex items-center align-middle">
+                            <Share
+                              size={12}
+                              color="#227B6F"
+                              strokeWidth={1.25}
+                            />
+                          </span>{" "}
+                          button in the toolbar.
+                        </p>
+                      </div>
+                    </div>
+                    <Image
+                      src={shareButtonChrome}
+                      alt="icon image"
+                      className="w-32"
+                    />
+                  </div>
+
+                  <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
+                    <div className="flex items-start gap-2 pt-3">
+                      <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
+                        2
+                      </p>
+                      <div className="flex flex-col gap-1">
+                        <p className="font-medium text-sm">
+                          Select “Add to Home Screen”
+                        </p>
+                        <p className="font-medium text-subtle text-xs">
+                          Scroll down and tap on “Add to Home Screen”.
+                        </p>
+                      </div>
+                    </div>
+                    <Image
+                      src={addHomeScreen}
+                      alt="icon image"
+                      className="w-32"
+                    />
+                  </div>
+
+                  <div className="flex gap-4 px-3 pb-3 bg-grey-c100 rounded-2xl">
+                    <div className="flex items-start gap-2 pt-3">
+                      <p className="py-1 px-3 rounded-full text-white bg-mint-green font-semibold text-sm">
+                        3
+                      </p>
+                      <div className="flex flex-col gap-1">
+                        <p className="font-medium text-sm">
+                          Find Nuko on your homescreen
+                        </p>
+                        <p className="font-medium text-subtle text-xs">
+                          Nuko has been added! You can now find and open it from
+                          your homescreen.
+                        </p>
+                      </div>
+                    </div>
+                    <Image
+                      src={findInHomeScreen}
+                      alt="icon image"
+                      className="w-32"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <button
+                    className="text-white py-3 rounded-full bg-mint-green font-medium text-sm"
+                    onClick={dismiss}
+                  >
+                    Got it!
+                  </button>
+                  <p className="text-xs font-medium text-subtle text-center">
+                    💚 Thanks for using Nuko!
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {mode === "android" && (
+              <div className="flex flex-col gap-4 mt-4">
+                <div className="flex flex-col gap-1 text-center">
+                  <p className="text-hero leading-6.5 font-semibold">
+                    Install Nuko
+                  </p>
+                  <p className="text-subtle text-sm font-medium">
+                    Add Nuko to your home screen for the best experience
+                  </p>
+                </div>
+                <button
+                  onClick={handleAndroidInstall}
+                  className="w-full rounded-full py-3 bg-mint-green text-white font-medium text-sm"
+                >
+                  Add to home screen
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {modalOpen && (
+        <div className="fixed inset-0 h-dvh z-50 flex items-center justify-center px-6">
+          <button
+            type="button"
+            aria-label="Close"
+            className="absolute inset-0 bg-black/20 backdrop-blur-xs"
+            onClick={() => setModalOpen(false)}
+          />
+
+          <div className="relative w-full max-w-96.5 bg-white rounded-3xl px-6 pt-4 pb-6 flex flex-col items-center">
+            <div className="absolute top-2 right-2.5">
+              <button
+                onClick={() => setModalOpen(false)}
                 className="size-7.5 rounded-full bg-grey-c100 flex items-center justify-center hover:opacity-75 transition-opacity"
                 aria-label="Close"
               >
@@ -455,7 +485,7 @@ export function PWAInstallPrompt() {
               <Image src={allSetImage} alt="image" className="" />
               <button
                 className="text-white py-3 rounded-full bg-mint-green font-medium text-sm"
-                onClick={dismiss}
+                onClick={() => setModalOpen(false)}
               >
                 Got it!
               </button>
@@ -463,6 +493,6 @@ export function PWAInstallPrompt() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
