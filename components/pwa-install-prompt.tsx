@@ -198,7 +198,7 @@ export function PWAInstallPrompt() {
 
             {/* Mode-specific instructions / CTA */}
             {mode === "ios-safari" && (
-              <div className="flex flex-col gap-4 mt-4 max-[400px]:gap-2 max-[400px]:mt-2">
+              <div className="flex flex-col gap-4 mt-4 max-[400px]:gap-3 max-[400px]:mt-2">
                 <div className="flex flex-col gap-1 text-center">
                   <p className="text-hero leading-6.5 font-semibold max-[400px]:text-modaltitle">
                     Add Nuko to your home screen
@@ -330,7 +330,7 @@ export function PWAInstallPrompt() {
             )}
 
             {mode === "ios-chrome" && (
-              <div className="flex flex-col gap-4 mt-4 max-[400px]:gap-2 max-[400px]:mt-2">
+              <div className="flex flex-col gap-4 mt-4 max-[400px]:gap-3 max-[400px]:mt-2">
                 <div className="flex flex-col gap-1 text-center">
                   <p className="text-hero leading-6.5 font-semibold max-[400px]:text-modaltitle">
                     Add Nuko to your home screen
