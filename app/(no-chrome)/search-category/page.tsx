@@ -71,10 +71,9 @@ function SearchCategoryContent() {
         .limit(20);
 
       if (categorySlug) {
-        queryBuilder = queryBuilder.eq(
-          "recipe_categories.categories.slug",
-          categorySlug,
-        );
+        queryBuilder = queryBuilder
+          .eq("recipe_categories.categories.slug", categorySlug)
+          .eq("recipe_categories.qualified" as never, true as never);
       }
 
       const { data } = await queryBuilder;
