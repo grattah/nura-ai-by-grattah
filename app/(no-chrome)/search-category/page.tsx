@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getCategoryConfig } from "@/lib/category-config";
 import { CategoryBanner } from "@/components/categories/category-banner";
 import { RecipesEmptyState } from "@/components/categories/recipes-empty-state";
-import { RecipeCard } from "@/components/recipe-card";
+import { SearchRecipeCard } from "@/components/search-recipe-card";
 import type { CategoryRecipe, Tag } from "@/lib/types";
 
 function SearchCategoryContent() {
@@ -62,7 +62,7 @@ function SearchCategoryContent() {
         .from("recipes")
         .select(
           categorySlug
-            ? "id, title, image_url, display_order, recipe_categories!inner(categories!inner(slug))"
+            ? "id, title, image_url, display_order, recipe_categories!inner(score, categories!inner(slug))"
             : "id, title, image_url, display_order",
         )
         .eq("status" as never, "approved" as never)
@@ -77,7 +77,22 @@ function SearchCategoryContent() {
       }
 
       const { data } = await queryBuilder;
-      setResults((data as unknown as CategoryRecipe[]) ?? []);
+      const mapped = (
+        (data as unknown as Array<{
+          id: string;
+          title: string;
+          image_url: string | null;
+          display_order: number;
+          recipe_categories?: { score: number }[];
+        }>) ?? []
+      ).map((r) => ({
+        id: r.id,
+        title: r.title,
+        image_url: r.image_url,
+        display_order: r.display_order,
+        score: r.recipe_categories?.[0]?.score,
+      }));
+      setResults(mapped);
       setIsLoading(false);
     },
     [supabase, categorySlug],
@@ -144,10 +159,11 @@ function SearchCategoryContent() {
             ) : results.length > 0 ? (
               <div className="grid grid-cols-2 gap-4">
                 {results.map((recipe, i) => (
-                  <RecipeCard
+                  <SearchRecipeCard
                     key={recipe.id}
                     recipe={recipe}
                     priority={i < 4}
+                    score={recipe.score}
                   />
                 ))}
               </div>

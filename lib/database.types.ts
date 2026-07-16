@@ -646,6 +646,9 @@ export type Database = {
           ingredient_score: number | null
           final_score: number | null
           nutrition_rating: string | null
+          track: string | null
+          preparation: string | null
+          track_reason: string | null
           preview_ingredients: string[]
           recipe_section_title: string
           saves: number
@@ -680,6 +683,9 @@ export type Database = {
           ingredient_score?: number | null
           final_score?: number | null
           nutrition_rating?: string | null
+          track?: string | null
+          preparation?: string | null
+          track_reason?: string | null
           preview_ingredients?: string[]
           recipe_section_title: string
           saves?: number
@@ -714,6 +720,9 @@ export type Database = {
           ingredient_score?: number | null
           final_score?: number | null
           nutrition_rating?: string | null
+          track?: string | null
+          preparation?: string | null
+          track_reason?: string | null
           preview_ingredients?: string[]
           recipe_section_title?: string
           saves?: number
