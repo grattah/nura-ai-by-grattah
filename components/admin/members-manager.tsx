@@ -93,7 +93,7 @@ export function MembersManager({
           </Button>
         </div>
         {error && <p className="text-sm text-destructive">{error}</p>}
-        {notice && <p className="text-sm text-success-c600">{notice}</p>}
+        {notice && <p className="text-sm text-success-c700">{notice}</p>}
       </form>
 
       {/* List */}
@@ -157,11 +157,7 @@ function MemberRow({ member, isSelf }: { member: Member; isSelf: boolean }) {
         {isOwner ? (
           <Badge>owner</Badge>
         ) : (
-          <Select
-            value={member.role}
-            onValueChange={onRole}
-            disabled={pending}
-          >
+          <Select value={member.role} onValueChange={onRole} disabled={pending}>
             <SelectTrigger className="w-32">
               <SelectValue />
             </SelectTrigger>

@@ -1,15 +1,17 @@
 import { getCloudinaryUrl } from "@/lib/cloudinary";
 import { Recipe } from "@/lib/types";
-import { Card, CardContent } from "@/ui/card";
 import Image from "next/image";
 import Link from "next/link";
+import { MatchBadge } from "@/components/match-badge";
 
 export function RecipeCard({
   recipe,
   priority,
+  score,
 }: {
   recipe: Pick<Recipe, "id" | "title" | "image_url">;
   priority?: boolean;
+  score?: number | null;
 }) {
   const imageUrl = recipe.image_url
     ? getCloudinaryUrl(recipe.image_url, { width: 600, height: 450 })
@@ -31,9 +33,11 @@ export function RecipeCard({
           )}
         </div>
 
-        <p className="text-base font-medium text-grey-c950 mb-2 leading-snug truncate josefin-sans">
+        <p className="text-base font-medium text-grey-c950 leading-snug truncate josefin-sans">
           {recipe.title}
         </p>
+
+        <MatchBadge score={score} />
       </div>
     </Link>
   );

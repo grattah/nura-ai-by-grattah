@@ -85,7 +85,22 @@ function SearchCategoryContent() {
       }
 
       const { data } = await queryBuilder;
-      setResults((data as unknown as CategoryRecipe[]) ?? []);
+      const mapped = (
+        (data as unknown as Array<{
+          id: string;
+          title: string;
+          image_url: string | null;
+          display_order: number;
+          recipe_categories?: { score: number }[];
+        }>) ?? []
+      ).map((r) => ({
+        id: r.id,
+        title: r.title,
+        image_url: r.image_url,
+        display_order: r.display_order,
+        score: r.recipe_categories?.[0]?.score,
+      }));
+      setResults(mapped);
       setIsLoading(false);
     },
     [supabase, categorySlug],
@@ -156,7 +171,7 @@ function SearchCategoryContent() {
                     key={recipe.id}
                     recipe={recipe}
                     priority={i < 4}
-                    personalizedScore={categorySlug && recipe.recipe_categories?.[0]?.score}
+                    score={recipe.score}
                   />
                 ))}
               </div>
