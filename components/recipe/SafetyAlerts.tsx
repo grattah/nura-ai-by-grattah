@@ -32,7 +32,7 @@ const SafetyAlerts = () => {
       <div className="flex items-end justify-between">
         <div className="flex items-end gap-2">
           <SafetyAlert />
-          <p className="font-medium text-base">{safetyAlerts.length} safety alerts found</p>
+          <p className="font-medium text-base text-base-text">{safetyAlerts.length} safety alerts found</p>
         </div>
         <button onClick={toggleDisplay}>
           <ChevronDown size={20} color="#3F4644" strokeWidth={2} />
@@ -55,7 +55,7 @@ const SafetyAlerts = () => {
                   }`}
                 >
                   <p
-                    className={`pt-0.5 pb-1 px-2 border rounded-full text-2xs capitalize font-inter ${
+                    className={`pt-0.5 pb-1 px-2 border rounded-full text-2xs capitalize font-inter font-medium ${
                       item.cause === "allergy"
                         ? "text-warning-c600 border-warning-c400 bg-warning-c100"
                         : item.cause === "medication"
