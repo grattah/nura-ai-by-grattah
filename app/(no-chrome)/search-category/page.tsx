@@ -16,6 +16,7 @@ type CategoryRecipe = {
   title: string;
   image_url: string;
   display_order: number;
+  score?: number;
   recipe_categories?: any[];
 };
 
