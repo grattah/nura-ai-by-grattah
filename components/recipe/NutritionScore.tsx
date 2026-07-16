@@ -13,7 +13,7 @@ const NutritionScore = ({
     <div className="p-4 rounded-3xl bg-white flex flex-col gap-4">
       <div className="flex gap-2 items-center">
         <Gauge />
-        <p className="font-semibold">Nutrition score</p>
+        <p className="font-semibold text-base text-base-text leading-[100%]">Nutrition score</p>
       </div>
       <div className="flex items-center gap-4">
         <div className="rounded-2xl bg-success-c100 flex flex-col gap-3 p-3 items-center text-center">
