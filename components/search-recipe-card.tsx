@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { MatchBadge } from "@/components/match-badge";
 
-export function RecipeCard({
+export function SearchRecipeCard({
   recipe,
   priority,
   score,
@@ -33,7 +33,7 @@ export function RecipeCard({
           )}
         </div>
 
-        <p className="text-base font-medium text-grey-c950 leading-snug truncate josefin-sans">
+        <p className="text-base font-medium text-grey-c950 mb-1 leading-snug truncate josefin-sans">
           {recipe.title}
         </p>
 

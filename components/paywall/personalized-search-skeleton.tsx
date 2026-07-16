@@ -83,7 +83,7 @@ export function PersonalizedSearchSkeleton() {
             <div className="h-3.5 w-1/3 rounded bg-black/10" />
             <div className="h-3 w-full rounded bg-black/10" />
           </div>
-          <Heart strokeWidth={2.67} className="size-7 text-success-c600" />
+          <Heart strokeWidth={2.67} className="size-7 text-success-c700" />
         </div>
       </div>
     </div>
