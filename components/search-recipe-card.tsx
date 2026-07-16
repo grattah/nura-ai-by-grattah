@@ -1,17 +1,17 @@
 import { getCloudinaryUrl } from "@/lib/cloudinary";
 import { Recipe } from "@/lib/types";
-import { Card, CardContent } from "@/ui/card";
 import Image from "next/image";
 import Link from "next/link";
+import { MatchBadge } from "@/components/match-badge";
 
 export function SearchRecipeCard({
   recipe,
   priority,
-  personalizedScore,
+  score,
 }: {
   recipe: Pick<Recipe, "id" | "title" | "image_url">;
   priority?: boolean;
-  personalizedScore: number;
+  score?: number | null;
 }) {
   const imageUrl = recipe.image_url
     ? getCloudinaryUrl(recipe.image_url, { width: 600, height: 450 })
@@ -37,24 +37,7 @@ export function SearchRecipeCard({
           {recipe.title}
         </p>
 
-        <div className="flex justify-between items-center">
-          <p
-            className={`font-medium text-xs py-0.5 px-1.5 rounded-sm tracking-[0.02em] ${
-              personalizedScore >= 60
-                ? "bg-[#E3E8D7] text-success-c600"
-                : "bg-[#EEE0CA] text-warning-c600"
-            }`}
-          >
-            {personalizedScore >= 60 ? "Strong match" : "Moderate match"}
-          </p>
-          <p
-            className={`text-sm ${
-              personalizedScore >= 60 ? "text-mint-green" : "text-warning-c600"
-            }`}
-          >
-            {personalizedScore}%
-          </p>
-        </div>
+        <MatchBadge score={score} />
       </div>
     </Link>
   );

@@ -22,4 +22,7 @@ export interface NutritionFacts {
 export type CategoryRecipe = Pick<
   Recipe,
   "id" | "title" | "image_url" | "display_order"
->;
+> & {
+  /** The recipe's CategoryScore for the category being viewed (recipe_categories.score). */
+  score?: number | null;
+};

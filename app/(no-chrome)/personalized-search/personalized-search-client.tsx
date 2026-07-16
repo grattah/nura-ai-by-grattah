@@ -279,7 +279,10 @@ export function PersonalizedSearchClient({
                 professional.
               </p>
               <div className="shrink-0">
-                <Heart strokeWidth={2.67} className="size-7 text-success-c600" />
+                <Heart
+                  strokeWidth={2.67}
+                  className="size-7 text-success-c700"
+                />
               </div>
             </div>
           </div>
