@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Red_Hat_Text, Red_Hat_Display, Lateef } from "next/font/google";
+import { Red_Hat_Text, Red_Hat_Display, Lateef, Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -21,6 +21,13 @@ const _redHatText = Red_Hat_Text({
 const _lateef = Lateef({
   subsets: ["latin"],
   variable: "--font-lateef",
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
+const _inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
   weight: ["400", "500", "600", "700"],
   display: "swap",
 });
