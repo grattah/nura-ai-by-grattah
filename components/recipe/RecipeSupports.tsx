@@ -58,29 +58,29 @@ const ICONS: Record<string, LucideIcon> = {
 
 // Compact display labels (the full bioactivity names are too long for the row).
 const SHORT_LABELS: Record<string, string> = {
-  "antioxidant-cellular-protection": "Cytoprotective",
-  "inflammation-support": "Inflammation Control",
+  "antioxidant-cellular-protection": "Antioxidants",
+  "inflammation-support": "Inflammation",
   "immune-support": "Immunity",
-  "natural-defense-support": "Antimicrobial Activity",
-  "heart-circulation-support": "Heart",
-  "cholesterol-lipid-balance": "Cholesterol Balance",
-  "blood-sugar-support": "Blood Sugar Control",
+  "natural-defense-support": "Antimicrobes",
+  "heart-circulation-support": "Heart Health",
+  "cholesterol-lipid-balance": "Lower LDL",
+  "blood-sugar-support": "Blood Sugar",
   "weight-metabolic-support": "Metabolism",
-  "gut-digestive-support": "Digestive",
+  "gut-digestive-support": "Gut Health",
   "microbiome-support": "Microbiome",
   "liver-detox-support": "Liver",
-  "kidney-fluid-balance-support": "Fluid Balance",
-  "brain-cognitive-support": "Brain",
-  "mood-emotional-balance": "Mood Balance",
-  "stress-resilience-support": "Stress Control",
-  "sleep-relaxation-support": "Sleep",
-  "pain-comfort-support": "Relief",
-  "temperature-balance-support": "Body Balance",
-  "hormonal-balance-support": "Hormonal Balance",
+  "kidney-fluid-balance-support": "Diuresis",
+  "brain-cognitive-support": "Brain Health",
+  "mood-emotional-balance": "Mood",
+  "stress-resilience-support": "Stress Relief",
+  "sleep-relaxation-support": "Relaxation",
+  "pain-comfort-support": "Analgesia",
+  "temperature-balance-support": "Homeostasis",
+  "hormonal-balance-support": "Hormones",
   "bone-joint-support": "Bone",
   "skin-health-support": "Skin",
-  "healthy-aging-support": "Healthy Aging",
-  "cellular-wellness-support": "Cell Wellness",
+  "healthy-aging-support": "Anti-aging",
+  "cellular-wellness-support": "Cell Health",
 };
 
 interface RecipeSupportsProps {
@@ -103,12 +103,12 @@ export function RecipeSupports({ supports }: RecipeSupportsProps) {
           return (
             <div
               key={s.slug}
-              className="flex flex-1 flex-col items-center text-center gap-1.5 min-w-0"
+              className="flex flex-1 flex-col items-center text-center gap-2 min-w-0"
             >
               <div className="size-12 rounded-full bg-[#F1F7F3] grid place-items-center shrink-0">
                 <Icon className="size-5 text-mint-green" strokeWidth={2} />
               </div>
-              <p className="text-2xs leading-tight text-subtle line-clamp-2 font-medium">
+              <p className="text-2xs leading-tight text-subtle line-clamp-2 font-medium text-nowrap">
                 {SHORT_LABELS[s.slug] ?? s.support}
               </p>
               <p className="text-sm font-semibold text-[#087567]">{s.score}%</p>
