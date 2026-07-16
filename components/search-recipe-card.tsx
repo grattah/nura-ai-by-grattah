@@ -37,12 +37,24 @@ export function SearchRecipeCard({
           {recipe.title}
         </p>
 
-		<div className="flex justify-between items-center">
-		  <p className="font-medium text-sm py-0.5 px-1.5 rounded-sm">{personalizedScore >= 60 ? "Strong match" : "Moderate match"}</p>
-		  <p className={`text-sm ${
-			personalizedScore >= 60 ? "" : ""
-		  }`}>{personalizedScore}%</p>
-		</div>
+        <div className="flex justify-between items-center">
+          <p
+            className={`font-medium text-xs py-0.5 px-1.5 rounded-sm ${
+              personalizedScore >= 60
+                ? "bg-[#E3E8D7] text-success-c600"
+                : "bg-[#EEE0CA] text-warning-c600"
+            }`}
+          >
+            {personalizedScore >= 60 ? "Strong match" : "Moderate match"}
+          </p>
+          <p
+            className={`text-sm ${
+              personalizedScore >= 60 ? "text-mint-green" : "text-warning-c600"
+            }`}
+          >
+            {personalizedScore}%
+          </p>
+        </div>
       </div>
     </Link>
   );

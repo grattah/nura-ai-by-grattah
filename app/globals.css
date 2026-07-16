@@ -81,7 +81,8 @@
   --error-c700: oklch(0.3909 0.132 25.78);
 
   --success-c100: oklch(0.9542 0.019 157.87);
-  --success-c600: oklch(0.5283 0.1342 150.36);
+  --success-c600: oklch(0.3443 0.0683 166.41);
+  --success-c700: oklch(0.5283 0.1342 150.36);
 
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
@@ -247,6 +248,7 @@
 
   --color-success-c100: var(--success-c100);
   --color-success-c600: var(--success-c600);
+  --color-success-c700: var(--success-c700);
 
   /* Fluid typo */
   --text-hero: var(--text-hero);
