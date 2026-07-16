@@ -1,6 +1,9 @@
 import React from "react";
 
-const Digestive = () => {
+const Digestive = React.forwardRef<
+  SVGSVGElement,
+  React.SVGProps<SVGSVGElement>
+>(() => {
   return (
     <svg
       width="22"
@@ -15,6 +18,6 @@ const Digestive = () => {
       />
     </svg>
   );
-};
+});
 
 export default Digestive;
