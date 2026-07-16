@@ -64,8 +64,12 @@
   --grey-c700: oklch(0.387 0.0098 176.81);
   --grey-c950: oklch(0.1841 0.0038 164.6);
 
+  --info-c100: oklch(0.9372 0.0154 269.98);
+  --info-c600: oklch(0.4362 0.1795 262.87);
+
   --warning-c100: oklch(0.9529 0.0148 70.89);
   --warning-c900: oklch(0.3006 0.0544 66.94);
+  --warning-c200: oklch(0.9075 0.0388 72.34)
 
   --error-c500: oklch(0.5751 0.2171 27.55);
   --error-c700: oklch(0.3909 0.132 25.78);
@@ -218,7 +222,11 @@
   --color-grey-c700: var(--grey-c700);
   --color-grey-c950: var(--grey-c950);
 
+  --color-info-c100: var(--info-c100);
+  --color-info-c600: var(--info-c600);
+
   --color-warning-c100: var(--warning-c100);
+  --color-warning-c200: var(--warning-c200);
   --color-warning-c900: var(--warning-c900);
 
   --color-error-c500: var(--error-c500);
