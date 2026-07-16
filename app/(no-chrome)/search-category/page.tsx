@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getCategoryConfig } from "@/lib/category-config";
 import { CategoryBanner } from "@/components/categories/category-banner";
 import { RecipesEmptyState } from "@/components/categories/recipes-empty-state";
-import { RecipeCard } from "@/components/recipe-card";
+import { SearchRecipeCard } from "@/components/search-recipe-card";
 import type { CategoryRecipe, Tag } from "@/lib/types";
 
 function SearchCategoryContent() {
@@ -144,10 +144,11 @@ function SearchCategoryContent() {
             ) : results.length > 0 ? (
               <div className="grid grid-cols-2 gap-4">
                 {results.map((recipe, i) => (
-                  <RecipeCard
+                  <SearchRecipeCard
                     key={recipe.id}
                     recipe={recipe}
                     priority={i < 4}
+                    personalizedScore={70}
                   />
                 ))}
               </div>
