@@ -96,7 +96,7 @@ function SearchCategoryContent() {
       ).map((r) => ({
         id: r.id,
         title: r.title,
-        image_url: r.image_url,
+        image_url: r.image_url ?? "", // Provide a default value for null
         display_order: r.display_order,
         score: r.recipe_categories?.[0]?.score,
       }));
