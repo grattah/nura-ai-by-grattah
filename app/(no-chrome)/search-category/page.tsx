@@ -9,7 +9,16 @@ import { getCategoryConfig } from "@/lib/category-config";
 import { CategoryBanner } from "@/components/categories/category-banner";
 import { RecipesEmptyState } from "@/components/categories/recipes-empty-state";
 import { SearchRecipeCard } from "@/components/search-recipe-card";
-import type { CategoryRecipe, Tag } from "@/lib/types";
+import type { Tag } from "@/lib/types";
+
+type CategoryRecipe = {
+  id: string;
+  title: string;
+  image_url: string;
+  display_order: number;
+  score?: number;
+  recipe_categories?: any[];
+};
 
 function SearchCategoryContent() {
   const router = useRouter();
@@ -88,7 +97,7 @@ function SearchCategoryContent() {
       ).map((r) => ({
         id: r.id,
         title: r.title,
-        image_url: r.image_url,
+        image_url: r.image_url ?? "", // Provide a default value for null
         display_order: r.display_order,
         score: r.recipe_categories?.[0]?.score,
       }));
