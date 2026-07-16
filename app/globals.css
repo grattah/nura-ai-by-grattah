@@ -159,6 +159,7 @@
   --font-redHatDisplay:
     "Red Hat Display", "Red Hat Display Fallback", system-ui, sans-serif;
   --font-lateef: "Lateef", "Lateef Fallback", system-ui, sans-serif;
+  --font-inter: "Inter", "Inter Fallback", system-ui, sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

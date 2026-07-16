@@ -55,7 +55,7 @@ const SafetyAlerts = () => {
                   }`}
                 >
                   <p
-                    className={`pt-0.5 pb-1 px-2 border rounded-full text-2xs capitalize ${
+                    className={`pt-0.5 pb-1 px-2 border rounded-full text-2xs capitalize font-inter ${
                       item.cause === "allergy"
                         ? "text-warning-c600 border-warning-c400 bg-warning-c100"
                         : item.cause === "medication"
