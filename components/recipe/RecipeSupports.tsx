@@ -30,7 +30,7 @@ import {
 import { type SupportScore } from "@/lib/wellness-score";
 
 // Draft icon mapping per bioactivity — swapped for the real design later.
-const ICONS = {
+const ICONS: Record<string, LucideIcon> = {
   "antioxidant-cellular-protection": Sparkles,
   "inflammation-support": Flame,
   "immune-support": Immunity,

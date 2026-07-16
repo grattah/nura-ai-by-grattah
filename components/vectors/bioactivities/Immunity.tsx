@@ -1,6 +1,6 @@
 import React from "react";
 
-const Immunity = () => {
+const Immunity = React.forwardRef<SVGSVGElement, React.SVGProps<SVGSVGElement>>(() => {
   return (
     <div className="mt-1">
       <svg
@@ -563,6 +563,6 @@ const Immunity = () => {
       </svg>
     </div>
   );
-};
+})
 
 export default Immunity;
