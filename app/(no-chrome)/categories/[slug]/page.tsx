@@ -78,8 +78,8 @@ export default function CategoryDetailPage() {
         throw new Error(error.message);
       }
       return (
-        (data as unknown as { recipes: CategoryRecipe }[]) ?? []
-      ).map((row) => row.recipes);
+        (data as unknown as { score: number; recipes: CategoryRecipe }[]) ?? []
+      ).map((row) => ({ ...row.recipes, score: row.score }));
     },
     [supabase, slug, activeType],
   );
@@ -298,7 +298,12 @@ export default function CategoryDetailPage() {
           <>
             <div className="grid grid-cols-2 gap-4 px-6">
               {recipes.map((recipe, i) => (
-                <RecipeCard key={recipe.id} recipe={recipe} priority={i < 4} />
+                <RecipeCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  score={recipe.score}
+                  priority={i < 4}
+                />
               ))}
             </div>
 
