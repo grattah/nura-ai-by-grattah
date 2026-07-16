@@ -39,7 +39,7 @@ export function SearchRecipeCard({
 
         <div className="flex justify-between items-center">
           <p
-            className={`font-medium text-xs py-0.5 px-1.5 rounded-sm ${
+            className={`font-medium text-xs py-0.5 px-1.5 rounded-sm tracking-[0.02em] ${
               personalizedScore >= 60
                 ? "bg-[#E3E8D7] text-success-c600"
                 : "bg-[#EEE0CA] text-warning-c600"
