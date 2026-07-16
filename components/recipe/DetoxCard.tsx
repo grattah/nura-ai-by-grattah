@@ -64,7 +64,7 @@ export function DetoxCard({ finalScore }: DetoxCardProps) {
         </div>
         <Link
           href="/"
-          className="text-sm py-2 pr-3 pl-2 bg-[#F3F1E8] rounded-full self-end w-fit"
+          className="text-sm py-2 pr-3 pl-2 bg-[#F3F1E8] rounded-full self-end w-fit font-medium leading-[100%]"
         >
           Complete health profile →
         </Link>
