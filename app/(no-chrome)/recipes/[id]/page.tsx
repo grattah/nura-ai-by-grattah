@@ -24,7 +24,6 @@ import type { NutritionFacts } from "@/lib/types";
 import type { SupportScore } from "@/lib/wellness-score";
 import { BookmarkProvider } from "@/components/bookmark-provider";
 import PersonalizedTokenModal from "@/components/tokens/PersonalizedTokenModal";
-import SafetyAlerts from "@/components/recipe/SafetyAlerts";
 
 type RecipeRecord = Database["public"]["Tables"]["recipes"]["Row"] & {
   recipe_tags:
@@ -238,7 +237,6 @@ export default async function RecipeDetailPage({
             </div>
 
             <div className="px-6 mb-8 space-y-4">
-              <SafetyAlerts />
               <RecipeSupports supports={topBioactivities(recipe.recipe_tags, 5)} />
               <DetoxCard finalScore={recipe.final_score ?? null} />
             </div>
