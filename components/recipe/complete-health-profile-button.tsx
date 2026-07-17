@@ -2,12 +2,11 @@
 
 import { useState } from "react";
 import { useAccess } from "@/hooks/use-access";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { PaywallModal } from "@/components/paywall/paywall-modal";
 
 export function CompleteHealthProfileButton() {
   const { isSubscriber, isLoading } = useAccess();
-  const { toast } = useToast();
   const [paywallOpen, setPaywallOpen] = useState(false);
 
   const handleClick = () => {
@@ -19,10 +18,7 @@ export function CompleteHealthProfileButton() {
     }
 
     // TODO: navigate to the health-profile page once it exists.
-    toast({
-      title: "Coming soon",
-      description: "Personalized health profiles are almost ready.",
-    });
+    toast.info("Personalized health profiles is coming soon!");
   };
 
   return (
