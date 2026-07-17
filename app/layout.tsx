@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Red_Hat_Text, Red_Hat_Display, Lateef, Inter } from "next/font/google";
+import { Red_Hat_Text, Lateef, Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { MobileGate } from "@/components/mobile-gate";
 import { AccessProvider } from "@/components/providers/access-provider";
@@ -120,6 +121,7 @@ export default async function RootLayout({
         <LiquidGlassFilter />
         <ChatCacheCleaner />
         <Analytics />
+        <Toaster />
         {process.env.NODE_ENV === "development" && <PerfProfiler />}
       </body>
     </html>
