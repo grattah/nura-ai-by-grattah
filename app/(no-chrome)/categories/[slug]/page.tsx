@@ -237,9 +237,9 @@ export default function CategoryDetailPage() {
   const displayName = slug?.replace(/-/g, " ") ?? "";
 
   return (
-    <div className="bg-white pb-24 min-h-svh">
+    <div className="bg-white pb-24 min-h-svh flex flex-col">
       {/* Header */}
-      <div className="flex items-center px-6 pt-5 pb-4 gap-3 bg-background">
+      <div className="flex items-center px-6 pt-5 pb-4 gap-3 bg-background shrink-0">
         <button
           onClick={() => router.back()}
           className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center shrink-0 hover:opacity-75 transition-opacity"
@@ -259,7 +259,7 @@ export default function CategoryDetailPage() {
         </Link>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-6 flex-1 mb-2">
         {/* Category banner */}
         <CategoryBanner name={displayName} config={config} />
 
@@ -346,7 +346,7 @@ export default function CategoryDetailPage() {
       </div>
 
       {/* Find a recipe CTA */}
-      <div className="px-6 mt-4">
+      <div className="px-6 mt-auto">
         <Link
           href="/find-recipe"
           className="w-full flex items-center justify-center gap-2.5 py-4 rounded-full border border-mint-green text-mint-green text-base font-semibold hover:opacity-80 transition-opacity"
