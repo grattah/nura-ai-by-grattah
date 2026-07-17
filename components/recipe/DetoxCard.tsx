@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { CompleteHealthProfileButton } from "@/components/recipe/complete-health-profile-button";
 
 interface DetoxCardProps {
   /** The recipe's Base Nutrition Score (final_score, 0–100). Card hides if null. */
@@ -62,12 +62,7 @@ export function DetoxCard({ finalScore }: DetoxCardProps) {
             For personalized suitability, please complete your health profile.
           </p>
         </div>
-        <Link
-          href="/"
-          className="text-sm py-2 pr-3 pl-2 bg-[#F3F1E8] rounded-full self-end w-fit font-medium leading-[100%]"
-        >
-          Complete health profile →
-        </Link>
+        <CompleteHealthProfileButton />
       </div>
     </div>
   );
