@@ -19,11 +19,11 @@ export function SignInModal({ onClose }: { onClose?: () => void }) {
   }, []);
 
   return (
-    <div className="fixed inset-0 h-svh z-50 flex items-center justify-center px-6">
+    <div className="fixed inset-0 h-dvh z-50 flex items-center justify-center px-6">
       <button
         type="button"
         aria-label="Close"
-        className="absolute h-svh inset-0 bg-black/20 backdrop-blur-xs"
+        className="absolute h-dvh inset-0 bg-black/20 backdrop-blur-xs"
         onClick={onClose}
       />
 
