@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getCategoryConfig } from "@/lib/category-config";
 import { CategoryBanner } from "@/components/categories/category-banner";
 import { RecipesEmptyState } from "@/components/categories/recipes-empty-state";
-import { SearchRecipeCard } from "@/components/search-recipe-card";
+import { RecipeCard } from "@/components/recipe-card";
 import type { Tag } from "@/lib/types";
 
 type CategoryRecipe = {
@@ -113,14 +113,14 @@ function SearchCategoryContent() {
     debounceRef.current = setTimeout(() => search(val), 300);
   };
 
-  const backHref = categorySlug ? `/categories/${categorySlug}` : "/categories";
+  // const backHref = categorySlug ? `/categories/${categorySlug}` : "/categories";
 
   return (
     <div className="bg-background min-h-dvh pb-24">
       {/* Header — search bar IS the header */}
       <div className="flex items-center gap-8.75 px-6 pt-5 pb-4">
         <button
-          onClick={() => router.push(backHref)}
+          onClick={() => router.back()}
           className="size-10 rounded-full bg-[#E8E6DC] flex items-center justify-center shrink-0 hover:opacity-75 transition-opacity"
           aria-label="Back"
         >
@@ -168,7 +168,7 @@ function SearchCategoryContent() {
             ) : results.length > 0 ? (
               <div className="grid grid-cols-2 gap-4">
                 {results.map((recipe, i) => (
-                  <SearchRecipeCard
+                  <RecipeCard
                     key={recipe.id}
                     recipe={recipe}
                     priority={i < 4}
