@@ -33,7 +33,7 @@ export function RecipeCard({
           )}
         </div>
 
-        <p className="text-base font-medium text-grey-c950 leading-snug truncate josefin-sans">
+        <p className="text-base font-medium text-grey-c950 leading-snug truncate font-redHatText">
           {recipe.title}
         </p>
 
