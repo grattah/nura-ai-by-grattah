@@ -17,17 +17,17 @@ export function CategorySection({ categories }: CategorySectionProps) {
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <h2 className="text-title leading-none font-semibold text-grey-c950">
-          Categories
+          Category
         </h2>
-        <Link
+        {/* <Link
           href="/categories"
           className="flex items-center gap-1 text-base text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4 font-semibold"
         >
           See all
-        </Link>
+        </Link> */}
       </div>
       <div className="grid grid-cols-1 gap-2 w-full">
-        {categories.slice(0, 3).map((tag) => (
+        {categories.map((tag) => (
           <CategoryCard
             key={tag.id}
             slug={tag.slug}
