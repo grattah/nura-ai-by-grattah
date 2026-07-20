@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAccess } from "@/hooks/use-access";
-import { toast } from "sonner";
 import { PaywallModal } from "@/components/paywall/paywall-modal";
 
 export function CompleteHealthProfileButton() {
+  const router = useRouter();
   const { isSubscriber, isLoading } = useAccess();
   const [paywallOpen, setPaywallOpen] = useState(false);
 
@@ -17,8 +18,7 @@ export function CompleteHealthProfileButton() {
       return;
     }
 
-    // TODO: navigate to the health-profile page once it exists.
-    toast.info("Personalized health profiles is coming soon!");
+    router.push("/health-profile");
   };
 
   return (

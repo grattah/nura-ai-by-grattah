@@ -413,6 +413,60 @@ export type Database = {
         }
         Relationships: []
       }
+      health_profiles: {
+        Row: {
+          age_range: string | null
+          allergies: string[]
+          allergies_other: string | null
+          biological_sex: string | null
+          conditions: string[]
+          conditions_other: string | null
+          consent_given_at: string | null
+          consent_version: string | null
+          created_at: string
+          dietary_pattern: string | null
+          goals: string[]
+          medications: string[]
+          pregnancy_status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          age_range?: string | null
+          allergies?: string[]
+          allergies_other?: string | null
+          biological_sex?: string | null
+          conditions?: string[]
+          conditions_other?: string | null
+          consent_given_at?: string | null
+          consent_version?: string | null
+          created_at?: string
+          dietary_pattern?: string | null
+          goals?: string[]
+          medications?: string[]
+          pregnancy_status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          age_range?: string | null
+          allergies?: string[]
+          allergies_other?: string | null
+          biological_sex?: string | null
+          conditions?: string[]
+          conditions_other?: string | null
+          consent_given_at?: string | null
+          consent_version?: string | null
+          created_at?: string
+          dietary_pattern?: string | null
+          goals?: string[]
+          medications?: string[]
+          pregnancy_status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string
@@ -500,6 +554,30 @@ export type Database = {
         }
         Relationships: []
       }
+      rag_raw: {
+        Row: {
+          created_at: string
+          display_order: number | null
+          id: number
+          recipe_title: string | null
+          sources: Json | null
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number | null
+          id?: number
+          recipe_title?: string | null
+          sources?: Json | null
+        }
+        Update: {
+          created_at?: string
+          display_order?: number | null
+          id?: number
+          recipe_title?: string | null
+          sources?: Json | null
+        }
+        Relationships: []
+      }
       ranking_weights: {
         Row: {
           action: string
@@ -519,6 +597,7 @@ export type Database = {
         Row: {
           category_id: string
           created_at: string
+          qualified: boolean
           recipe_id: string
           score: number
           via_trace: boolean
@@ -526,6 +605,7 @@ export type Database = {
         Insert: {
           category_id: string
           created_at?: string
+          qualified?: boolean
           recipe_id: string
           score: number
           via_trace?: boolean
@@ -533,6 +613,7 @@ export type Database = {
         Update: {
           category_id?: string
           created_at?: string
+          qualified?: boolean
           recipe_id?: string
           score?: number
           via_trace?: boolean
@@ -631,24 +712,22 @@ export type Database = {
           created_by: string | null
           display_order: number
           drink_type: string
+          final_score: number | null
           follow_up_questions: string[] | null
           generated_from: string | null
           how_to_make: Json
           id: string
           image_url: string | null
+          ingredient_score: number | null
           ingredients: Json
           inside_tip: string
           is_todays_recipe: boolean
           last_engaged_at: string | null
           likes: number | null
           nutrition: Json | null
-          nutrition_score: number | null
-          ingredient_score: number | null
-          final_score: number | null
           nutrition_rating: string | null
-          track: string | null
+          nutrition_score: number | null
           preparation: string | null
-          track_reason: string | null
           preview_ingredients: string[]
           recipe_section_title: string
           saves: number
@@ -657,6 +736,8 @@ export type Database = {
           source_url: string
           status: string
           title: string
+          track: string | null
+          track_reason: string | null
           updated_at: string
           weighted_score: number
           why_it_works: string
@@ -668,24 +749,22 @@ export type Database = {
           created_by?: string | null
           display_order?: number
           drink_type?: string
+          final_score?: number | null
           follow_up_questions?: string[] | null
           generated_from?: string | null
           how_to_make?: Json
           id?: string
           image_url?: string | null
+          ingredient_score?: number | null
           ingredients?: Json
           inside_tip: string
           is_todays_recipe?: boolean
           last_engaged_at?: string | null
           likes?: number | null
           nutrition?: Json | null
-          nutrition_score?: number | null
-          ingredient_score?: number | null
-          final_score?: number | null
           nutrition_rating?: string | null
-          track?: string | null
+          nutrition_score?: number | null
           preparation?: string | null
-          track_reason?: string | null
           preview_ingredients?: string[]
           recipe_section_title: string
           saves?: number
@@ -694,6 +773,8 @@ export type Database = {
           source_url?: string
           status?: string
           title: string
+          track?: string | null
+          track_reason?: string | null
           updated_at?: string
           weighted_score?: number
           why_it_works: string
@@ -705,24 +786,22 @@ export type Database = {
           created_by?: string | null
           display_order?: number
           drink_type?: string
+          final_score?: number | null
           follow_up_questions?: string[] | null
           generated_from?: string | null
           how_to_make?: Json
           id?: string
           image_url?: string | null
+          ingredient_score?: number | null
           ingredients?: Json
           inside_tip?: string
           is_todays_recipe?: boolean
           last_engaged_at?: string | null
           likes?: number | null
           nutrition?: Json | null
-          nutrition_score?: number | null
-          ingredient_score?: number | null
-          final_score?: number | null
           nutrition_rating?: string | null
-          track?: string | null
+          nutrition_score?: number | null
           preparation?: string | null
-          track_reason?: string | null
           preview_ingredients?: string[]
           recipe_section_title?: string
           saves?: number
@@ -731,6 +810,8 @@ export type Database = {
           source_url?: string
           status?: string
           title?: string
+          track?: string | null
+          track_reason?: string | null
           updated_at?: string
           weighted_score?: number
           why_it_works?: string

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import Tokens from "@/components/vectors/Tokens";
-import { ArrowLeft, Crown, HelpCircle, Shield } from "lucide-react";
+import { ArrowLeft, Crown, HelpCircle, Heart, Shield } from "lucide-react";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { SettingsRow } from "@/components/account/settings-row";
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -157,6 +157,11 @@ export default async function AccountPage() {
           <p className="text-base font-semibold text-base-text px-1">
             Settings
           </p>
+          <SettingsRow
+            icon={<Heart className="size-4 text-grey-c500" strokeWidth={2} />}
+            label="Health profile"
+            href="/health-profile"
+          />
           <SettingsRow
             icon={<Tokens className="size-4 text-grey-c500" />}
             label="Tokens"
