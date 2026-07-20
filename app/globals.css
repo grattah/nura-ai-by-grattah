@@ -59,6 +59,7 @@
   --grey-c100: oklch(96.34% 0.001 197.14);
   --grey-c200: oklch(0.9173 0.0022 197.12);
   --grey-c300: oklch(0.8337 0.0071 174.34);
+  --grey-c400: oklch(0.7141 0.0106 181.28);
   --grey-c500: oklch(0.5819 0.0154 173.79);
   --grey-c600: oklch(0.4806 0.0116 181.01);
   --grey-c700: oklch(0.387 0.0098 176.81);
@@ -126,6 +127,7 @@
   --space-64: clamp(52px, 14.9vw, 64px);
   --space-72: clamp(58px, 16.7vw, 72px);
   --space-80: clamp(64px, 18.6vw, 80px);
+  --space-104: clamp(83.2px, 24.6vw, 104px);
   /* --space-88: clamp(70px, 20.5vw, 88px); */
   --space-96: clamp(76px, 22.3vw, 96px);
   /* --space-116: clamp(93px, 27vw, 116px); */
@@ -139,10 +141,12 @@
   --text-title: clamp(20px, 5.6vw, 24px);
   --text-modaltitle: clamp(20.8px, 6.04vw, 26px);
   --text-hero: clamp(24px, 6.5vw, 28px);
+  --text-32: clamp(27px, 7.4vw, 32px);
   --text-40: clamp(34px, 9.3vw, 40px);
 
   --nrounded-sm: clamp(6px, 1.9vw, 8px);
   --nrounded-md: clamp(10px, 2.8vw, 12px);
+  --nrounded-md-5: clamp(12px, 3.3vw, 14px);
   --nrounded-lg: clamp(12px, 3.7vw, 16px);
   --nrounded-xl: clamp(18px, 5.6vw, 24px);
   --nrounded-2xl: clamp(24px, 7.4vw, 32px);
@@ -225,6 +229,7 @@
   --color-grey-c100: var(--grey-c100);
   --color-grey-c200: var(--grey-c200);
   --color-grey-c300: var(--grey-c300);
+  --color-grey-c400: var(--grey-c400);
   --color-grey-c500: var(--grey-c500);
   --color-grey-c600: var(--grey-c600);
   --color-grey-c700: var(--grey-c700);
@@ -260,6 +265,7 @@
   --text-xs: var(--text-xs);
   --text-2xs: var(--text-2xs);
   --text-3xs: var(--text-3xs);
+  --text-hp-title: var(--text-32);
   --text-40: var(--text-40);
 
   /* Fluid spacing */
@@ -284,6 +290,7 @@
   --spacing-16: var(--space-64);
   --spacing-18: var(--space-72);
   --spacing-20: var(--space-80);
+  --spacing-26: var(--space-104);
   /* --spacing-22: var(--space-88); */
   --spacing-24: var(--space-96);
   /* --spacing-29: var(--space-116); */
@@ -294,6 +301,7 @@
 
   --radius-lg: var(--nrounded-sm);
   --radius-xl: var(--nrounded-md);
+  --radius-xl-5: var(--nrounded-md-5);
   --radius-2xl: var(--nrounded-lg);
   --radius-3xl: var(--nrounded-xl);
   --radius-4xl: var(--nrounded-2xl);
