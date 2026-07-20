@@ -134,7 +134,7 @@ export default async function HomePage() {
         </section>
 
         {/* Popular Recipes */}
-        <section className="relative z-10 mt-8">
+        <section className="relative z-10 mt-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-title leading-none font-semibold text-grey-c950">
               Trending this week
