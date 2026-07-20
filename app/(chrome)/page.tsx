@@ -90,7 +90,7 @@ export default async function HomePage() {
   const dailyTip = dailyTipRow ?? FALLBACK_TIP;
 
   const recipes = (rawRecipes ?? []) as unknown as RecipeWithTags[];
-  const popularRecipes = oneRecipePerCategory(recipes).slice(0, 4);
+  const popularRecipes = oneRecipePerCategory(recipes).slice(0, 6);
 
   const bookmarkedIds = new Set<string>();
   if (user) {
@@ -119,11 +119,11 @@ export default async function HomePage() {
     <div className="bg-background">
       <main className="px-mp pt-2 space-y-8">
         {/* Hero */}
-        <section className="space-y-4 relative">
-          <h1 className="text-title font-semibold text-grey-c950 leading-snug z-10 relative">
+        <section className="relative m-0">
+          {/* <h1 className="text-title font-semibold text-grey-c950 leading-snug z-10 relative">
             What’s bugging you today?
-          </h1>
-          <SearchSection />
+          </h1> */}
+          {/* <SearchSection /> */}
           <Image
             src="/search-sec-flower.svg"
             alt="flower"
@@ -134,14 +134,14 @@ export default async function HomePage() {
         </section>
 
         {/* Popular Recipes */}
-        <section>
+        <section className="relative z-10 mt-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-title leading-none font-semibold text-grey-c950">
-              Popular recipes
+              Trending this week
             </h2>
             <Link
               href="/popular"
-              className="text-base font-semibold text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4"
+              className="text-sm font-semibold text-mint-green hover:opacity-75 transition-opacity py-1 px-3 rounded-full bg-[#F3F1E8]"
             >
               See all
             </Link>
