@@ -14,6 +14,7 @@ import BackButton from "@/components/back-button";
 import { DetoxCard } from "@/components/recipe/DetoxCard";
 import { RecipeSupports } from "@/components/recipe/RecipeSupports";
 import { RecipeHeroImage } from "@/components/recipe/RecipeHeroImage";
+import { RecipeScoreTrigger } from "@/components/recipe/RecipeScoreTrigger";
 import Comment from "@/components/recipe/Comment";
 import AccordionSection from "@/components/recipe/AccordionSection";
 import LikeButton from "@/components/recipe/LikeButton";
@@ -237,6 +238,19 @@ export default async function RecipeDetailPage({
             </div>
 
             <div className="px-6 mb-8 space-y-4">
+              {/* Generated recipes are created unscored; the owner's first view
+                  scores them (bioactivity + categories + nutrition), then the
+                  page refreshes and the cards below fill in. */}
+              <RecipeScoreTrigger
+                recipeId={recipe.id}
+                canTrigger={
+                  !!user &&
+                  (recipe as { created_by?: string | null }).created_by ===
+                    user.id &&
+                  (recipe.final_score == null ||
+                    (recipe.recipe_tags?.length ?? 0) === 0)
+                }
+              />
               <RecipeSupports supports={topBioactivities(recipe.recipe_tags, 5)} />
               <DetoxCard finalScore={recipe.final_score ?? null} />
             </div>
