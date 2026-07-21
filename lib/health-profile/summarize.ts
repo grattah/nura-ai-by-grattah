@@ -47,7 +47,9 @@ export function summarizeAllergies(d: HealthProfileDraft): string {
 }
 
 export function summarizeMedications(d: HealthProfileDraft): string {
-  return d.medications.length ? d.medications.join(", ") : "None";
+  return d.medications.length
+    ? d.medications.map((m) => m.name).join(", ")
+    : "None";
 }
 
 export function summarizeDietary(d: HealthProfileDraft): string {
