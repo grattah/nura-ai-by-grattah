@@ -15,6 +15,12 @@ import { DetoxCard } from "@/components/recipe/DetoxCard";
 import { RecipeSupports } from "@/components/recipe/RecipeSupports";
 import { RecipeHeroImage } from "@/components/recipe/RecipeHeroImage";
 import { RecipeScoreTrigger } from "@/components/recipe/RecipeScoreTrigger";
+import { RecipePersonalizeTrigger } from "@/components/recipe/RecipePersonalizeTrigger";
+import SafetyAlerts, {
+  type SafetyAlertItem,
+} from "@/components/recipe/SafetyAlerts";
+import NutritionScore from "@/components/recipe/NutritionScore";
+import { hasActiveSubscription } from "@/lib/subscription";
 import Comment from "@/components/recipe/Comment";
 import AccordionSection from "@/components/recipe/AccordionSection";
 import LikeButton from "@/components/recipe/LikeButton";
@@ -193,6 +199,55 @@ export default async function RecipeDetailPage({
 
   const shareDisabled = (recipe as { status?: string }).status !== "approved";
 
+  // ── Personalized nutrition score + safety alerts ──────────────────────────
+  // Shown to a subscriber who has a health profile; generated on demand (lazily)
+  // and cached per (user, recipe), regenerated only when the profile is newer.
+  let personalizedView = false;
+  let personalizedScore: number | null = null;
+  let personalizedAlerts: SafetyAlertItem[] = [];
+  let canPersonalize = false;
+  if (user) {
+    const [isSub, profileRes, cacheRes] = await Promise.all([
+      hasActiveSubscription(supabase, user.id),
+      supabase
+        .from("health_profiles" as never)
+        .select("updated_at")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("recipe_personalized_scores" as never)
+        .select(
+          "personalized_final_score, base_final_score, safety_alerts, profile_updated_at",
+        )
+        .eq("user_id", user.id)
+        .eq("recipe_id", recipe.id)
+        .maybeSingle(),
+    ]);
+    const profileUpdatedAt =
+      (profileRes.data as { updated_at?: string } | null)?.updated_at ?? null;
+    personalizedView = isSub && !!profileUpdatedAt;
+    if (personalizedView) {
+      const cache = cacheRes.data as {
+        personalized_final_score: number | null;
+        base_final_score: number | null;
+        safety_alerts: SafetyAlertItem[] | null;
+        profile_updated_at: string;
+      } | null;
+      const baseScored = recipe.final_score != null;
+      const fresh =
+        !!cache &&
+        baseScored &&
+        cache.base_final_score === recipe.final_score &&
+        new Date(cache.profile_updated_at) >= new Date(profileUpdatedAt!);
+      if (fresh && cache) {
+        personalizedScore = cache.personalized_final_score;
+        personalizedAlerts = cache.safety_alerts ?? [];
+      } else {
+        canPersonalize = baseScored;
+      }
+    }
+  }
+
   // Recipe detail is a public page; its premium components (ingredients, how-to,
   // share, bookmark, comments, follow-up…) gate GUESTS to the sign-in modal via
   // AuthGate. Authenticated users view freely — only the follow-up chat is paid.
@@ -238,6 +293,12 @@ export default async function RecipeDetailPage({
             </div>
 
             <div className="px-6 mb-8 space-y-4">
+              {/* Safety alerts (allergy / medication) — above the supports card
+                  when the personalized evaluation flagged any. */}
+              {personalizedView && personalizedAlerts.length > 0 && (
+                <SafetyAlerts alerts={personalizedAlerts} />
+              )}
+
               {/* Generated recipes are created unscored; the owner's first view
                   scores them (bioactivity + categories + nutrition), then the
                   page refreshes and the cards below fill in. */}
@@ -252,7 +313,24 @@ export default async function RecipeDetailPage({
                 }
               />
               <RecipeSupports supports={topBioactivities(recipe.recipe_tags, 5)} />
-              <DetoxCard finalScore={recipe.final_score ?? null} />
+
+              {/* Personalized (subscriber + profile) shows base vs personalized
+                  nutrition; otherwise the base DetoxCard + "complete profile" CTA. */}
+              {personalizedView ? (
+                personalizedScore != null ? (
+                  <NutritionScore
+                    baseScore={recipe.final_score ?? 0}
+                    personalizedScore={personalizedScore}
+                  />
+                ) : (
+                  <RecipePersonalizeTrigger
+                    recipeId={recipe.id}
+                    canTrigger={canPersonalize}
+                  />
+                )
+              ) : (
+                <DetoxCard finalScore={recipe.final_score ?? null} />
+              )}
             </div>
 
             {/* Accordion sections */}
