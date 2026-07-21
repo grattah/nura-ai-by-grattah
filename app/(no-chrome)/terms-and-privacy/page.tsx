@@ -47,7 +47,7 @@ const page = () => {
 
         <div className="flex flex-col gap-3 mt-5">
           <p className="text-sm text-subtle font-medium">
-            Last updated: June 2026
+            Last updated: July 2026
           </p>
           <div className="bg-[#E8E6DC] py-4 px-3 rounded-2xl">
             {pageState === "privacy" ? (

@@ -8,7 +8,7 @@ const PrivacyComponent = () => {
           <p>1.</p>
           <p>Information We Collect</p>
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           <p className="font-medium text-subtle text-base">
             <span className="text-[#1B1D1D]">Account Information:</span> Name,
             email address, and profile information.
@@ -16,10 +16,17 @@ const PrivacyComponent = () => {
 
           <p className="font-medium text-subtle text-base">
             <span className="text-[#1B1D1D]">
-              Health & Preference Information:
+              Health & Wellness Information:
             </span>{" "}
-            Dietary preferences, recipe preferences, saved recipes and
-            favourites, nutrition and wellness preferences, and app settings.
+            To personalize your recipe recommendations and help identify
+            ingredients that may not be suitable for you, we collect information
+            you choose to provide about your health profile, including: age
+            range, biological sex, pregnancy/breastfeeding status, health goals,
+            existing health conditions (e.g. diabetes, high blood pressure,
+            digestive conditions), food allergies and intolerances, medications
+            and supplements you take, and dietary patterns. Providing this
+            information is optional, except for basic profile information
+            required to use the app.
           </p>
 
           <p className="font-medium text-subtle text-base">
@@ -41,6 +48,44 @@ const PrivacyComponent = () => {
             Browser type, device information, IP address, operating system,
             analytics, and performance logs.
           </p>
+        </div>
+      </div>
+
+      <div>
+        <div className="flex gap-1 items-center font-semibold text-xl text-mint-green">
+          <p>1a.</p>
+          <p>Consumer Health Data</p>
+        </div>
+        <div className="flex flex-col gap-3">
+          <p className="font-medium text-base text-subtle">
+            Some of the information described above (health conditions,
+            allergies, medications) may be considered "consumer health data"
+            under applicable state privacy laws (such as Washington's My Health
+            My Data Act).
+          </p>
+          <p className="font-medium text-base text-subtle">
+            For this category of information specifically:
+          </p>
+          <ul className="list-disc px-6">
+            <li className="font-medium text-base text-subtle">
+              We collect it only with your explicit, separate consent, obtained
+              before you complete your health profile.
+            </li>
+            <li className="font-medium text-base text-subtle">
+              We do not sell this information, and do not share it with third
+              parties for advertising purposes.
+            </li>
+            <li className="font-medium text-base text-subtle">
+              You may withdraw your consent and delete this information at any
+              time from Settings, separately from deleting your overall account.
+            </li>
+            <li className="font-medium text-base text-subtle">
+              Your health profile remains saved for as long as your account is
+              active — you do not need to re-enter it. If you request deletion
+              of this information or your account, it is permanently removed
+              from our active systems within 30 days.
+            </li>
+          </ul>
         </div>
       </div>
 
@@ -98,6 +143,13 @@ const PrivacyComponent = () => {
             We do not sell your personal information. Limited information may be
             shared with trusted providers necessary to operate the platform.
           </p>
+          <p>
+            Health profile information (conditions, allergies, medications) is
+            used solely to power in-app features such as ingredient warnings and
+            score personalization. It is not shared with Stripe, Square, or any
+            payment or advertising provider, and is not used for any purpose
+            beyond the personalization features described in this policy.
+          </p>
         </div>
       </div>
 
@@ -109,7 +161,10 @@ const PrivacyComponent = () => {
         <div className="font-medium text-base text-subtle flex flex-col gap-3">
           <p>
             We take reasonable measures to protect your information, though no
-            online platform can guarantee complete security.
+            online platform can guarantee complete security. Health profile
+            information specifically is encrypted at rest and stored separately
+            from general account and usage data, with access restricted to
+            systems necessary to deliver personalization features.
           </p>
         </div>
       </div>
@@ -123,6 +178,13 @@ const PrivacyComponent = () => {
           <p>
             You may update your account, request account or data deletion, and
             contact us regarding privacy concerns at support@nukohealth.app.
+          </p>
+          <p>
+            For health profile information specifically, you may withdraw
+            consent and delete this data independently of your general account,
+            at any time, from Settings. California residents may also have the
+            right to limit the use of sensitive personal information under the
+            CCPA; contact us at support@nukohealth.app to exercise this right.
           </p>
         </div>
       </div>
