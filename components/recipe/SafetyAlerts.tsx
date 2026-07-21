@@ -7,6 +7,7 @@ import SafetyAlert from "@/components/vectors/SafetyAlert";
 
 export interface SafetyAlertItem {
   type: "allergy" | "medication";
+  severity?: "avoid" | "caution";
   message: string;
 }
 
@@ -60,7 +61,9 @@ const SafetyAlerts = ({ alerts }: { alerts: SafetyAlertItem[] }) => {
                 >
                   <p
                     className={`pt-0.5 pb-1 px-2 border rounded-full text-2xs capitalize font-inter font-medium shrink-0 ${
-                      item.type === "allergy"
+                      // Allergy = amber; medication colored by severity
+                      // (avoid = red, caution = amber).
+                      item.type === "allergy" || item.severity === "caution"
                         ? "text-warning-c600 border-warning-c400 bg-warning-c100"
                         : "text-error-c600 border-error-c400 bg-error-c100"
                     }`}

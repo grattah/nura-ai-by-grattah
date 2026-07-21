@@ -82,23 +82,25 @@ export default function MedicationsStep() {
     if (mode === "list" && meds.length === 0) setMode("search");
   }, [mode, meds.length]);
 
-  const add = (name: string) => {
-    if (!meds.some((m) => m.toLowerCase() === name.toLowerCase())) {
-      update({ medications: [...meds, name] });
+  const add = (med: MedResult) => {
+    if (!meds.some((m) => m.name.toLowerCase() === med.name.toLowerCase())) {
+      update({
+        medications: [...meds, { name: med.name, rxcui: med.rxcui }],
+      });
     }
     // Stay in search with the input focused so the user can add more.
     inputRef.current?.focus();
   };
 
   const remove = (name: string) =>
-    update({ medications: meds.filter((m) => m !== name) });
+    update({ medications: meds.filter((m) => m.name !== name) });
 
   const openSearch = () => {
     shouldFocus.current = true;
     setMode("search");
   };
 
-  const addedLower = new Set(meds.map((m) => m.toLowerCase()));
+  const addedLower = new Set(meds.map((m) => m.name.toLowerCase()));
   const visibleResults = results.filter(
     (r) => !addedLower.has(r.name.toLowerCase()),
   );
@@ -167,7 +169,7 @@ export default function MedicationsStep() {
                     key={r.rxcui + r.name}
                     type="button"
                     onPointerDown={(e) => e.preventDefault()}
-                    onClick={() => add(r.name)}
+                    onClick={() => add(r)}
                     className="w-full flex items-center justify-between gap-3 py-3.5 border-b border-[#E3E1D8] text-left hover:opacity-80 transition-opacity"
                   >
                     <span className="text-base text-base-text">
@@ -191,7 +193,10 @@ export default function MedicationsStep() {
               <p className="text-base font-semibold text-[#43474E]">
                 Current medications / supplements
               </p>
-              <MedicationChips medications={meds} onRemove={remove} />
+              <MedicationChips
+            medications={meds.map((m) => m.name)}
+            onRemove={remove}
+          />
             </div>
           )}
         </>
@@ -201,7 +206,10 @@ export default function MedicationsStep() {
           <p className="text-base font-semibold text-[#43474E]">
             Current medications / supplements
           </p>
-          <MedicationChips medications={meds} onRemove={remove} />
+          <MedicationChips
+            medications={meds.map((m) => m.name)}
+            onRemove={remove}
+          />
           <button
             type="button"
             onClick={openSearch}
