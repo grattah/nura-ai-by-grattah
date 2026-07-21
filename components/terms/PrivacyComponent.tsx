@@ -9,12 +9,12 @@ const PrivacyComponent = () => {
           <p>Information We Collect</p>
         </div>
         <div className="flex flex-col gap-3">
-          <p className="font-medium text-subtle text-base">
+          <p className="font-medium text-subtle text-base leading-5.75">
             <span className="text-[#1B1D1D]">Account Information:</span> Name,
             email address, and profile information.
           </p>
 
-          <p className="font-medium text-subtle text-base">
+          <p className="font-medium text-subtle text-base leading-5.75">
             <span className="text-[#1B1D1D]">
               Health & Wellness Information:
             </span>{" "}
@@ -29,13 +29,13 @@ const PrivacyComponent = () => {
             required to use the app.
           </p>
 
-          <p className="font-medium text-subtle text-base">
+          <p className="font-medium text-subtle text-base leading-5.75">
             <span className="text-[#1B1D1D]">Usage Information:</span> Searches
             performed, recipes viewed or saved, features used, and website
             interactions.
           </p>
 
-          <p className="font-medium text-subtle text-base">
+          <p className="font-medium text-subtle text-base leading-5.75">
             <span className="text-[#1B1D1D]">
               Subscription & Payment Information:
             </span>{" "}
@@ -43,7 +43,7 @@ const PrivacyComponent = () => {
             store your card details.
           </p>
 
-          <p className="font-medium text-subtle text-base">
+          <p className="font-medium text-subtle text-base leading-5.75">
             <span className="text-[#1B1D1D]">Technical Information:</span>{" "}
             Browser type, device information, IP address, operating system,
             analytics, and performance logs.
@@ -57,16 +57,16 @@ const PrivacyComponent = () => {
           <p>Consumer Health Data</p>
         </div>
         <div className="flex flex-col gap-3">
-          <p className="font-medium text-base text-subtle">
+          <p className="font-medium text-base text-subtle leading-5.75">
             Some of the information described above (health conditions,
             allergies, medications) may be considered "consumer health data"
             under applicable state privacy laws (such as Washington's My Health
             My Data Act).
           </p>
-          <p className="font-medium text-base text-subtle">
+          <p className="font-medium text-base text-subtle leading-5.75">
             For this category of information specifically:
           </p>
-          <ul className="list-disc px-6">
+          <ul className="list-disc px-6 leading-5.75">
             <li className="font-medium text-base text-subtle">
               We collect it only with your explicit, separate consent, obtained
               before you complete your health profile.
@@ -94,7 +94,7 @@ const PrivacyComponent = () => {
           <p>2.</p>
           <p>How We Use Your Information</p>
         </div>
-        <ul className="list-disc px-6">
+        <ul className="list-disc px-6 leading-5.75">
           <li className="font-medium text-base text-subtle">
             Personalize recipes and recommendations
           </li>
@@ -124,7 +124,7 @@ const PrivacyComponent = () => {
           <p>3.</p>
           <p>Third-Party Services</p>
         </div>
-        <div className="font-medium text-base text-subtle flex flex-col gap-3">
+        <div className="font-medium text-base text-subtle flex flex-col gap-3 leading-5.75">
           <p>
             Supabase for authentication, database management, and secure
             storage.
@@ -138,7 +138,7 @@ const PrivacyComponent = () => {
           <p>4.</p>
           <p>Sharing of Information</p>
         </div>
-        <div className="font-medium text-base text-subtle flex flex-col gap-3">
+        <div className="font-medium text-base text-subtle flex flex-col gap-3 leading-5.75">
           <p>
             We do not sell your personal information. Limited information may be
             shared with trusted providers necessary to operate the platform.
@@ -158,7 +158,7 @@ const PrivacyComponent = () => {
           <p>5.</p>
           <p>Data Security</p>
         </div>
-        <div className="font-medium text-base text-subtle flex flex-col gap-3">
+        <div className="font-medium text-base text-subtle flex flex-col gap-3 leading-5.75">
           <p>
             We take reasonable measures to protect your information, though no
             online platform can guarantee complete security. Health profile
@@ -174,7 +174,7 @@ const PrivacyComponent = () => {
           <p>6.</p>
           <p>Your Rights</p>
         </div>
-        <div className="font-medium text-base text-subtle flex flex-col gap-3">
+        <div className="font-medium text-base text-subtle flex flex-col gap-3 leading-5.75">
           <p>
             You may update your account, request account or data deletion, and
             contact us regarding privacy concerns at support@nukohealth.app.
@@ -194,7 +194,7 @@ const PrivacyComponent = () => {
           <p>7.</p>
           <p>Children’s Privacy</p>
         </div>
-        <div className="font-medium text-base text-subtle flex flex-col gap-3">
+        <div className="font-medium text-base text-subtle flex flex-col gap-3 leading-5.75">
           <p>Nuko Health is not intended for children under 13.</p>
         </div>
       </div>
@@ -204,7 +204,7 @@ const PrivacyComponent = () => {
           <p>8.</p>
           <p>Changes to This Privacy Policy</p>
         </div>
-        <div className="font-medium text-base text-subtle flex flex-col gap-3">
+        <div className="font-medium text-base text-subtle flex flex-col gap-3 leading-5.75">
           <p>We may update this policy and post changes on the platform.</p>
         </div>
       </div>
@@ -214,7 +214,7 @@ const PrivacyComponent = () => {
           <p>9.</p>
           <p>Contact Us</p>
         </div>
-        <div className="font-medium text-base text-subtle flex flex-col gap-3">
+        <div className="font-medium text-base text-subtle flex flex-col gap-3 leading-5.75">
           <p>support@nukohealth.app</p>
         </div>
       </div>
