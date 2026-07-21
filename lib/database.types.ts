@@ -356,6 +356,27 @@ export type Database = {
         }
         Relationships: []
       }
+      drug_interaction_buckets: {
+        Row: {
+          buckets: string[]
+          drug_name: string | null
+          resolved_at: string
+          rxcui: string
+        }
+        Insert: {
+          buckets?: string[]
+          drug_name?: string | null
+          resolved_at?: string
+          rxcui: string
+        }
+        Update: {
+          buckets?: string[]
+          drug_name?: string | null
+          resolved_at?: string
+          rxcui?: string
+        }
+        Relationships: []
+      }
       free_trial_usage: {
         Row: {
           created_at: string
@@ -426,7 +447,7 @@ export type Database = {
           created_at: string
           dietary_pattern: string | null
           goals: string[]
-          medications: string[]
+          medications: Json
           pregnancy_status: string | null
           updated_at: string
           user_id: string
@@ -443,7 +464,7 @@ export type Database = {
           created_at?: string
           dietary_pattern?: string | null
           goals?: string[]
-          medications?: string[]
+          medications?: Json
           pregnancy_status?: string | null
           updated_at?: string
           user_id: string
@@ -460,10 +481,46 @@ export type Database = {
           created_at?: string
           dietary_pattern?: string | null
           goals?: string[]
-          medications?: string[]
+          medications?: Json
           pregnancy_status?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      ingredient_interactions: {
+        Row: {
+          aliases: string[]
+          bucket: string
+          created_at: string
+          id: string
+          ingredient_key: string
+          layperson_note: string
+          severity: string
+          source: string | null
+          supplement_only: boolean
+        }
+        Insert: {
+          aliases?: string[]
+          bucket: string
+          created_at?: string
+          id?: string
+          ingredient_key: string
+          layperson_note: string
+          severity: string
+          source?: string | null
+          supplement_only?: boolean
+        }
+        Update: {
+          aliases?: string[]
+          bucket?: string
+          created_at?: string
+          id?: string
+          ingredient_key?: string
+          layperson_note?: string
+          severity?: string
+          source?: string | null
+          supplement_only?: boolean
         }
         Relationships: []
       }
@@ -671,6 +728,53 @@ export type Database = {
           },
         ]
       }
+      recipe_personalized_scores: {
+        Row: {
+          adjusted: boolean
+          applied_modifiers: Json
+          base_final_score: number | null
+          created_at: string
+          personalized_final_score: number | null
+          profile_updated_at: string
+          recipe_id: string
+          safety_alerts: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          adjusted?: boolean
+          applied_modifiers?: Json
+          base_final_score?: number | null
+          created_at?: string
+          personalized_final_score?: number | null
+          profile_updated_at: string
+          recipe_id: string
+          safety_alerts?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          adjusted?: boolean
+          applied_modifiers?: Json
+          base_final_score?: number | null
+          created_at?: string
+          personalized_final_score?: number | null
+          profile_updated_at?: string
+          recipe_id?: string
+          safety_alerts?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_personalized_scores_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recipe_tags: {
         Row: {
           recipe_id: string
@@ -721,6 +825,7 @@ export type Database = {
           ingredient_score: number | null
           ingredients: Json
           inside_tip: string
+          interaction_ingredients: Json
           is_todays_recipe: boolean
           last_engaged_at: string | null
           likes: number | null
@@ -758,6 +863,7 @@ export type Database = {
           ingredient_score?: number | null
           ingredients?: Json
           inside_tip: string
+          interaction_ingredients?: Json
           is_todays_recipe?: boolean
           last_engaged_at?: string | null
           likes?: number | null
@@ -795,6 +901,7 @@ export type Database = {
           ingredient_score?: number | null
           ingredients?: Json
           inside_tip?: string
+          interaction_ingredients?: Json
           is_todays_recipe?: boolean
           last_engaged_at?: string | null
           likes?: number | null

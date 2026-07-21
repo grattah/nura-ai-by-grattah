@@ -4,11 +4,11 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import type { FactorMultipliers } from "@/lib/health-profile/nutrition-modifiers";
 
-// Personalized Nutrition Score — the LLM CLASSIFIES (recipe's base per-factor
-// negative points + allergy/medication ingredient matches); the personalized
-// number is computed deterministically in code (computePersonalized) from the
-// Modifier Table. Keeps arithmetic reliable and avoids re-deriving the recipe's
-// base each time in a way that could drift. Runs on Haiku (single call, cached).
+// Personalized Nutrition Score — the LLM CLASSIFIES only the recipe's base
+// per-factor nutrition points; the personalized number is computed
+// deterministically in code (computePersonalizedFinal) from the Modifier Table.
+// Safety (allergy + medication) is fully deterministic elsewhere. Keeps
+// arithmetic reliable. Runs on Haiku (single call, cached).
 
 export interface PersonalizeRecipe {
   title: string;
@@ -16,13 +16,6 @@ export interface PersonalizeRecipe {
   nutrition?: unknown; // { kcal, protein, fat, carbs, fiber }
   track: "Beverage" | "Solid Food" | null;
   preparation: "Juiced" | "Blended" | "N/A" | null;
-}
-
-export interface UserSafety {
-  allergies: string[];
-  allergiesOther: string;
-  medications: string[];
-  celiac: boolean;
 }
 
 const schema = z.object({
@@ -35,23 +28,12 @@ const schema = z.object({
   addedSugarPoints: z.number().min(0).max(6),
   saturatedFatPoints: z.number().min(0).max(3),
   sodiumPoints: z.number().min(0).max(3),
-  safetyAlerts: z
-    .array(
-      z.object({
-        type: z.enum(["allergy", "medication"]),
-        ingredient: z.string().describe("The specific trigger ingredient."),
-        message: z
-          .string()
-          .describe("Short user-facing sentence naming the trigger."),
-      }),
-    )
-    .describe("Empty array if none."),
 });
 
-const SYSTEM = `You are a clinical nutrition assistant for the Nuko app. Do two independent jobs for a single recipe and return ONLY the schema fields.
+const SYSTEM = `You are a clinical nutrition assistant for the Nuko app. Classify a single recipe's base nutrition points and return ONLY the schema fields.
 
 ────────────────────────────────────
-JOB 1 — Base per-factor points (positive total + the 3 negative factors)
+Base per-factor points (positive total + the 3 negative factors)
 ────────────────────────────────────
 Use the recipe's GIVEN Track (and Preparation for beverages) — do NOT reclassify. Convert nutrients to per-100g (Solid Food) or per-100ml (Beverage): per100 = (amount per serving ÷ serving weight) × 100. Estimate any missing values from standard ingredient data. Exclude water/ice from weight.
 
@@ -61,15 +43,7 @@ IF Solid Food — Positive Points (max 14): Fiber g/100g (<0.9=0, 0.9–1.9=1, 1
 IF Beverage — Positive Points (max 12): Fiber g/100ml (<0.9=0, 0.9–1.9=1, 1.9–2.8=2, >2.8=3); Protein g/100ml (<1.2=0, 1.2–2.4=1, 2.4–3.6=2, >3.6=3); Fruit/Veg/Legume % (<40=0, 40–59=2, 60–79=4, ≥80=6).
   Negative — Added Sugar rule by Preparation: IF Blended, "added sugar" = separately added sweeteners only (intrinsic whole-fruit sugar EXEMPT); IF Juiced, ALL sugar counts. Added sugar g/100ml (0–0.5=0, 0.5–2=1, 2–4=2, 4–6=3, 6–8=4, 8–11=5, >11=6); Saturated fat g/100ml (≤1=0, 1.1–2=1, 2.1–3=2, >3=3); Sodium mg/100ml (0–40=0, 41–90=1, 91–140=2, >140=3).
 
-Return positiveTotal, addedSugarPoints, saturatedFatPoints, sodiumPoints. (Do NOT compute any final score — that is done downstream.)
-
-────────────────────────────────────
-JOB 2 — Safety alerts (name the trigger ingredient; this is safety info)
-────────────────────────────────────
-- allergy: if any recipe ingredient matches one of the user's disclosed allergens, add {type:"allergy", ingredient, message:"Contains <ingredient>. You reported a <allergen> allergy/intolerance."}.
-- celiac (if disclosed): if the recipe contains any gluten-containing ingredient, add {type:"allergy", ingredient, message:"Contains gluten. You reported celiac disease."}.
-- medication: if any recipe ingredient has a known interaction with one of the user's medications (e.g. grapefruit–CYP3A4), add {type:"medication", ingredient, message:"<ingredient> may interact with medications you're taking. (<mechanism>)"}.
-Only include genuine matches; otherwise return an empty array. Never name a diagnosed condition beyond the allergy/celiac/interaction context above.`;
+Return positiveTotal, addedSugarPoints, saturatedFatPoints, sodiumPoints. (Do NOT compute any final score — that is done downstream.)`;
 
 function formatIngredients(ingredients: unknown): string {
   if (!Array.isArray(ingredients)) return "(none listed)";
@@ -97,18 +71,12 @@ export interface ClassifyResult {
   addedSugarPoints: number;
   saturatedFatPoints: number;
   sodiumPoints: number;
-  safetyAlerts: { type: "allergy" | "medication"; ingredient: string; message: string }[];
   totalTokens: number;
 }
 
 export async function classifyForPersonalization(
   recipe: PersonalizeRecipe,
-  user: UserSafety,
 ): Promise<ClassifyResult> {
-  const allergens = [
-    ...user.allergies,
-    ...(user.allergiesOther.trim() ? [user.allergiesOther.trim()] : []),
-  ];
   const prompt = `Recipe: ${recipe.title}
 Track: ${recipe.track ?? "Solid Food"}${
     recipe.track === "Beverage" ? ` / Preparation: ${recipe.preparation ?? "Juiced"}` : ""
@@ -118,12 +86,7 @@ Per-serving nutrition: ${formatNutrition(recipe.nutrition)}
 Ingredients:
 ${formatIngredients(recipe.ingredients)}
 
-User safety context:
-- Allergies/intolerances: ${allergens.length ? allergens.join(", ") : "none"}
-- Celiac disease disclosed: ${user.celiac ? "yes" : "no"}
-- Medications/supplements: ${user.medications.length ? user.medications.join(", ") : "none"}
-
-Do JOB 1 and JOB 2.`;
+Classify the base nutrition points.`;
 
   const { object, usage } = await generateObject({
     model: anthropic("claude-haiku-4-5"),
@@ -138,7 +101,6 @@ Do JOB 1 and JOB 2.`;
     addedSugarPoints: object.addedSugarPoints,
     saturatedFatPoints: object.saturatedFatPoints,
     sodiumPoints: object.sodiumPoints,
-    safetyAlerts: object.safetyAlerts ?? [],
     totalTokens:
       usage?.totalTokens ??
       (usage?.inputTokens ?? 0) + (usage?.outputTokens ?? 0),

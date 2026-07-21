@@ -23,7 +23,7 @@ interface HealthProfileRow {
   conditions_other: string | null;
   allergies: string[];
   allergies_other: string | null;
-  medications: string[];
+  medications: { name: string; rxcui: string | null }[];
   consent_given_at: string | null;
   consent_version: string | null;
 }
