@@ -47,11 +47,11 @@ const page = () => {
 
         <div className="flex flex-col gap-3 mt-5">
           <p className="text-sm text-subtle font-medium">
-            Last updated: June 2026
+            Last updated: July 2026
           </p>
           <div className="bg-[#E8E6DC] py-4 px-3 rounded-2xl">
             {pageState === "privacy" ? (
-              <div className="flex flex-col gap-2.5 text-[#333333E5] font-medium text-base">
+              <div className="flex flex-col gap-2.5 text-[#333333E5] font-medium text-base leading-5.75">
                 <p>Welcome to Nuko Health (“we,” “our,” or “us”).</p>
                 <p>
                   We respect your privacy and are committed to protecting your
@@ -61,7 +61,7 @@ const page = () => {
                 </p>
               </div>
             ) : pageState === "terms" ? (
-              <div className="text-[#333333E5] font-medium text-base">
+              <div className="text-[#333333E5] font-medium text-base leading-5.75">
                 <p>
                   These Terms of Service govern your use of the Nuko Health
                   website, web app, and related services.
