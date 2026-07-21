@@ -7,6 +7,13 @@ export interface BasicProfile {
   pregnancyStatus: string | null;
 }
 
+// rxcui is captured from the RxNav search (null for free-text entries) and used
+// to resolve drug-interaction classes via RxClass.
+export interface Medication {
+  name: string;
+  rxcui: string | null;
+}
+
 export interface HealthProfileDraft {
   basic: BasicProfile;
   goals: string[]; // category slugs
@@ -14,7 +21,7 @@ export interface HealthProfileDraft {
   conditionsOther: string;
   allergies: string[];
   allergiesOther: string;
-  medications: string[]; // free-text names
+  medications: Medication[];
   dietaryPattern: string | null; // single-select
   consent: boolean;
 }

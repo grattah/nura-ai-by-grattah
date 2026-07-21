@@ -10,6 +10,13 @@ import {
   classifyForPersonalization,
   computePersonalizedFinal,
 } from "@/lib/scoring/personalize";
+import {
+  detectInteractionIngredients,
+  type InteractionIngredient,
+} from "@/lib/interactions/detect";
+import { resolveMedications } from "@/lib/interactions/rxclass";
+import type { Bucket } from "@/lib/interactions/buckets";
+import { detectAllergens } from "@/lib/interactions/allergens";
 
 export const maxDuration = 60;
 
@@ -38,7 +45,7 @@ export async function POST(
   const { data: recipeRaw } = await admin
     .from("recipes")
     .select(
-      "id, title, ingredients, nutrition, track, preparation, final_score, ingredient_score",
+      "id, title, ingredients, nutrition, track, preparation, final_score, ingredient_score, interaction_ingredients",
     )
     .eq("id", id)
     .maybeSingle();
@@ -51,6 +58,7 @@ export async function POST(
     preparation: "Juiced" | "Blended" | "N/A" | null;
     final_score: number | null;
     ingredient_score: number | null;
+    interaction_ingredients: InteractionIngredient[] | null;
   } | null;
 
   if (!recipe) {
@@ -76,7 +84,7 @@ export async function POST(
     goals: string[];
     allergies: string[];
     allergies_other: string | null;
-    medications: string[];
+    medications: { name: string; rxcui: string | null }[];
   } | null;
   if (!profile) {
     return NextResponse.json({ error: "No health profile" }, { status: 403 });
@@ -103,21 +111,13 @@ export async function POST(
   }
 
   try {
-    const classified = await classifyForPersonalization(
-      {
-        title: recipe.title,
-        ingredients: recipe.ingredients,
-        nutrition: recipe.nutrition,
-        track: recipe.track,
-        preparation: recipe.preparation,
-      },
-      {
-        allergies: profile.allergies ?? [],
-        allergiesOther: profile.allergies_other ?? "",
-        medications: profile.medications ?? [],
-        celiac: (profile.conditions ?? []).includes("celiac-disease"),
-      },
-    );
+    const classified = await classifyForPersonalization({
+      title: recipe.title,
+      ingredients: recipe.ingredients,
+      nutrition: recipe.nutrition,
+      track: recipe.track,
+      preparation: recipe.preparation,
+    });
 
     const multipliers = computeMultipliers(
       profile.conditions ?? [],
@@ -131,11 +131,47 @@ export async function POST(
       multipliers,
     );
 
-    const safetyAlerts = classified.safetyAlerts.map((a) => ({
-      type: a.type,
-      label: a.type === "allergy" ? "Allergy" : "Medication",
-      message: a.message,
-    }));
+    // Medication interactions — deterministic (ingredient buckets ∩ drug buckets).
+    // Detect + cache the recipe's interaction ingredients once (user-independent).
+    let interaction = recipe.interaction_ingredients ?? [];
+    if (!interaction.length) {
+      interaction = await detectInteractionIngredients(admin, recipe.ingredients);
+      await admin
+        .from("recipes")
+        .update({ interaction_ingredients: interaction } as never)
+        .eq("id", recipe.id);
+    }
+    const resolvedMeds = await resolveMedications(
+      admin,
+      profile.medications ?? [],
+    );
+
+    // Allergy alerts — deterministic (recipe ingredients × the user's allergens).
+    const allergyAlerts = detectAllergens(
+      recipe.ingredients,
+      profile.allergies ?? [],
+      profile.allergies_other ?? "",
+      (profile.conditions ?? []).includes("celiac-disease"),
+    );
+    // Medication alerts — name the specific drug(s) whose class matches the
+    // ingredient's mechanism bucket.
+    const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+    const medicationAlerts = interaction
+      .map((ii) => {
+        const drugs = resolvedMeds
+          .filter((m) => m.buckets.includes(ii.bucket as Bucket))
+          .map((m) => m.name)
+          .filter(Boolean);
+        if (!drugs.length) return null;
+        return {
+          type: "medication" as const,
+          severity: ii.severity,
+          label: "Medication",
+          message: `${cap(ii.ingredient_key)} may interact with medications you're taking (${drugs.join(", ")}).`,
+        };
+      })
+      .filter((a): a is NonNullable<typeof a> => a !== null);
+    const safetyAlerts = [...allergyAlerts, ...medicationAlerts];
 
     const { error: upErr } = await admin
       .from("recipe_personalized_scores" as never)
