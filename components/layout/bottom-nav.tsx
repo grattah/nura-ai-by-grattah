@@ -39,7 +39,7 @@ export function BottomNav() {
   };
 
   return (
-    <nav className="sticky bottom-2 z-40 w-[93%] mx-auto pb-safe">
+    <nav className="fixed bottom-2 inset-x-0 z-40 w-[93%] mx-auto pb-safe">
       <div className="mx-0 flex items-center p-1 rounded-full overflow-hidden liquid-glass border-2 backdrop-blur-xs">
         {NAV_ITEMS.map(
           ({ label, href, icon: Icon, activeIcon: ActiveIcon }) => {
