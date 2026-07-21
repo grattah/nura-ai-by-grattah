@@ -39,7 +39,9 @@ export default async function ChromeLayout({
     <div className="min-h-dvh flex flex-col">
       <AuthSync serverAuthed={!!user} />
       <AppHeader user={headerUser} />
-      <main className="flex-1 pb-16">{children}</main>
+      <main className="flex-1 pb-[calc(4.5rem+env(safe-area-inset-bottom))]">
+        {children}
+      </main>
       <BottomNav />
       <PWAInstallPrompt />
     </div>
