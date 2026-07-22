@@ -225,7 +225,11 @@ export async function POST(req: NextRequest) {
         }) => {
           // Fire-and-forget; the stream has already completed for the client.
           // Subscribers meter real tokens; new users consume one free chat use.
-          if (activeSub) void meter(user.id, usageTokens(totalUsage), "follow-up");
+          if (activeSub)
+            void meter(user.id, usageTokens(totalUsage), "follow-up", {
+              provider: "anthropic",
+              model: "claude-haiku-4-5",
+            });
           else void recordFreeUse(user.id, SURFACE);
         }
       : undefined;

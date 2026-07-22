@@ -22,7 +22,6 @@ import {
   summarizeConditions,
   summarizeAllergies,
   summarizeMedications,
-  summarizeDietary,
 } from "@/lib/health-profile/summarize";
 import Stepper from "@/components/health-profile/stepper";
 

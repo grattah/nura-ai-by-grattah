@@ -93,6 +93,7 @@ export async function POST(
           user.id,
           bioRes.value.totalTokens,
           "recipe-score-bioactivity",
+          { provider: "anthropic", model: "claude-haiku-4-5" },
         );
       }
     } else if (bioRes.status === "rejected") {
@@ -102,7 +103,10 @@ export async function POST(
     if (nutRes.status === "fulfilled" && nutRes.value) {
       await writeNutrition(admin, recipe.id, nutRes.value);
       if (isOwner) {
-        await meter(user.id, nutRes.value.totalTokens, "recipe-score-nutrition");
+        await meter(user.id, nutRes.value.totalTokens, "recipe-score-nutrition", {
+          provider: "anthropic",
+          model: "claude-haiku-4-5",
+        });
       }
     } else if (nutRes.status === "rejected") {
       console.error("[recipes/score] nutrition", nutRes.reason);

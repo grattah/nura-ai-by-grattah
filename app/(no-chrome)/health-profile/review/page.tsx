@@ -15,7 +15,6 @@ import {
   summarizeConditions,
   summarizeAllergies,
   summarizeMedications,
-  summarizeDietary,
 } from "@/lib/health-profile/summarize";
 import Link from "next/link";
 

@@ -3,7 +3,6 @@ import {
   BIOLOGICAL_SEX,
   CONDITIONS,
   ALLERGENS,
-  DIETARY_PATTERNS,
   GOALS,
   labelFor,
   labelsFor,
@@ -52,8 +51,5 @@ export function summarizeMedications(d: HealthProfileDraft): string {
     : "None";
 }
 
-export function summarizeDietary(d: HealthProfileDraft): string {
-  return d.dietaryPattern
-    ? labelFor(DIETARY_PATTERNS, d.dietaryPattern)
-    : EMPTY;
-}
+// summarizeDietary removed with the dietary-pattern step (see types.ts). Restore
+// alongside HealthProfileDraft.dietaryPattern if the step is reinstated.

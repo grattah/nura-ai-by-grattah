@@ -6,6 +6,25 @@ import {
   LOW_WARN_PCT,
   type TokenState,
 } from "@/lib/credits";
+import {
+  recordUsage,
+  type UsageProvider,
+  type UsageSource,
+} from "@/lib/usage-server";
+
+// Provider/model context for the token-usage ledger. Billed call sites pass this
+// so every metered spend is also logged to token_usage (best-effort).
+export interface MeterMeta {
+  provider: UsageProvider;
+  model: string;
+  source?: UsageSource;
+  images?: number;
+  inputTokens?: number;
+  outputTokens?: number;
+  // Usage-ledger surface, when it should differ from the billing `label`
+  // (e.g. recipe generation bills under the recipe name but logs "recipe-generate").
+  surface?: string;
+}
 
 // Server-side token operations via the SECURITY DEFINER RPCs. Callers must have
 // already verified auth + active subscription; pass the authenticated user's id.
@@ -69,6 +88,7 @@ export async function meterUnits(
   units: number,
   label: string,
   rawTokens?: number,
+  meta?: MeterMeta,
 ): Promise<TokenState> {
   const admin = createServiceRoleClient();
   const { data } = await admin.rpc("spend_tokens" as never, {
@@ -78,6 +98,22 @@ export async function meterUnits(
     p_label: label,
     p_raw_tokens: rawTokens ?? null,
   } as never);
+  // Also log to the observability ledger (best-effort; never blocks).
+  if (meta) {
+    void recordUsage({
+      provider: meta.provider,
+      model: meta.model,
+      surface: meta.surface ?? label,
+      source: meta.source ?? "runtime",
+      userId,
+      inputTokens: meta.inputTokens,
+      outputTokens: meta.outputTokens,
+      totalTokens: rawTokens,
+      images: meta.images,
+      units,
+      billed: true,
+    });
+  }
   return toState(data as RawState | null);
 }
 
@@ -86,8 +122,15 @@ export async function meter(
   userId: string,
   claudeTokens: number,
   label: string,
+  meta?: MeterMeta,
 ): Promise<TokenState> {
-  return meterUnits(userId, unitsForTokens(claudeTokens), label, claudeTokens);
+  return meterUnits(
+    userId,
+    unitsForTokens(claudeTokens),
+    label,
+    claudeTokens,
+    meta,
+  );
 }
 
 /** Add purchased "extra" units (Stripe webhook). */

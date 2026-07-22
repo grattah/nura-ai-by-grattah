@@ -69,9 +69,7 @@ export const getCachedAccess = cache(
       };
 
     const supabase = await createClient();
-    // Global browse access = active subscriber OR a brand-new (never-subscribed)
-    // user still in their free trial. Lapsed subscribers are blocked. Per-surface
-    // free-use limits are enforced at the paywalled surfaces themselves.
+
     const [activeSub, everSubscribed] = await Promise.all([
       hasActiveSubscription(supabase, user.id),
       hasEverSubscribed(supabase, user.id),
