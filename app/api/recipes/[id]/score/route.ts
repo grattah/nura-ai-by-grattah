@@ -35,7 +35,7 @@ export async function POST(
   const { data: recipeRaw } = await admin
     .from("recipes")
     .select(
-      "id, title, short_description, ingredients, how_to_make, why_it_works, nutrition, final_score, created_by, recipe_tags(recipe_id)",
+      "id, title, short_description, ingredients, how_to_make, why_it_works, nutrition, final_score, nutrition_positive_total, created_by, recipe_tags(recipe_id)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -48,6 +48,7 @@ export async function POST(
     why_it_works: string | null;
     nutrition: unknown;
     final_score: number | null;
+    nutrition_positive_total: number | null;
     created_by: string | null;
     recipe_tags: { recipe_id: string }[] | null;
   } | null;
@@ -56,10 +57,12 @@ export async function POST(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  // Idempotent: already scored (has a nutrition score AND bioactivities) → no-op.
-  const alreadyScored =
-    recipe.final_score != null && (recipe.recipe_tags?.length ?? 0) > 0;
-  if (alreadyScored) {
+  // What still needs doing. Nutrition also re-runs when the per-factor points are
+  // missing (backfill for recipes scored before those columns existed).
+  const needsBio = (recipe.recipe_tags?.length ?? 0) === 0;
+  const needsNut =
+    recipe.final_score == null || recipe.nutrition_positive_total == null;
+  if (!needsBio && !needsNut) {
     return NextResponse.json({ scored: true });
   }
 
@@ -70,15 +73,15 @@ export async function POST(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Run both scoring passes together. Settle independently so one failing doesn't
-  // discard the other's result.
+  // Run only the passes that are needed. Settle independently so one failing
+  // doesn't discard the other's result.
   const [bioRes, nutRes] = await Promise.allSettled([
-    scoreBioactivities(recipe),
-    scoreNutrition(recipe),
+    needsBio ? scoreBioactivities(recipe) : Promise.resolve(null),
+    needsNut ? scoreNutrition(recipe) : Promise.resolve(null),
   ]);
 
   try {
-    if (bioRes.status === "fulfilled") {
+    if (bioRes.status === "fulfilled" && bioRes.value) {
       await writeBioactivityAndCategories(
         admin,
         recipe.id,
@@ -92,16 +95,16 @@ export async function POST(
           "recipe-score-bioactivity",
         );
       }
-    } else {
+    } else if (bioRes.status === "rejected") {
       console.error("[recipes/score] bioactivity", bioRes.reason);
     }
 
-    if (nutRes.status === "fulfilled") {
+    if (nutRes.status === "fulfilled" && nutRes.value) {
       await writeNutrition(admin, recipe.id, nutRes.value);
       if (isOwner) {
         await meter(user.id, nutRes.value.totalTokens, "recipe-score-nutrition");
       }
-    } else {
+    } else if (nutRes.status === "rejected") {
       console.error("[recipes/score] nutrition", nutRes.reason);
     }
   } catch (err) {

@@ -82,6 +82,12 @@ export async function writeNutrition(
       ingredient_score: r.ingredientScore,
       final_score: r.finalScore,
       nutrition_rating: r.rating,
+      nutrition_positive_total: r.positiveTotal,
+      nutrition_added_sugar_points: r.addedSugarPoints,
+      nutrition_sat_fat_points: r.saturatedFatPoints,
+      nutrition_sodium_points: r.sodiumPoints,
+      nutrition_fiber_points: r.fiberPoints,
+      nutrition_protein_points: r.proteinPoints,
     } as never)
     .eq("id", recipeId);
 }

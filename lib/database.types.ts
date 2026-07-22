@@ -830,8 +830,14 @@ export type Database = {
           last_engaged_at: string | null
           likes: number | null
           nutrition: Json | null
+          nutrition_added_sugar_points: number | null
+          nutrition_fiber_points: number | null
+          nutrition_positive_total: number | null
+          nutrition_protein_points: number | null
           nutrition_rating: string | null
+          nutrition_sat_fat_points: number | null
           nutrition_score: number | null
+          nutrition_sodium_points: number | null
           preparation: string | null
           preview_ingredients: string[]
           recipe_section_title: string
@@ -868,8 +874,14 @@ export type Database = {
           last_engaged_at?: string | null
           likes?: number | null
           nutrition?: Json | null
+          nutrition_added_sugar_points?: number | null
+          nutrition_fiber_points?: number | null
+          nutrition_positive_total?: number | null
+          nutrition_protein_points?: number | null
           nutrition_rating?: string | null
+          nutrition_sat_fat_points?: number | null
           nutrition_score?: number | null
+          nutrition_sodium_points?: number | null
           preparation?: string | null
           preview_ingredients?: string[]
           recipe_section_title: string
@@ -906,8 +918,14 @@ export type Database = {
           last_engaged_at?: string | null
           likes?: number | null
           nutrition?: Json | null
+          nutrition_added_sugar_points?: number | null
+          nutrition_fiber_points?: number | null
+          nutrition_positive_total?: number | null
+          nutrition_protein_points?: number | null
           nutrition_rating?: string | null
+          nutrition_sat_fat_points?: number | null
           nutrition_score?: number | null
+          nutrition_sodium_points?: number | null
           preparation?: string | null
           preview_ingredients?: string[]
           recipe_section_title?: string
