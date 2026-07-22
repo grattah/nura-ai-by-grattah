@@ -2,6 +2,7 @@ import "server-only";
 import { generateObject } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
+import type { FactorMultipliers } from "@/lib/health-profile/nutrition-modifiers";
 
 // Base Nutrition Score — the TS twin of scripts/score-nutrition.mjs. The LLM
 // returns Track/Preparation + point TOTALS + IngredientScore; NutritionScore,
@@ -24,7 +25,11 @@ const scoreSchema = z.object({
     .string()
     .describe("Which Step-0 rule set the track/prep, and why."),
   positiveTotal: z.number().min(0).max(14).describe("Sum of positive points."),
-  negativeTotal: z.number().min(0).max(12).describe("Sum of negative points."),
+  // Per-factor negative points (stored so the personalized score can re-weight
+  // a single factor without re-classifying the whole recipe).
+  addedSugarPoints: z.number().min(0).max(6),
+  saturatedFatPoints: z.number().min(0).max(3),
+  sodiumPoints: z.number().min(0).max(3),
   fiberPoints: z.number().min(0).max(4),
   proteinPoints: z.number().min(0).max(4),
   ingredientScore: z.number().min(0).max(100),
@@ -123,9 +128,10 @@ RULES
 - Show all step-by-step Step 0–3 work in the "work" field.
 
 OUTPUT: put your full working in "work", then return: "track", "preparation" ("N/A" for Solid Food),
-"trackReason", "positiveTotal" and "negativeTotal" (the summed points), "fiberPoints" and
-"proteinPoints" (the individual fiber/protein point awards, for the substance floor), and
-"ingredientScore" (0–100). NutritionScore, finalScore and the rating are computed downstream.`;
+"trackReason", "positiveTotal" (the summed positive points), the three individual negative-point awards
+"addedSugarPoints", "saturatedFatPoints" and "sodiumPoints", "fiberPoints" and "proteinPoints" (for the
+substance floor), and "ingredientScore" (0–100). NutritionScore, finalScore and the rating are computed
+downstream.`;
 
 function formatIngredients(ingredients: unknown): string {
   if (!Array.isArray(ingredients)) return "(none listed)";
@@ -178,11 +184,60 @@ Calculate the Base Nutrition Score for this recipe.`;
 
 const clamp = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
 
-function ratingFor(finalScore: number): string {
+export function ratingFor(finalScore: number): string {
   if (finalScore >= 70) return "Excellent";
   if (finalScore >= 50) return "Good";
   if (finalScore >= 30) return "Fair";
   return "Needs Improvement";
+}
+
+// The recipe's base per-factor points. Both the base score (identity multipliers)
+// and the personalized score (Modifier-Table multipliers) are computed from the
+// SAME points via computeNutrition* — so personalized ≤ base always and = base
+// when no modifier applies.
+export interface NutritionPoints {
+  positiveTotal: number;
+  addedSugarPoints: number;
+  saturatedFatPoints: number;
+  sodiumPoints: number;
+  fiberPoints: number;
+  proteinPoints: number;
+  track: "Beverage" | "Solid Food";
+  ingredientScore: number; // 0–100
+}
+
+export const IDENTITY_MULTIPLIERS: FactorMultipliers = {
+  addedSugar: 1,
+  saturatedFat: 1,
+  sodium: 1,
+};
+
+/** NutritionScore (0–100) with the substance floor, given per-factor multipliers. */
+export function computeNutritionScore(
+  p: NutritionPoints,
+  m: FactorMultipliers,
+): number {
+  const newNegative =
+    p.addedSugarPoints * m.addedSugar +
+    p.saturatedFatPoints * m.saturatedFat +
+    p.sodiumPoints * m.sodium;
+  const composite = p.positiveTotal - newNegative;
+  const offset = p.track === "Solid Food" ? 10 : 12;
+  let nutritionScore = clamp(((composite + offset) / 24) * 100);
+  // Substance floor (Solid Food only): no fiber AND no protein points → cap 35.
+  if (p.track === "Solid Food" && p.fiberPoints === 0 && p.proteinPoints === 0) {
+    nutritionScore = Math.min(nutritionScore, 35);
+  }
+  return nutritionScore;
+}
+
+/** FinalScore = 0.7·NutritionScore + 0.3·IngredientScore. */
+export function computeNutritionFinal(
+  p: NutritionPoints,
+  m: FactorMultipliers,
+): number {
+  const nutritionScore = computeNutritionScore(p, m);
+  return clamp(0.7 * nutritionScore + 0.3 * clamp(p.ingredientScore));
 }
 
 export interface NutritionResult {
@@ -193,6 +248,13 @@ export interface NutritionResult {
   ingredientScore: number;
   finalScore: number;
   rating: string;
+  // Per-factor points to persist (drive the personalized score).
+  positiveTotal: number;
+  addedSugarPoints: number;
+  saturatedFatPoints: number;
+  sodiumPoints: number;
+  fiberPoints: number;
+  proteinPoints: number;
   totalTokens: number;
 }
 
@@ -211,23 +273,22 @@ export async function scoreNutrition(
 
   const track = object.track;
   const preparation = track === "Solid Food" ? "N/A" : object.preparation;
-
-  // NutritionScore = ((Composite + offset) / 24) × 100, offset 10 (Solid) / 12 (Beverage).
-  const composite = object.positiveTotal - object.negativeTotal;
-  const offset = track === "Solid Food" ? 10 : 12;
-  let nutritionScore = clamp(((composite + offset) / 24) * 100);
-
-  // Substance floor (Solid Food only): no fiber AND no protein points → cap at 35.
-  if (
-    track === "Solid Food" &&
-    object.fiberPoints === 0 &&
-    object.proteinPoints === 0
-  ) {
-    nutritionScore = Math.min(nutritionScore, 35);
-  }
-
   const ingredientScore = clamp(object.ingredientScore);
-  const finalScore = clamp(0.7 * nutritionScore + 0.3 * ingredientScore);
+
+  const points: NutritionPoints = {
+    positiveTotal: object.positiveTotal,
+    addedSugarPoints: object.addedSugarPoints,
+    saturatedFatPoints: object.saturatedFatPoints,
+    sodiumPoints: object.sodiumPoints,
+    fiberPoints: object.fiberPoints,
+    proteinPoints: object.proteinPoints,
+    track,
+    ingredientScore,
+  };
+
+  // Base score = the same points with no re-weighting.
+  const nutritionScore = computeNutritionScore(points, IDENTITY_MULTIPLIERS);
+  const finalScore = computeNutritionFinal(points, IDENTITY_MULTIPLIERS);
 
   return {
     track,
@@ -237,6 +298,12 @@ export async function scoreNutrition(
     ingredientScore,
     finalScore,
     rating: ratingFor(finalScore),
+    positiveTotal: object.positiveTotal,
+    addedSugarPoints: object.addedSugarPoints,
+    saturatedFatPoints: object.saturatedFatPoints,
+    sodiumPoints: object.sodiumPoints,
+    fiberPoints: object.fiberPoints,
+    proteinPoints: object.proteinPoints,
     totalTokens:
       usage?.totalTokens ??
       (usage?.inputTokens ?? 0) + (usage?.outputTokens ?? 0),
