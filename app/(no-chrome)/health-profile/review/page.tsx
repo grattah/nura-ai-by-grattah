@@ -49,11 +49,11 @@ export default function ReviewStep() {
       values: summarizeMedications(draft),
       step: "medications",
     },
-    {
-      title: "Dietary Pattern",
-      values: summarizeDietary(draft),
-      step: "dietary",
-    },
+    // {
+    //   title: "Dietary Pattern",
+    //   values: summarizeDietary(draft),
+    //   step: "dietary",
+    // },
   ];
 
   return (

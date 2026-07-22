@@ -47,7 +47,7 @@ const CLEARED: Record<ProfileSection, Partial<HealthProfileDraft>> = {
   conditions: { conditions: [], conditionsOther: "" },
   allergies: { allergies: [], allergiesOther: "" },
   medications: { medications: [] },
-  dietary: { dietaryPattern: null },
+  // dietary: { dietaryPattern: null },
 };
 
 const HealthProfileContext = createContext<HealthProfileContextValue | null>(

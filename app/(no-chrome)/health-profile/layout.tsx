@@ -5,9 +5,6 @@ import { getHealthProfile } from "@/actions/health-profile";
 import { HealthProfileProvider } from "@/components/health-profile/health-profile-provider";
 import { HealthProfilePaywallGate } from "@/components/health-profile/health-profile-paywall-gate";
 
-// Health Profile is subscriber-only. Guests sign in; authenticated
-// non-subscribers see the page behind the "Get Nuko+" paywall (no hard redirect
-// — that read as a glitch), matching the "Complete health profile" CTA.
 export default async function HealthProfileLayout({
   children,
 }: {

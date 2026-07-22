@@ -22,7 +22,7 @@ export interface HealthProfileDraft {
   allergies: string[];
   allergiesOther: string;
   medications: Medication[];
-  dietaryPattern: string | null; // single-select
+  // dietaryPattern: string | null; // single-select
   consent: boolean;
 }
 
@@ -31,8 +31,8 @@ export type ProfileSection =
   | "goals"
   | "conditions"
   | "allergies"
-  | "medications"
-  | "dietary";
+  | "medications";
+// | "dietary";
 
 // The steps of the questionnaire, in order. Used for navigation + the Review
 // screen's per-section "Edit" deep-links.
@@ -42,7 +42,7 @@ export const STEP_ORDER = [
   "conditions",
   "allergies",
   "medications",
-  "dietary",
+  // "dietary",
   "review",
 ] as const;
 export type Step = (typeof STEP_ORDER)[number];
@@ -72,6 +72,6 @@ export const EMPTY_DRAFT: HealthProfileDraft = {
   allergies: [],
   allergiesOther: "",
   medications: [],
-  dietaryPattern: null,
+  // dietaryPattern: null,
   consent: false,
 };
