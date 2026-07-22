@@ -42,7 +42,6 @@ export const STEP_ORDER = [
   "conditions",
   "allergies",
   "medications",
-  "dietary",
   "review",
 ] as const;
 export type Step = (typeof STEP_ORDER)[number];
