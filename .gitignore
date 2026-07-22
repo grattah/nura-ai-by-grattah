@@ -40,3 +40,5 @@ next-env.d.ts
 /supabase
 
 /SECURITY_AUDIT.md
+
+/docs

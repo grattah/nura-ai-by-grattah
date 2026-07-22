@@ -18,6 +18,7 @@ import { canManageMembers } from "@/lib/admin/roles";
 const LINKS = [
   { href: "/admin", label: "Dashboard", exact: true },
   { href: "/admin/recipes", label: "Recipes" },
+  { href: "/admin/tokens", label: "Tokens" },
   { href: "/admin/members", label: "Members", membersOnly: true },
 ];
 
@@ -93,7 +94,7 @@ export function AdminNav({
   return (
     <>
       {/* Desktop sidebar (≥ md) */}
-      <aside className="hidden md:flex w-60 shrink-0 border-r border-border bg-card min-h-dvh flex-col p-4">
+      <aside className="hidden md:flex md:fixed md:inset-y-0 md:left-0 z-30 w-60 border-r border-border bg-card overflow-y-auto flex-col p-4">
         <NavBody />
       </aside>
 

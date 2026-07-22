@@ -1,5 +1,9 @@
+import "server-only";
 import { embed, embedMany, type EmbeddingModel } from "ai";
 import { google } from "@ai-sdk/google";
+import { recordUsage } from "@/lib/usage-server";
+
+const EMBED_MODEL_ID = "gemini-embedding-2";
 
 export interface Embedder {
   dimensions: number;
@@ -15,7 +19,7 @@ function createEmbedder(
     dimensions,
     async embed(text) {
       if (!text?.trim()) throw new Error("Cannot embed empty string");
-      const { embedding } = await embed({
+      const { embedding, usage } = await embed({
         model,
         value: text,
         providerOptions: {
@@ -25,10 +29,17 @@ function createEmbedder(
           },
         },
       });
+      void recordUsage({
+        provider: "google",
+        model: EMBED_MODEL_ID,
+        surface: "rag-embed",
+        inputTokens: usage?.tokens ?? 0,
+        totalTokens: usage?.tokens ?? 0,
+      });
       return embedding;
     },
     async embedBatch(texts) {
-      const { embeddings } = await embedMany({
+      const { embeddings, usage } = await embedMany({
         model,
         values: texts,
         providerOptions: {
@@ -37,6 +48,13 @@ function createEmbedder(
             taskType: "RETRIEVAL_DOCUMENT",
           },
         },
+      });
+      void recordUsage({
+        provider: "google",
+        model: EMBED_MODEL_ID,
+        surface: "rag-embed",
+        inputTokens: usage?.tokens ?? 0,
+        totalTokens: usage?.tokens ?? 0,
       });
       return embeddings;
     },

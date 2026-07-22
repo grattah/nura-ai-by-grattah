@@ -3,6 +3,7 @@ import { generateObject } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { recordUsage, usageTokens } from "@/lib/usage-server";
 
 export const maxDuration = 30;
 
@@ -79,7 +80,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { object } = await generateObject({
+    const { object, usage } = await generateObject({
       model: anthropic("claude-haiku-4-5"),
       schema: SuggestionsSchema,
       maxOutputTokens: 256,
@@ -98,6 +99,14 @@ Rules:
 - No numbering, bullets, explanations, punctuation, or descriptions.
 `,
       prompt: `The user searched for: "${query.trim()}"`,
+    });
+
+    void recordUsage({
+      provider: "anthropic",
+      model: "claude-haiku-4-5",
+      surface: "suggestions",
+      billed: false,
+      ...usageTokens(usage),
     });
 
     suggestionsCache.set(normalizedQuery, {
