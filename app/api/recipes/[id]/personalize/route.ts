@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedUser, createServiceRoleClient } from "@/lib/supabase/server";
 import { hasActiveSubscription } from "@/lib/subscription";
-import { meter } from "@/lib/credits-server";
 import {
   computeMultipliers,
   describeModifiers,
 } from "@/lib/health-profile/nutrition-modifiers";
 import {
-  classifyForPersonalization,
-  computePersonalizedFinal,
-} from "@/lib/scoring/personalize";
+  computeNutritionFinal,
+  type NutritionPoints,
+} from "@/lib/scoring/nutrition";
 import {
   detectInteractionIngredients,
   type InteractionIngredient,
@@ -24,7 +23,9 @@ export const maxDuration = 60;
  * Generates (or returns) the current user's Personalized Nutrition Score + safety
  * alerts for a recipe. Triggered by the detail page on first view for a
  * subscriber with a health profile. Cached per (user, recipe); regenerated only
- * when the health profile is newer than the cached score. Metered to the user.
+ * when the health profile is newer than the cached score. Fully deterministic —
+ * the personalized score re-weights the recipe's STORED base per-factor points,
+ * so it's always ≤ base and = base when no modifier applies (no LLM here).
  */
 export async function POST(
   _req: NextRequest,
@@ -45,7 +46,7 @@ export async function POST(
   const { data: recipeRaw } = await admin
     .from("recipes")
     .select(
-      "id, title, ingredients, nutrition, track, preparation, final_score, ingredient_score, interaction_ingredients",
+      "id, title, ingredients, track, final_score, ingredient_score, interaction_ingredients, nutrition_positive_total, nutrition_added_sugar_points, nutrition_sat_fat_points, nutrition_sodium_points, nutrition_fiber_points, nutrition_protein_points",
     )
     .eq("id", id)
     .maybeSingle();
@@ -53,19 +54,24 @@ export async function POST(
     id: string;
     title: string;
     ingredients: unknown;
-    nutrition: unknown;
     track: "Beverage" | "Solid Food" | null;
-    preparation: "Juiced" | "Blended" | "N/A" | null;
     final_score: number | null;
     ingredient_score: number | null;
     interaction_ingredients: InteractionIngredient[] | null;
+    nutrition_positive_total: number | null;
+    nutrition_added_sugar_points: number | null;
+    nutrition_sat_fat_points: number | null;
+    nutrition_sodium_points: number | null;
+    nutrition_fiber_points: number | null;
+    nutrition_protein_points: number | null;
   } | null;
 
   if (!recipe) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  // Base nutrition score must exist first (the lazy base-scoring trigger runs it).
-  if (recipe.final_score == null) {
+  // Base score + its per-factor points must exist first (the lazy base-scoring
+  // trigger computes/backfills them).
+  if (recipe.final_score == null || recipe.nutrition_positive_total == null) {
     return NextResponse.json({ notReady: true });
   }
 
@@ -111,25 +117,25 @@ export async function POST(
   }
 
   try {
-    const classified = await classifyForPersonalization({
-      title: recipe.title,
-      ingredients: recipe.ingredients,
-      nutrition: recipe.nutrition,
-      track: recipe.track,
-      preparation: recipe.preparation,
-    });
+    // Re-weight the recipe's STORED base per-factor points (never a fresh
+    // classification), so personalized ≤ base and = base when no modifier.
+    const points: NutritionPoints = {
+      positiveTotal: recipe.nutrition_positive_total ?? 0,
+      addedSugarPoints: recipe.nutrition_added_sugar_points ?? 0,
+      saturatedFatPoints: recipe.nutrition_sat_fat_points ?? 0,
+      sodiumPoints: recipe.nutrition_sodium_points ?? 0,
+      fiberPoints: recipe.nutrition_fiber_points ?? 0,
+      proteinPoints: recipe.nutrition_protein_points ?? 0,
+      track: recipe.track ?? "Solid Food",
+      ingredientScore: recipe.ingredient_score ?? 0,
+    };
 
     const multipliers = computeMultipliers(
       profile.conditions ?? [],
       profile.goals ?? [],
     );
     const applied = describeModifiers(multipliers);
-    const personalizedFinal = computePersonalizedFinal(
-      classified,
-      recipe.track,
-      recipe.ingredient_score ?? 0,
-      multipliers,
-    );
+    const personalizedFinal = computeNutritionFinal(points, multipliers);
 
     // Medication interactions — deterministic (ingredient buckets ∩ drug buckets).
     // Detect + cache the recipe's interaction ingredients once (user-independent).
@@ -189,8 +195,6 @@ export async function POST(
         { onConflict: "user_id,recipe_id" },
       );
     if (upErr) throw upErr;
-
-    await meter(user.id, classified.totalTokens, "recipe-personalize");
 
     return NextResponse.json({ personalized: true });
   } catch (err) {
