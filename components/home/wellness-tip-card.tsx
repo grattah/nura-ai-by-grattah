@@ -1,45 +1,20 @@
-"use client";
-
-import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 interface WellnessTipCardProps {
   title: string;
   description: string;
   imageUrl?: string;
-  /** True when the server served the fallback (today's tip wasn't ready yet). */
-  stale?: boolean;
 }
 
+// The daily-tip feature is retired: the card renders whatever the server passes
+// (an existing stored tip, or the fallback) and no longer self-heals by calling
+// /api/daily-tip. Restore the client fetch here if the feature is re-enabled.
 export function WellnessTipCard({
   title,
   description,
   imageUrl,
-  stale = false,
 }: WellnessTipCardProps) {
-  const [tip, setTip] = useState({ title, description, imageUrl });
-  const healed = useRef(false);
-
-  // Self-heal: if we got the fallback, fetch (and generate-on-miss) today's tip
-  // and swap it in. Runs once. No-op on cron-warmed days (stale=false).
-  useEffect(() => {
-    if (!stale || healed.current) return;
-    healed.current = true;
-    fetch("/api/daily-tip")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.title && data?.description) {
-          setTip({
-            title: data.title,
-            description: data.description,
-            imageUrl: data.imageUrl,
-          });
-        }
-      })
-      .catch(() => {
-        /* keep the fallback */
-      });
-  }, [stale]);
+  const tip = { title, description, imageUrl };
 
   return (
     <div className="bg-white border-grey-c100 rounded-xl flex gap-4">

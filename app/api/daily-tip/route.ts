@@ -10,6 +10,14 @@ import { recordUsage, usageTokens } from "@/lib/usage-server";
 
 export const maxDuration = 60;
 
+// Feature retired: the daily-tip cron (see vercel.json) is disabled and we no
+// longer generate new tips. This guard is defense-in-depth — even if the
+// endpoint is still hit (homepage self-heal, a manual call, or the cron being
+// re-enabled), it never spends LLM/image tokens. Any previously generated tip is
+// still served as a pure DB read. Flip this back to true (and restore the cron)
+// to re-enable.
+const DAILY_TIP_ENABLED = false;
+
 const TipSchema = z.object({
   title: z
     .string()
@@ -99,6 +107,10 @@ export async function GET(req: NextRequest) {
   // Already generated today → return it (the common path; public read).
   const existing = await readTip(admin, day);
   if (existing) return NextResponse.json(existing);
+
+  // Feature retired — never generate a new tip (no LLM/image spend). Return null
+  // rather than 500 so any residual caller degrades gracefully.
+  if (!DAILY_TIP_ENABLED) return NextResponse.json(null);
 
   // Bound the expensive generation path (audit M4). When CRON_SECRET is set,
   // only the Vercel cron (Authorization: Bearer <secret>) or an authenticated

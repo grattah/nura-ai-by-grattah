@@ -1,5 +1,6 @@
 {
-  "crons": [
+  "//": "daily-tip cron disabled (feature retired). To re-enable, rename \"crons_disabled\" back to \"crons\".",
+  "crons_disabled": [
     {
       "path": "/api/daily-tip",
       "schedule": "0 0 * * *"
