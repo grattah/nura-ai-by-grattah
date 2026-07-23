@@ -29,8 +29,16 @@ export default async function AdminDashboardPage() {
   const { pending, approved, members } = await counts();
 
   const cards = [
-    { label: "Pending recipes", value: pending, href: "/admin/recipes?status=pending" },
-    { label: "Approved recipes", value: approved, href: "/admin/recipes?status=approved" },
+    {
+      label: "Pending recipes",
+      value: pending,
+      href: "/admin/recipes?status=pending",
+    },
+    {
+      label: "Approved recipes",
+      value: approved,
+      href: "/admin/recipes?status=approved",
+    },
     { label: "Admins", value: members, href: "/admin/members" },
   ];
 
@@ -38,7 +46,7 @@ export default async function AdminDashboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
-        <p className="text-sm text-muted-foreground break-words">
+        <p className="text-sm text-muted-foreground wrap-break-word">
           Welcome back{identity?.email ? `, ${identity.email}` : ""}.
         </p>
       </div>
