@@ -216,6 +216,13 @@ do not fabricate false precision.`,
       recipeUsage?.totalTokens ??
         (recipeUsage?.inputTokens ?? 0) + (recipeUsage?.outputTokens ?? 0),
       cleanName,
+      {
+        provider: "anthropic",
+        model: "claude-haiku-4-5",
+        surface: "recipe-generate",
+        inputTokens: recipeUsage?.inputTokens,
+        outputTokens: recipeUsage?.outputTokens,
+      },
     );
   }
 

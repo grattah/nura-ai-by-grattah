@@ -11,9 +11,11 @@ export default async function AdminPanelLayout({
   if (!identity) redirect("/admin/login");
 
   return (
-    <div className="min-h-dvh bg-background md:flex">
+    <div className="h-dvh bg-background relative">
       <AdminNav email={identity.email} role={identity.role} />
-      <main className="flex-1 min-w-0 p-4 md:p-6">{children}</main>
+      <main className="min-w-0 p-4 md:p-6 md:ml-60 relative min-h-dvh">
+        {children}
+      </main>
     </div>
   );
 }

@@ -19,14 +19,6 @@ import { detectAllergens } from "@/lib/interactions/allergens";
 
 export const maxDuration = 60;
 
-/**
- * Generates (or returns) the current user's Personalized Nutrition Score + safety
- * alerts for a recipe. Triggered by the detail page on first view for a
- * subscriber with a health profile. Cached per (user, recipe); regenerated only
- * when the health profile is newer than the cached score. Fully deterministic —
- * the personalized score re-weights the recipe's STORED base per-factor points,
- * so it's always ≤ base and = base when no modifier applies (no LLM here).
- */
 export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -42,7 +34,6 @@ export async function POST(
 
   const admin = createServiceRoleClient();
 
-  // Recipe base data (bioactivity not needed for the nutrition personalization).
   const { data: recipeRaw } = await admin
     .from("recipes")
     .select(
@@ -76,12 +67,17 @@ export async function POST(
   }
 
   if (!(await hasActiveSubscription(admin, user.id))) {
-    return NextResponse.json({ error: "Subscription required" }, { status: 403 });
+    return NextResponse.json(
+      { error: "Subscription required" },
+      { status: 403 },
+    );
   }
 
   const { data: profileRaw } = await admin
     .from("health_profiles")
-    .select("updated_at, conditions, goals, allergies, allergies_other, medications")
+    .select(
+      "updated_at, conditions, goals, allergies, allergies_other, medications",
+    )
     .eq("user_id", user.id)
     .maybeSingle();
   const profile = profileRaw as unknown as {
@@ -117,8 +113,6 @@ export async function POST(
   }
 
   try {
-    // Re-weight the recipe's STORED base per-factor points (never a fresh
-    // classification), so personalized ≤ base and = base when no modifier.
     const points: NutritionPoints = {
       positiveTotal: recipe.nutrition_positive_total ?? 0,
       addedSugarPoints: recipe.nutrition_added_sugar_points ?? 0,
@@ -137,11 +131,12 @@ export async function POST(
     const applied = describeModifiers(multipliers);
     const personalizedFinal = computeNutritionFinal(points, multipliers);
 
-    // Medication interactions — deterministic (ingredient buckets ∩ drug buckets).
-    // Detect + cache the recipe's interaction ingredients once (user-independent).
     let interaction = recipe.interaction_ingredients ?? [];
     if (!interaction.length) {
-      interaction = await detectInteractionIngredients(admin, recipe.ingredients);
+      interaction = await detectInteractionIngredients(
+        admin,
+        recipe.ingredients,
+      );
       await admin
         .from("recipes")
         .update({ interaction_ingredients: interaction } as never)
@@ -199,6 +194,9 @@ export async function POST(
     return NextResponse.json({ personalized: true });
   } catch (err) {
     console.error("[recipes/personalize]", err);
-    return NextResponse.json({ error: "Failed to personalize" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to personalize" },
+      { status: 500 },
+    );
   }
 }

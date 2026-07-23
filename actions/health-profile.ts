@@ -43,7 +43,6 @@ function rowToDraft(row: HealthProfileRow): HealthProfileDraft {
     allergies: row.allergies ?? [],
     allergiesOther: row.allergies_other ?? "",
     medications: row.medications ?? [],
-    dietaryPattern: row.dietary_pattern,
     consent: !!row.consent_given_at,
   };
 }
@@ -98,7 +97,8 @@ export async function saveHealthProfile(
     biological_sex: draft.basic.biologicalSex,
     pregnancy_status: draft.basic.pregnancyStatus,
     goals: draft.goals,
-    dietary_pattern: draft.dietaryPattern,
+    // Dietary-pattern step is disabled for now — always clear the column.
+    dietary_pattern: null,
     conditions: draft.conditions,
     conditions_other: draft.conditionsOther.trim() || null,
     allergies: draft.allergies,
@@ -136,9 +136,7 @@ export async function deleteHealthProfileSection(
         ? { conditions: [], conditions_other: null }
         : section === "allergies"
           ? { allergies: [], allergies_other: null }
-          : section === "medications"
-            ? { medications: [] }
-            : { dietary_pattern: null };
+          : { medications: [] };
 
   const { error } = await supabase
     .from("health_profiles" as never)

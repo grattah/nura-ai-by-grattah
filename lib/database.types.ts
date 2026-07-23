@@ -7,10 +7,30 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.4"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -1101,6 +1121,57 @@ export type Database = {
         }
         Relationships: []
       }
+      token_usage: {
+        Row: {
+          billed: boolean
+          created_at: string
+          id: number
+          images: number
+          input_tokens: number
+          meta: Json | null
+          model: string
+          output_tokens: number
+          provider: string
+          source: string
+          surface: string
+          total_tokens: number
+          units: number | null
+          user_id: string | null
+        }
+        Insert: {
+          billed?: boolean
+          created_at?: string
+          id?: never
+          images?: number
+          input_tokens?: number
+          meta?: Json | null
+          model: string
+          output_tokens?: number
+          provider: string
+          source?: string
+          surface: string
+          total_tokens?: number
+          units?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          billed?: boolean
+          created_at?: string
+          id?: never
+          images?: number
+          input_tokens?: number
+          meta?: Json | null
+          model?: string
+          output_tokens?: number
+          provider?: string
+          source?: string
+          surface?: string
+          total_tokens?: number
+          units?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1168,6 +1239,48 @@ export type Database = {
       token_state_json: {
         Args: { r: Database["public"]["Tables"]["credits"]["Row"] }
         Returns: Json
+      }
+      token_usage_by_model: {
+        Args: { p_since: string }
+        Returns: {
+          calls: number
+          images: number
+          input_tokens: number
+          model: string
+          output_tokens: number
+          provider: string
+          total_tokens: number
+        }[]
+      }
+      token_usage_by_surface: {
+        Args: { p_since: string }
+        Returns: {
+          calls: number
+          images: number
+          model: string
+          provider: string
+          surface: string
+          total_tokens: number
+        }[]
+      }
+      token_usage_daily: {
+        Args: { p_since: string }
+        Returns: {
+          calls: number
+          day: string
+          images: number
+          total_tokens: number
+        }[]
+      }
+      token_usage_summary: { Args: { p_since: string }; Returns: Json }
+      token_usage_top_users: {
+        Args: { p_limit: number; p_since: string }
+        Returns: {
+          calls: number
+          images: number
+          total_tokens: number
+          user_id: string
+        }[]
       }
       top_searched_concerns: {
         Args: { result_limit?: number }
@@ -1313,7 +1426,11 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
 } as const
+

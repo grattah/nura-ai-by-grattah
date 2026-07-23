@@ -143,7 +143,12 @@ Provide personalized wellness guidance for this concern.`,
       const tokens =
         usage?.totalTokens ??
         (usage?.inputTokens ?? 0) + (usage?.outputTokens ?? 0);
-      await meter(userId, tokens, "personalized-search");
+      await meter(userId, tokens, "personalized-search", {
+        provider: "anthropic",
+        model: "claude-haiku-4-5",
+        inputTokens: usage?.inputTokens,
+        outputTokens: usage?.outputTokens,
+      });
     }
 
     return { status: "ok", result: object };
