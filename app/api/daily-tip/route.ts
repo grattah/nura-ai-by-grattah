@@ -10,12 +10,14 @@ import { recordUsage, usageTokens } from "@/lib/usage-server";
 
 export const maxDuration = 60;
 
-// Feature retired: the daily-tip cron (see vercel.json) is disabled and we no
-// longer generate new tips. This guard is defense-in-depth — even if the
-// endpoint is still hit (homepage self-heal, a manual call, or the cron being
-// re-enabled), it never spends LLM/image tokens. Any previously generated tip is
-// still served as a pure DB read. Flip this back to true (and restore the cron)
-// to re-enable.
+// Feature retired: the daily-tip cron is disabled (vercel.json has an empty
+// "crons": []) and we no longer generate new tips. This guard is defense-in-depth
+// — even if the endpoint is still hit (homepage self-heal, a manual call, or the
+// cron being re-enabled), it never spends LLM/image tokens. Any previously
+// generated tip is still served as a pure DB read.
+//
+// To re-enable: set this to true AND restore the cron in vercel.json:
+//   "crons": [{ "path": "/api/daily-tip", "schedule": "0 0 * * *" }]
 const DAILY_TIP_ENABLED = false;
 
 const TipSchema = z.object({
