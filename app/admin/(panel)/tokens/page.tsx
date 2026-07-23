@@ -77,15 +77,67 @@ const fmt = (n: number) => n.toLocaleString();
 const fmtUsd = (n: number) =>
   n >= 1 ? `$${n.toFixed(2)}` : `$${n.toFixed(3)}`;
 
+// Preserve the range + both tables' page indices across pagination links.
+function tokensHref(range: string, usersPage: number, eventsPage: number) {
+  const sp = new URLSearchParams({ range });
+  if (usersPage > 1) sp.set("up", String(usersPage));
+  if (eventsPage > 1) sp.set("ep", String(eventsPage));
+  return `/admin/tokens?${sp.toString()}`;
+}
+
+function Pager({
+  page,
+  hasNext,
+  hrefFor,
+}: {
+  page: number;
+  hasNext: boolean;
+  hrefFor: (page: number) => string;
+}) {
+  if (page === 1 && !hasNext) return null;
+  const btn =
+    "rounded-md border border-border px-2.5 py-1 transition-colors hover:bg-muted";
+  const disabled = "rounded-md border border-border px-2.5 py-1 opacity-40";
+  return (
+    <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+      <span>Page {page}</span>
+      <div className="flex gap-1">
+        {page > 1 ? (
+          <Link href={hrefFor(page - 1)} className={btn} scroll={false}>
+            Prev
+          </Link>
+        ) : (
+          <span className={disabled}>Prev</span>
+        )}
+        {hasNext ? (
+          <Link href={hrefFor(page + 1)} className={btn} scroll={false}>
+            Next
+          </Link>
+        ) : (
+          <span className={disabled}>Next</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const PAGE_SIZE = 15;
+
 export default async function TokensPage({
   searchParams,
 }: {
-  searchParams: Promise<{ range?: string }>;
+  searchParams: Promise<{ range?: string; up?: string; ep?: string }>;
 }) {
-  const { range } = await searchParams;
+  const { range, up, ep } = await searchParams;
   const days = range === "7" ? 7 : range === "90" ? 90 : 30;
   const activeRange = String(days);
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+
+  // 1-based page indices for the two tables (independent, range preserved).
+  const usersPage = Math.max(1, Number(up) || 1);
+  const eventsPage = Math.max(1, Number(ep) || 1);
+  const usersOffset = (usersPage - 1) * PAGE_SIZE;
+  const eventsOffset = (eventsPage - 1) * PAGE_SIZE;
 
   const admin = createServiceRoleClient();
   const p = { p_since: since } as never;
@@ -102,11 +154,13 @@ export default async function TokensPage({
     admin.rpc("token_usage_by_surface" as never, p),
     admin.rpc("token_usage_by_model" as never, p),
     admin.rpc("token_usage_daily" as never, p),
+    // Fetch through the current page plus one extra row so we can tell whether
+    // a "Next" page exists without a separate count query.
     admin.rpc(
       "token_usage_top_users" as never,
       {
         p_since: since,
-        p_limit: 10,
+        p_limit: usersPage * PAGE_SIZE + 1,
       } as never,
     ),
     admin
@@ -116,7 +170,7 @@ export default async function TokensPage({
       )
       .gte("created_at" as never, since as never)
       .order("created_at" as never, { ascending: false })
-      .limit(25),
+      .range(eventsOffset, eventsOffset + PAGE_SIZE),
   ]);
 
   const summary = (summaryData as Summary | null) ?? {
@@ -133,8 +187,14 @@ export default async function TokensPage({
   const surfaceRows = (surfaceData as SurfaceRow[] | null) ?? [];
   const modelRows = (modelData as ModelRow[] | null) ?? [];
   const dailyRows = (dailyData as DailyRow[] | null) ?? [];
-  const topUsers = (topUserData as TopUserRow[] | null) ?? [];
-  const recent = (recentData as RecentRow[] | null) ?? [];
+  // Paginate: the queries fetched one extra row past the page to detect "Next".
+  const topUsersAll = (topUserData as TopUserRow[] | null) ?? [];
+  const usersHasNext = topUsersAll.length > usersPage * PAGE_SIZE;
+  const topUsers = topUsersAll.slice(usersOffset, usersOffset + PAGE_SIZE);
+
+  const recentAll = (recentData as RecentRow[] | null) ?? [];
+  const eventsHasNext = recentAll.length > PAGE_SIZE;
+  const recent = recentAll.slice(0, PAGE_SIZE);
 
   // ── Cost estimation ───────────────────────────────────────────────────────
   const byModel: ModelPoint[] = modelRows.map((r) => ({
@@ -286,6 +346,11 @@ export default async function TokensPage({
               </table>
             </div>
           )}
+          <Pager
+            page={usersPage}
+            hasNext={usersHasNext}
+            hrefFor={(pg) => tokensHref(activeRange, pg, eventsPage)}
+          />
         </div>
 
         {/* Recent events */}
@@ -339,6 +404,11 @@ export default async function TokensPage({
               </table>
             </div>
           )}
+          <Pager
+            page={eventsPage}
+            hasNext={eventsHasNext}
+            hrefFor={(pg) => tokensHref(activeRange, usersPage, pg)}
+          />
         </div>
       </div>
     </div>
