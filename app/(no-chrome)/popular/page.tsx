@@ -56,16 +56,18 @@ const page = async () => {
                         backgroundColor: getCategoryConfig(catSlug!).bgColor,
                         color: getCategoryConfig(catSlug!).textColor,
                       }}
-                      className="text-xs w-fit text-grey-c500 uppercase tracking-wide mb-0.5 rounded-2xl py-1 px-2 flex items-center gap-1 josefin-sans"
+                      className="w-fit mb-0.5 rounded-2xl py-1 px-2 flex items-center gap-1 josefin-sans"
                     >
                       <span
                         style={{
                           backgroundColor: getCategoryConfig(catSlug!)
                             .textColor,
                         }}
-                        className="rounded-full size-1.25 font-semibold"
+                        className="rounded-full size-1.25"
                       />
-                      {firstTag}
+                      <span className="text-xs font-semibold uppercase tracking-wide">
+                        {firstTag}
+                      </span>
                     </div>
                   )}
                   <Link

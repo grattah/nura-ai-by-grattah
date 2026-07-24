@@ -54,7 +54,7 @@ export function RecipePersonalizeTrigger({
   return (
     <div className="rounded-3xl bg-white p-4 flex items-center gap-3">
       <div className="size-5 rounded-full border-2 border-mint-green border-t-transparent animate-spin shrink-0" />
-      <p className="text-sm text-subtle">Personalizing your nutrition score…</p>
+      <p className="text-sm text-subtle">Getting your match score…</p>
     </div>
   );
 }

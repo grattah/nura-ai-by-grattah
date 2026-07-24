@@ -1,6 +1,5 @@
 import Link from "next/link";
 import Image from "next/image";
-import { unstable_cache } from "next/cache";
 import {
   createServiceRoleClient,
   getCachedUser,
@@ -41,23 +40,20 @@ function topCategory(
   return top?.categories ?? null;
 }
 
-// Static wellness tip — swap for a DB-driven fetch when ready
-const getPopularRecipes = unstable_cache(
-  async () => {
-    const supabase = createServiceRoleClient();
-    return supabase
-      .from("recipes")
-      .select("id, title, image_url, recipe_categories(score, qualified, categories(name, slug))")
-      .eq("status" as never, "approved" as never)
-      .or("shares.gt.0, saves.gt.0, comments.gt.0, likes.gt.0")
-      .order("weighted_score", { ascending: false })
-      .order("last_engaged_at", { ascending: false, nullsFirst: false })
-      .order("id", { ascending: false })
-      .limit(30);
-  },
-  ["home-popular-recipes"],
-  { revalidate: 300 },
-);
+// Fetched fresh per request — no cross-request cache, so new/re-scored recipes
+// surface immediately.
+async function getPopularRecipes() {
+  const supabase = createServiceRoleClient();
+  return supabase
+    .from("recipes")
+    .select("id, title, image_url, recipe_categories(score, qualified, categories(name, slug))")
+    .eq("status" as never, "approved" as never)
+    .or("shares.gt.0, saves.gt.0, comments.gt.0, likes.gt.0")
+    .order("weighted_score", { ascending: false })
+    .order("last_engaged_at", { ascending: false, nullsFirst: false })
+    .order("id", { ascending: false })
+    .limit(30);
+}
 
 export default async function HomePage() {
   const supabase = await createClient();

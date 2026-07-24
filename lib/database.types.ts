@@ -7,30 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -544,6 +524,96 @@ export type Database = {
         }
         Relationships: []
       }
+      ingredients: {
+        Row: {
+          aliases: string[]
+          basis: string
+          calcium_dv: number | null
+          calorie_density: number | null
+          carbs_g: number | null
+          created_at: string
+          energy_kcal: number | null
+          fdc_id: number | null
+          fiber_g: number | null
+          food_group: string | null
+          id: string
+          iron_mg: number | null
+          iron_rich: boolean
+          is_added_sweetener: boolean
+          is_fvl: boolean
+          name: string
+          needs_review: boolean
+          nova_group: number | null
+          protein_g: number | null
+          sat_fat_g: number | null
+          sodium_mg: number | null
+          total_fat_g: number | null
+          total_sugar_g: number | null
+          updated_at: string
+          verified_at: string | null
+          vitamin_c_dv: number | null
+          water_pct: number | null
+        }
+        Insert: {
+          aliases?: string[]
+          basis?: string
+          calcium_dv?: number | null
+          calorie_density?: number | null
+          carbs_g?: number | null
+          created_at?: string
+          energy_kcal?: number | null
+          fdc_id?: number | null
+          fiber_g?: number | null
+          food_group?: string | null
+          id?: string
+          iron_mg?: number | null
+          iron_rich?: boolean
+          is_added_sweetener?: boolean
+          is_fvl?: boolean
+          name: string
+          needs_review?: boolean
+          nova_group?: number | null
+          protein_g?: number | null
+          sat_fat_g?: number | null
+          sodium_mg?: number | null
+          total_fat_g?: number | null
+          total_sugar_g?: number | null
+          updated_at?: string
+          verified_at?: string | null
+          vitamin_c_dv?: number | null
+          water_pct?: number | null
+        }
+        Update: {
+          aliases?: string[]
+          basis?: string
+          calcium_dv?: number | null
+          calorie_density?: number | null
+          carbs_g?: number | null
+          created_at?: string
+          energy_kcal?: number | null
+          fdc_id?: number | null
+          fiber_g?: number | null
+          food_group?: string | null
+          id?: string
+          iron_mg?: number | null
+          iron_rich?: boolean
+          is_added_sweetener?: boolean
+          is_fvl?: boolean
+          name?: string
+          needs_review?: boolean
+          nova_group?: number | null
+          protein_g?: number | null
+          sat_fat_g?: number | null
+          sodium_mg?: number | null
+          total_fat_g?: number | null
+          total_sugar_g?: number | null
+          updated_at?: string
+          verified_at?: string | null
+          vitamin_c_dv?: number | null
+          water_pct?: number | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string
@@ -712,6 +782,60 @@ export type Database = {
           },
         ]
       }
+      recipe_ingredients: {
+        Row: {
+          created_at: string
+          grams: number | null
+          id: string
+          ingredient_id: string | null
+          needs_review: boolean
+          position: number
+          quantity: number | null
+          raw_label: string
+          recipe_id: string
+          unit: string | null
+        }
+        Insert: {
+          created_at?: string
+          grams?: number | null
+          id?: string
+          ingredient_id?: string | null
+          needs_review?: boolean
+          position?: number
+          quantity?: number | null
+          raw_label: string
+          recipe_id: string
+          unit?: string | null
+        }
+        Update: {
+          created_at?: string
+          grams?: number | null
+          id?: string
+          ingredient_id?: string | null
+          needs_review?: boolean
+          position?: number
+          quantity?: number | null
+          raw_label?: string
+          recipe_id?: string
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_ingredients_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_ingredients_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recipe_likes: {
         Row: {
           created_at: string | null
@@ -753,7 +877,10 @@ export type Database = {
           adjusted: boolean
           applied_modifiers: Json
           base_final_score: number | null
+          base_final_score_10: number | null
           created_at: string
+          match_breakdown: Json | null
+          match_score: number | null
           personalized_final_score: number | null
           profile_updated_at: string
           recipe_id: string
@@ -765,7 +892,10 @@ export type Database = {
           adjusted?: boolean
           applied_modifiers?: Json
           base_final_score?: number | null
+          base_final_score_10?: number | null
           created_at?: string
+          match_breakdown?: Json | null
+          match_score?: number | null
           personalized_final_score?: number | null
           profile_updated_at: string
           recipe_id: string
@@ -777,7 +907,10 @@ export type Database = {
           adjusted?: boolean
           applied_modifiers?: Json
           base_final_score?: number | null
+          base_final_score_10?: number | null
           created_at?: string
+          match_breakdown?: Json | null
+          match_score?: number | null
           personalized_final_score?: number | null
           profile_updated_at?: string
           recipe_id?: string
@@ -830,22 +963,29 @@ export type Database = {
       }
       recipes: {
         Row: {
+          bns_grade: string | null
           category_overrides: Json | null
           comments: number
           created_at: string
           created_by: string | null
           display_order: number
           drink_type: string
+          energy_points: number | null
+          fiber_points: number | null
           final_score: number | null
+          final_score_10: number | null
           follow_up_questions: string[] | null
+          fvl_points: number | null
           generated_from: string | null
           how_to_make: Json
           id: string
           image_url: string | null
           ingredient_score: number | null
+          ingredient_score_10: number | null
           ingredients: Json
           inside_tip: string
           interaction_ingredients: Json
+          iron_rich: boolean
           is_todays_recipe: boolean
           last_engaged_at: string | null
           likes: number | null
@@ -857,39 +997,55 @@ export type Database = {
           nutrition_rating: string | null
           nutrition_sat_fat_points: number | null
           nutrition_score: number | null
+          nutrition_score_10: number | null
+          nutrition_scoring: Json | null
           nutrition_sodium_points: number | null
           preparation: string | null
           preview_ingredients: string[]
+          protein_points: number | null
           recipe_section_title: string
+          salt_points: number | null
+          sat_fat_points: number | null
           saves: number
+          servings: number | null
           shares: number
           short_description: string
           source_url: string
           status: string
+          sugar_points: number | null
+          sweetener_penalty: boolean
           title: string
           track: string | null
           track_reason: string | null
           updated_at: string
+          water_content_pct: number | null
           weighted_score: number
           why_it_works: string
         }
         Insert: {
+          bns_grade?: string | null
           category_overrides?: Json | null
           comments?: number
           created_at?: string
           created_by?: string | null
           display_order?: number
           drink_type?: string
+          energy_points?: number | null
+          fiber_points?: number | null
           final_score?: number | null
+          final_score_10?: number | null
           follow_up_questions?: string[] | null
+          fvl_points?: number | null
           generated_from?: string | null
           how_to_make?: Json
           id?: string
           image_url?: string | null
           ingredient_score?: number | null
+          ingredient_score_10?: number | null
           ingredients?: Json
           inside_tip: string
           interaction_ingredients?: Json
+          iron_rich?: boolean
           is_todays_recipe?: boolean
           last_engaged_at?: string | null
           likes?: number | null
@@ -901,39 +1057,55 @@ export type Database = {
           nutrition_rating?: string | null
           nutrition_sat_fat_points?: number | null
           nutrition_score?: number | null
+          nutrition_score_10?: number | null
+          nutrition_scoring?: Json | null
           nutrition_sodium_points?: number | null
           preparation?: string | null
           preview_ingredients?: string[]
+          protein_points?: number | null
           recipe_section_title: string
+          salt_points?: number | null
+          sat_fat_points?: number | null
           saves?: number
+          servings?: number | null
           shares?: number
           short_description: string
           source_url?: string
           status?: string
+          sugar_points?: number | null
+          sweetener_penalty?: boolean
           title: string
           track?: string | null
           track_reason?: string | null
           updated_at?: string
+          water_content_pct?: number | null
           weighted_score?: number
           why_it_works: string
         }
         Update: {
+          bns_grade?: string | null
           category_overrides?: Json | null
           comments?: number
           created_at?: string
           created_by?: string | null
           display_order?: number
           drink_type?: string
+          energy_points?: number | null
+          fiber_points?: number | null
           final_score?: number | null
+          final_score_10?: number | null
           follow_up_questions?: string[] | null
+          fvl_points?: number | null
           generated_from?: string | null
           how_to_make?: Json
           id?: string
           image_url?: string | null
           ingredient_score?: number | null
+          ingredient_score_10?: number | null
           ingredients?: Json
           inside_tip?: string
           interaction_ingredients?: Json
+          iron_rich?: boolean
           is_todays_recipe?: boolean
           last_engaged_at?: string | null
           likes?: number | null
@@ -945,19 +1117,28 @@ export type Database = {
           nutrition_rating?: string | null
           nutrition_sat_fat_points?: number | null
           nutrition_score?: number | null
+          nutrition_score_10?: number | null
+          nutrition_scoring?: Json | null
           nutrition_sodium_points?: number | null
           preparation?: string | null
           preview_ingredients?: string[]
+          protein_points?: number | null
           recipe_section_title?: string
+          salt_points?: number | null
+          sat_fat_points?: number | null
           saves?: number
+          servings?: number | null
           shares?: number
           short_description?: string
           source_url?: string
           status?: string
+          sugar_points?: number | null
+          sweetener_penalty?: boolean
           title?: string
           track?: string | null
           track_reason?: string | null
           updated_at?: string
+          water_content_pct?: number | null
           weighted_score?: number
           why_it_works?: string
         }
@@ -1426,11 +1607,7 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },
 } as const
-

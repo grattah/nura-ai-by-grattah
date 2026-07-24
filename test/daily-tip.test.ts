@@ -78,23 +78,15 @@ describe("daily-tip route", () => {
     expect(h.upsert).not.toHaveBeenCalled();
   });
 
-  it("generates + upserts when missing", async () => {
+  // Feature retired: the daily-tip cron + generation are disabled
+  // (DAILY_TIP_ENABLED = false). The route still serves any existing tip (above)
+  // but never generates a new one — it returns null instead of spending tokens.
+  it("does NOT generate when missing (feature disabled) — returns null", async () => {
     const res = await get();
     const body = await res.json();
-    expect(h.genObj).toHaveBeenCalledTimes(1);
-    expect(h.upsert).toHaveBeenCalledTimes(1);
-    expect(body.title).toBe("Move more often");
-    expect(body.imageUrl).toBe("https://cdn.test/daily-tips/x.webp");
-  });
-
-  it("returns a text-only tip when image generation fails", async () => {
-    h.genText.mockRejectedValueOnce(new Error("image down"));
-    const res = await get();
-    const body = await res.json();
-    expect(res.status).toBe(200);
-    expect(body.title).toBe("Move more often");
-    expect(body.imageUrl).toBeUndefined();
-    const upsertRow = h.upsert.mock.calls[0][0] as { image_url: string | null };
-    expect(upsertRow.image_url).toBeNull();
+    expect(body).toBeNull();
+    expect(h.genObj).not.toHaveBeenCalled();
+    expect(h.genText).not.toHaveBeenCalled();
+    expect(h.upsert).not.toHaveBeenCalled();
   });
 });

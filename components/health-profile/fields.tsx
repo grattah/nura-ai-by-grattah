@@ -192,10 +192,8 @@ export function GoalGrid({
             key={g.key}
             type="button"
             onClick={() => onToggle(g.key)}
-            className={`relative pt-4 px-3 pb-8 bg-card rounded-2xl border flex flex-col items-center justify-center gap-2 transition-colors ${
-              active
-                ? "border-mint-green"
-                : "border-[#EAECE9]"
+            className={`relative pt-4 px-3 h-30 pb-8 bg-card rounded-2xl border flex flex-col items-center gap-2 transition-colors ${
+              active ? "border-mint-green" : "border-[#EAECE9]"
             }`}
           >
             <span
@@ -210,10 +208,10 @@ export function GoalGrid({
                 <Check className="size-2.5 text-white" strokeWidth={3} />
               )}
             </span>
-            <div className="w-[40px] h-[40px] rounded-full flex items-center justify-center bg-[#F1F7F3]">
+            <div className="size-10 shrink-0 rounded-full flex items-center justify-center bg-[#F1F7F3]">
               <g.icon className={`size-6 text-mint-green`} strokeWidth={1.5} />
             </div>
-            <span className="text-xs font-semibold text-base-text text-center px-1">
+            <span className="text-xs font-medium text-base-text text-center px-1">
               {index + 1}. {g.label}
             </span>
           </button>
