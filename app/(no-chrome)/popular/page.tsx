@@ -63,14 +63,14 @@ const page = async () => {
                           backgroundColor: getCategoryConfig(catSlug!)
                             .textColor,
                         }}
-                        className="rounded-full size-1.25"
+                        className="rounded-full size-1.25 font-semibold"
                       />
                       {firstTag}
                     </div>
                   )}
                   <Link
                     href={`/recipes/${recipe.id}`}
-                    className="text-[#111312] font-medium text-base josefin-sans line-clamp-1"
+                    className="font-medium text-sm text-subtle line-clamp-1"
                   >
                     {truncateText(recipe.title, 3)}
                   </Link>
