@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { cache } from "react";
-import { unstable_cache } from "next/cache";
 import { notFound } from "next/navigation";
 
 import { FollowUpSection } from "@/components/follow-up-section";
@@ -20,6 +19,7 @@ import SafetyAlerts, {
   type SafetyAlertItem,
 } from "@/components/recipe/SafetyAlerts";
 import NutritionScore from "@/components/recipe/NutritionScore";
+import { computeMatchScore } from "@/lib/scoring/match-score";
 import { hasActiveSubscription } from "@/lib/subscription";
 import Comment from "@/components/recipe/Comment";
 import AccordionSection from "@/components/recipe/AccordionSection";
@@ -70,36 +70,23 @@ function topBioactivities(
     .slice(0, count);
 }
 
-const getCachedApprovedRecipe = (id: string) =>
-  unstable_cache(
-    async () => {
-      const admin = createServiceRoleClient();
-      const { data } = await admin
-        .from("recipes")
-        .select(RECIPE_SELECT)
-        .eq("id", id)
-        .eq("status" as never, "approved" as never)
-        .maybeSingle();
-      return data ? (data as unknown as RecipeRecord) : null;
-    },
-    ["recipe-detail", id],
-    { revalidate: 300, tags: [`recipe-${id}`] },
-  )();
-
-// React cache deduplicates within a request — generateMetadata and the page
-// both call getRecipe(id) but it resolves once per request.
 const getRecipe = cache(async (id: string): Promise<RecipeRecord | null> => {
-  const cached = await getCachedApprovedRecipe(id);
-  if (cached) return cached;
+  const admin = createServiceRoleClient();
+  const { data: approved } = await admin
+    .from("recipes")
+    .select(RECIPE_SELECT)
+    .eq("id", id)
+    .eq("status" as never, "approved" as never)
+    .maybeSingle();
+  if (approved) return approved as unknown as RecipeRecord;
 
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("recipes")
     .select(RECIPE_SELECT)
     .eq("id", id)
     .single();
-  if (error || !data) return null;
-  return data as unknown as RecipeRecord;
+  return (data as unknown as RecipeRecord) ?? null;
 });
 
 export async function generateMetadata({
@@ -199,58 +186,72 @@ export default async function RecipeDetailPage({
 
   const shareDisabled = (recipe as { status?: string }).status !== "approved";
 
-  // ── Personalized nutrition score + safety alerts ──────────────────────────
-  // Shown to a subscriber who has a health profile; generated on demand (lazily)
-  // and cached per (user, recipe), regenerated only when the profile is newer.
+  // Match Score is deterministic + cheap, so it's computed inline here every
+  // render — no cache, so it can never go stale after a re-score. Only the
+  // expensive medication safety alerts (RxClass) stay cached, keyed on the
+  // profile (they don't depend on scores).
   let personalizedView = false;
   let matchScore: number | null = null;
   let personalizedAlerts: SafetyAlertItem[] = [];
-  let canPersonalize = false;
+  let needsSafetyAlerts = false;
   if (user) {
     const [isSub, profileRes, cacheRes] = await Promise.all([
       hasActiveSubscription(supabase, user.id),
       supabase
         .from("health_profiles" as never)
-        .select("updated_at")
+        .select("updated_at, conditions, goals")
         .eq("user_id", user.id)
         .maybeSingle(),
       supabase
         .from("recipe_personalized_scores" as never)
-        .select(
-          "match_score, base_final_score_10, safety_alerts, profile_updated_at",
-        )
+        .select("safety_alerts, profile_updated_at")
         .eq("user_id", user.id)
         .eq("recipe_id", recipe.id)
         .maybeSingle(),
     ]);
-    const profileUpdatedAt =
-      (profileRes.data as { updated_at?: string } | null)?.updated_at ?? null;
+    const profile = profileRes.data as {
+      updated_at?: string;
+      conditions?: string[];
+      goals?: string[];
+    } | null;
+    const profileUpdatedAt = profile?.updated_at ?? null;
     personalizedView = isSub && !!profileUpdatedAt;
-    if (personalizedView) {
+    if (personalizedView && recipe.final_score_10 != null) {
+      // Fresh match, computed from the recipe's current scores + the profile.
+      const bioBySlug: Record<string, number> = {};
+      for (const rt of recipe.recipe_tags ?? []) {
+        if (rt.tags?.slug && rt.score != null) bioBySlug[rt.tags.slug] = rt.score;
+      }
+      const match = computeMatchScore({
+        bioBySlug,
+        points: {
+          sugar: recipe.sugar_points ?? 0,
+          salt: recipe.salt_points ?? 0,
+          satFat: recipe.sat_fat_points ?? 0,
+          energy: recipe.energy_points ?? 0,
+          fiber: recipe.fiber_points ?? 0,
+          protein: recipe.protein_points ?? 0,
+        },
+        track: recipe.track ?? "Solid Food",
+        ironRich: !!recipe.iron_rich,
+        waterContentPercent: recipe.water_content_pct ?? 0,
+        conditions: profile?.conditions ?? [],
+        goals: profile?.goals ?? [],
+      });
+      matchScore = match.score;
+
+      // Safety alerts stay cached (profile-keyed); populate in the background if
+      // this (user, recipe, profile) hasn't been evaluated yet.
       const cache = cacheRes.data as {
-        match_score: number | null;
-        base_final_score_10: number | null;
         safety_alerts: SafetyAlertItem[] | null;
         profile_updated_at: string;
       } | null;
-      const baseScored = recipe.final_score_10 != null;
-      // Freshness keys on the profile only — not on final_score_10 equality,
-      // which can lag via the recipe's unstable_cache and doesn't affect the
-      // match (that would leave the "Personalizing…" spinner stuck forever).
-      const fresh =
-        !!cache &&
-        baseScored &&
-        new Date(cache.profile_updated_at) >= new Date(profileUpdatedAt!);
-      if (fresh && cache) {
-        matchScore = cache.match_score;
-        personalizedAlerts = cache.safety_alerts ?? [];
-      } else {
-        canPersonalize = baseScored;
-      }
+      const safetyFresh =
+        !!cache && new Date(cache.profile_updated_at) >= new Date(profileUpdatedAt!);
+      if (safetyFresh && cache) personalizedAlerts = cache.safety_alerts ?? [];
+      else needsSafetyAlerts = true;
     }
   }
-
-  console.log(matchScore);
   return (
     <AuthGate>
       <BookmarkProvider
@@ -316,20 +317,20 @@ export default async function RecipeDetailPage({
                 supports={topBioactivities(recipe.recipe_tags, 5)}
               />
 
-              {/* Personalized (subscriber + profile) shows base vs personalized
-                  nutrition; otherwise the base DetoxCard + "complete profile" CTA. */}
-              {personalizedView ? (
-                matchScore != null ? (
+              {/* Subscriber + profile with conditions/goals → base + match (both
+                  computed fresh). Otherwise the base DetoxCard + "complete
+                  profile" CTA. The trigger only backgrounds the safety alerts. */}
+              {personalizedView && matchScore != null ? (
+                <>
                   <NutritionScore
                     baseScore={recipe.final_score_10 ?? 0}
                     personalizedScore={Math.round(matchScore)}
                   />
-                ) : (
                   <RecipePersonalizeTrigger
                     recipeId={recipe.id}
-                    canTrigger={canPersonalize}
+                    canTrigger={needsSafetyAlerts}
                   />
-                )
+                </>
               ) : (
                 <DetoxCard
                   finalScore={

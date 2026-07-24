@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { getCachedUser, createServiceRoleClient } from "@/lib/supabase/server";
 import { getAdminIdentity } from "@/lib/admin/auth";
 import { meter } from "@/lib/credits-server";
@@ -118,8 +117,5 @@ export async function POST(
   if (!scored) {
     return NextResponse.json({ error: "Failed to score" }, { status: 500 });
   }
-  // Bust the recipe-detail cache so the new scores show without waiting out the
-  // unstable_cache window.
-  revalidatePath(`/recipes/${recipe.id}`);
   return NextResponse.json({ scored: true });
 }

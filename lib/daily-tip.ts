@@ -1,5 +1,4 @@
 import "server-only";
-import { unstable_cache } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
 export interface DailyTip {
@@ -53,22 +52,16 @@ export const FALLBACK_TIP: DailyTip = {
  * Today's stored tip (or null if not generated yet). Cached per UTC day so each
  * new day is a fresh entry and old days never carry over.
  */
-export function getDailyTip(day: string): Promise<DailyTip | null> {
-  return unstable_cache(
-    async () => {
-      const admin = createServiceRoleClient();
-      const { data } = await dailyTipsTable(admin)
-        .select("title, description, image_url")
-        .eq("day", day)
-        .maybeSingle();
-      if (!data) return null;
-      return {
-        title: data.title,
-        description: data.description,
-        imageUrl: data.image_url ?? undefined,
-      };
-    },
-    ["daily-tip", day],
-    { revalidate: 300, tags: [`daily-tip-${day}`] },
-  )();
+export async function getDailyTip(day: string): Promise<DailyTip | null> {
+  const admin = createServiceRoleClient();
+  const { data } = await dailyTipsTable(admin)
+    .select("title, description, image_url")
+    .eq("day", day)
+    .maybeSingle();
+  if (!data) return null;
+  return {
+    title: data.title,
+    description: data.description,
+    imageUrl: data.image_url ?? undefined,
+  };
 }
