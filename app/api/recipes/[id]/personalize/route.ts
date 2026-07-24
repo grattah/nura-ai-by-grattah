@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedUser, createServiceRoleClient } from "@/lib/supabase/server";
 import { hasActiveSubscription } from "@/lib/subscription";
-import {
-  computeMultipliers,
-  describeModifiers,
-} from "@/lib/health-profile/nutrition-modifiers";
-import {
-  computeNutritionFinal,
-  type NutritionPoints,
-} from "@/lib/scoring/nutrition";
+import { computeMatchScore } from "@/lib/scoring/match-score";
 import {
   detectInteractionIngredients,
   type InteractionIngredient,
@@ -19,6 +12,10 @@ import { detectAllergens } from "@/lib/interactions/allergens";
 
 export const maxDuration = 60;
 
+// Computes the deterministic Recipe Match Score (PRD) for the signed-in user +
+// this recipe, and the deterministic safety alerts (allergy / medication). This
+// replaces the old nutrient-point "personalized" re-weighting. The route path is
+// unchanged for the (separately owned) UI trigger.
 export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -34,50 +31,48 @@ export async function POST(
 
   const admin = createServiceRoleClient();
 
+  // `recipes` cast to `never` so we can select BNS-v2 columns not yet in the
+  // (prod-generated) types.
   const { data: recipeRaw } = await admin
-    .from("recipes")
+    .from("recipes" as never)
     .select(
-      "id, title, ingredients, track, final_score, ingredient_score, interaction_ingredients, nutrition_positive_total, nutrition_added_sugar_points, nutrition_sat_fat_points, nutrition_sodium_points, nutrition_fiber_points, nutrition_protein_points",
+      "id, title, ingredients, track, final_score_10, iron_rich, water_content_pct, sugar_points, salt_points, sat_fat_points, energy_points, fiber_points, protein_points, interaction_ingredients",
     )
-    .eq("id", id)
+    .eq("id" as never, id as never)
     .maybeSingle();
   const recipe = recipeRaw as unknown as {
     id: string;
     title: string;
     ingredients: unknown;
     track: "Beverage" | "Solid Food" | null;
-    final_score: number | null;
-    ingredient_score: number | null;
+    final_score_10: number | null;
+    iron_rich: boolean | null;
+    water_content_pct: number | null;
+    sugar_points: number | null;
+    salt_points: number | null;
+    sat_fat_points: number | null;
+    energy_points: number | null;
+    fiber_points: number | null;
+    protein_points: number | null;
     interaction_ingredients: InteractionIngredient[] | null;
-    nutrition_positive_total: number | null;
-    nutrition_added_sugar_points: number | null;
-    nutrition_sat_fat_points: number | null;
-    nutrition_sodium_points: number | null;
-    nutrition_fiber_points: number | null;
-    nutrition_protein_points: number | null;
   } | null;
 
   if (!recipe) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  // Base score + its per-factor points must exist first (the lazy base-scoring
-  // trigger computes/backfills them).
-  if (recipe.final_score == null || recipe.nutrition_positive_total == null) {
+  // Base Nutrition Score (with its point fields) must exist first — the lazy
+  // base-scoring trigger computes it deterministically from USDA data.
+  if (recipe.final_score_10 == null) {
     return NextResponse.json({ notReady: true });
   }
 
   if (!(await hasActiveSubscription(admin, user.id))) {
-    return NextResponse.json(
-      { error: "Subscription required" },
-      { status: 403 },
-    );
+    return NextResponse.json({ error: "Subscription required" }, { status: 403 });
   }
 
   const { data: profileRaw } = await admin
     .from("health_profiles")
-    .select(
-      "updated_at, conditions, goals, allergies, allergies_other, medications",
-    )
+    .select("updated_at, conditions, goals, allergies, allergies_other, medications")
     .eq("user_id", user.id)
     .maybeSingle();
   const profile = profileRaw as unknown as {
@@ -96,66 +91,67 @@ export async function POST(
   // recipe's base score changed.
   const { data: cacheRaw } = await admin
     .from("recipe_personalized_scores" as never)
-    .select("profile_updated_at, base_final_score")
+    .select("profile_updated_at, base_final_score_10")
     .eq("user_id" as never, user.id as never)
     .eq("recipe_id" as never, recipe.id as never)
     .maybeSingle();
   const cache = cacheRaw as unknown as {
     profile_updated_at: string;
-    base_final_score: number | null;
+    base_final_score_10: number | null;
   } | null;
   const fresh =
     cache &&
-    cache.base_final_score === recipe.final_score &&
+    cache.base_final_score_10 === recipe.final_score_10 &&
     new Date(cache.profile_updated_at) >= new Date(profile.updated_at);
   if (fresh) {
     return NextResponse.json({ personalized: true });
   }
 
   try {
-    const points: NutritionPoints = {
-      positiveTotal: recipe.nutrition_positive_total ?? 0,
-      addedSugarPoints: recipe.nutrition_added_sugar_points ?? 0,
-      saturatedFatPoints: recipe.nutrition_sat_fat_points ?? 0,
-      sodiumPoints: recipe.nutrition_sodium_points ?? 0,
-      fiberPoints: recipe.nutrition_fiber_points ?? 0,
-      proteinPoints: recipe.nutrition_protein_points ?? 0,
+    // Bioactivity scores (slug → 0..100) for the Match Score.
+    const { data: tagRows } = await admin
+      .from("recipe_tags")
+      .select("score, tags(slug)")
+      .eq("recipe_id", recipe.id);
+    const bioBySlug: Record<string, number> = {};
+    for (const row of (tagRows as unknown as { score: number; tags: { slug: string } | null }[]) ??
+      []) {
+      if (row.tags?.slug) bioBySlug[row.tags.slug] = row.score;
+    }
+
+    const match = computeMatchScore({
+      bioBySlug,
+      points: {
+        sugar: recipe.sugar_points ?? 0,
+        salt: recipe.salt_points ?? 0,
+        satFat: recipe.sat_fat_points ?? 0,
+        energy: recipe.energy_points ?? 0,
+        fiber: recipe.fiber_points ?? 0,
+        protein: recipe.protein_points ?? 0,
+      },
       track: recipe.track ?? "Solid Food",
-      ingredientScore: recipe.ingredient_score ?? 0,
-    };
+      ironRich: !!recipe.iron_rich,
+      waterContentPercent: recipe.water_content_pct ?? 0,
+      conditions: profile.conditions ?? [],
+      goals: profile.goals ?? [],
+    });
 
-    const multipliers = computeMultipliers(
-      profile.conditions ?? [],
-      profile.goals ?? [],
-    );
-    const applied = describeModifiers(multipliers);
-    const personalizedFinal = computeNutritionFinal(points, multipliers);
-
+    // Safety alerts — unchanged (allergy + medication interaction).
     let interaction = recipe.interaction_ingredients ?? [];
     if (!interaction.length) {
-      interaction = await detectInteractionIngredients(
-        admin,
-        recipe.ingredients,
-      );
+      interaction = await detectInteractionIngredients(admin, recipe.ingredients);
       await admin
         .from("recipes")
         .update({ interaction_ingredients: interaction } as never)
         .eq("id", recipe.id);
     }
-    const resolvedMeds = await resolveMedications(
-      admin,
-      profile.medications ?? [],
-    );
-
-    // Allergy alerts — deterministic (recipe ingredients × the user's allergens).
+    const resolvedMeds = await resolveMedications(admin, profile.medications ?? []);
     const allergyAlerts = detectAllergens(
       recipe.ingredients,
       profile.allergies ?? [],
       profile.allergies_other ?? "",
       (profile.conditions ?? []).includes("celiac-disease"),
     );
-    // Medication alerts — name the specific drug(s) whose class matches the
-    // ingredient's mechanism bucket.
     const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
     const medicationAlerts = interaction
       .map((ii) => {
@@ -180,23 +176,24 @@ export async function POST(
         {
           user_id: user.id,
           recipe_id: recipe.id,
-          base_final_score: recipe.final_score,
-          personalized_final_score: personalizedFinal,
-          adjusted: applied.length > 0,
+          base_final_score_10: recipe.final_score_10,
+          match_score: match.score,
+          match_breakdown: match.breakdown,
           safety_alerts: safetyAlerts,
-          applied_modifiers: applied,
           profile_updated_at: profile.updated_at,
+          // Deprecated columns (kept non-null during the transition).
+          base_final_score: Math.round(recipe.final_score_10),
+          personalized_final_score: Math.round(recipe.final_score_10),
+          adjusted: false,
+          applied_modifiers: [],
         } as never,
         { onConflict: "user_id,recipe_id" },
       );
     if (upErr) throw upErr;
 
-    return NextResponse.json({ personalized: true });
+    return NextResponse.json({ personalized: true, matchScore: match.score });
   } catch (err) {
     console.error("[recipes/personalize]", err);
-    return NextResponse.json(
-      { error: "Failed to personalize" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Failed to personalize" }, { status: 500 });
   }
 }
