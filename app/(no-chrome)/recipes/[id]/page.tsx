@@ -333,7 +333,6 @@ export default async function RecipeDetailPage({
               ) : (
                 <DetoxCard finalScore={recipe.final_score ?? null} />
               )}
-              <NutritionScore baseScore={6.7} personalizedScore={72} />
             </div>
 
             {/* Accordion sections */}
