@@ -60,7 +60,7 @@ export function RecipeCardNew({
                   style={{
                     backgroundColor: getCategoryConfig(catSlug!).textColor,
                   }}
-                  className="rounded-full size-1.25"
+                  className="rounded-full size-1.25 font-semibold"
                 />
                 {category}
               </div>
