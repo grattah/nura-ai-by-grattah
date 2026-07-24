@@ -105,7 +105,13 @@ export async function POST(
       const rawTokens =
         usage?.totalTokens ??
         (usage?.inputTokens ?? 0) + (usage?.outputTokens ?? 0);
-      await meterUnits(user.id, IMAGE_UNITS, "recipe-image", rawTokens);
+      await meterUnits(user.id, IMAGE_UNITS, "recipe-image", rawTokens, {
+        provider: "google",
+        model: "gemini-3.1-flash-image-preview",
+        images: 1,
+        inputTokens: usage?.inputTokens,
+        outputTokens: usage?.outputTokens,
+      });
     }
 
     return NextResponse.json({ imageUrl: publicUrl });

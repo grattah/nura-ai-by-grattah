@@ -8,12 +8,13 @@ import {
 } from "@/lib/supabase/server";
 import { SearchSection } from "@/components/home/search-section";
 import { RecipeCardNew } from "@/components/home/recipe-card-new";
-import { WellnessTipCard } from "@/components/home/wellness-tip-card";
+// Daily-tip feature retired — card + server read disabled (see below).
+// import { WellnessTipCard } from "@/components/home/wellness-tip-card";
 import { CategorySection } from "@/components/home/category-section";
 import { UpgradeBanner } from "@/components/home/upgrade-banner";
 import { getBookmarkedIds } from "@/actions/bookmark";
 import { withTiming } from "@/lib/perf";
-import { getDailyTip, utcDayKey, FALLBACK_TIP } from "@/lib/daily-tip";
+// import { getDailyTip, utcDayKey, FALLBACK_TIP } from "@/lib/daily-tip";
 import { getCategories } from "@/actions/categories";
 import { MoveRight } from "lucide-react";
 import { FreeTokensModal } from "@/components/tokens/FreeTokensModal";
@@ -66,11 +67,10 @@ export default async function HomePage() {
       data: { user },
     },
     { data: rawRecipes },
-    dailyTipRow,
   ] = await Promise.all([
     withTiming("home:getCachedUser", () => getCachedUser()),
     withTiming("home:getPopularRecipes", () => getPopularRecipes()),
-    withTiming("home:getDailyTip", () => getDailyTip(utcDayKey())),
+    // Daily-tip read removed — feature retired (no endpoint call, no DB read).
   ]);
 
   function oneRecipePerCategory(recipes: RecipeWithTags[]): RecipeWithTags[] {
@@ -86,8 +86,6 @@ export default async function HomePage() {
     }
     return result;
   }
-
-  const dailyTip = dailyTipRow ?? FALLBACK_TIP;
 
   const recipes = (rawRecipes ?? []) as unknown as RecipeWithTags[];
   const popularRecipes = oneRecipePerCategory(recipes).slice(0, 6);

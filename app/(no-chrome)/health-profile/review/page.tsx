@@ -15,7 +15,6 @@ import {
   summarizeConditions,
   summarizeAllergies,
   summarizeMedications,
-  summarizeDietary,
 } from "@/lib/health-profile/summarize";
 import Link from "next/link";
 
@@ -49,6 +48,11 @@ export default function ReviewStep() {
       values: summarizeMedications(draft),
       step: "medications",
     },
+    // {
+    //   title: "Dietary Pattern",
+    //   values: summarizeDietary(draft),
+    //   step: "dietary",
+    // },
   ];
 
   return (

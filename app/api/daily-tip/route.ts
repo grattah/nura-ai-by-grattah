@@ -6,8 +6,19 @@ import sharp from "sharp";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { utcDayKey, dailyTipsTable, type DailyTip } from "@/lib/daily-tip";
+import { recordUsage, usageTokens } from "@/lib/usage-server";
 
 export const maxDuration = 60;
+
+// Feature retired: the daily-tip cron is disabled (vercel.json has an empty
+// "crons": []) and we no longer generate new tips. This guard is defense-in-depth
+// — even if the endpoint is still hit (homepage self-heal, a manual call, or the
+// cron being re-enabled), it never spends LLM/image tokens. Any previously
+// generated tip is still served as a pure DB read.
+//
+// To re-enable: set this to true AND restore the cron in vercel.json:
+//   "crons": [{ "path": "/api/daily-tip", "schedule": "0 0 * * *" }]
+const DAILY_TIP_ENABLED = false;
 
 const TipSchema = z.object({
   title: z
@@ -50,6 +61,14 @@ async function generateImage(
       prompt: `A calm, minimal wellness illustration representing "${title}". Soft natural light, clean neutral background, gentle organic shapes. No text, no watermark.`,
     });
     const image = result.files.find((f) => f.mediaType?.startsWith("image/"));
+    void recordUsage({
+      provider: "google",
+      model: "gemini-3.1-flash-image-preview",
+      surface: "daily-tip-image",
+      source: "cron",
+      images: image ? 1 : 0,
+      ...usageTokens(result.usage),
+    });
     if (!image) return null;
 
     const optimized = await sharp(Buffer.from(image.uint8Array))
@@ -91,6 +110,10 @@ export async function GET(req: NextRequest) {
   const existing = await readTip(admin, day);
   if (existing) return NextResponse.json(existing);
 
+  // Feature retired — never generate a new tip (no LLM/image spend). Return null
+  // rather than 500 so any residual caller degrades gracefully.
+  if (!DAILY_TIP_ENABLED) return NextResponse.json(null);
+
   // Bound the expensive generation path (audit M4). When CRON_SECRET is set,
   // only the Vercel cron (Authorization: Bearer <secret>) or an authenticated
   // user (homepage self-heal) may trigger generation — anonymous callers can't.
@@ -114,7 +137,7 @@ export async function GET(req: NextRequest) {
   let title: string;
   let description: string;
   try {
-    const { object } = await generateObject({
+    const { object, usage } = await generateObject({
       model: google("gemini-2.5-flash"),
       // Disable Gemini 2.5's default "thinking" — it otherwise spends the whole
       // output budget on reasoning and emits no JSON (finishReason: "length").
@@ -124,6 +147,13 @@ export async function GET(req: NextRequest) {
       system:
         "You are a warm wellness expert for the Nuko app. Write one concise, practical, evidence-aware daily wellness tip. Plain prose only — no markdown, asterisks, or emoji.",
       prompt: `Generate today's daily wellness tip (for ${day}). Pick a useful, non-obvious angle across hydration, digestion, sleep, movement, nutrition, breathing, or stress — vary the topic day to day.`,
+    });
+    void recordUsage({
+      provider: "google",
+      model: "gemini-2.5-flash",
+      surface: "daily-tip-text",
+      source: "cron",
+      ...usageTokens(usage),
     });
     title = object.title.trim().slice(0, 60);
     description = object.description.trim().slice(0, 130);

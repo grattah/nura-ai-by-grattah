@@ -3,10 +3,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
 import { deriveBuckets, type Bucket } from "./buckets";
 
-// Resolve a medication (by rxcui) to the interaction buckets it's susceptible to,
-// from its OWN RxClass pharmacologic classes (EPC/MoA/PE via DAILYMED+MEDRT, plus
-// ATC). Cached per rxcui in drug_interaction_buckets (shared across users).
-
 type Admin = SupabaseClient<Database>;
 
 const OWN_RELAS = new Set(["has_epc", "has_moa", "has_pe"]);
@@ -16,7 +12,10 @@ interface RxClassInfo {
   rxclassMinConceptItem?: { className?: string; classType?: string };
 }
 
-async function getInfo(rxcui: string, relaSource: string): Promise<RxClassInfo[]> {
+async function getInfo(
+  rxcui: string,
+  relaSource: string,
+): Promise<RxClassInfo[]> {
   const url = `https://rxnav.nlm.nih.gov/REST/rxclass/class/byRxcui.json?rxcui=${encodeURIComponent(
     rxcui,
   )}&relaSource=${relaSource}`;
@@ -77,9 +76,9 @@ export async function resolveMedications(
     .select("rxcui, buckets")
     .in("rxcui", rxcuis);
   const byRxcui = new Map<string, Bucket[]>(
-    ((cachedRaw as unknown as { rxcui: string; buckets: string[] }[]) ?? []).map(
-      (r) => [r.rxcui, r.buckets as Bucket[]],
-    ),
+    (
+      (cachedRaw as unknown as { rxcui: string; buckets: string[] }[]) ?? []
+    ).map((r) => [r.rxcui, r.buckets as Bucket[]]),
   );
 
   for (const rxcui of rxcuis) {
@@ -91,7 +90,12 @@ export async function resolveMedications(
     await admin
       .from("drug_interaction_buckets" as never)
       .upsert(
-        { rxcui, drug_name: name, buckets, resolved_at: new Date().toISOString() } as never,
+        {
+          rxcui,
+          drug_name: name,
+          buckets,
+          resolved_at: new Date().toISOString(),
+        } as never,
         { onConflict: "rxcui" },
       );
   }
