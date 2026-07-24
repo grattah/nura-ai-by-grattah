@@ -21,13 +21,13 @@ export default function ExistingConditionsStep() {
           selected={draft.conditions}
           onToggle={(k) => update({ conditions: toggle(draft.conditions, k) })}
         />
-        <OtherInput
+        {/* <OtherInput
           value={draft.conditionsOther}
           onChange={(v) => update({ conditionsOther: v })}
         />
         <p className="text-xs text-subtle">
           Leave anything unchecked that you&apos;d prefer not to share.
-        </p>
+        </p> */}
       </div>
     </StepShell>
   );
