@@ -3,11 +3,11 @@ import { getCachedUser, createServiceRoleClient } from "@/lib/supabase/server";
 import { getAdminIdentity } from "@/lib/admin/auth";
 import { meter } from "@/lib/credits-server";
 import { scoreBioactivities } from "@/lib/scoring/bioactivity";
-import { scoreNutrition } from "@/lib/scoring/nutrition";
+import { writeBioactivityAndCategories } from "@/lib/scoring/persist";
 import {
-  writeBioactivityAndCategories,
-  writeNutrition,
-} from "@/lib/scoring/persist";
+  scoreNutritionFromDb,
+  writeNutritionV2,
+} from "@/lib/scoring/nutrition-deterministic";
 
 export const maxDuration = 60;
 
@@ -32,12 +32,14 @@ export async function POST(
   }
 
   const admin = createServiceRoleClient();
+  // `recipes` is cast to `never` so the select can reference BNS-v2 columns not
+  // yet in the (prod-generated) types; the row is re-typed below.
   const { data: recipeRaw } = await admin
-    .from("recipes")
+    .from("recipes" as never)
     .select(
-      "id, title, short_description, ingredients, how_to_make, why_it_works, nutrition, final_score, nutrition_positive_total, created_by, recipe_tags(recipe_id)",
+      "id, title, short_description, ingredients, how_to_make, why_it_works, nutrition, servings, final_score_10, created_by, recipe_tags(recipe_id)",
     )
-    .eq("id", id)
+    .eq("id" as never, id as never)
     .maybeSingle();
   const recipe = recipeRaw as unknown as {
     id: string;
@@ -47,8 +49,8 @@ export async function POST(
     how_to_make: unknown;
     why_it_works: string | null;
     nutrition: unknown;
-    final_score: number | null;
-    nutrition_positive_total: number | null;
+    servings: number | null;
+    final_score_10: number | null;
     created_by: string | null;
     recipe_tags: { recipe_id: string }[] | null;
   } | null;
@@ -57,11 +59,10 @@ export async function POST(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  // What still needs doing. Nutrition also re-runs when the per-factor points are
-  // missing (backfill for recipes scored before those columns existed).
+  // What still needs doing. Nutrition is deterministic (USDA-derived) and re-runs
+  // whenever the v2 headline score is missing.
   const needsBio = (recipe.recipe_tags?.length ?? 0) === 0;
-  const needsNut =
-    recipe.final_score == null || recipe.nutrition_positive_total == null;
+  const needsNut = recipe.final_score_10 == null;
   if (!needsBio && !needsNut) {
     return NextResponse.json({ scored: true });
   }
@@ -77,7 +78,7 @@ export async function POST(
   // doesn't discard the other's result.
   const [bioRes, nutRes] = await Promise.allSettled([
     needsBio ? scoreBioactivities(recipe) : Promise.resolve(null),
-    needsNut ? scoreNutrition(recipe) : Promise.resolve(null),
+    needsNut ? scoreNutritionFromDb(admin, recipe) : Promise.resolve(null),
   ]);
 
   try {
@@ -101,13 +102,8 @@ export async function POST(
     }
 
     if (nutRes.status === "fulfilled" && nutRes.value) {
-      await writeNutrition(admin, recipe.id, nutRes.value);
-      if (isOwner) {
-        await meter(user.id, nutRes.value.totalTokens, "recipe-score-nutrition", {
-          provider: "anthropic",
-          model: "claude-haiku-4-5",
-        });
-      }
+      // Deterministic (USDA-derived) — no LLM, no metering.
+      await writeNutritionV2(admin, recipe.id, nutRes.value.patch);
     } else if (nutRes.status === "rejected") {
       console.error("[recipes/score] nutrition", nutRes.reason);
     }

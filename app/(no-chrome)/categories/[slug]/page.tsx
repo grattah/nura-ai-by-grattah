@@ -248,7 +248,7 @@ export default function CategoryDetailPage() {
           <ArrowLeft className="size-5 text-foreground" />
         </button>
         <h1 className="flex-1 text-center text-xl font-semibold text-base-text capitalize">
-          {displayName}
+          {displayName == "beauty" ? "Anti-aging" : displayName}
         </h1>
         <Link
           href={`/search-category?category=${slug}`}
@@ -261,7 +261,7 @@ export default function CategoryDetailPage() {
 
       <div className="space-y-6 flex-1 mb-2">
         {/* Category banner */}
-        <CategoryBanner name={displayName} config={config} />
+        <CategoryBanner name={displayName == "beauty" ? "Anti-aging" : displayName} config={config} />
 
         {/* Drink-type sub-sub-category filter (shown once present types load) */}
         {pills.length > 1 && (
