@@ -99,10 +99,12 @@ export async function POST(
     profile_updated_at: string;
     base_final_score_10: number | null;
   } | null;
+  // Staleness keys on the PROFILE only — the Match Score depends on the profile
+  // + the recipe's bioactivities/points, not on final_score_10 (which can change
+  // on re-score without affecting the match). Coupling to it caused a refresh
+  // loop when the page's cached recipe lagged the DB.
   const fresh =
-    cache &&
-    cache.base_final_score_10 === recipe.final_score_10 &&
-    new Date(cache.profile_updated_at) >= new Date(profile.updated_at);
+    cache && new Date(cache.profile_updated_at) >= new Date(profile.updated_at);
   if (fresh) {
     return NextResponse.json({ personalized: true });
   }
@@ -136,16 +138,10 @@ export async function POST(
       goals: profile.goals ?? [],
     });
 
-    // Safety alerts — unchanged (allergy + medication interaction).
-    let interaction = recipe.interaction_ingredients ?? [];
-    if (!interaction.length) {
-      interaction = await detectInteractionIngredients(admin, recipe.ingredients);
-      await admin
-        .from("recipes")
-        .update({ interaction_ingredients: interaction } as never)
-        .eq("id", recipe.id);
-    }
-    const resolvedMeds = await resolveMedications(admin, profile.medications ?? []);
+    // Safety alerts (allergy + medication). The medication path hits external
+    // services (RxClass) + optional interaction detection; wrap it best-effort so
+    // a slow/failing lookup never blocks writing the match score (which caused a
+    // never-resolving "Personalizing…" spinner). Allergy alerts are local + fast.
     const allergyAlerts = detectAllergens(
       recipe.ingredients,
       profile.allergies ?? [],
@@ -153,21 +149,40 @@ export async function POST(
       (profile.conditions ?? []).includes("celiac-disease"),
     );
     const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
-    const medicationAlerts = interaction
-      .map((ii) => {
-        const drugs = resolvedMeds
-          .filter((m) => m.buckets.includes(ii.bucket as Bucket))
-          .map((m) => m.name)
-          .filter(Boolean);
-        if (!drugs.length) return null;
-        return {
-          type: "medication" as const,
-          severity: ii.severity,
-          label: "Medication",
-          message: `${cap(ii.ingredient_key)} may interact with medications you're taking (${drugs.join(", ")}).`,
-        };
-      })
-      .filter((a): a is NonNullable<typeof a> => a !== null);
+    let medicationAlerts: Array<{
+      type: "medication";
+      severity: string;
+      label: string;
+      message: string;
+    }> = [];
+    try {
+      let interaction = recipe.interaction_ingredients ?? [];
+      if (!interaction.length) {
+        interaction = await detectInteractionIngredients(admin, recipe.ingredients);
+        await admin
+          .from("recipes")
+          .update({ interaction_ingredients: interaction } as never)
+          .eq("id", recipe.id);
+      }
+      const resolvedMeds = await resolveMedications(admin, profile.medications ?? []);
+      medicationAlerts = interaction
+        .map((ii) => {
+          const drugs = resolvedMeds
+            .filter((m) => m.buckets.includes(ii.bucket as Bucket))
+            .map((m) => m.name)
+            .filter(Boolean);
+          if (!drugs.length) return null;
+          return {
+            type: "medication" as const,
+            severity: ii.severity,
+            label: "Medication",
+            message: `${cap(ii.ingredient_key)} may interact with medications you're taking (${drugs.join(", ")}).`,
+          };
+        })
+        .filter((a): a is NonNullable<typeof a> => a !== null);
+    } catch (e) {
+      console.error("[recipes/personalize] safety alerts (non-fatal)", e);
+    }
     const safetyAlerts = [...allergyAlerts, ...medicationAlerts];
 
     const { error: upErr } = await admin
