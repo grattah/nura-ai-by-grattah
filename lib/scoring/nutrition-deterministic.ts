@@ -2,6 +2,8 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
 import { rollupRecipe, type ResolvedIngredient } from "@/lib/usda/rollup";
+import { resolveRecipeIngredients } from "@/lib/usda/resolve";
+import { recordUsage, usageTokens } from "@/lib/usage-server";
 import { classifyTrack, classifyPreparation } from "./track";
 import { scoreFromInput, rollupToScoringInput, bnsColumns } from "./score-recipe";
 import type { BnsResult } from "./base-nutrition";
@@ -41,22 +43,29 @@ export interface DeterministicNutrition {
 
 /**
  * Deterministically score a recipe's Base Nutrition Score from its resolved USDA
- * ingredients (recipe_ingredients → ingredients). Returns null when the recipe
- * has no resolved ingredients yet (run the USDA resolve step first).
+ * ingredients. If the recipe hasn't been USDA-resolved yet (e.g. freshly
+ * generated), it resolves on demand here (first-view lazy scoring). Returns null
+ * only when the recipe has no resolvable ingredients at all.
  */
 export async function scoreNutritionFromDb(
   admin: Admin,
-  recipe: { id: string; title: string; how_to_make: unknown; servings?: number | null },
+  recipe: {
+    id: string;
+    title: string;
+    ingredients: unknown;
+    how_to_make: unknown;
+    servings?: number | null;
+  },
 ): Promise<DeterministicNutrition | null> {
   const { data } = await admin
     .from("recipe_ingredients" as never)
     .select(
-      "grams, ingredients(name, nova_group, is_fvl, iron_rich, is_added_sweetener, energy_kcal, protein_g, total_fat_g, sat_fat_g, carbs_g, fiber_g, total_sugar_g, sodium_mg, calcium_dv, vitamin_c_dv, iron_mg, water_pct)" as never,
+      "grams, ingredients(name, nova_group, is_fvl, iron_rich, is_added_sweetener, is_sweetener_nnutritive, energy_kcal, protein_g, total_fat_g, sat_fat_g, carbs_g, fiber_g, total_sugar_g, sodium_mg, calcium_dv, vitamin_c_dv, iron_mg, water_pct)" as never,
     )
     .eq("recipe_id" as never, recipe.id as never);
 
   const rows = (data as unknown as JoinedIngredientRow[] | null) ?? [];
-  const resolved: ResolvedIngredient[] = rows
+  let resolved: ResolvedIngredient[] = rows
     .filter((r) => r.ingredients && r.grams != null)
     .map((r) => {
       const ing = r.ingredients!;
@@ -82,6 +91,25 @@ export async function scoreNutritionFromDb(
         water_pct: ing.water_pct ?? 0,
       };
     });
+
+  // Not USDA-resolved yet (freshly generated recipe) → resolve on demand.
+  if (resolved.length === 0) {
+    const out = await resolveRecipeIngredients(
+      admin as unknown as SupabaseClient,
+      { id: recipe.id, ingredients: recipe.ingredients },
+      {
+        onClassifyUsage: (usage) =>
+          void recordUsage({
+            provider: "anthropic",
+            model: "claude-haiku-4-5",
+            surface: "usda-classify",
+            billed: false,
+            ...usageTokens(usage as never),
+          }),
+      },
+    );
+    resolved = out.resolved;
+  }
 
   if (resolved.length === 0) return null;
 
