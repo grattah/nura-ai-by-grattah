@@ -211,7 +211,7 @@ export function GoalGrid({
               )}
             </span>
             <div className="w-[40px] h-[40px] rounded-full flex items-center justify-center bg-[#F1F7F3]">
-              <g.icon className={`size-6 text-mint-green`} strokeWidth={1.75} />
+              <g.icon className={`size-6 text-mint-green`} strokeWidth={1.5} />
             </div>
             <span className="text-xs font-semibold text-base-text text-center px-1">
               {index + 1}. {g.label}
