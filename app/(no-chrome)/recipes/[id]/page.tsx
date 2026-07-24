@@ -186,10 +186,6 @@ export default async function RecipeDetailPage({
 
   const shareDisabled = (recipe as { status?: string }).status !== "approved";
 
-  // Match Score is deterministic + cheap, so it's computed inline here every
-  // render — no cache, so it can never go stale after a re-score. Only the
-  // expensive medication safety alerts (RxClass) stay cached, keyed on the
-  // profile (they don't depend on scores).
   let personalizedView = false;
   let matchScore: number | null = null;
   let personalizedAlerts: SafetyAlertItem[] = [];
@@ -220,7 +216,8 @@ export default async function RecipeDetailPage({
       // Fresh match, computed from the recipe's current scores + the profile.
       const bioBySlug: Record<string, number> = {};
       for (const rt of recipe.recipe_tags ?? []) {
-        if (rt.tags?.slug && rt.score != null) bioBySlug[rt.tags.slug] = rt.score;
+        if (rt.tags?.slug && rt.score != null)
+          bioBySlug[rt.tags.slug] = rt.score;
       }
       const match = computeMatchScore({
         bioBySlug,
@@ -240,14 +237,13 @@ export default async function RecipeDetailPage({
       });
       matchScore = match.score;
 
-      // Safety alerts stay cached (profile-keyed); populate in the background if
-      // this (user, recipe, profile) hasn't been evaluated yet.
       const cache = cacheRes.data as {
         safety_alerts: SafetyAlertItem[] | null;
         profile_updated_at: string;
       } | null;
       const safetyFresh =
-        !!cache && new Date(cache.profile_updated_at) >= new Date(profileUpdatedAt!);
+        !!cache &&
+        new Date(cache.profile_updated_at) >= new Date(profileUpdatedAt!);
       if (safetyFresh && cache) personalizedAlerts = cache.safety_alerts ?? [];
       else needsSafetyAlerts = true;
     }
@@ -299,10 +295,6 @@ export default async function RecipeDetailPage({
               {personalizedView && personalizedAlerts.length > 0 && (
                 <SafetyAlerts alerts={personalizedAlerts} />
               )}
-
-              {/* Generated recipes are created unscored; the owner's first view
-                  scores them (bioactivity + categories + nutrition), then the
-                  page refreshes and the cards below fill in. */}
               <RecipeScoreTrigger
                 recipeId={recipe.id}
                 canTrigger={
@@ -316,21 +308,18 @@ export default async function RecipeDetailPage({
               <RecipeSupports
                 supports={topBioactivities(recipe.recipe_tags, 5)}
               />
-
-              {/* Subscriber + profile with conditions/goals → base + match (both
-                  computed fresh). Otherwise the base DetoxCard + "complete
-                  profile" CTA. The trigger only backgrounds the safety alerts. */}
-              {personalizedView && matchScore != null ? (
-                <>
+              {personalizedView ? (
+                matchScore != null ? (
                   <NutritionScore
                     baseScore={recipe.final_score_10 ?? 0}
                     personalizedScore={Math.round(matchScore)}
                   />
+                ) : (
                   <RecipePersonalizeTrigger
                     recipeId={recipe.id}
                     canTrigger={needsSafetyAlerts}
                   />
-                </>
+                )
               ) : (
                 <DetoxCard
                   finalScore={
