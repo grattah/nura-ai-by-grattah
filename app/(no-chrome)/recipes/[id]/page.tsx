@@ -58,13 +58,13 @@ const RECIPE_SELECT = "*, recipe_tags(score, tags(name, slug))";
 // The recipe's strongest bioactivities (from recipe_tags) for the supports card.
 function topBioactivities(
   recipeTags: RecipeRecord["recipe_tags"],
-  count = 5,
+  count = 5
 ): SupportScore[] {
   return (recipeTags ?? [])
     .flatMap((rt) =>
       rt.tags && rt.score != null
         ? [{ slug: rt.tags.slug, support: rt.tags.name, score: rt.score }]
-        : [],
+        : []
     )
     .sort((a, b) => b.score - a.score)
     .slice(0, count);
@@ -83,7 +83,7 @@ const getCachedApprovedRecipe = (id: string) =>
       return data ? (data as unknown as RecipeRecord) : null;
     },
     ["recipe-detail", id],
-    { revalidate: 300, tags: [`recipe-${id}`] },
+    { revalidate: 300, tags: [`recipe-${id}`] }
   )();
 
 // React cache deduplicates within a request — generateMetadata and the page
@@ -165,7 +165,7 @@ export default async function RecipeDetailPage({
     likes,
     profiles (id, username, avatar_url),
     comment_likes!comment_id (user_id)
-  `,
+  `
       )
       .eq("recipe_id", recipe.id)
       .is("parent_id", null)
@@ -184,7 +184,7 @@ export default async function RecipeDetailPage({
         ...latestComment,
         hasLiked:
           latestComment.comment_likes?.some(
-            (like: { user_id: string }) => like.user_id === user?.id,
+            (like: { user_id: string }) => like.user_id === user?.id
           ) ?? false,
       }
     : null;
@@ -217,7 +217,7 @@ export default async function RecipeDetailPage({
       supabase
         .from("recipe_personalized_scores" as never)
         .select(
-          "personalized_final_score, base_final_score, safety_alerts, profile_updated_at",
+          "personalized_final_score, base_final_score, safety_alerts, profile_updated_at"
         )
         .eq("user_id", user.id)
         .eq("recipe_id", recipe.id)
@@ -312,7 +312,9 @@ export default async function RecipeDetailPage({
                     (recipe.recipe_tags?.length ?? 0) === 0)
                 }
               />
-              <RecipeSupports supports={topBioactivities(recipe.recipe_tags, 5)} />
+              <RecipeSupports
+                supports={topBioactivities(recipe.recipe_tags, 5)}
+              />
 
               {/* Personalized (subscriber + profile) shows base vs personalized
                   nutrition; otherwise the base DetoxCard + "complete profile" CTA. */}

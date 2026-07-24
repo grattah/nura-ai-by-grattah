@@ -21,8 +21,14 @@ function PopoverContent({
   className,
   align = 'center',
   sideOffset = 4,
+  showArrow = false,
+  arrowClassName,
+  children,
   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Content>) {
+}: React.ComponentProps<typeof PopoverPrimitive.Content> & {
+  showArrow?: boolean
+  arrowClassName?: string
+}) {
   return (
     <PopoverPrimitive.Portal>
       <PopoverPrimitive.Content
@@ -34,7 +40,17 @@ function PopoverContent({
           className,
         )}
         {...props}
-      />
+      >
+        {children}
+        {showArrow && (
+          <PopoverPrimitive.Arrow
+            className={cn(
+              'size-2 rotate-45 rounded-xs border-r border-b bg-popover fill-popover translate-y-[calc(-50%-1px)]',
+              arrowClassName,
+            )}
+          />
+        )}
+      </PopoverPrimitive.Content>
     </PopoverPrimitive.Portal>
   )
 }
