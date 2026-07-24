@@ -26,7 +26,7 @@ export function AppHeader({ user }: AppHeaderProps) {
             width={20}
             height={20}
           />
-          <span className="text-xl font-semibold text-[#50443B] tracking-tight">
+          <span className="text-xl font-semibold text-[#50443B] tracking-tight leading-[32px]">
             Nuko
           </span>
         </Link>
