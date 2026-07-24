@@ -33,7 +33,9 @@ export function OptionGroup({
         {hint && <p className="text-sm text-subtle mt-1.5">{hint}</p>}
       </div>
       <div
-        className={`grid gap-2 ${hasLongThirdOptions ? "grid-cols-[1fr_1fr_auto]" : "grid-cols-3"}`}
+        className={`grid gap-2 ${
+          hasLongThirdOptions ? "grid-cols-[1fr_1fr_auto]" : "grid-cols-3"
+        }`}
       >
         {options.map((o) => {
           const active = value === o.key;
@@ -183,30 +185,36 @@ export function GoalGrid({
 }) {
   return (
     <div className="grid grid-cols-3 gap-3">
-      {goals.map((g) => {
+      {goals.map((g, index) => {
         const active = selected.includes(g.key);
         return (
           <button
             key={g.key}
             type="button"
             onClick={() => onToggle(g.key)}
-            className={`relative h-26 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-colors ${
+            className={`relative pt-4 px-3 pb-8 bg-card rounded-2xl border flex flex-col items-center justify-center gap-2 transition-colors ${
               active
-                ? "border-mint-green bg-mint-green/10"
-                : "border-[#E3E1D880] bg-card hover:border-mint-green/40"
+                ? "border-mint-green"
+                : "border-[#EAECE9]"
             }`}
           >
-            {active && (
-              <span className="absolute top-2 right-2 size-4.5 rounded-full bg-mint-green grid place-items-center">
+            <span
+              aria-hidden="true"
+              className={`absolute top-2 right-2 size-3.5 rounded-[3px] border grid place-items-center transition-colors ${
+                active
+                  ? "bg-mint-green border-mint-green"
+                  : "bg-transparent border-[#CCD1CD]"
+              }`}
+            >
+              {active && (
                 <Check className="size-2.5 text-white" strokeWidth={3} />
-              </span>
-            )}
-            <g.icon
-              className={`size-6 ${active ? "text-mint-green" : "text-subtle"}`}
-              strokeWidth={1.75}
-            />
+              )}
+            </span>
+            <div className="w-[40px] h-[40px] rounded-full flex items-center justify-center bg-[#F1F7F3]">
+              <g.icon className={`size-6 text-mint-green`} strokeWidth={1.5} />
+            </div>
             <span className="text-xs font-semibold text-base-text text-center px-1">
-              {g.label}
+              {index + 1}. {g.label}
             </span>
           </button>
         );
