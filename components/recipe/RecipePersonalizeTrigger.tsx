@@ -3,13 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-/**
- * Generates the current user's personalized nutrition score + safety alerts on
- * first view (subscriber with a health profile), then refreshes so the server-
- * rendered card fills in. If the recipe isn't base-scored yet (freshly generated
- * via find-recipe), the endpoint replies `notReady` and this retries a few times
- * while the base-scoring trigger completes.
- */
 export function RecipePersonalizeTrigger({
   recipeId,
   canTrigger,

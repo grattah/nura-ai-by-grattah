@@ -22,8 +22,6 @@ export function RecipeScoreTrigger({
   const triggered = useRef(false);
 
   useEffect(() => {
-    // Fire exactly once. The ref survives Strict Mode's setup→cleanup→setup, so
-    // we don't gate the result on a per-effect cancelled flag.
     if (!canTrigger || triggered.current) return;
     triggered.current = true;
 
