@@ -10,6 +10,7 @@ import {
   hasSensitiveData,
   isBasicComplete,
 } from "@/lib/health-profile/types";
+import { needsConsent } from "@/lib/health-profile/consent";
 
 // Shape of a `health_profiles` row (table not yet in generated types).
 interface HealthProfileRow {
@@ -44,6 +45,7 @@ function rowToDraft(row: HealthProfileRow): HealthProfileDraft {
     allergiesOther: row.allergies_other ?? "",
     medications: row.medications ?? [],
     consent: !!row.consent_given_at,
+    consentVersion: row.consent_version,
   };
 }
 
@@ -84,12 +86,40 @@ export async function saveHealthProfile(
   if (!isBasicComplete(draft))
     return { error: "Please complete your basic profile." };
 
-  const sensitive = hasSensitiveData(draft);
-  if (sensitive && !draft.consent)
+  // Authoritative guard. The client routes users to Review & Consent before they
+  // can get here, so this is the backstop for direct/stale calls.
+  if (needsConsent(draft))
     return {
       error:
         "Please consent to storing your health data to continue, or clear the sensitive sections.",
     };
+
+  // Consent is STICKY: it's a historical fact, so never re-stamp or erase it on
+  // an unrelated save. Read what's on record, then only write when consent is
+  // affirmatively given. A version bump re-stamps the date (a new agreement).
+  const { data: priorRaw } = await supabase
+    .from("health_profiles" as never)
+    .select("consent_given_at, consent_version")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const prior = priorRaw as unknown as {
+    consent_given_at: string | null;
+    consent_version: string | null;
+  } | null;
+
+  // Only record consent when there is sensitive data to consent to — that's
+  // exactly when the checkbox is shown. Without this, clearing all sensitive
+  // sections while an old consent flag lingers would silently stamp agreement to
+  // a version the user never saw.
+  const giveConsent = hasSensitiveData(draft) && draft.consent;
+  const consentGivenAt = giveConsent
+    ? prior?.consent_given_at && prior.consent_version === CONSENT_VERSION
+      ? prior.consent_given_at // same version → keep the original timestamp
+      : new Date().toISOString() // first consent, or a new version
+    : (prior?.consent_given_at ?? null); // preserve, never null out
+  const consentVersion = giveConsent
+    ? CONSENT_VERSION
+    : (prior?.consent_version ?? null);
 
   const row: HealthProfileRow = {
     user_id: user.id,
@@ -104,9 +134,8 @@ export async function saveHealthProfile(
     allergies: draft.allergies,
     allergies_other: draft.allergiesOther.trim() || null,
     medications: draft.medications,
-    // Only record consent when there is sensitive data to consent to.
-    consent_given_at: sensitive ? new Date().toISOString() : null,
-    consent_version: sensitive ? CONSENT_VERSION : null,
+    consent_given_at: consentGivenAt,
+    consent_version: consentVersion,
   };
 
   const { error } = await supabase

@@ -21,9 +21,14 @@ function apiKey(): string {
 }
 
 async function getJson(url: string, init?: RequestInit): Promise<unknown> {
-  // Retry on rate limit / transient errors with linear backoff.
+  // API key travels as a header, not a query param, so it never lands in
+  // request logs/proxies (audit S5). Retry transient errors with backoff.
+  const withKey: RequestInit = {
+    ...init,
+    headers: { ...(init?.headers ?? {}), "X-Api-Key": apiKey() },
+  };
   for (let attempt = 0; attempt < 4; attempt++) {
-    const res = await fetch(url, init);
+    const res = await fetch(url, withKey);
     if (res.status === 429 || res.status >= 500) {
       await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
       continue;
@@ -45,7 +50,7 @@ export async function searchFoods(
 ): Promise<UsdaFood[]> {
   // POST with a JSON body — the dataType filter (with spaces/parens like
   // "Survey (FNDDS)") breaks the GET query string (nginx 400), but POST is fine.
-  const url = `${BASE}/foods/search?api_key=${apiKey()}`;
+  const url = `${BASE}/foods/search`;
   const data = (await getJson(url, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -62,7 +67,7 @@ export async function searchFoods(
 export async function getFoods(fdcIds: number[]): Promise<UsdaFood[]> {
   if (fdcIds.length === 0) return [];
   if (fdcIds.length > 20) throw new Error("getFoods accepts at most 20 ids");
-  const url = `${BASE}/foods?api_key=${apiKey()}`;
+  const url = `${BASE}/foods`;
   const data = (await getJson(url, {
     method: "POST",
     headers: { "content-type": "application/json" },

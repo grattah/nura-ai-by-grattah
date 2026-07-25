@@ -125,20 +125,32 @@ export async function POST(req: NextRequest) {
 
   // Two independent dedup lookups: a prior generation of this exact prompt, and
   // an existing recipe whose name matches. Run them together.
-  const [{ data: priorGen }, { data: existing }] = await Promise.all([
-    supabase
-      .from("recipes")
-      .select("id")
-      .eq("generated_from" as never, norm as never)
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("recipes")
-      .select("id")
-      .or(`title.ilike.%${cleanName}%,short_description.ilike.%${cleanName}%`)
-      .limit(1)
-      .maybeSingle(),
-  ]);
+  // Dedup checks. NOTE: never build a PostgREST `.or()` filter string from user
+  // input — `,`/`(`/`)` are filter syntax (injection, audit S2). Parameterized
+  // .ilike() calls escape the value safely, so run the two columns as separate
+  // queries instead.
+  const [{ data: priorGen }, { data: titleMatch }, { data: descMatch }] =
+    await Promise.all([
+      supabase
+        .from("recipes")
+        .select("id")
+        .eq("generated_from" as never, norm as never)
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("recipes")
+        .select("id")
+        .ilike("title" as never, `%${cleanName}%` as never)
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("recipes")
+        .select("id")
+        .ilike("short_description" as never, `%${cleanName}%` as never)
+        .limit(1)
+        .maybeSingle(),
+    ]);
+  const existing = titleMatch ?? descMatch;
   if (priorGen) {
     return NextResponse.json({ id: priorGen.id, existed: true });
   }

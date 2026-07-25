@@ -6,7 +6,6 @@ import {
   computeAllCategoryScores,
   type TraceOverride,
 } from "@/lib/bioactivity-categories";
-import type { NutritionResult } from "./nutrition";
 
 type Admin = SupabaseClient<Database>;
 
@@ -66,28 +65,6 @@ export async function writeBioactivityAndCategories(
     .eq("id", recipeId);
 }
 
-// Mirrors the write in scripts/score-nutrition.mjs.
-export async function writeNutrition(
-  admin: Admin,
-  recipeId: string,
-  r: NutritionResult,
-): Promise<void> {
-  await admin
-    .from("recipes")
-    .update({
-      track: r.track,
-      preparation: r.preparation,
-      track_reason: r.trackReason,
-      nutrition_score: r.nutritionScore,
-      ingredient_score: r.ingredientScore,
-      final_score: r.finalScore,
-      nutrition_rating: r.rating,
-      nutrition_positive_total: r.positiveTotal,
-      nutrition_added_sugar_points: r.addedSugarPoints,
-      nutrition_sat_fat_points: r.saturatedFatPoints,
-      nutrition_sodium_points: r.sodiumPoints,
-      nutrition_fiber_points: r.fiberPoints,
-      nutrition_protein_points: r.proteinPoints,
-    } as never)
-    .eq("id", recipeId);
-}
+// The legacy LLM nutrition writer (writeNutrition) moved to
+// archive/old-scoring/ — the deterministic path writes via
+// lib/scoring/nutrition-deterministic.ts (writeNutritionV2).

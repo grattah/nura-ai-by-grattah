@@ -1,9 +1,13 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { secureCompare } from "@/lib/secure-compare";
 
 export async function GET(req: Request) {
-  // Verify cron secret header
+  // Verify cron secret header (constant-time — audit S4).
   if (
-    req.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`
+    !secureCompare(
+      req.headers.get("authorization"),
+      `Bearer ${process.env.CRON_SECRET}`,
+    )
   ) {
     return new Response("Unauthorized", { status: 401 });
   }

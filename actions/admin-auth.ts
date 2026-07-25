@@ -2,6 +2,7 @@
 
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { ownerExists } from "@/lib/admin/auth";
+import { secureCompare } from "@/lib/secure-compare";
 
 /**
  * One-time creation of the owner account. Gated by ADMIN_BOOTSTRAP_SECRET and by
@@ -22,7 +23,7 @@ export async function bootstrapOwner({
   if (!expected) {
     return { error: "Owner sign-up is not configured." };
   }
-  if (secret !== expected) {
+  if (!secureCompare(secret, expected)) {
     return { error: "Invalid setup key." };
   }
   if (!email?.trim() || !password || password.length < 8) {

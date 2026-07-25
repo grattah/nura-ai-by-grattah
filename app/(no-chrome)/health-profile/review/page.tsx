@@ -9,6 +9,8 @@ import {
   hasSensitiveData,
   isBasicComplete,
 } from "@/lib/health-profile/types";
+import { needsConsent } from "@/lib/health-profile/consent";
+import { CONSENT_VERSION } from "@/lib/health-profile/options";
 import {
   summarizeBasic,
   summarizeGoals,
@@ -21,10 +23,15 @@ import Link from "next/link";
 const REVIEW = "/health-profile/review";
 
 export default function ReviewStep() {
-  const { draft, update, enterEdit, saveProfile, saving } = useHealthProfile();
+  const { draft, update, mode, enterEdit, saveProfile, saving } =
+    useHealthProfile();
+  // True only when an edit to an existing profile introduced sensitive data (or
+  // consent is for an outdated version) and finishEdit redirected here — the
+  // user needs to know why they landed on Review mid-edit.
+  const consentRequired = mode === "edit" && needsConsent(draft);
 
   const sensitive = hasSensitiveData(draft);
-  const canSave = isBasicComplete(draft) && (!sensitive || draft.consent);
+  const canSave = isBasicComplete(draft) && !needsConsent(draft);
 
   const sections: { title: string; values: string; step: Step }[] = [
     {
@@ -65,10 +72,17 @@ export default function ReviewStep() {
       </div>
 
       <div className="flex-1 px-6 pb-6 mt-7 overflow-y-auto">
-        <p className="text-base text-base-text mb-4">
-          Review your selections. You can edit or delete this anytime in
-          Settings.
-        </p>
+        {consentRequired ? (
+          <p className="mb-4 rounded-2xl bg-[#FDF3E7] border border-[#E8C89A] p-4 text-sm text-base-text">
+            Your profile now includes health details (conditions, allergies or
+            medications). Please give consent below to save these changes.
+          </p>
+        ) : (
+          <p className="text-base text-base-text mb-4">
+            Review your selections. You can edit or delete this anytime in
+            Settings.
+          </p>
+        )}
 
         <div className="mt-2">
           {sections.map((s) => (
@@ -83,8 +97,26 @@ export default function ReviewStep() {
 
         {sensitive && (
           <label className="mt-6 flex items-start gap-3 rounded-2xl bg-[#E6ECEA] p-4 cursor-pointer">
+            {/* The real input is visually hidden, so mirror its focus state onto
+                the custom box — otherwise keyboard users get no focus cue. */}
+            <input
+              type="checkbox"
+              className="sr-only peer"
+              checked={draft.consent}
+              onChange={(e) =>
+                // Ticking means "I accept the CURRENT version", so stamp it here
+                // too — keeps needsConsent() uniform for fresh ticks and for
+                // consent hydrated from the DB.
+                update({
+                  consent: e.target.checked,
+                  consentVersion: e.target.checked
+                    ? CONSENT_VERSION
+                    : draft.consentVersion,
+                })
+              }
+            />
             <span
-              className={`mt-0.5 size-5.5 rounded-md grid place-items-center shrink-0 border-2 ${
+              className={`mt-0.5 size-5.5 rounded-md grid place-items-center shrink-0 border-2 peer-focus-visible:ring-2 peer-focus-visible:ring-mint-green peer-focus-visible:ring-offset-2 ${
                 draft.consent
                   ? "bg-mint-green border-mint-green"
                   : "bg-transparent border-[#9CA5A3]"
@@ -94,12 +126,6 @@ export default function ReviewStep() {
                 <Check className="size-4 text-white" strokeWidth={3} />
               )}
             </span>
-            <input
-              type="checkbox"
-              className="sr-only"
-              checked={draft.consent}
-              onChange={(e) => update({ consent: e.target.checked })}
-            />
             <div className="flex flex-col gap-y-2">
               <span className="text-sm text-base-text">
                 I consent to Nuko collecting and storing my health profile data
