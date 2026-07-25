@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getCachedUser } from "@/lib/supabase/server";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 // Proxy for RxNav's approximateTerm drug search. Runs server-side to avoid
 // browser CORS, cache upstream, and normalize the (noisy) candidate names into
-// clean, deduped display strings.
+// clean, deduped display strings. Auth-gated (audit S3): it's only used by the
+// signed-in health-profile medications step, so don't leave an open relay to
+// RxNav.
 
 export const revalidate = 86400;
 
@@ -29,6 +33,22 @@ function normalizeName(raw: string): string {
 }
 
 export async function GET(req: NextRequest) {
+  const {
+    data: { user },
+  } = await getCachedUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  // Typeahead fires per keystroke (debounced client-side) — 30/min is generous.
+  const { success } = await rateLimit(
+    `medications-search:${getClientIp(req.headers)}`,
+    30,
+    60_000,
+  );
+  if (!success) {
+    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+  }
+
   const term = (req.nextUrl.searchParams.get("term") ?? "").trim();
   if (term.length < 2) {
     return NextResponse.json({ results: [] as MedicationResult[] });

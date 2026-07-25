@@ -68,13 +68,12 @@ export async function POST(
 
   // Reuse the cache unless the profile changed (safety alerts don't depend on
   // recipe scores).
-  const { data: cacheRaw } = await admin
-    .from("recipe_personalized_scores" as never)
+  const { data: cache } = await admin
+    .from("recipe_personalized_scores")
     .select("profile_updated_at")
-    .eq("user_id" as never, user.id as never)
-    .eq("recipe_id" as never, recipe.id as never)
+    .eq("user_id", user.id)
+    .eq("recipe_id", recipe.id)
     .maybeSingle();
-  const cache = cacheRaw as unknown as { profile_updated_at: string } | null;
   if (cache && new Date(cache.profile_updated_at) >= new Date(profile.updated_at)) {
     return NextResponse.json({ personalized: true });
   }
@@ -126,20 +125,19 @@ export async function POST(
     }
     const safetyAlerts = [...allergyAlerts, ...medicationAlerts];
 
+    // Deprecated columns (base_final_score, personalized_final_score, …) are no
+    // longer written — migration 20260725130000 relaxed their constraints.
     const { error: upErr } = await admin
-      .from("recipe_personalized_scores" as never)
+      .from("recipe_personalized_scores")
       .upsert(
+        // Cast: the generated Insert type still requires the deprecated NOT
+        // NULL columns; drop this cast after applying migration 20260725130000
+        // and regenerating lib/database.types.ts.
         {
           user_id: user.id,
           recipe_id: recipe.id,
           safety_alerts: safetyAlerts,
           profile_updated_at: profile.updated_at,
-          // Deprecated columns (kept satisfying their NOT NULL constraints; the
-          // match is now computed inline on the page and these are unread).
-          base_final_score: 0,
-          personalized_final_score: 0,
-          adjusted: false,
-          applied_modifiers: [],
         } as never,
         { onConflict: "user_id,recipe_id" },
       );

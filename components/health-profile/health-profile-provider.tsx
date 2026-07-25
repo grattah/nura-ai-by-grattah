@@ -17,6 +17,7 @@ import {
   STEP_ORDER,
   EMPTY_DRAFT,
 } from "@/lib/health-profile/types";
+import { needsConsent } from "@/lib/health-profile/consent";
 import {
   saveHealthProfile,
   deleteHealthProfileSection,
@@ -107,6 +108,14 @@ export function HealthProfileProvider({
       router.push(returnTo);
     };
     if (!exists) return go();
+    // The edit just introduced sensitive data (or consent is for an outdated
+    // version) and the consent checkbox lives only on Review — send them there
+    // rather than failing the save with a toast they can't act on. Mode/returnTo
+    // are kept so consenting lands them back where they came from.
+    if (needsConsent(draft)) {
+      router.push(`${BASE}/review`);
+      return;
+    }
     startSaving(async () => {
       const res = await saveHealthProfile(draft);
       if ("error" in res) {
@@ -119,6 +128,12 @@ export function HealthProfileProvider({
   }, [draft, exists, returnTo, router]);
 
   const saveProfile = useCallback(() => {
+    // Symmetry with finishEdit: Review's Save button is already disabled in this
+    // state, so this only catches a stale/forced call.
+    if (needsConsent(draft)) {
+      router.push(`${BASE}/review`);
+      return;
+    }
     startSaving(async () => {
       const res = await saveHealthProfile(draft);
       if ("error" in res) {
