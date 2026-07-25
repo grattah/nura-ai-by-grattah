@@ -7,13 +7,10 @@ import {
 } from "@/lib/supabase/server";
 import { SearchSection } from "@/components/home/search-section";
 import { RecipeCardNew } from "@/components/home/recipe-card-new";
-// Daily-tip feature retired — card + server read disabled (see below).
-// import { WellnessTipCard } from "@/components/home/wellness-tip-card";
 import { CategorySection } from "@/components/home/category-section";
 import { UpgradeBanner } from "@/components/home/upgrade-banner";
 import { getBookmarkedIds } from "@/actions/bookmark";
 import { withTiming } from "@/lib/perf";
-// import { getDailyTip, utcDayKey, FALLBACK_TIP } from "@/lib/daily-tip";
 import { getCategories } from "@/actions/categories";
 import { MoveRight } from "lucide-react";
 import { FreeTokensModal } from "@/components/tokens/FreeTokensModal";
@@ -66,7 +63,6 @@ export default async function HomePage() {
   ] = await Promise.all([
     withTiming("home:getCachedUser", () => getCachedUser()),
     withTiming("home:getPopularRecipes", () => getPopularRecipes()),
-    // Daily-tip read removed — feature retired (no endpoint call, no DB read).
   ]);
 
   function oneRecipePerCategory(recipes: RecipeWithTags[]): RecipeWithTags[] {
@@ -197,14 +193,6 @@ export default async function HomePage() {
             className="absolute -top-2.5 left-0 z-0 pointer-events-none"
           />
         </div>
-
-        {/* Daily Wellness Tip */}
-        {/* <WellnessTipCard
-          title={dailyTip.title}
-          description={dailyTip.description}
-          imageUrl={dailyTip.imageUrl}
-          stale={!dailyTipRow}
-        /> */}
 
         {/* Categories */}
         <CategorySection categories={categories} />

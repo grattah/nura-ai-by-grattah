@@ -18,6 +18,12 @@ vi.mock("@/lib/credits-server", () => ({
   meter: (...args: unknown[]) => h.meter(...args),
 }));
 
+// Free-trial consumption also uses the service-role client; deny it here so a
+// user with no subscription exercises the blocked (403) path deterministically.
+vi.mock("@/lib/free-trial-server", () => ({
+  tryConsumeFreeView: vi.fn().mockResolvedValue(false),
+}));
+
 // Don't hit the model — if auth passes we still shouldn't call Anthropic in these tests.
 vi.mock("ai", () => ({ generateObject: vi.fn(), generateText: vi.fn() }));
 vi.mock("@ai-sdk/anthropic", () => ({ anthropic: vi.fn() }));

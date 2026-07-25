@@ -1,6 +1,5 @@
 "use server";
 
-import { createClient } from "@supabase/supabase-js";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
 import { headers } from "next/headers";
@@ -33,37 +32,44 @@ export async function initiateCheckout(
   }
 
   // ── 1. Find or create the Supabase user ──────────────────────────────────
-  const authClient = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { db: { schema: "auth" } },
-  );
-
+  // Lookup goes through the SECURITY DEFINER RPC (auth_user_id_by_email): the
+  // auth schema is NOT exposed via PostgREST, so the previous direct
+  // `from("users")` read always failed silently and existing users could never
+  // check out (they fell into createUser → "already registered" → error).
   const adminSupabase = createServiceRoleClient();
 
-  let userId: string;
+  const lookupUserId = async (): Promise<string | null> => {
+    const { data, error } = await adminSupabase.rpc(
+      "auth_user_id_by_email" as never,
+      { p_email: email.toLowerCase() } as never,
+    );
+    if (error) {
+      console.error("[initiateCheckout] email lookup failed:", error.message);
+      return null;
+    }
+    return (data as string | null) ?? null;
+  };
 
-  const { data: existingUser } = await authClient
-    .from("users")
-    .select("id")
-    .eq("email", email.toLowerCase())
-    .maybeSingle();
+  let userId: string | null = await lookupUserId();
 
-  if (existingUser) {
-    userId = existingUser.id;
-  } else {
+  if (!userId) {
     const { data, error } = await adminSupabase.auth.admin.createUser({
       email: email.toLowerCase(),
       email_confirm: false,
       user_metadata: { onboarding_source: "checkout" },
     });
 
-    if (error || !data.user) {
-      console.error("[initiateCheckout] createUser failed:", error?.message);
-      return { error: "Failed to create account. Please try again." };
+    if (data.user) {
+      userId = data.user.id;
+    } else {
+      // Lost a race (or lookup outage): the email may exist after all —
+      // re-resolve before giving up.
+      userId = await lookupUserId();
+      if (!userId) {
+        console.error("[initiateCheckout] createUser failed:", error?.message);
+        return { error: "Failed to create account. Please try again." };
+      }
     }
-
-    userId = data.user.id;
   }
 
   // ── 2. Block if the user already has an active subscription ──────────────

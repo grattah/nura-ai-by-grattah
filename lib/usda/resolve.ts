@@ -62,15 +62,32 @@ const NovaSchema = z.object({
 });
 type Classification = z.infer<typeof NovaSchema> & { needs_review: boolean };
 
-function heuristicClassify(name: string, usdaCategory: string): Classification | null {
-  const hay = `${name} ${usdaCategory}`.toLowerCase();
+// Unambiguous whole-food USDA categories; combined with an absence of
+// processing markers in the NAME they safely classify NOVA 1 without an LLM.
+const WHOLE_CATEGORY_RE = /fruits|vegetables|legumes|nut and seed|spices and herbs/i;
+const PROCESSED_NAME_RE = /juice|syrup|powder|canned|dried|concentrate|extract|flavored|sweetened|milk|butter/i;
+
+export function heuristicClassify(name: string, usdaCategory: string): Classification | null {
+  const n = name.toLowerCase();
+  const cat = usdaCategory.toLowerCase();
+  const hay = `${n} ${cat}`;
   const is_added_sweetener = SWEETENER_RE.test(hay) && !/whole|fresh fruit/.test(hay);
   const is_sweetener_nnutritive = NNUTRITIVE_RE.test(hay);
   const iron_rich = IRON_RICH_RE.test(hay);
   const is_fvl = FVL_CATEGORIES.test(hay) && !is_added_sweetener;
-  if (WHOLE_RE.test(hay)) return { nova_group: 1, is_fvl, is_added_sweetener, is_sweetener_nnutritive, iron_rich, needs_review: false };
-  if (is_sweetener_nnutritive || ULTRA_RE.test(hay)) return { nova_group: 4, is_fvl, is_added_sweetener, is_sweetener_nnutritive, iron_rich, needs_review: false };
-  if (is_added_sweetener) return { nova_group: 2, is_fvl: false, is_added_sweetener, is_sweetener_nnutritive, iron_rich, needs_review: false };
+  const base = { is_fvl, is_added_sweetener, is_sweetener_nnutritive, iron_rich, needs_review: false };
+
+  // Order matters (PRD tiers): artificial/flavored → 4; nutritive sweeteners
+  // (honey, maple syrup) → 2 BEFORE the generic ultra keywords, so "maple
+  // syrup" isn't swallowed by ULTRA's `syrup`; remaining ultra markers → 4.
+  if (is_sweetener_nnutritive || /flavored|artificial/.test(hay)) return { nova_group: 4, ...base };
+  if (is_added_sweetener) return { nova_group: 2, ...base, is_fvl: false };
+  if (ULTRA_RE.test(hay)) return { nova_group: 4, ...base };
+  // Whole/minimally processed: generic name prefix (e.g. "fresh herb …"), OR an
+  // unambiguous whole-food category with no processing marker in the name
+  // (catches plain produce like "banana" / "fresh spinach").
+  if (WHOLE_RE.test(n) || (WHOLE_CATEGORY_RE.test(cat) && !PROCESSED_NAME_RE.test(n)))
+    return { nova_group: 1, ...base };
   return null; // ambiguous → LLM
 }
 

@@ -54,9 +54,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Too many requests." }, { status: 429 });
   }
 
-  // Public by design: anyone (guest or signed-in) can browse suggestions. Only
-  // generating a recipe from a suggestion is gated (/api/recipes/generate).
-  // Cost is bounded by the rate-limit above + the 24h query cache below.
+  // Global daily budget (audit S1): the per-IP limit is bypassable by rotating
+  // IPs, so cap the endpoint's total LLM spend as a circuit breaker. 500 fresh
+  // generations/day is far above organic guest traffic; cached hits don't count
+  // (checked before the budget below).
+  //
+  // Public by design: anyone (guest or signed-in) can browse suggestions —
+  // /find-recipe is a public page. Only generating a recipe from a suggestion
+  // is gated (/api/recipes/generate).
 
   let query: string;
   try {
@@ -77,6 +82,15 @@ export async function POST(req: NextRequest) {
   const cached = getCachedSuggestions(normalizedQuery);
   if (cached) {
     return NextResponse.json(cached);
+  }
+
+  // Global daily budget — only fresh (uncached) LLM generations count.
+  const budget = await rateLimit("recipe-suggestions:global", 500, 86_400_000);
+  if (!budget.success) {
+    return NextResponse.json(
+      { error: "Suggestions are temporarily unavailable. Please try again later." },
+      { status: 429 },
+    );
   }
 
   try {

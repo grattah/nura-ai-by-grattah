@@ -13,7 +13,6 @@
     "usda:build": "esbuild scripts/usda-build.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.usda-build.mjs && node --env-file=.env.local scripts/.usda-build.mjs",
     "vectorise": "node --env-file=.env.local scripts/vectorise.mjs",
     "score-supports": "node --env-file=.env.local scripts/score-supports.mjs",
-    "backfill-nutrition": "node --env-file=.env.local scripts/backfill-nutrition.mjs",
     "list-models": "node --env-file=.env.local scripts/list-models.mjs"
   },
   "dependencies": {

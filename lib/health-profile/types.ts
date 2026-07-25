@@ -24,6 +24,12 @@ export interface HealthProfileDraft {
   medications: Medication[];
   // dietaryPattern: string | null; // single-select
   consent: boolean;
+  /**
+   * Which CONSENT_VERSION the stored consent was given against (null when never
+   * consented). Carried in the draft so a version bump can re-prompt — see
+   * needsConsent() in lib/health-profile/consent.ts.
+   */
+  consentVersion: string | null;
 }
 
 // Optional sections a user can clear individually from the populated view.
@@ -74,4 +80,5 @@ export const EMPTY_DRAFT: HealthProfileDraft = {
   medications: [],
   // dietaryPattern: null,
   consent: false,
+  consentVersion: null,
 };
