@@ -308,18 +308,15 @@ export default async function RecipeDetailPage({
               <RecipeSupports
                 supports={topBioactivities(recipe.recipe_tags, 5)}
               />
-              {personalizedView ? (
-                matchScore != null ? (
-                  <NutritionScore
-                    baseScore={recipe.final_score_10 ?? 0}
-                    personalizedScore={Math.round(matchScore)}
-                  />
-                ) : (
-                  <RecipePersonalizeTrigger
-                    recipeId={recipe.id}
-                    canTrigger={needsSafetyAlerts}
-                  />
-                )
+              {/* Base + match when we can personalize; otherwise fall back to the
+                  default card (nutrition % + "complete profile" CTA). A profiled
+                  subscriber with no goals AND no conditions has nothing to match
+                  against, so matchScore is null and they get the default too. */}
+              {personalizedView && matchScore != null ? (
+                <NutritionScore
+                  baseScore={recipe.final_score_10 ?? 0}
+                  personalizedScore={Math.round(matchScore)}
+                />
               ) : (
                 <DetoxCard
                   finalScore={
@@ -328,6 +325,14 @@ export default async function RecipeDetailPage({
                       : null
                   }
                 />
+              )}
+
+              {/* Safety alerts are cached separately and don't depend on the match
+                  score — keep this trigger independent of the card above, or users
+                  who DO have a match score would never have their alerts computed.
+                  Renders no visible chrome once the alerts are cached. */}
+              {personalizedView && needsSafetyAlerts && (
+                <RecipePersonalizeTrigger recipeId={recipe.id} canTrigger />
               )}
             </div>
 
