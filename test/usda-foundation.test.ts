@@ -3,6 +3,7 @@ import { parseIngredient } from "@/lib/usda/parse-ingredient";
 import { toGrams } from "@/lib/usda/units";
 import { rollupRecipe, type ResolvedIngredient } from "@/lib/usda/rollup";
 import { extractNutrients } from "@/lib/usda/nutrient-ids";
+import { zeroNutrientProfile, pickBestFood } from "@/lib/usda/resolve";
 
 describe("parseIngredient", () => {
   it("splits quantity, unit, and name", () => {
@@ -127,5 +128,63 @@ describe("rollupRecipe", () => {
       1,
     );
     expect(r.iron_rich).toBe(true);
+  });
+});
+
+// Regression cover for the corrupted-nutrient bug: USDA search matched
+// "ice cubes" to a food with 28.8 g protein / 187 kcal per 100 g. At 120 g of a
+// 512 g drink that supplied 86% of the recipe's protein and 44% of its calories,
+// pinning protein_points at 7/7 and energy_points at 10/10 — inflating both the
+// Base Nutrition Score and every Match Score credit that reads nutrient points.
+describe("zeroNutrientProfile", () => {
+  it("treats every water/ice variant as pure water", () => {
+    for (const name of [
+      "ice", "ice cubes", "a few ice cubes", "crushed ice", "cold water",
+      "hot water", "filtered water", "sparkling water", "tap water",
+    ]) {
+      const z = zeroNutrientProfile(name);
+      expect(z, `"${name}" should be zero-nutrient`).not.toBeNull();
+      expect(z!.energy_kcal).toBe(0);
+      expect(z!.protein_g).toBe(0);
+      expect(z!.water_pct).toBe(100);
+    }
+  });
+
+  it("salt has no calories or protein but real sodium", () => {
+    const z = zeroNutrientProfile("sea salt");
+    expect(z).not.toBeNull();
+    expect(z!.energy_kcal).toBe(0);
+    expect(z!.protein_g).toBe(0);
+    expect(z!.sodium_mg).toBeGreaterThan(30000); // drives salt_points
+  });
+
+  it("does NOT swallow foods that merely contain the word", () => {
+    // These carry genuine nutrients and must still be resolved via USDA.
+    for (const name of ["coconut water", "rose water", "milk or water", "ice cream"]) {
+      expect(zeroNutrientProfile(name), `"${name}" must not be zeroed`).toBeNull();
+    }
+  });
+});
+
+describe("pickBestFood", () => {
+  it("prefers a description that overlaps the query over the first hit", () => {
+    const best = pickBestFood("almond butter", [
+      { description: "Butter, salted" },
+      { description: "Nuts, almond butter, plain" },
+    ]);
+    expect(best?.description).toBe("Nuts, almond butter, plain");
+  });
+
+  it("returns null when nothing overlaps — the spurious-match signature", () => {
+    // Exactly the shape of the bug: a candidate unrelated to the query.
+    expect(pickBestFood("ice cubes", [{ description: "Beef, ground, raw" }])).toBeNull();
+  });
+
+  it("keeps USDA's ranking when candidates tie", () => {
+    const best = pickBestFood("banana", [
+      { description: "Bananas, raw" },
+      { description: "Bananas, dehydrated" },
+    ]);
+    expect(best?.description).toBe("Bananas, raw");
   });
 });
