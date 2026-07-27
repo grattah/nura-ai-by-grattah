@@ -19,7 +19,7 @@ const CategoriesList = ({ categories }: { categories: Categories[] }) => {
         <CategoryCard
           key={tag.id}
           slug={tag.slug}
-          name={tag.name}
+          name={tag.name == "Beauty" ? "Anti-aging" : tag.name}
           config={getCategoryConfig(tag.slug)}
         />
       ))}
