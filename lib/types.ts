@@ -23,6 +23,11 @@ export type CategoryRecipe = Pick<
   Recipe,
   "id" | "title" | "image_url" | "display_order"
 > & {
-  /** The recipe's CategoryScore for the category being viewed (recipe_categories.score). */
+  /**
+   * The recipe's CategoryScore for the category being viewed
+   * (recipe_categories.score). Used for ORDERING only — it is not a Match Score
+   * and must never be displayed as one (PRD §7.4). Cards get their match from
+   * useMatchScores().
+   */
   score?: number | null;
 };

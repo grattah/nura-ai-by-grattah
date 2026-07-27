@@ -9,6 +9,7 @@ import { getCategoryConfig } from "@/lib/category-config";
 import { CategoryBanner } from "@/components/categories/category-banner";
 import { RecipesEmptyState } from "@/components/categories/recipes-empty-state";
 import { RecipeCard } from "@/components/recipe-card";
+import { useMatchScores } from "@/components/recipe/use-match-scores";
 import { FilterPills, type FilterPill } from "@/components/filter-pills";
 import { DRINK_TYPES } from "@/lib/drink-types";
 import type { CategoryRecipe } from "@/lib/types";
@@ -32,6 +33,8 @@ export default function CategoryDetailPage() {
   const [availableTypes, setAvailableTypes] = useState<string[]>([]);
 
   const [recipes, setRecipes] = useState<CategoryRecipe[]>([]);
+  // PRD §7.4: cards must show the same Match Score as the recipe's detail page.
+  const matchScores = useMatchScores(recipes.map((r) => r.id));
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState(false);
@@ -235,6 +238,7 @@ export default function CategoryDetailPage() {
   ];
 
   const displayName = slug?.replace(/-/g, " ") ?? "";
+  const categoryLabel = config?.label ?? displayName;
 
   return (
     <div className="bg-white pb-24 min-h-svh flex flex-col">
@@ -248,7 +252,7 @@ export default function CategoryDetailPage() {
           <ArrowLeft className="size-5 text-foreground" />
         </button>
         <h1 className="flex-1 text-center text-xl font-semibold text-base-text capitalize">
-          {displayName == "beauty" ? "Anti-aging" : displayName}
+          {categoryLabel}
         </h1>
         <Link
           href={`/search-category?category=${slug}`}
@@ -261,7 +265,7 @@ export default function CategoryDetailPage() {
 
       <div className="space-y-6 flex-1 mb-2">
         {/* Category banner */}
-        <CategoryBanner name={displayName == "beauty" ? "Anti-aging" : displayName} config={config} />
+        <CategoryBanner name={categoryLabel} config={config} />
 
         {/* Drink-type sub-sub-category filter (shown once present types load) */}
         {pills.length > 1 && (
@@ -301,7 +305,7 @@ export default function CategoryDetailPage() {
                 <RecipeCard
                   key={recipe.id}
                   recipe={recipe}
-                  score={recipe.score}
+                  match={matchScores[recipe.id] ?? null}
                   priority={i < 4}
                 />
               ))}

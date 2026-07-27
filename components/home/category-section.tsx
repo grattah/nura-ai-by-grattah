@@ -31,7 +31,7 @@ export function CategorySection({ categories }: CategorySectionProps) {
           <CategoryCard
             key={tag.id}
             slug={tag.slug}
-            name={tag.name == "Beauty" ? "Anti-aging" : tag.name}
+            name={tag.name}
             config={getCategoryConfig(tag.slug)}
           />
         ))}

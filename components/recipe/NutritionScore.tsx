@@ -6,15 +6,34 @@ import { HiOutlineInformationCircle } from "react-icons/hi";
 const DISCLAIMER =
   "Personalized based on your preferences - not a substitute for guidance from your doctor or dietitian.";
 
+export interface MatchBreakdownRow {
+  key: string;
+  label: string;
+  percent: number;
+}
+
 const NutritionScore = ({
   baseScore,
-  personalizedScore,
+  match,
+  breakdown = [],
+  average = null,
 }: {
+  /** Base Nutrition Score, 1–10 — the same for everyone. */
   baseScore: number;
-  personalizedScore: number;
+  /** §7.1 headline: the highest credit + the condition/goal that produced it. */
+  match: { percent: number; label: string };
+  /** §7.2 every credit, already sorted best-first. */
+  breakdown?: MatchBreakdownRow[];
+  /** §7.3 mean of all credits. Shown inside the panel only, never as headline. */
+  average?: number | null;
 }) => {
   const [open, setOpen] = useState(false);
+  // §7.2 expandable panel — collapsed by default.
+  const [showBreakdown, setShowBreakdown] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  // §7.5 with a single selection the average IS the highest, so showing both
+  // adds no information.
+  const showAverage = average != null && breakdown.length > 1;
 
   // Close on outside click and on Escape.
   useEffect(() => {
@@ -84,11 +103,56 @@ const NutritionScore = ({
         </div>
         <div className="rounded-2xl bg-info-c100 flex flex-col gap-2 p-3 items-center text-center">
           <p className="text-info-c600 text-hp-title leading-tight font-semibold">
-            {personalizedScore}%
+            {Math.round(match.percent)}%
           </p>
-          <p className="text-sm font-medium text-subtle">Your match</p>
+          {/* §7.1 — the headline always names what it matched. */}
+          <p className="text-sm font-medium text-subtle wrap-break-word">
+            {match.label}
+          </p>
         </div>
       </div>
+
+      {/* §7.2 full breakdown, sorted best-first. */}
+      {breakdown.length > 1 && (
+        <div>
+          <button
+            type="button"
+            onClick={() => setShowBreakdown((v) => !v)}
+            aria-expanded={showBreakdown}
+            aria-controls="match-breakdown"
+            className="text-sm font-medium text-mint-green underline"
+          >
+            {showBreakdown
+              ? "Hide details"
+              : "See other goals this recipe supports"}
+          </button>
+
+          {showBreakdown && (
+            <ul id="match-breakdown" className="mt-3 flex flex-col gap-2">
+              {breakdown.map((b) => (
+                <li
+                  key={b.key}
+                  className="flex items-center justify-between gap-3 text-sm"
+                >
+                  <span className="text-base-text wrap-break-word">{b.label}</span>
+                  <span className="text-subtle shrink-0">
+                    {Math.round(b.percent)}%
+                  </span>
+                </li>
+              ))}
+              {/* §7.3 optional average — secondary, never the headline. */}
+              {showAverage && (
+                <li className="flex items-center justify-between gap-3 text-sm border-t border-grey-c100 pt-2 mt-1">
+                  <span className="text-subtle">Average across all</span>
+                  <span className="text-subtle shrink-0">
+                    {Math.round(average)}%
+                  </span>
+                </li>
+              )}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 };

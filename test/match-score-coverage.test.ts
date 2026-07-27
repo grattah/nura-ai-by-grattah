@@ -52,4 +52,14 @@ describe("map integrity", () => {
       expect(GOAL_CREDITS[prd], `${key} → ${prd}`).toBeTypeOf("function");
     }
   });
+
+  // §7.1 shows the label of the winning selection, so every live option needs a
+  // real display label — a key echoed back as its own label would surface raw
+  // slugs like "gut-health" in the UI.
+  it("every live option resolves to a human label", () => {
+    for (const o of [...CONDITIONS, ...GOALS]) {
+      expect(o.label, `option "${o.key}" has no label`).toBeTruthy();
+      expect(o.label, `option "${o.key}" label is just the key`).not.toBe(o.key);
+    }
+  });
 });
