@@ -258,7 +258,7 @@ export default async function RecipeDetailPage({
           {/* Sub-header */}
           <div className="flex items-center justify-between px-6 pt-5 pb-3">
             <BackButton className="size-10 grid place-items-center rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <ShareButton
                 recipeId={recipe.id}
                 recipeTitle={recipe.title}
@@ -267,7 +267,7 @@ export default async function RecipeDetailPage({
                 disabled={shareDisabled}
               />
               <BookmarkButton text="" addText="" popularStyle="" />
-            </div>
+            </div> */}
           </div>
 
           <main className="pb-6">

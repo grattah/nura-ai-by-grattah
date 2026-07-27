@@ -12,14 +12,23 @@ export default function ExistingConditionsStep() {
     <StepShell
       step="conditions"
       title="Existing conditions"
-      sublabel="Select all that apply."
+      sublabel="Select any three that apply."
       optional
     >
       <div className="space-y-5">
         <Checklist
           options={CONDITIONS}
           selected={draft.conditions}
-          onToggle={(k) => update({ conditions: toggle(draft.conditions, k) })}
+          onToggle={(k) => {
+            const conditions = draft.conditions;
+            if (conditions.includes(k)) {
+              update({ conditions: conditions.filter((g) => g !== k) });
+            } else if (conditions.length < 3) {
+              update({ conditions: [...conditions, k] });
+            } else {
+              update({ conditions: [...conditions.slice(0, -1), k] });
+            }
+          }}
         />
         {/* <OtherInput
           value={draft.conditionsOther}
