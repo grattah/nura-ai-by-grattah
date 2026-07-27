@@ -17,15 +17,16 @@ export default function HealthGoalsStep() {
       <GoalGrid
         goals={GOALS}
         selected={draft.goals}
-        onToggle={(k) =>
-          update({
-            goals: draft.goals.includes(k)
-              ? toggle(draft.goals, k) // always allow deselect
-              : draft.goals.length < 3
-              ? toggle(draft.goals, k) // allow select only under the cap
-              : draft.goals, // at cap: ignore new selections
-          })
-        }
+        onToggle={(k) => {
+          const goals = draft.goals;
+          if (goals.includes(k)) {
+            update({ goals: goals.filter((g) => g !== k) });
+          } else if (goals.length < 3) {
+            update({ goals: [...goals, k] });
+          } else {
+            update({ goals: [...goals.slice(0, -1), k] });
+          }
+        }}
       />
     </StepShell>
   );

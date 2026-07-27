@@ -19,15 +19,16 @@ export default function ExistingConditionsStep() {
         <Checklist
           options={CONDITIONS}
           selected={draft.conditions}
-          onToggle={(k) =>
-            update({
-              conditions: draft.conditions.includes(k)
-                ? toggle(draft.conditions, k) // always allow deselect
-                : draft.conditions.length < 3
-                ? toggle(draft.conditions, k) // allow select only under the cap
-                : draft.conditions, // at cap: ignore new selections
-            })
-          }
+          onToggle={(k) => {
+            const conditions = draft.conditions;
+            if (conditions.includes(k)) {
+              update({ conditions: conditions.filter((g) => g !== k) });
+            } else if (conditions.length < 3) {
+              update({ conditions: [...conditions, k] });
+            } else {
+              update({ conditions: [...conditions.slice(0, -1), k] });
+            }
+          }}
         />
         {/* <OtherInput
           value={draft.conditionsOther}
