@@ -88,7 +88,10 @@ export async function POST(req: NextRequest) {
   const budget = await rateLimit("recipe-suggestions:global", 500, 86_400_000);
   if (!budget.success) {
     return NextResponse.json(
-      { error: "Suggestions are temporarily unavailable. Please try again later." },
+      {
+        error:
+          "Suggestions are temporarily unavailable. Please try again later.",
+      },
       { status: 429 },
     );
   }
@@ -100,18 +103,17 @@ export async function POST(req: NextRequest) {
       maxOutputTokens: 256,
       system: `You are a recipe naming assistant for the Nuko wellness app.
 A user searched for a wellness drink that is not in our catalogue.
-Generate exactly 5 realistic drink recipe names that someone searching for that drink would expect to find..
+Generate exactly 5 realistic drink recipe names that someone searching for that drink would expect to find.
 
 Rules:
 - Return only the recipe names, one per line.
 - Suggest drinks only. Never suggest food.
-- Use simple ingredient-based names, like recipes found in a cookbook or smoothie menu.
-- Prefer names built from the main ingredients.
+- Each name must be an established, well-known drink with real, documented health benefits, not an invented or novel-sounding combination. If you would not find this drink name in a health cookbook, on a wellness blog, or ordered at a juice bar, do not include it.
+- Name format: [Main plant/fruit ingredient(s)] + [drink type]. Example pattern: "Ginger Turmeric Tea," "Beet Carrot Juice," "Mango Lassi."
+- Do not use filler, marketing, or descriptive words of any kind, including "Fresh," "Homemade," "Classic," "Natural," or similar. Only ingredient names and drink type words belong in the name.
+- Drink type must be one of: Juice, Smoothie, Tea, Lassi, Cooler, Water, Cider, Milk, Shot (only use the type that is conventionally correct for that combination of ingredients).
 - Do not use marketing or functional words such as: Refresh, Hydrator, Revive, Booster, Energizer, Detox, Elixir, Immunity, Glow, Power, Vitality, Fuel, Blend (unless it is the natural drink type), Splash.
-- Keep every name natural, home-makeable, and believable.
-- Do not repeat the user's search exactly.
-- No numbering, bullets, explanations, punctuation, or descriptions.
-`,
+- No numbering, bullets, explanations, punctuation, or descriptions.`,
       prompt: `The user searched for: "${query.trim()}"`,
     });
 
