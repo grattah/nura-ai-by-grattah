@@ -63,6 +63,55 @@ describe("Recipe Match Score — PRD full worked example → 46.6%", () => {
     expect(r.score).toBeCloseTo(80, 5);
   });
 
+  // The consolidated keys the picker actually saves today. These previously
+  // mapped to nothing, so the score silently vanished (or dropped the condition
+  // from the average) — see test/match-score-coverage.test.ts for the guard.
+  it("scores the live consolidated condition keys", () => {
+    const ctx = {
+      points: { sugar: 0, salt: 0, satFat: 0, energy: 0, protein: 0, fiber: 0 },
+      track: "Beverage",
+      ironRich: false,
+      waterContentPercent: 0,
+      goals: [],
+    };
+    // diabetes → Diabetes = (BloodSugar/100 + (1 − 0/10)) / 2 = (0.5 + 1)/2
+    expect(
+      computeMatchScore({
+        ...ctx,
+        bioBySlug: bySlug({ BloodSugar: 50 }),
+        conditions: ["diabetes"],
+      }).score,
+    ).toBeCloseTo(75, 5);
+    // arthritis → (Inflammation + PainComfort) / 2
+    expect(
+      computeMatchScore({
+        ...ctx,
+        bioBySlug: bySlug({ Inflammation: 60, PainComfort: 40 }),
+        conditions: ["arthritis"],
+      }).score,
+    ).toBeCloseTo(50, 5);
+    // digestive-sensitivities → (Gut + Inflammation) / 2
+    expect(
+      computeMatchScore({
+        ...ctx,
+        bioBySlug: bySlug({ Gut: 80, Inflammation: 20 }),
+        conditions: ["digestive-sensitivities"],
+      }).score,
+    ).toBeCloseTo(50, 5);
+  });
+
+  it("still scores legacy keys held by older profiles", () => {
+    // Pre-consolidation rows in health_profiles must keep working.
+    const r = computeMatchScore({
+      bioBySlug: bySlug({ Gut: 80, Inflammation: 20 }),
+      points: { sugar: 0, salt: 0, satFat: 0, energy: 0, protein: 0, fiber: 0 },
+      track: "Beverage", ironRich: false, waterContentPercent: 0,
+      conditions: ["ibs"], goals: [],
+    });
+    expect(r.creditCount).toBe(1);
+    expect(r.score).toBeCloseTo(50, 5);
+  });
+
   it("Anemia credit is driven by the iron-rich flag", () => {
     const on = computeMatchScore({
       bioBySlug: {}, points: { sugar: 0, salt: 0, satFat: 0, energy: 0, protein: 0, fiber: 0 },

@@ -114,13 +114,19 @@ export const GOAL_CREDITS: Record<string, (c: MatchContext) => number> = {
 };
 
 // ── App health-profile key → PRD formula name ───────────────────────────────
-// Keys with no PRD formula (thyroid-condition, celiac-disease, and the
-// diabetes/menopause/heart *goal* slugs) are intentionally absent → they
-// contribute no credit and are excluded from the average.
+// EVERY live key in lib/health-profile/options.ts (CONDITIONS / GOALS) must have
+// a row here: computeMatchScore silently skips unmapped keys, so a missing row
+// doesn't error — it just drops that condition/goal from the average, or hides
+// the Match Score entirely when nothing maps. test/match-score-coverage.test.ts
+// enforces this; add a row here whenever an option is added or renamed.
+//
+// Rows marked "legacy" are keys the picker no longer offers but that older
+// profiles still hold in health_profiles — keep them so those users keep scoring.
 export const CONDITION_KEY_TO_PRD: Record<string, string> = {
-  "type-1-diabetes": "Diabetes",
-  "type-2-diabetes": "Diabetes",
-  prediabetes: "Diabetes",
+  diabetes: "Diabetes",
+  "type-1-diabetes": "Diabetes", // legacy
+  "type-2-diabetes": "Diabetes", // legacy
+  prediabetes: "Diabetes", // legacy
   "heart-disease": "Heart disease",
   "high-blood-pressure": "High blood pressure",
   "high-cholesterol": "High cholesterol",
@@ -128,21 +134,24 @@ export const CONDITION_KEY_TO_PRD: Record<string, string> = {
   "kidney-disease": "Kidney disease",
   "liver-disease": "Liver disease",
   menopause: "Menopause",
-  perimenopause: "Menopause",
-  ibs: "Digestive Sensitivities",
-  ibd: "Digestive Sensitivities",
-  gerd: "Digestive Sensitivities",
-  gout: "Arthritis",
+  perimenopause: "Menopause", // legacy
+  "digestive-sensitivities": "Digestive Sensitivities",
+  ibs: "Digestive Sensitivities", // legacy
+  ibd: "Digestive Sensitivities", // legacy
+  gerd: "Digestive Sensitivities", // legacy
+  arthritis: "Arthritis",
+  gout: "Arthritis", // legacy
   osteoporosis: "Osteoporosis",
   anemia: "Anemia",
 };
 export const GOAL_KEY_TO_PRD: Record<string, string> = {
   energy: "Have more energy",
   hormones: "Balance my hormones",
-  hydration: "Get more hydration",
+  hydration: "Get more hydration", // formula retained; no live picker option
   fitness: "Improve my fitness",
   focus: "Sharpen my focus",
-  beauty: "Improve my skin & hair",
+  "skin-hair": "Improve my skin & hair",
+  beauty: "Improve my skin & hair", // legacy
   sleep: "Sleep better",
   detox: "Support my body's detox",
   "gut-health": "Improve my gut health",
