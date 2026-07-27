@@ -11,13 +11,21 @@ export default function HealthGoalsStep() {
   return (
     <StepShell step="goals" title="Health goals" sublabel="Optional" optional>
       <p className="text-base font-medium leading-snug text-base-text mb-8 pt-3">
-        Select all that apply. These map directly to your personalized nutrition
-        score.
+        Select any three that apply. These map directly to your personalized
+        nutrition score.
       </p>
       <GoalGrid
         goals={GOALS}
         selected={draft.goals}
-        onToggle={(k) => update({ goals: toggle(draft.goals, k) })}
+        onToggle={(k) =>
+          update({
+            goals: draft.goals.includes(k)
+              ? toggle(draft.goals, k) // always allow deselect
+              : draft.goals.length < 3
+              ? toggle(draft.goals, k) // allow select only under the cap
+              : draft.goals, // at cap: ignore new selections
+          })
+        }
       />
     </StepShell>
   );
