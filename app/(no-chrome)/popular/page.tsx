@@ -66,7 +66,7 @@ const page = async () => {
                         className="rounded-full size-1.25"
                       />
                       <span className="text-xs font-semibold uppercase tracking-wide">
-                        {firstTag}
+                        {firstTag == "Beauty" ? "anti-aging" : firstTag }
                       </span>
                     </div>
                   )}
