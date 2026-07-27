@@ -21,7 +21,7 @@ export function CategoryBanner({ name, config }: CategoryBannerProps) {
           className="object-contain"
         />
         <p className="text-lg font-semibold text-base-text capitalize">
-          {name}
+          {name == "beauty" ? "Anti-aging" : name}
         </p>
       </div>
       <div className="shrink-0 overflow-hidden">
