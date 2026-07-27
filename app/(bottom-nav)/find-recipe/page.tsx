@@ -44,12 +44,12 @@ const page = () => {
   const concernParam = searchParams.get("concern");
   const supabase = createClient();
   const [searchTerm, setSearchTerm] = React.useState(
-    query || generateParam || "",
+    query || generateParam || ""
   );
   const [results, setResults] = React.useState<RecipeHit[]>([]);
   const [searchLoading, setSearchLoading] = React.useState(false);
   const [suggestedRecipes, setSuggestedRecipes] = React.useState<RecipeHit[]>(
-    [],
+    []
   );
   const [pendingRecipe, setPendingRecipe] = React.useState<string | null>(null);
   const [generating, setGenerating] = React.useState(false);
@@ -59,7 +59,7 @@ const page = () => {
   const [tokenModalOpen, setTokenModalOpen] = React.useState(false);
   const [showSignInModal, setShowSignInModal] = React.useState(false);
   const [aiSuggestions, setAiSuggestions] = React.useState<RecipeSuggestion[]>(
-    [],
+    []
   );
   const [aiSuggestionsLoading, setAiSuggestionsLoading] = React.useState(false);
   const [aiSuggestionsError, setAiSuggestionsError] = React.useState<
@@ -70,7 +70,7 @@ const page = () => {
     React.useState(false);
   const [hasSearched, setHasSearched] = React.useState(false);
   const suggestionsCache = React.useRef<Map<string, RecipeSuggestion[]>>(
-    new Map(),
+    new Map()
   );
 
   const { recents, add: addRecent, clear: clearRecents } = useRecentSearches();
@@ -145,7 +145,7 @@ const page = () => {
 
       // Shuffle and take 3 so the user sees variety each visit
       const shuffled = ((data ?? []) as unknown as RecipeHit[]).sort(
-        () => Math.random() - 0.5,
+        () => Math.random() - 0.5
       );
       setSuggestedRecipes(shuffled.slice(0, 3));
     };
@@ -239,7 +239,7 @@ const page = () => {
         setGenerateError(true);
       }
     },
-    [router, applyState, refreshCredits],
+    [router, applyState, refreshCredits]
   );
 
   const autoTriggered = React.useRef(false);
@@ -391,25 +391,17 @@ const page = () => {
             <div className="flex flex-col gap-5 mt-2 px-6">
               <div className="flex flex-col gap-2">
                 <p className="font-medium">Results</p>
-                <p className="text-sm text-subtle">
-                  No recipe found for “{searchTerm.trim()}”.
+                <p className="text-sm text-subtle leading-[16px]">
+                  No recipe found for “{searchTerm.trim()}”. Please check your
+                  search again or check our suggestions
                 </p>
                 {generateError && (
                   <p className="text-sm text-red-500">
                     Couldn&apos;t generate that recipe. Please try again.
                   </p>
                 )}
-              </div>
-              <div className="flex flex-col gap-6 w-full rounded-3xl bg-white py-10.5 px-6">
-                <div className="flex flex-col gap-4 justify-center items-center">
-                  <SearchX />
-                  <p className="font-medium text-subtle text-center">
-                    No recipe found. Please check your search again or check our
-                    suggestions
-                  </p>
-                </div>
                 <button
-                  className="border border-mint-green py-4 flex items-center justify-center gap-3 rounded-full bg-white w-full"
+                  className="border border-mint-green py-4 flex items-center justify-center gap-3 rounded-full w-full mt-6"
                   onClick={handleGetSuggestions}
                 >
                   <Sparkles color="#227B6F" size={20} strokeWidth={2} />
@@ -570,7 +562,7 @@ const page = () => {
                         onClick={() =>
                           handleGenerate(
                             recipe.title,
-                            searchTerm.trim() || undefined,
+                            searchTerm.trim() || undefined
                           )
                         }
                         className="flex items-center gap-3 p-3 border-b hover:bg-[#E8E6DC] text-left transition-colors"
