@@ -148,7 +148,7 @@ export default async function HomePage() {
                   id={recipe.id}
                   title={recipe.title}
                   imageUrl={recipe.image_url ?? undefined}
-                  category={firstTag}
+                  category={firstTag == "Beauty" ? "anti-aging" : firstTag }
                   catSlug={catSlug}
                   href={`/recipes/${recipe.id}`}
                   priority={i < 2}
