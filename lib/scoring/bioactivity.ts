@@ -5,11 +5,6 @@ import { z } from "zod";
 import { WELLNESS_SUPPORTS, type ScorableRecipe } from "@/lib/wellness-score";
 import { type TraceOverride } from "@/lib/bioactivity-categories";
 
-// Bioactivity scoring — the TS twin of scripts/score-supports.mjs (scores all 23
-// bioactivities + trace-override categories). Used by the lazy per-recipe scoring
-// endpoint; runs on Haiku for speed (the batch script uses sonnet). KEEP IN SYNC
-// with the .mjs script's prompt/schema.
-
 export const scoreSchema = z.object({
   bioactivities: z.array(
     z.object({
@@ -48,7 +43,7 @@ Rules:
 
 TRACE EXCEPTION (category overrides):
 Certain ingredients exert strong, clinically-meaningful biological effects despite small quantities: turmeric, ginger, cinnamon, cloves, black pepper, matcha, saffron, moringa, spirulina, medicinal mushrooms. Averaged category scoring can wrongly exclude such recipes.
-The 14 recipe categories are: energy, hormones, hydration, fitness, focus, beauty, sleep, detox, gut-health, immunity, weight-loss, diabetes, menopause, heart.
+The 14 recipe categories are: energy, hormones, hydration, fitness, focus, anti-aging, sleep, detox, gut-health, immunity, weight-loss, diabetes, menopause, heart.
 In "traceOverrides", list any category this recipe should still be admitted to because it contains a clinically-meaningful amount of a trace-active ingredient strongly associated with that category's primary effect. For each, give the category slug, the ingredient, and your override confidence (0–100). Only include categories you genuinely believe warrant an override; return an empty array otherwise.
 
 Output only the schema fields, nothing else.`;
@@ -63,9 +58,9 @@ function formatIngredients(ingredients: unknown): string {
 }
 
 function buildPrompt(recipe: ScorableRecipe): string {
-  const list = WELLNESS_SUPPORTS.map((s) => `- ${s.name} (slug: ${s.slug})`).join(
-    "\n",
-  );
+  const list = WELLNESS_SUPPORTS.map(
+    (s) => `- ${s.name} (slug: ${s.slug})`,
+  ).join("\n");
   return `Recipe: ${recipe.title}
 ${recipe.short_description ? `Summary: ${recipe.short_description}\n` : ""}
 Ingredients (quantities are for one serving as written):
@@ -99,7 +94,8 @@ export async function scoreBioactivities(
   const valid = new Set(WELLNESS_SUPPORTS.map((b) => b.slug));
   const scoresBySlug: Record<string, number> = {};
   for (const s of object.bioactivities ?? []) {
-    if (valid.has(s.slug)) scoresBySlug[s.slug] = clampScore(s.bioactivityScore);
+    if (valid.has(s.slug))
+      scoresBySlug[s.slug] = clampScore(s.bioactivityScore);
   }
 
   return {

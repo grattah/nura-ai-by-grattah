@@ -187,7 +187,7 @@ export default async function RecipeDetailPage({
   const shareDisabled = (recipe as { status?: string }).status !== "approved";
 
   let personalizedView = false;
-  let matchScore: number | null = null;
+  let matchResult: ReturnType<typeof computeMatchScore> | null = null;
   let personalizedAlerts: SafetyAlertItem[] = [];
   let needsSafetyAlerts = false;
   if (user) {
@@ -219,7 +219,7 @@ export default async function RecipeDetailPage({
         if (rt.tags?.slug && rt.score != null)
           bioBySlug[rt.tags.slug] = rt.score;
       }
-      const match = computeMatchScore({
+      matchResult = computeMatchScore({
         bioBySlug,
         points: {
           sugar: recipe.sugar_points ?? 0,
@@ -235,7 +235,6 @@ export default async function RecipeDetailPage({
         conditions: profile?.conditions ?? [],
         goals: profile?.goals ?? [],
       });
-      matchScore = match.score;
 
       const cache = cacheRes.data as {
         safety_alerts: SafetyAlertItem[] | null;
@@ -259,7 +258,7 @@ export default async function RecipeDetailPage({
           {/* Sub-header */}
           <div className="flex items-center justify-between px-6 pt-5 pb-3">
             <BackButton className="size-10 grid place-items-center rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <ShareButton
                 recipeId={recipe.id}
                 recipeTitle={recipe.title}
@@ -268,7 +267,7 @@ export default async function RecipeDetailPage({
                 disabled={shareDisabled}
               />
               <BookmarkButton text="" addText="" popularStyle="" />
-            </div>
+            </div> */}
           </div>
 
           <main className="pb-6">
@@ -312,10 +311,12 @@ export default async function RecipeDetailPage({
                   default card (nutrition % + "complete profile" CTA). A profiled
                   subscriber with no goals AND no conditions has nothing to match
                   against, so matchScore is null and they get the default too. */}
-              {personalizedView && matchScore != null ? (
+              {personalizedView && matchResult?.highest ? (
                 <NutritionScore
                   baseScore={recipe.final_score_10 ?? 0}
-                  personalizedScore={Math.round(matchScore)}
+                  match={matchResult.highest}
+                  breakdown={matchResult.breakdown}
+                  average={matchResult.average}
                 />
               ) : (
                 <DetoxCard

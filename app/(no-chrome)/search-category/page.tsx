@@ -9,6 +9,7 @@ import { getCategoryConfig } from "@/lib/category-config";
 import { CategoryBanner } from "@/components/categories/category-banner";
 import { RecipesEmptyState } from "@/components/categories/recipes-empty-state";
 import { RecipeCard } from "@/components/recipe-card";
+import { useMatchScores } from "@/components/recipe/use-match-scores";
 import type { Tag } from "@/lib/types";
 
 type CategoryRecipe = {
@@ -29,6 +30,8 @@ function SearchCategoryContent() {
 
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<CategoryRecipe[]>([]);
+  // PRD §7.4: same Match Score here as on the recipe's detail page.
+  const matchScores = useMatchScores(results.map((r) => r.id));
   const [searched, setSearched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [categoryName, setCategoryName] = useState<string>("");
@@ -172,7 +175,7 @@ function SearchCategoryContent() {
                     key={recipe.id}
                     recipe={recipe}
                     priority={i < 4}
-                    score={recipe.score}
+                    match={matchScores[recipe.id] ?? null}
                   />
                 ))}
               </div>

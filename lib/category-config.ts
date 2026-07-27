@@ -4,6 +4,7 @@ export interface CategoryConfig {
   subtitle: string;
   imageUrl: string;
   iconUrl: string;
+  label?: string;
 }
 
 export const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
@@ -13,6 +14,7 @@ export const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
     subtitle: "Glow from the inside out",
     imageUrl: "/beauty.webp",
     iconUrl: "/beauty-icon.svg",
+    label: "Anti-aging",
   },
   detox: {
     bgColor: "oklch(0.9545 0.0182 161.12)",

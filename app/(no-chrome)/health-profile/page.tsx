@@ -214,7 +214,7 @@ function PopulatedView() {
                 </span>
               </span>
             </button>
-            {r.section && (
+            {/* {r.section && (
               <button
                 type="button"
                 disabled={saving}
@@ -224,13 +224,13 @@ function PopulatedView() {
               >
                 <Trash2 className="size-4" />
               </button>
-            )}
+            )} */}
             <ChevronRight className="size-4 text-grey-c500 shrink-0" />
           </div>
         ))}
 
         <p className="text-sm text-subtle pt-2">
-          You can edit or delete any section anytime.
+          You can edit any section anytime.
         </p>
       </div>
 

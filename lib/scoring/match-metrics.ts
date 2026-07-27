@@ -54,21 +54,62 @@ function bioSubtotal(bio: BioScores, weights: Record<string, number>): number {
 }
 
 // ── Existing Conditions (§4) ─────────────────────────────────────────────────
+// Every condition uses a relevance-weighted BioSubtotal (only bioactivities with
+// relevance ≥ 50 qualify — the PRD's cutoff, so the weight maps below ARE the
+// complete qualifying list). Nutrient terms use (1 − points/max) so a LOW point
+// value (good) contributes a HIGH credit.
 export const CONDITION_CREDITS: Record<string, (c: MatchContext) => number> = {
-  Diabetes: (c) => avg([c.bio.BloodSugar / 100, 1 - c.points.sugar / c.maxes.sugar]),
+  Diabetes: (c) =>
+    avg([
+      bioSubtotal(c.bio, { BloodSugar: 95, WeightMetabolic: 65 }) / 100,
+      1 - c.points.sugar / c.maxes.sugar,
+    ]),
   "Heart disease": (c) =>
-    avg([c.bio.Heart / 100, 1 - c.points.salt / c.maxes.salt, 1 - c.points.satFat / c.maxes.satFat]),
-  "High blood pressure": (c) => avg([c.bio.Heart / 100, 1 - c.points.salt / c.maxes.salt]),
-  "High cholesterol": (c) => avg([c.bio.CholLipid / 100, 1 - c.points.satFat / c.maxes.satFat]),
-  PCOS: (c) => avg([c.bio.Hormonal / 100, 1 - c.points.sugar / c.maxes.sugar]),
-  "Kidney disease": (c) => avg([c.bio.Kidney / 100, 1 - c.points.salt / c.maxes.salt]),
+    avg([
+      bioSubtotal(c.bio, { Heart: 95, CholLipid: 85, Inflammation: 50 }) / 100,
+      1 - c.points.salt / c.maxes.salt,
+      1 - c.points.satFat / c.maxes.satFat,
+    ]),
+  "High blood pressure": (c) =>
+    avg([
+      bioSubtotal(c.bio, { Heart: 95, Kidney: 60, CholLipid: 55, Inflammation: 50 }) / 100,
+      1 - c.points.salt / c.maxes.salt,
+    ]),
+  "High cholesterol": (c) =>
+    avg([
+      bioSubtotal(c.bio, { CholLipid: 95, Heart: 70, WeightMetabolic: 50, Inflammation: 50 }) / 100,
+      1 - c.points.satFat / c.maxes.satFat,
+    ]),
+  PCOS: (c) =>
+    avg([
+      bioSubtotal(c.bio, { Hormonal: 95, BloodSugar: 75, WeightMetabolic: 65, Inflammation: 55 }) / 100,
+      1 - c.points.sugar / c.maxes.sugar,
+    ]),
+  Menopause: (c) =>
+    bioSubtotal(c.bio, { Hormonal: 95, Temperature: 70, SleepRelaxation: 55, BoneJoint: 50, Mood: 50 }) / 100,
+  "Digestive Sensitivities": (c) =>
+    bioSubtotal(c.bio, { Gut: 95, Microbiome: 85, Inflammation: 55 }) / 100,
+  "Kidney disease": (c) =>
+    avg([
+      bioSubtotal(c.bio, { Kidney: 95, Heart: 50 }) / 100,
+      1 - c.points.salt / c.maxes.salt,
+    ]),
   "Liver disease": (c) =>
-    avg([c.bio.Liver / 100, 1 - c.points.sugar / c.maxes.sugar, 1 - c.points.satFat / c.maxes.satFat]),
-  Menopause: (c) => avg([c.bio.Hormonal / 100, c.bio.Temperature / 100, c.bio.BoneJoint / 100]),
-  "Digestive Sensitivities": (c) => avg([c.bio.Gut / 100, c.bio.Inflammation / 100]),
-  Osteoporosis: (c) => c.bio.BoneJoint / 100,
-  Arthritis: (c) => avg([c.bio.Inflammation / 100, c.bio.PainComfort / 100]),
-  Anemia: (c) => (c.ironRich ? 1 : 0),
+    avg([
+      bioSubtotal(c.bio, { Liver: 95, Antioxidant: 60, CholLipid: 55, Inflammation: 50 }) / 100,
+      1 - c.points.sugar / c.maxes.sugar,
+      1 - c.points.satFat / c.maxes.satFat,
+    ]),
+  Osteoporosis: (c) =>
+    bioSubtotal(c.bio, { BoneJoint: 95, HealthyAging: 55 }) / 100,
+  Arthritis: (c) =>
+    bioSubtotal(c.bio, { Inflammation: 95, PainComfort: 80, BoneJoint: 65, Antioxidant: 50 }) / 100,
+  // Not a bare flag: the iron-rich flag is averaged with a BrainCognitive subtotal.
+  Anemia: (c) =>
+    avg([
+      bioSubtotal(c.bio, { BrainCognitive: 50 }) / 100,
+      c.ironRich ? 1 : 0,
+    ]),
 };
 
 // ── Health Goals (§5) ────────────────────────────────────────────────────────
@@ -81,18 +122,18 @@ export const GOAL_CREDITS: Record<string, (c: MatchContext) => number> = {
     ]),
   "Balance my hormones": (c) =>
     bioSubtotal(c.bio, { Hormonal: 95, Mood: 65, StressResilience: 60 }) / 100,
-  "Get more hydration": (c) =>
+  "Drink more water": (c) =>
     avg([bioSubtotal(c.bio, { Kidney: 95, Temperature: 60 }) / 100, c.waterContentPercent]),
   "Improve my fitness": (c) =>
     avg([
-      bioSubtotal(c.bio, { WeightMetabolic: 85, Heart: 75, BoneJoint: 60, PainComfort: 50 }) / 100,
+      bioSubtotal(c.bio, { WeightMetabolic: 85, Heart: 75, BoneJoint: 60, BloodSugar: 55, PainComfort: 50 }) / 100,
       c.points.protein / c.maxes.protein,
       c.points.energy / c.maxes.energy,
     ]),
   "Sharpen my focus": (c) =>
     bioSubtotal(c.bio, { BrainCognitive: 95, Mood: 60, StressResilience: 55, SleepRelaxation: 50 }) / 100,
   "Improve my skin & hair": (c) =>
-    bioSubtotal(c.bio, { SkinHealth: 95, HealthyAging: 80, Antioxidant: 70 }) / 100,
+    bioSubtotal(c.bio, { SkinHealth: 95, HealthyAging: 80, Antioxidant: 70, CellWellness: 55 }) / 100,
   "Sleep better": (c) =>
     bioSubtotal(c.bio, { SleepRelaxation: 95, StressResilience: 65, Mood: 55 }) / 100,
   "Support my body's detox": (c) =>
@@ -107,10 +148,12 @@ export const GOAL_CREDITS: Record<string, (c: MatchContext) => number> = {
       1 - c.points.energy / c.maxes.energy,
       c.points.fiber / c.maxes.fiber,
     ]),
+  // Trimmed to the ≥50 qualifying bioactivities (the sub-50 tails these two
+  // previously carried are excluded by the PRD's relevance cutoff).
   "Reduce stress": (c) =>
-    bioSubtotal(c.bio, { StressResilience: 95, Mood: 65, SleepRelaxation: 55, Gut: 30, Inflammation: 25, BrainCognitive: 25, Hormonal: 20 }) / 100,
+    bioSubtotal(c.bio, { StressResilience: 95, Mood: 65, SleepRelaxation: 55 }) / 100,
   "Improve my mood": (c) =>
-    bioSubtotal(c.bio, { Mood: 95, StressResilience: 65, Gut: 35, SleepRelaxation: 30, BrainCognitive: 30, Hormonal: 25, Microbiome: 20 }) / 100,
+    bioSubtotal(c.bio, { Mood: 95, StressResilience: 65, SleepRelaxation: 50 }) / 100,
 };
 
 // ── App health-profile key → PRD formula name ───────────────────────────────
@@ -147,7 +190,7 @@ export const CONDITION_KEY_TO_PRD: Record<string, string> = {
 export const GOAL_KEY_TO_PRD: Record<string, string> = {
   energy: "Have more energy",
   hormones: "Balance my hormones",
-  hydration: "Get more hydration", // formula retained; no live picker option
+  hydration: "Drink more water", // formula retained; no live picker option
   fitness: "Improve my fitness",
   focus: "Sharpen my focus",
   "skin-hair": "Improve my skin & hair",
