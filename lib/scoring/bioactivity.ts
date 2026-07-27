@@ -5,11 +5,6 @@ import { z } from "zod";
 import { WELLNESS_SUPPORTS, type ScorableRecipe } from "@/lib/wellness-score";
 import { type TraceOverride } from "@/lib/bioactivity-categories";
 
-// Bioactivity scoring — the TS twin of scripts/score-supports.mjs (scores all 23
-// bioactivities + trace-override categories). Used by the lazy per-recipe scoring
-// endpoint; runs on Haiku for speed (the batch script uses sonnet). KEEP IN SYNC
-// with the .mjs script's prompt/schema.
-
 export const scoreSchema = z.object({
   bioactivities: z.array(
     z.object({
