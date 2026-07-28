@@ -24,10 +24,10 @@ export default function AllergiesStep() {
           selected={draft.allergies}
           onToggle={(k) => update({ allergies: toggle(draft.allergies, k) })}
         />
-        <OtherInput
+        {/* <OtherInput
           value={draft.allergiesOther}
           onChange={(v) => update({ allergiesOther: v })}
-        />
+        /> */}
       </div>
 
       <div className="mt-6 flex items-start gap-4 rounded-xl-5 bg-[#E6ECEA] p-4">

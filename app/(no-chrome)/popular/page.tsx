@@ -53,20 +53,21 @@ const page = async () => {
                   {firstTag && (
                     <div
                       style={{
-                        backgroundColor: getCategoryConfig(catSlug!).bgColor,
-                        color: getCategoryConfig(catSlug!).textColor,
+                        backgroundColor: getCategoryConfig(catSlug!)
+                          .bgColorBadge,
+                        color: getCategoryConfig(catSlug!).textColorBadge,
                       }}
                       className="w-fit mb-0.5 rounded-2xl py-1 px-2 flex items-center gap-1 josefin-sans"
                     >
                       <span
                         style={{
                           backgroundColor: getCategoryConfig(catSlug!)
-                            .textColor,
+                            .textColorBadge,
                         }}
                         className="rounded-full size-1.25"
                       />
                       <span className="text-xs font-semibold uppercase tracking-wide">
-                        {firstTag == "Beauty" ? "anti-aging" : firstTag }
+                        {firstTag == "Beauty" ? "anti-aging" : firstTag}
                       </span>
                     </div>
                   )}

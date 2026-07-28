@@ -17,7 +17,7 @@ const NAV_ITEMS = [
     activeIcon: Search,
   },
   {
-    label: "Community",
+    label: "Activities",
     href: "/community",
     icon: CommunityIcon,
     activeIcon: CommunityIconActive,

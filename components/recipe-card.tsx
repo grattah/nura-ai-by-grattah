@@ -3,17 +3,16 @@ import { Recipe } from "@/lib/types";
 import Image from "next/image";
 import Link from "next/link";
 import { MatchBadge } from "@/components/match-badge";
-import type { CardMatch } from "@/components/recipe/use-match-scores";
 
 export function RecipeCard({
   recipe,
   priority,
-  match,
+  score,
 }: {
   recipe: Pick<Recipe, "id" | "title" | "image_url">;
   priority?: boolean;
-  /** The user's Recipe Match Score for this recipe (PRD §7.4), or null. */
-  match?: CardMatch | null;
+  /** CategoryScore for the category being viewed (recipe_categories.score). */
+  score?: number | null;
 }) {
   const imageUrl = recipe.image_url
     ? getCloudinaryUrl(recipe.image_url, { width: 600, height: 450 })
@@ -39,7 +38,7 @@ export function RecipeCard({
           {recipe.title}
         </p>
 
-        <MatchBadge match={match} />
+        <MatchBadge score={score} />
       </div>
     </Link>
   );

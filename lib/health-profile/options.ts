@@ -117,6 +117,13 @@ export const ALLERGENS: Option[] = [
   { key: "soy", label: "Soy" },
   { key: "shellfish", label: "Shellfish" },
   { key: "eggs", label: "Eggs" },
+  { key: "fish", label: "Fish" },
+  { key: "sesame", label: "Sesame" },
+  { key: "mustard", label: "Mustard" },
+  { key: "celery", label: "Celery" },
+  { key: "lupin", label: "Lupin" },
+  { key: "sulphites", label: "Sulphites" },
+  { key: "molluscs", label: "Molluscs" },
 ];
 
 export interface DietaryOption extends Option {

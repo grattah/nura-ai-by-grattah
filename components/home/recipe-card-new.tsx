@@ -51,14 +51,14 @@ export function RecipeCardNew({
           {category && (
             <div
               style={{
-                backgroundColor: getCategoryConfig(catSlug!).bgColor,
-                color: getCategoryConfig(catSlug!).textColor,
+                backgroundColor: getCategoryConfig(catSlug!).bgColorBadge,
+                color: getCategoryConfig(catSlug!).textColorBadge,
               }}
               className="w-fit mb-0.5 rounded-2xl py-1 px-2 flex items-center gap-1"
             >
               <span
                 style={{
-                  backgroundColor: getCategoryConfig(catSlug!).textColor,
+                  backgroundColor: getCategoryConfig(catSlug!).textColorBadge,
                 }}
                 className="rounded-full size-1.25"
               />
