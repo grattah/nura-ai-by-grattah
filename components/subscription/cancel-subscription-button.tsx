@@ -16,6 +16,7 @@ import {
   cancelSubscription,
   reactivateSubscription,
 } from "@/actions/cancel-subscription";
+import EndSubscriptionModal from "@/components/EndSubscriptionModal";
 
 export function CancelSubscriptionButton({
   cancelAtPeriodEnd,
@@ -26,6 +27,7 @@ export function CancelSubscriptionButton({
 }) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const [showGoodbye, setShowGoodbye] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const doCancel = () =>
@@ -43,6 +45,7 @@ export function CancelSubscriptionButton({
           description: `You'll keep access until ${accessUntil}.`,
         });
         setOpen(false);
+        setShowGoodbye(true);
       }
     });
 
@@ -84,6 +87,7 @@ export function CancelSubscriptionButton({
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button className="w-full text-center text-sm font-semibold text-grey-c500 py-3 hover:opacity-75 transition-opacity">
@@ -112,5 +116,9 @@ export function CancelSubscriptionButton({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    {showGoodbye && (
+      <EndSubscriptionModal onClose={() => setShowGoodbye(false)} />
+    )}
+    </>
   );
 }

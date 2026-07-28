@@ -231,7 +231,7 @@ const page = () => {
         const data = await res.json();
         if (!data?.id) throw new Error("no id returned");
         refreshCredits();
-        router.replace(`/recipes/${data.id}`);
+        router.replace(`/recipes/${data.id}?generate=true`);
       } catch (err) {
         console.error("[find-recipe] generate", err);
         setGenerating(false);

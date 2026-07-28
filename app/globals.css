@@ -56,6 +56,8 @@
   --brown: oklch(0.3962 0.0221 58.94);
   --green: oklch(0.526 0.1005 141.71);
 
+  --brand-c600: oklch(0.3443 0.0683 166.41);
+
   --grey-c100: oklch(96.34% 0.001 197.14);
   --grey-c200: oklch(0.9173 0.0022 197.12);
   --grey-c300: oklch(0.8337 0.0071 174.34);
@@ -225,6 +227,8 @@
   --color-orange-25: var(--orange-25);
   --color-brown: var(--brown);
   --color-green: var(--green);
+
+  --color-brand-c600: var(--brand-c600);
 
   --color-grey-c100: var(--grey-c100);
   --color-grey-c200: var(--grey-c200);

@@ -28,14 +28,24 @@ export default async function ManageSubscriptionPage() {
       }
     | undefined;
 
-  if (!sub) redirect("/checkout");
+  // if (!sub) redirect("/checkout");
 
-  const nextBilling = sub.expires_at
-    ? format(new Date(sub.expires_at), "MMM d, yyyy")
-    : "—";
+  const nextBilling = sub?.expires_at
+    ? format(new Date(sub?.expires_at), "MMM d, yyyy")
+    : "-- --";
 
-  const planLabel = sub.plan === "monthly" ? "Monthly Plan" : "Premium Plan";
-  const priceLabel = sub.plan === "monthly" ? "£7.99/month" : "£79/year";
+  const planLabel =
+    sub?.plan === "monthly"
+      ? "Monthly Plan"
+      : !sub?.plan
+      ? "Free plan"
+      : "Premium Plan";
+  const priceLabel =
+    sub?.plan === "monthly"
+      ? "£7.99/month"
+      : !sub?.plan
+      ? "25 free token"
+      : "£79/year";
 
   return (
     <div className="min-h-dvh bg-background pb-10 flex flex-col">
