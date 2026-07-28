@@ -64,7 +64,7 @@ const AccordionSection = ({
               {[
                 { value: `${nutrition.kcal}`, label: "kcal" },
                 { value: `${nutrition.protein}g`, label: "Protein" },
-                { value: `${nutrition.fat}g`, label: "Fat" },
+                { value: `${nutrition.fat}g`, label: "Sat. Fat" },
                 { value: `${nutrition.carbs}g`, label: "Carbs" },
                 { value: `${nutrition.fiber}g`, label: "Fiber" },
               ].map((stat) => (
