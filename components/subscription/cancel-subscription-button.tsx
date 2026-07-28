@@ -86,7 +86,7 @@ export function CancelSubscriptionButton({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="w-full text-center text-sm font-semibold text-destructive py-3 hover:opacity-75 transition-opacity">
+        <button className="w-full text-center text-sm font-semibold text-grey-c500 py-3 hover:opacity-75 transition-opacity">
           Cancel subscription
         </button>
       </DialogTrigger>

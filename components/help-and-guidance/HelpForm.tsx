@@ -43,7 +43,7 @@ const HelpForm = ({ email, fullname }: { email: string; fullname: string }) => {
           <BackButton className="p-3 rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
           <div className="flex flex-col gap-1.75 items-center justify-center">
             <h1 className="text-center text-xl font-semibold text-base-text">
-              Help and guidance
+              Support
             </h1>
             <p className="text-subtle text-center text-sm font-medium">
               Submit your feedback
@@ -102,7 +102,8 @@ const HelpForm = ({ email, fullname }: { email: string; fullname: string }) => {
           <div className="flex flex-col gap-2.25 justify-center mt-4">
             <button
               type="submit"
-              className="py-4 rounded-full bg-mint-green text-white"
+              disabled={!canSubmit}
+              className="py-4 disabled:opacity-50 rounded-full bg-mint-green text-white"
             >
               Submit feedback
             </button>

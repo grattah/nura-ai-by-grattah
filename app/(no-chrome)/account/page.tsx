@@ -1,11 +1,15 @@
 import Link from "next/link";
 import Image from "next/image";
 import Tokens from "@/components/vectors/Tokens";
-import { ArrowLeft, Crown, HelpCircle, Heart, Shield } from "lucide-react";
+import Crown from "@/components/vectors/Crown";
+import Support from "@/components/vectors/Support";
+import { ShieldMark2 } from "@/components/vectors/ShieldMark";
+import { Heart } from "lucide-react";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { SettingsRow } from "@/components/account/settings-row";
 import { LogoutButton } from "@/components/auth/logout-button";
 import BackButton from "@/components/back-button";
+import FeatureRequestIcon from "@/components/vectors/feature-request";
 
 export default async function AccountPage() {
   const supabase = await createClient();
@@ -131,51 +135,43 @@ export default async function AccountPage() {
           )}
         </div>
 
-        {/* Manage subscription */}
-        <Link
-          href="/manage-subscription"
-          className="flex items-center justify-between border border-[#E3E1D880] bg-linear-to-r from-mint-green to-mint-green-2 p-4 rounded-2xl hover:opacity-90 transition-opacity active:scale-[0.98]"
-        >
-          <div className="flex items-center gap-3">
-            <div className="size-12 grid place-items-center rounded-lg border border-white/2 bg-mint-green">
-              <Crown className="w-5 h-5 text-white" strokeWidth={1.75} />
-            </div>
-            <div>
-              <p className="text-base font-medium text-white">
-                Manage subscription
-              </p>
-              <p className="text-sm text-white font-medium">
-                Access to 1000+ premium recipes
-              </p>
-            </div>
-          </div>
-          <ArrowLeft className="size-4 text-white rotate-180" />
-        </Link>
-
         {/* Settings section */}
-        <div className="space-y-2 mt-6">
+        <div className="space-y-2 mt-10">
           <p className="text-base font-semibold text-base-text px-1">
             Settings
           </p>
           <SettingsRow
-            icon={<Heart className="size-4 text-grey-c500" strokeWidth={2} />}
+            icon={<Heart className="size-5 text-grey-c500" strokeWidth={2} />}
             label="Health profile"
             href="/health-profile"
           />
           <SettingsRow
-            icon={<Tokens className="size-4 text-grey-c500" />}
+            icon={<Tokens className="size-5 text-grey-c500" />}
             label="Tokens"
             href="/tokens"
           />
           <SettingsRow
-            icon={
-              <HelpCircle className="size-4 text-grey-c500" strokeWidth={2} />
-            }
-            label="Help & guidance"
+            icon={<Crown className="size-5 text-grey-c500" />}
+            label="Membership"
+            href="/manage-subscription"
+          />
+          <SettingsRow
+            icon={<Support className="size-5 text-grey-c500" strokeWidth={2} />}
+            label="Support"
             href="/help-and-guidance"
           />
           <SettingsRow
-            icon={<Shield className="size-4 text-grey-c500" strokeWidth={2} />}
+            icon={
+              <FeatureRequestIcon
+                className="size-5 text-grey-c500"
+                strokeWidth={2}
+              />
+            }
+            label="Feature request"
+            href="/feature-request"
+          />
+          <SettingsRow
+            icon={<ShieldMark2 className="size-5 text-grey-c500" />}
             label="Terms and privacy"
             href="/terms-and-privacy"
           />

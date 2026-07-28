@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
+import { getStripeCustomerId } from "@/lib/billing";
 import { headers } from "next/headers";
 
 // ─── Update display name ───────────────────────────────────────────────────
@@ -67,16 +68,7 @@ export async function getStripePortalUrl(): Promise<
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated." };
 
-  const { data: subs } = await supabase
-    .from("subscriptions")
-    .select("stripe_customer_id")
-    .eq("user_id", user.id)
-    .not("stripe_customer_id", "is", null)
-    .order("created_at", { ascending: false })
-    .limit(1);
-
-  let stripeCustomerId = subs?.[0]?.stripe_customer_id ?? null;
-
+  const stripeCustomerId = await getStripeCustomerId(supabase, user.id);
   if (!stripeCustomerId) {
     return { error: "No active subscription found." };
   }

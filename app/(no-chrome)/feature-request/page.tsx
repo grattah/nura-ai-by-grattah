@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 
-import HelpForm from "@/components/help-and-guidance/HelpForm";
+import RequestForm from "@/components/feature-request/RequestForm";
 
 const page = async () => {
   const supabase = await createClient();
@@ -9,10 +9,10 @@ const page = async () => {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return null; // guest → RouteAuthGuard sign-in overlay
+  if (!user) return null;
 
   return (
-    <HelpForm
+    <RequestForm
       email={user?.email || ""}
       fullname={user.user_metadata.full_name || ""}
     />

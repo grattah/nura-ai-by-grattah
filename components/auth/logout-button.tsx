@@ -2,15 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import LogoutIcon from "@/components/vectors/logout";
 import { createClient } from "@/lib/supabase/client";
 
-/**
- * Client sign-out so the auth change propagates immediately: the browser
- * client's signOut clears the cookie session AND fires
- * onAuthStateChange('SIGNED_OUT'), which updates AccessProvider (and every gate)
- * without a reload. router.refresh() then re-renders server components as a guest.
- */
 export function LogoutButton() {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -36,7 +30,7 @@ export function LogoutButton() {
     >
       <div className="flex items-center gap-3">
         <div className="size-10 rounded-full bg-[#F3F1E8] flex items-center justify-center shrink-0">
-          <LogOut className="size-4 text-error-c700" strokeWidth={2} />
+          <LogoutIcon className="size-5 text-error-c700" strokeWidth={2} />
         </div>
         <span className="text-base font-medium text-error-c500">
           {pending ? "Logging out..." : "Log out"}

@@ -9,7 +9,6 @@ import { getCategoryConfig } from "@/lib/category-config";
 import { CategoryBanner } from "@/components/categories/category-banner";
 import { RecipesEmptyState } from "@/components/categories/recipes-empty-state";
 import { RecipeCard } from "@/components/recipe-card";
-import { useMatchScores } from "@/components/recipe/use-match-scores";
 import { FilterPills, type FilterPill } from "@/components/filter-pills";
 import { DRINK_TYPES } from "@/lib/drink-types";
 import type { CategoryRecipe } from "@/lib/types";
@@ -33,8 +32,6 @@ export default function CategoryDetailPage() {
   const [availableTypes, setAvailableTypes] = useState<string[]>([]);
 
   const [recipes, setRecipes] = useState<CategoryRecipe[]>([]);
-  // PRD §7.4: cards must show the same Match Score as the recipe's detail page.
-  const matchScores = useMatchScores(recipes.map((r) => r.id));
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState(false);
@@ -305,7 +302,7 @@ export default function CategoryDetailPage() {
                 <RecipeCard
                   key={recipe.id}
                   recipe={recipe}
-                  match={matchScores[recipe.id] ?? null}
+                  score={recipe.score}
                   priority={i < 4}
                 />
               ))}

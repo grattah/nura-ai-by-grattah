@@ -27,7 +27,7 @@ function BackButton({ className, backPage }: BackButtonProps) {
       onClick={handleBackClick}
       className={className}
     >
-      <ArrowLeft size={16} color="#1B1D1D" />
+      <ArrowLeft className="size-5 text-foreground" />
     </button>
   );
 }
