@@ -14,6 +14,7 @@ import { withTiming } from "@/lib/perf";
 import { getCategories } from "@/actions/categories";
 import { MoveRight } from "lucide-react";
 import { FreeTokensModal } from "@/components/tokens/FreeTokensModal";
+import { FeatureRequest } from "@/components/home/feature-request";
 
 type RecipeWithTags = {
   id: string;
@@ -199,6 +200,8 @@ export default async function HomePage() {
 
         {/* Upgrade / Pending banner */}
         <UpgradeBanner />
+
+        <FeatureRequest />
       </main>
       {showFreeTokens && user && <FreeTokensModal userId={user.id} />}
     </div>

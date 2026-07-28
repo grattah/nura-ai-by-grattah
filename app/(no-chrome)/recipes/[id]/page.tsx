@@ -58,13 +58,13 @@ const RECIPE_SELECT = "*, recipe_tags(score, tags(name, slug))";
 // The recipe's strongest bioactivities (from recipe_tags) for the supports card.
 function topBioactivities(
   recipeTags: RecipeRecord["recipe_tags"],
-  count = 5,
+  count = 5
 ): SupportScore[] {
   return (recipeTags ?? [])
     .flatMap((rt) =>
       rt.tags && rt.score != null
         ? [{ slug: rt.tags.slug, support: rt.tags.name, score: rt.score }]
-        : [],
+        : []
     )
     .sort((a, b) => b.score - a.score)
     .slice(0, count);
@@ -118,10 +118,13 @@ export async function generateMetadata({
 
 export default async function RecipeDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { id } = await params;
+  const { generate } = await searchParams;
 
   const [recipe, supabase] = await Promise.all([getRecipe(id), createClient()]);
 
@@ -152,7 +155,7 @@ export default async function RecipeDetailPage({
     likes,
     profiles (id, username, avatar_url),
     comment_likes!comment_id (user_id)
-  `,
+  `
       )
       .eq("recipe_id", recipe.id)
       .is("parent_id", null)
@@ -171,7 +174,7 @@ export default async function RecipeDetailPage({
         ...latestComment,
         hasLiked:
           latestComment.comment_likes?.some(
-            (like: { user_id: string }) => like.user_id === user?.id,
+            (like: { user_id: string }) => like.user_id === user?.id
           ) ?? false,
       }
     : null;
@@ -272,14 +275,16 @@ export default async function RecipeDetailPage({
 
           <main className="pb-6">
             {/* Hero image — LCP element; fills in async for freshly generated recipes */}
-            <RecipeHeroImage
-              recipeId={recipe.id}
-              title={recipe.title}
-              initialImageUrl={recipe.image_url}
-            />
+            {!generate && (
+              <RecipeHeroImage
+                recipeId={recipe.id}
+                title={recipe.title}
+                initialImageUrl={recipe.image_url}
+              />
+            )}
 
             {/* Title + description */}
-            <div className="px-6 mb-8">
+            <div className={`px-6 mb-8 ${generate && "mt-4.5"}`}>
               <h1 className="text-2xl font-bold text-foreground mb-1.5 leading-tight">
                 {recipe.title}
               </h1>
