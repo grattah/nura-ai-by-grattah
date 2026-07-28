@@ -100,7 +100,7 @@ export const ForYouCategory = () => {
           })}
         </div>
       ) : (
-        <div className="w-full max-w-95.5 h-55 flex flex-col gap-3 justify-center items-center bg-white rounded-3xl">
+        <div className="w-full max-w-95.5 h-55 flex flex-col gap-3 justify-center items-center rounded-3xl overflow-hidden bg-cover bg-center" style={{ backgroundImage: "url('/bg.png')" }}>
           <div className="bg-[#F0F2EA] p-3 rounded-full">
             <FaLock color="#227B6F" size={16} />
           </div>
