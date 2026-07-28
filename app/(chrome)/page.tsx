@@ -15,6 +15,7 @@ import { getCategories } from "@/actions/categories";
 import { MoveRight } from "lucide-react";
 import { FreeTokensModal } from "@/components/tokens/FreeTokensModal";
 import { FeatureRequest } from "@/components/home/feature-request";
+import { ForYouCategory } from "@/components/for-you-category";
 
 type RecipeWithTags = {
   id: string;
@@ -124,8 +125,10 @@ export default async function HomePage() {
           />
         </section>
 
+        <ForYouCategory />
+
         {/* Popular Recipes */}
-        <section className="relative z-10 mt-4">
+        <section className="relative z-10 mt-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-title leading-none font-semibold text-grey-c950">
               Trending this week
