@@ -3,7 +3,6 @@ import Link from "next/link";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { format } from "date-fns";
-import { CancelSubscriptionButton } from "@/components/subscription/cancel-subscription-button";
 
 export default async function ManageSubscriptionPage() {
   const supabase = await createClient();
@@ -11,10 +10,8 @@ export default async function ManageSubscriptionPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return null; // guest → RouteAuthGuard sign-in overlay
+  if (!user) return null;
 
-  // limit(1), not maybeSingle(): a user may have >1 active row, which would make
-  // maybeSingle() error and wrongly bounce a subscribed user to /checkout.
   const { data: subs } = await supabase
     .from("subscriptions")
     .select("*")
@@ -41,7 +38,7 @@ export default async function ManageSubscriptionPage() {
   const priceLabel = sub.plan === "monthly" ? "£7.99/month" : "£79/year";
 
   return (
-    <div className="min-h-dvh bg-background pb-10">
+    <div className="min-h-dvh bg-background pb-10 flex flex-col">
       {/* Header */}
       <div className="flex items-center px-6 pt-5 pb-10 relative">
         <Link
@@ -62,7 +59,7 @@ export default async function ManageSubscriptionPage() {
         </div>
       </div>
 
-      <div className="px-6 space-y-4">
+      <div className="px-6 space-y-4 flex flex-col flex-1">
         {/* Current plan card */}
         <div>
           <p className="text-sm text-subtle font-medium mb-2">Current Plan</p>
@@ -92,20 +89,21 @@ export default async function ManageSubscriptionPage() {
         {/* Change plan */}
         <Link
           href="/change-plan"
-          className="flex items-center justify-between px-6 py-6 bg-[#E8E6DC] rounded-xl border border-[#E8E6DC] hover:opacity-80 transition-opacity active:scale-[0.98]"
+          className="flex items-center justify-between p-4 bg-[#E8E6DC] rounded-xl border border-[#E8E6DC] hover:opacity-80 transition-opacity active:scale-[0.98]"
         >
           <p className="text-base font-medium text-[#333333CC]">Change Plan</p>
-          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          <ChevronRight className="size-4.5 text-muted-foreground" />
+        </Link>
+        <Link
+          href="/billing-history"
+          className="flex items-center justify-between p-4 bg-[#E8E6DC] rounded-xl border border-[#E8E6DC] hover:opacity-80 transition-opacity active:scale-[0.98]"
+        >
+          <p className="text-base font-medium text-[#333333CC]">Billing</p>
+          <ChevronRight className="size-4.5 text-muted-foreground" />
         </Link>
 
-        {/* Cancel / resume */}
-        {/* <CancelSubscriptionButton
-          cancelAtPeriodEnd={!!sub.cancel_at_period_end}
-          accessUntil={nextBilling}
-        /> */}
-
         {/* Support */}
-        <div className="pt-4 text-center mt-18">
+        <div className="pt-4 text-center mt-auto">
           <p className="text-base text-grey-c500">
             Need help?{" "}
             <a

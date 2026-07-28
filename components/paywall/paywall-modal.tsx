@@ -38,16 +38,17 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
 
   const benefits = [
     {
+      title: "Recipes matched to your health goals",
+      subtitle:
+        "Know instantly which recipes best fits your health goals/conditions.",
+    },
+    {
       title: "The full premium library",
       subtitle: "10,000+ curated recipes by experts.",
     },
     {
-      title: "Personalized nutrient guidance",
-      subtitle: "Tailored to you and your concerns",
-    },
-    {
-      title: "Keep your remedies closed",
-      subtitle: "Save your recipes for whenever you need them",
+      title: "Safety ingredient flags",
+      subtitle: "For allergies and medication interactions.",
     },
   ];
 
