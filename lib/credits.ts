@@ -52,6 +52,48 @@ export const FREE_SURFACES = {
 
 export type FreeSurface = (typeof FREE_SURFACES)[keyof typeof FREE_SURFACES];
 
+/** Total free trials a new user gets across all paywalled surfaces (3 × 2 = 6). */
+export const FREE_TRIALS_TOTAL =
+  Object.keys(FREE_SURFACES).length * FREE_USES_PER_SURFACE;
+
+export interface FreeTrialTokens {
+  /** Trials consumed, capped per surface. */
+  used: number;
+  /** Trials available in total. */
+  total: number;
+  remaining: number;
+  /** `remaining` projected onto the familiar 25-token scale, for display. */
+  tokensLeft: number;
+  exhausted: boolean;
+}
+
+/**
+ * Present the per-surface free-trial allowance as a token count.
+ *
+ * The 25-unit wallet was retired (see FREE_UNITS) — gating is now N uses of each
+ * surface. Users still think in "free tokens", so scale the remaining trials
+ * onto that scale: 4 of 6 trials left → 4/6 × 25 = 16.67 → **17 tokens**.
+ * Rounded UP so a user with any trial left never sees "0 tokens".
+ *
+ * Pure: takes the per-surface counts so it can be tested without the DB.
+ */
+export function freeTrialTokens(usedPerSurface: number[]): FreeTrialTokens {
+  const total = FREE_TRIALS_TOTAL;
+  // Cap each surface — a surface can't consume another's allowance.
+  const used = usedPerSurface.reduce(
+    (sum, n) => sum + Math.min(Math.max(n, 0), FREE_USES_PER_SURFACE),
+    0,
+  );
+  const remaining = Math.max(0, total - used);
+  return {
+    used,
+    total,
+    remaining,
+    tokensLeft: total > 0 ? Math.ceil((remaining / total) * FREE_UNITS) : 0,
+    exhausted: remaining <= 0,
+  };
+}
+
 // Claude tokens per 1 unit. Calibrated so a typical action (~1–3k real tokens)
 // costs ~1–2 units. Output tokens dominate; MAX_OUTPUT_TOKENS bounds the worst case.
 export const UNIT_TOKENS = 1500;

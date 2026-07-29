@@ -3,6 +3,7 @@
 import React from "react";
 import { Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 import { toggleCommentLike } from "@/actions/like-comments";
 
 interface CommentLikeButtonProps {
@@ -21,6 +22,7 @@ export default function CommentLikeButton({
   isAuthenticated,
 }: CommentLikeButtonProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [liked, setLiked] = React.useState(initialLiked);
   const [count, setCount] = React.useState(initialCount);
   const [isPending, startTransition] = React.useTransition();
@@ -40,6 +42,11 @@ export default function CommentLikeButton({
       if (result.error) {
         setLiked(wasLiked);
         setCount((prev) => prev + (wasLiked ? 1 : -1));
+        toast({
+          title: "Error",
+          description: "Failed to update like. Please try again.",
+          variant: "destructive",
+        });
       }
     });
   };
