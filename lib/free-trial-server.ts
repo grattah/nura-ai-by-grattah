@@ -1,6 +1,12 @@
 import "server-only";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { FREE_USES_PER_SURFACE, type FreeSurface } from "@/lib/credits";
+import {
+  FREE_SURFACES,
+  FREE_USES_PER_SURFACE,
+  freeTrialTokens,
+  type FreeSurface,
+  type FreeTrialTokens,
+} from "@/lib/credits";
 
 // Server-side per-surface free-trial usage via the SECURITY DEFINER RPCs
 // (free_trial_per_surface migration). Callers pass the authenticated user's id.
@@ -18,6 +24,19 @@ export async function freeUseCount(
     p_surface: surface,
   } as never);
   return (data as number | null) ?? 0;
+}
+
+/**
+ * The user's remaining free trials, expressed as a token count for display on
+ * the Free Plan card. One RPC per surface, issued in parallel.
+ */
+export async function getFreeTrialTokens(
+  userId: string,
+): Promise<FreeTrialTokens> {
+  const counts = await Promise.all(
+    Object.values(FREE_SURFACES).map((s) => freeUseCount(userId, s)),
+  );
+  return freeTrialTokens(counts);
 }
 
 /** True when the user still has at least one free use left on the surface. */

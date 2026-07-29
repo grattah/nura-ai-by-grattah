@@ -1,8 +1,10 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { format } from "date-fns";
+import { getSubscriptionView } from "@/lib/subscription-state";
+import { getFreeTrialTokens } from "@/lib/free-trial-server";
+import { FreeTrialExhaustedGate } from "@/components/subscription/free-trial-exhausted-gate";
 
 export default async function ManageSubscriptionPage() {
   const supabase = await createClient();
@@ -12,32 +14,42 @@ export default async function ManageSubscriptionPage() {
 
   if (!user) return null;
 
-  const { data: subs } = await supabase
-    .from("subscriptions")
-    .select("*")
-    .eq("user_id", user.id)
-    .eq("status", "active")
-    .order("created_at", { ascending: false })
-    .limit(1);
-  const sub = subs?.[0] as
-    | {
-        status: string;
-        plan: string;
-        expires_at: string | null;
-        cancel_at_period_end?: boolean;
-      }
-    | undefined;
+  // No redirect: expired and never-subscribed users get their own card states.
+  const sub = await getSubscriptionView(supabase, user.id);
+  const isFree = sub.state === "free";
+  const isExpired = sub.state === "expired";
+  const trial = isFree ? await getFreeTrialTokens(user.id) : null;
 
-  if (!sub) redirect("/checkout");
-
-  const nextBilling = sub.expires_at
-    ? format(new Date(sub.expires_at), "MMM d, yyyy")
+  const dated = sub.expiresAt
+    ? format(new Date(sub.expiresAt), "MMM d, yyyy")
     : "—";
 
-  const planLabel = sub.plan === "monthly" ? "Monthly Plan" : "Premium Plan";
-  const priceLabel = sub.plan === "monthly" ? "£7.99/month" : "£79/year";
+  const planLabel = isFree
+    ? "Free Plan"
+    : sub.plan === "monthly"
+      ? "Monthly Plan"
+      : "Premium Plan";
+  const priceLabel = isFree
+    ? `${trial!.tokensLeft} free token${trial!.tokensLeft === 1 ? "" : "s"}`
+    : sub.plan === "monthly"
+      ? "£7.99/month"
+      : "£79/year";
+
+  // Expired reuses the card layout with the error palette; free plan has no
+  // billing date to show.
+  const cardClass = isExpired ? "bg-[#DC23231A]" : "bg-mint-green/8";
+  const pillClass = isExpired
+    ? "text-xs bg-white text-[#DC2323] font-semibold px-1.75 py-0.75 rounded-full"
+    : "text-xs bg-white text-mint-green font-semibold px-1.75 py-0.75 rounded-full";
+  const valueClass = isExpired
+    ? "text-base font-semibold text-[#DC2323]"
+    : "text-base font-semibold text-mint-green";
+  const rowValueClass = isExpired
+    ? "text-sm font-semibold text-[#DC2323]"
+    : "text-sm font-semibold text-mint-green";
 
   return (
+    <FreeTrialExhaustedGate exhausted={!!trial?.exhausted}>
     <div className="min-h-dvh bg-background pb-10 flex flex-col">
       {/* Header */}
       <div className="flex items-center px-6 pt-5 pb-10 relative">
@@ -63,25 +75,24 @@ export default async function ManageSubscriptionPage() {
         {/* Current plan card */}
         <div>
           <p className="text-sm text-subtle font-medium mb-2">Current Plan</p>
-          <div className="bg-mint-green/8 rounded-xl px-4 py-5 space-y-3">
+          <div className={`${cardClass} rounded-xl px-4 py-5 space-y-3`}>
             <div>
               <div className="flex items-center justify-between">
                 <p className="text-base font-semibold text-[#333333CC]">
                   {planLabel}
                 </p>
-                <span className="text-xs bg-white text-mint-green font-semibold px-1.75 py-0.75 rounded-full">
-                  Active
+                <span className={pillClass}>
+                  {isExpired ? "Expired" : "Active"}
                 </span>
               </div>
-              <p className="text-base font-semibold text-mint-green">
-                {priceLabel}
-              </p>
+              <p className={valueClass}>{priceLabel}</p>
             </div>
             <div className="flex items-center justify-between">
-              <p className="text-sm text-[#333333CC]">Next billing date</p>
-              <p className="text-sm font-semibold text-mint-green">
-                {nextBilling}
+              <p className="text-sm text-[#333333CC]">
+                {isExpired ? "Expired on" : "Next billing date"}
               </p>
+              {/* A free plan has no billing date. */}
+              <p className={rowValueClass}>{isFree ? "-- --" : dated}</p>
             </div>
           </div>
         </div>
@@ -116,5 +127,6 @@ export default async function ManageSubscriptionPage() {
         </div>
       </div>
     </div>
+    </FreeTrialExhaustedGate>
   );
 }
