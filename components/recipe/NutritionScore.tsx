@@ -204,7 +204,7 @@ const NutritionScore = ({
           </div>
           <Link
             href="/health-profile"
-            className="mt-1 bg-mint-green text-white py-2.5 px-4 rounded-full font-medium text-xs"
+            className="bg-mint-green text-white py-2 px-4 rounded-full font-medium text-xs"
           >
             Choose my goals
           </Link>
