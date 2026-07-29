@@ -11,6 +11,7 @@ import { CategorySection } from "@/components/home/category-section";
 import { UpgradeBanner } from "@/components/home/upgrade-banner";
 import { getBookmarkedIds } from "@/actions/bookmark";
 import { withTiming } from "@/lib/perf";
+import { oneRecipePerDrinkType } from "@/lib/drink-types";
 import { getCategories } from "@/actions/categories";
 import { MoveRight } from "lucide-react";
 import { FreeTokensModal } from "@/components/tokens/FreeTokensModal";
@@ -21,23 +22,8 @@ type RecipeWithTags = {
   id: string;
   title: string;
   image_url: string | null;
-  recipe_categories: Array<{
-    score: number;
-    qualified: boolean;
-    categories: { name: string; slug: string } | null;
-  }>;
+  drink_type: string | null;
 };
-
-// The recipe's strongest QUALIFYING category (highest CategoryScore) for the
-// card label. Recipes that qualify for nothing get no badge.
-function topCategory(
-  recipe: RecipeWithTags,
-): { name: string; slug: string } | null {
-  const top = [...(recipe.recipe_categories ?? [])]
-    .filter((rc) => rc.qualified && rc.categories)
-    .sort((a, b) => b.score - a.score)[0];
-  return top?.categories ?? null;
-}
 
 // Fetched fresh per request — no cross-request cache, so new/re-scored recipes
 // surface immediately.
@@ -45,7 +31,7 @@ async function getPopularRecipes() {
   const supabase = createServiceRoleClient();
   return supabase
     .from("recipes")
-    .select("id, title, image_url, recipe_categories(score, qualified, categories(name, slug))")
+    .select("id, title, image_url, drink_type")
     .eq("status" as never, "approved" as never)
     .or("shares.gt.0, saves.gt.0, comments.gt.0, likes.gt.0")
     .order("weighted_score", { ascending: false })
@@ -67,22 +53,8 @@ export default async function HomePage() {
     withTiming("home:getPopularRecipes", () => getPopularRecipes()),
   ]);
 
-  function oneRecipePerCategory(recipes: RecipeWithTags[]): RecipeWithTags[] {
-    const seenTags = new Set<string>();
-    const result: RecipeWithTags[] = [];
-    for (const recipe of recipes) {
-      const firstTag = topCategory(recipe)?.name ?? null;
-      if (firstTag !== null) {
-        if (seenTags.has(firstTag)) continue;
-        seenTags.add(firstTag);
-      }
-      result.push(recipe);
-    }
-    return result;
-  }
-
   const recipes = (rawRecipes ?? []) as unknown as RecipeWithTags[];
-  const popularRecipes = oneRecipePerCategory(recipes).slice(0, 6);
+  const popularRecipes = oneRecipePerDrinkType(recipes).slice(0, 6);
 
   const bookmarkedIds = new Set<string>();
   if (user) {
@@ -143,17 +115,13 @@ export default async function HomePage() {
 
           <div className="grid grid-cols-2 gap-x-4 gap-y-8">
             {popularRecipes.map((recipe, i) => {
-              const cat = topCategory(recipe);
-              const firstTag = cat?.name;
-              const catSlug = cat?.slug;
               return (
                 <RecipeCardNew
                   key={recipe.id}
                   id={recipe.id}
                   title={recipe.title}
                   imageUrl={recipe.image_url ?? undefined}
-                  category={firstTag == "Beauty" ? "anti-aging" : firstTag }
-                  catSlug={catSlug}
+                  drinkType={recipe.drink_type ?? undefined}
                   href={`/recipes/${recipe.id}`}
                   priority={i < 2}
                   initialBookmarked={bookmarkedIds.has(recipe.id)}

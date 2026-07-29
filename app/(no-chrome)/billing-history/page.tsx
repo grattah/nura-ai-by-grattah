@@ -1,7 +1,7 @@
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { format } from "date-fns";
 import { getUserInvoices } from "@/lib/billing";
+import { getSubscriptionView } from "@/lib/subscription-state";
 import { CancelSubscriptionButton } from "@/components/subscription/cancel-subscription-button";
 import BackButton from "@/components/back-button";
 import Invoice from "@/components/subscription/invoice";
@@ -14,29 +14,15 @@ export default async function page() {
 
   if (!user) return null;
 
-  const { data: subs } = await supabase
-    .from("subscriptions")
-    .select("*")
-    .eq("user_id", user.id)
-    .eq("status", "active")
-    .order("created_at", { ascending: false })
-    .limit(1);
-  const sub = subs?.[0] as
-    | {
-        status: string;
-        plan: string;
-        expires_at: string | null;
-        cancel_at_period_end?: boolean;
-      }
-    | undefined;
-
-  if (!sub) redirect("/checkout");
+  // Same resolver as /manage-subscription — no redirect, so a lapsed user can
+  // still reach their invoices (getUserInvoices already serves them).
+  const sub = await getSubscriptionView(supabase, user.id);
 
   // Read live from Stripe — nothing stores invoices locally.
   const { invoices, failed } = await getUserInvoices(supabase, user.id);
 
-  const nextBilling = sub.expires_at
-    ? format(new Date(sub.expires_at), "MMM d, yyyy")
+  const nextBilling = sub.expiresAt
+    ? format(new Date(sub.expiresAt), "MMM d, yyyy")
     : "—";
   return (
     <div className="min-h-dvh bg-background pb-10 flex flex-col">
@@ -72,11 +58,15 @@ export default async function page() {
           </div>
         </div>
         <div className="pt-4 text-center mt-auto">
-          {/* Cancel / resume */}
-          <CancelSubscriptionButton
-            cancelAtPeriodEnd={!!sub.cancel_at_period_end}
-            accessUntil={nextBilling}
-          />
+          {/* Cancel / resume — only for a live subscription. Its server actions
+              look up an ACTIVE row, so rendering this for an expired or free
+              user would always fail with "No active subscription to cancel". */}
+          {sub.state === "active" && (
+            <CancelSubscriptionButton
+              cancelAtPeriodEnd={sub.cancelAtPeriodEnd}
+              accessUntil={nextBilling}
+            />
+          )}
         </div>
       </div>
     </div>

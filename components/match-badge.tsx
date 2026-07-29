@@ -1,14 +1,7 @@
-/**
- * Category-fit badge for recipe cards in listings/search. `score` is the
- * recipe's CategoryScore for the category being viewed (recipe_categories.score)
- * — a per-category ranking, NOT the personalised Recipe Match Score.
- *
- * The Recipe Match Score (and the condition/goal label that produced it) is
- * shown only on the recipe detail page.
- */
 export function MatchBadge({ score }: { score?: number | null }) {
   if (score == null) return null;
-  const strong = score >= 60;
+  const strong = score >= 39;
+  // const strong = score >= 60;
   return (
     <div className="flex justify-between items-center">
       <p
@@ -18,13 +11,13 @@ export function MatchBadge({ score }: { score?: number | null }) {
             : "bg-[#EEE0CA] text-warning-c600"
         }`}
       >
-        {strong ? "Strong match" : "Moderate match"}
+        {score}% match{/* {strong ? "Strong match" : "Moderate match"} */}
       </p>
-      <p
+      {/* <p
         className={`text-sm ${strong ? "text-mint-green" : "text-warning-c600"}`}
       >
         {score}%
-      </p>
+      </p> */}
     </div>
   );
 }

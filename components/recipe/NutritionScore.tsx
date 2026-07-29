@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { HiOutlineInformationCircle } from "react-icons/hi";
+import { FaLock } from "react-icons/fa";
+
+import { createClient } from "@/lib/supabase/client";
 
 const DISCLAIMER =
   "Personalized based on your preferences - not a substitute for guidance from your doctor or dietitian.";
@@ -17,6 +21,7 @@ const NutritionScore = ({
   match,
   breakdown = [],
   average = null,
+  hasProfile,
 }: {
   /** Base Nutrition Score, 1–10 — the same for everyone. */
   baseScore: number;
@@ -26,14 +31,38 @@ const NutritionScore = ({
   breakdown?: MatchBreakdownRow[];
   /** §7.3 mean of all credits. Shown inside the panel only, never as headline. */
   average?: number | null;
+  hasProfile: boolean;
 }) => {
   const [open, setOpen] = useState(false);
+
   // §7.2 expandable panel — collapsed by default.
   const [showBreakdown, setShowBreakdown] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   // §7.5 with a single selection the average IS the highest, so showing both
   // adds no information.
   const showAverage = average != null && breakdown.length > 1;
+
+  const fetchUser = async () => {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("health_profiles")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (error) {
+      console.error(error.message);
+      return;
+    }
+
+    const profileExists = !!data;
+  };
 
   // Close on outside click and on Escape.
   useEffect(() => {
@@ -57,8 +86,12 @@ const NutritionScore = ({
   }, [open]);
 
   return (
-    <div className="p-4 rounded-3xl bg-white flex flex-col gap-4">
-      <div className="flex justify-between items-center">
+    <div
+      className={`relative p-4 rounded-3xl bg-white flex flex-col gap-4 ${
+        !hasProfile && "h-57"
+      }`}
+    >
+      <div className="relative z-30 flex justify-between items-center">
         <p className="font-semibold text-base text-base-text leading-[100%]">
           Recipe insights
         </p>
@@ -97,7 +130,8 @@ const NutritionScore = ({
       <div className="grid grid-cols-2 gap-4">
         <div className="rounded-2xl bg-success-c100 flex flex-col gap-2 p-3 items-center text-center">
           <p className="text-success-c700 text-hp-title leading-tight font-semibold">
-            {baseScore}<span className="text-subtle text-sm font-medium">{"/10"}</span>
+            {baseScore}
+            <span className="text-subtle text-sm font-medium">{"/10"}</span>
           </p>
           <p className="text-sm font-medium text-subtle">Nutrition score</p>
         </div>
@@ -134,7 +168,9 @@ const NutritionScore = ({
                   key={b.key}
                   className="flex items-center justify-between gap-3 text-sm"
                 >
-                  <span className="text-base-text wrap-break-word">{b.label}</span>
+                  <span className="text-base-text wrap-break-word">
+                    {b.label}
+                  </span>
                   <span className="text-subtle shrink-0">
                     {Math.round(b.percent)}%
                   </span>
@@ -151,6 +187,27 @@ const NutritionScore = ({
               )}
             </ul>
           )}
+        </div>
+      )}
+      {!hasProfile && (
+        <div className="absolute inset-0 rounded-b-3xl backdrop-blur-sm bg-white/30 flex flex-col items-center justify-center gap-3 text-center px-4 z-20">
+          <div className="bg-[#F0F2EA] p-3 rounded-full">
+            <FaLock color="#227B6F" size={16} />
+          </div>
+          <div className="flex flex-col gap-2 text-center items-center">
+            <p className="font-semibold text-sm text-black">
+              Your match is locked
+            </p>
+            <p className="text-xs text-subtle w-8/12">
+              Choose your health goals to see if the recipe is right for you.
+            </p>
+          </div>
+          <Link
+            href="/health-profile"
+            className="bg-mint-green text-white py-2 px-4 rounded-full font-medium text-xs"
+          >
+            Choose my goals
+          </Link>
         </div>
       )}
     </div>

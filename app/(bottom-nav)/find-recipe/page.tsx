@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
+import { logSearch } from "@/actions/log-search";
 import { useCredits } from "@/components/providers/credits-provider";
 import { useRecentSearches } from "@/hooks/use-recent-searches";
 import ModalLoadingScreen from "@/components/recipe/ModalLoadingScreen";
@@ -153,9 +154,15 @@ const page = () => {
     fetchSuggestions();
   }, [recents]);
 
+  // A term only "counts" as a search once it has results and has stopped
+  // changing for a second — so prefixes ("carr", "carrot") never commit. Both
+  // the local recents list and the Activities feed hang off that same settle.
   React.useEffect(() => {
     if (!searchTerm.trim() || results.length === 0) return;
-    const timer = setTimeout(() => addRecent(searchTerm), 1000);
+    const timer = setTimeout(() => {
+      addRecent(searchTerm);
+      void logSearch(searchTerm);
+    }, 1000);
     return () => clearTimeout(timer);
   }, [searchTerm, results]);
 

@@ -1,4 +1,4 @@
-// components/community-feed.tsx
+// components/community/CommunityFeed.tsx — the user's own activity feed.
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -9,6 +9,8 @@ import { createClient } from "@/lib/supabase/client";
 import { formatRelativeTime } from "@/lib/format-time";
 import {
   fetchActivitiesPage,
+  activityPhrase,
+  activityTarget,
   ACTIVITIES_PAGE_SIZE,
   type ActivityItem,
 } from "@/lib/activities";
@@ -20,10 +22,22 @@ function isAbortError(e: unknown): boolean {
   return e instanceof DOMException && e.name === "AbortError";
 }
 
+/** "5m" → "5m ago", but "now" → "Just now". */
+function timeLabel(createdAt: string): string {
+  const t = formatRelativeTime(createdAt);
+  return t === "now" ? "Just now" : `${t} ago`;
+}
+
 export function CommunityFeed({
   initialActivities,
+  userId,
+  actorName,
 }: {
   initialActivities: ActivityItem[];
+  /** Null for guests — the feed is empty and never paginates. */
+  userId: string | null;
+  /** The user's name, or "You" when they haven't set one. */
+  actorName: string;
 }) {
   const supabase = useMemo(() => createClient(), []);
 
@@ -43,6 +57,7 @@ export function CommunityFeed({
 
   const loadMore = useCallback(async () => {
     if (
+      !userId ||
       fetchingRef.current ||
       !hasMoreRef.current ||
       loadMoreErrorRef.current
@@ -62,7 +77,12 @@ export function CommunityFeed({
 
     try {
       const next = pageRef.current + 1;
-      const rows = await fetchActivitiesPage(supabase, next, controller.signal);
+      const rows = await fetchActivitiesPage(
+        supabase,
+        next,
+        userId,
+        controller.signal,
+      );
 
       if (rows.length > 0) {
         pageRef.current = next;
@@ -88,7 +108,7 @@ export function CommunityFeed({
       fetchingRef.current = false;
       setIsLoadingMore(false);
     }
-  }, [supabase]);
+  }, [supabase, userId]);
 
   const retryLoadMore = useCallback(() => {
     loadMoreErrorRef.current = false;
@@ -120,17 +140,13 @@ export function CommunityFeed({
 
   return (
     <div className="flex flex-col gap-5">
-      {activities.map((item) => (
-        <Link
-          key={item.id}
-          href={`/recipes/${item.recipe?.id}`}
-          className="block"
-        >
+      {activities.map((item) => {
+        const row = (
           <div className="flex items-stretch gap-6 w-full">
             <div className="flex gap-4 flex-1">
               <Image
-                src={item.profile?.avatar_url || profile}
-                alt={item.profile?.username || "unknown user"}
+                src={profile}
+                alt=""
                 width={44}
                 height={44}
                 className="rounded-full object-cover size-11 shrink-0"
@@ -138,21 +154,19 @@ export function CommunityFeed({
               <div className="flex flex-col gap-2.5">
                 <p className="text-subtle text-base">
                   <span className="font-semibold text-[#1B1D1D]">
-                    {item.profile?.username || "unknown user"}
+                    {actorName}
                   </span>{" "}
-                  {item.action} {item.recipe?.title}
+                  {activityPhrase(item.action, activityTarget(item))}
                 </p>
                 <p className="text-[#57605E] text-sm">
-                  {formatRelativeTime(item.created_at) === "now" ? "Just" : ""}{" "}
-                  {formatRelativeTime(item.created_at)}{" "}
-                  {formatRelativeTime(item.created_at) === "now" ? "" : "ago"}
+                  {timeLabel(item.created_at)}
                 </p>
               </div>
             </div>
             {item.recipe?.image_url && (
               <Image
                 src={item.recipe.image_url}
-                alt="photo"
+                alt=""
                 className="rounded-lg object-cover w-15.5 h-auto max-h-20 shrink-0"
                 width={62}
                 height={80}
@@ -160,8 +174,26 @@ export function CommunityFeed({
               />
             )}
           </div>
-        </Link>
-      ))}
+        );
+
+        // Searches (and rows whose recipe was deleted) have nowhere to go —
+        // linking them produced /recipes/undefined.
+        return item.recipe?.id ? (
+          <Link key={item.id} href={`/recipes/${item.recipe.id}`} className="block">
+            {row}
+          </Link>
+        ) : (
+          <div key={item.id}>{row}</div>
+        );
+      })}
+
+      {/* A personal feed starts empty, unlike the old community-wide one. */}
+      {activities.length === 0 && (
+        <p className="text-sm text-[#57605E] py-6">
+          Nothing here yet. Recipes you search, view, like or save will show up
+          here.
+        </p>
+      )}
 
       {!atEnd && (
         <div ref={sentinelRef} className="py-6 flex justify-center">

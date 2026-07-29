@@ -61,6 +61,7 @@ export type Database = {
           action: string | null
           created_at: string
           id: number
+          label: string | null
           recipe_id: string | null
           user_id: string | null
         }
@@ -68,6 +69,7 @@ export type Database = {
           action?: string | null
           created_at?: string
           id?: number
+          label?: string | null
           recipe_id?: string | null
           user_id?: string | null
         }
@@ -75,6 +77,7 @@ export type Database = {
           action?: string | null
           created_at?: string
           id?: number
+          label?: string | null
           recipe_id?: string | null
           user_id?: string | null
         }

@@ -26,9 +26,19 @@ const PLANS = [
 ];
 
 const FEATURES = [
-  { title: "See the highest-scoring recipes", subtitle: "Based on your needs" },
-  { title: "10,000+ wellness recipes", subtitle: "with expert tips" },
-  { title: "Personalized nutrient guidance", subtitle: "Tailored to you" },
+  {
+    title: "Recipes matched to your health goals",
+    subtitle:
+      "Know instantly which recipes best fits your health goals/conditions.",
+  },
+  {
+    title: "The full premium library",
+    subtitle: "1,000+ curated recipes by experts.",
+  },
+  {
+    title: "Safety ingredient flags",
+    subtitle: "For allergies and medication interactions.",
+  },
 ];
 
 export function ChangePlanClient() {
