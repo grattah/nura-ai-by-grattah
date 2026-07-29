@@ -9,7 +9,6 @@ import { getTopMatches } from "@/actions/for-you";
 import { RecipeCardForYou } from "@/components/RecipeCardForYou";
 
 export const ForYouCategory = () => {
-  const [userId, setUserId] = React.useState<string | null>(null);
   const [hasProfile, setHasProfile] = React.useState(false);
   const [topRecipes, setTopRecipes] = React.useState<any[]>([]);
   const [ready, setReady] = React.useState(false);
@@ -24,7 +23,6 @@ export const ForYouCategory = () => {
         setReady(true);
         return;
       }
-      setUserId(user.id);
 
       const { data, error } = await supabase
         .from("health_profiles")
@@ -67,7 +65,6 @@ export const ForYouCategory = () => {
       </div>
     );
   }
-  if (!userId) return null;
 
   return (
     <div className="mt-4 flex flex-col gap-2 relative z-10">
@@ -75,7 +72,7 @@ export const ForYouCategory = () => {
         <p className="text-title text-grey-c950 font-semibold leading-[100%]">
           For you
         </p>
-        {ready && hasProfile && (
+        {hasProfile && (
           <Link
             href="/for-you"
             className="text-sm font-semibold text-mint-green hover:opacity-75 transition-opacity py-1 px-3 rounded-full bg-[#F3F1E8]"
@@ -100,7 +97,7 @@ export const ForYouCategory = () => {
           })}
         </div>
       ) : (
-        <div className="w-full max-w-95.5 h-55 flex flex-col gap-3 justify-center items-center bg-white rounded-3xl">
+        <div className="w-full max-w-95.5 h-55 flex flex-col gap-3 justify-center items-center rounded-3xl overflow-hidden bg-cover bg-center" style={{ backgroundImage: "url('/bg.webp')" }}>
           <div className="bg-[#F0F2EA] p-3 rounded-full">
             <FaLock color="#227B6F" size={16} />
           </div>
