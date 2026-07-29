@@ -66,6 +66,25 @@ describe("Track / Preparation classification", () => {
     expect(classifyTrack("Smoothie Bowl")).toBe("Solid Food");
     expect(classifyTrack("Chia Pudding")).toBe("Solid Food");
   });
+
+  it("yogurt decides the track only when nothing says it's a drink", () => {
+    // Eaten with a spoon — was scored against BEVERAGE thresholds (sugar max 10,
+    // per-100ml bands) before yogurt was recognised.
+    expect(classifyTrack("Greek Yogurt with Chia Seeds")).toBe("Solid Food");
+    // …but these are drunk, and a blanket yogurt override would have broken them.
+    expect(classifyTrack("Banana Yogurt Smoothie")).toBe("Beverage");
+    expect(classifyTrack("Greek Yogurt Chia Smoothie")).toBe("Beverage");
+  });
+
+  it("matches whole words, so solid keywords don't hide inside other foods", () => {
+    // "bar" is inside "rhubarb"/"barley"; "bite" is inside "bitter".
+    expect(classifyTrack("Rhubarb Ginger Juice")).toBe("Beverage");
+    expect(classifyTrack("Barley Water")).toBe("Beverage");
+    expect(classifyTrack("Bitter Melon Juice")).toBe("Beverage");
+    // The real keywords still work.
+    expect(classifyTrack("Almond Energy Bar")).toBe("Solid Food");
+    expect(classifyTrack("Protein Bite")).toBe("Solid Food");
+  });
   it("prep-based Juiced/Blended with Juiced default", () => {
     expect(classifyPreparation("Beverage", "Blend until smooth")).toBe("Blended");
     expect(classifyPreparation("Beverage", "Cold-press and strain the pulp")).toBe("Juiced");

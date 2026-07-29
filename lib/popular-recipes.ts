@@ -1,12 +1,18 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { oneRecipePerDrinkType } from "@/lib/drink-types";
 
-export async function fetchPopularRecipesOnePerCategory(
+/**
+ * Most-popular recipes, one per drink type (Juice, Smoothie, Tea, …) so the
+ * grid shows variety rather than the smoothies that dominate the catalogue.
+ * The cards badge by drink type, so the de-duplication uses the same key.
+ */
+export async function fetchPopularRecipesOnePerDrinkType(
   supabase: SupabaseClient,
   maxResults = 20,
 ) {
   const { data, error } = await supabase
     .from("recipes")
-    .select(`*, recipe_categories ( score, qualified, categories (id, name, slug) )`)
+    .select("*")
     .eq("status", "approved")
     .or("shares.gt.0,saves.gt.0,comments.gt.0,likes.gt.0")
     .order("weighted_score", { ascending: false })
@@ -15,26 +21,6 @@ export async function fetchPopularRecipesOnePerCategory(
 
   if (error) throw new Error(error.message);
 
-  // Walk the popularity-sorted list, keep the first (most popular) recipe
-  // per top category. Recipes with no category are kept as-is.
-  const seenTags = new Set<string>();
-  const result = [];
-  for (const recipe of data ?? []) {
-    const firstTag =
-      [...(recipe.recipe_categories ?? [])]
-        .filter(
-          (rc: { categories: unknown; qualified?: boolean }) =>
-            rc.qualified && rc.categories,
-        )
-        .sort(
-          (a: { score: number }, b: { score: number }) => b.score - a.score,
-        )[0]?.categories?.name ?? null;
-    if (firstTag !== null) {
-      if (seenTags.has(firstTag)) continue;
-      seenTags.add(firstTag);
-    }
-    result.push(recipe);
-    if (result.length >= maxResults) break;
-  }
-  return result;
+  // Popularity-sorted, so the first hit per type is also the most popular one.
+  return oneRecipePerDrinkType(data ?? []).slice(0, maxResults);
 }

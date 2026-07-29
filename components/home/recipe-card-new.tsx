@@ -3,14 +3,14 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getCloudinaryUrl } from "@/lib/cloudinary";
-import { getCategoryConfig } from "@/lib/category-config";
+import { getDrinkTypeBadge, drinkTypeName } from "@/lib/drink-types";
 
 interface RecipeCardNewProps {
   id: string;
   title: string;
-  catSlug?: string;
+  /** Drink-type slug (recipes.drink_type) — drives the badge. */
+  drinkType?: string;
   imageUrl?: string;
-  category?: string;
   href?: string;
   priority?: boolean;
   initialBookmarked?: boolean;
@@ -18,12 +18,12 @@ interface RecipeCardNewProps {
 
 export function RecipeCardNew({
   title,
-  catSlug,
+  drinkType,
   imageUrl,
-  category,
   href = "#",
   priority = false,
 }: RecipeCardNewProps) {
+  const badge = getDrinkTypeBadge(drinkType);
   const transformedUrl = imageUrl
     ? getCloudinaryUrl(imageUrl, { width: 600, height: 600 })
     : undefined;
@@ -48,22 +48,17 @@ export function RecipeCardNew({
 
         {/* Meta */}
         <div className="px-0.5">
-          {category && (
+          {drinkType && (
             <div
-              style={{
-                backgroundColor: getCategoryConfig(catSlug!).bgColorBadge,
-                color: getCategoryConfig(catSlug!).textColorBadge,
-              }}
+              style={{ backgroundColor: badge.bgColor, color: badge.textColor }}
               className="w-fit mb-0.5 rounded-2xl py-1 px-2 flex items-center gap-1"
             >
               <span
-                style={{
-                  backgroundColor: getCategoryConfig(catSlug!).textColorBadge,
-                }}
+                style={{ backgroundColor: badge.textColor }}
                 className="rounded-full size-1.25"
               />
               <span className="text-xs font-semibold uppercase tracking-wide">
-                {category}
+                {drinkTypeName(drinkType)}
               </span>
             </div>
           )}
