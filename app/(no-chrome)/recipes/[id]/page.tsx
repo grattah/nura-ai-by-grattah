@@ -190,6 +190,8 @@ export default async function RecipeDetailPage({
   const shareDisabled = (recipe as { status?: string }).status !== "approved";
 
   let personalizedView = false;
+  let isSubscribed = false;
+  let hasProfile = false;
   let matchResult: ReturnType<typeof computeMatchScore> | null = null;
   let personalizedAlerts: SafetyAlertItem[] = [];
   let needsSafetyAlerts = false;
@@ -214,6 +216,8 @@ export default async function RecipeDetailPage({
       goals?: string[];
     } | null;
     const profileUpdatedAt = profile?.updated_at ?? null;
+    hasProfile = !!profileUpdatedAt;
+    isSubscribed = isSub;
     personalizedView = isSub && !!profileUpdatedAt;
     if (personalizedView && recipe.final_score_10 != null) {
       // Fresh match, computed from the recipe's current scores + the profile.
@@ -316,20 +320,27 @@ export default async function RecipeDetailPage({
                   default card (nutrition % + "complete profile" CTA). A profiled
                   subscriber with no goals AND no conditions has nothing to match
                   against, so matchScore is null and they get the default too. */}
-              {personalizedView && matchResult?.highest ? (
+
+              {isSubscribed && !hasProfile ? (
+                // subscribed, no profile → locked NutritionScore (blur overlay)
+                <NutritionScore
+                  baseScore={recipe.final_score_10 ?? 0}
+                  match={{ percent: 0, label: "" }} // placeholder — it's blurred anyway
+                  hasProfile={false}
+                />
+              ) : personalizedView && matchResult?.highest ? (
+                // subscribed, has profile, real match → unlocked NutritionScore
                 <NutritionScore
                   baseScore={recipe.final_score_10 ?? 0}
                   match={matchResult.highest}
                   breakdown={matchResult.breakdown}
                   average={matchResult.average}
+                  hasProfile
                 />
               ) : (
                 <DetoxCard
-                  finalScore={
-                    recipe.final_score_10 != null
-                      ? Math.round(recipe.final_score_10 * 10)
-                      : null
-                  }
+                  recipeId={recipe.id}
+                  initialScores={topBioactivities(recipe.recipe_tags, 2)}
                 />
               )}
 
