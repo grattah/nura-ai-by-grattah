@@ -325,7 +325,7 @@ export default async function RecipeDetailPage({
                 // subscribed, no profile → locked NutritionScore (blur overlay)
                 <NutritionScore
                   baseScore={recipe.final_score_10 ?? 0}
-                  match={{ percent: 0, label: "" }} // placeholder — it's blurred anyway
+                  match={{ percent: 0, label: "" }} 
                   hasProfile={false}
                 />
               ) : personalizedView && matchResult?.highest ? (
@@ -338,9 +338,10 @@ export default async function RecipeDetailPage({
                   hasProfile
                 />
               ) : (
-                <DetoxCard
-                  recipeId={recipe.id}
-                  initialScores={topBioactivities(recipe.recipe_tags, 2)}
+                <NutritionScore
+                  baseScore={recipe.final_score_10 ?? 0}
+                  match={{ percent: 0, label: "" }} 
+                  hasProfile={false}
                 />
               )}
 
