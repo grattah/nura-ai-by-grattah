@@ -50,83 +50,85 @@ export default async function ManageSubscriptionPage() {
 
   return (
     <FreeTrialExhaustedGate exhausted={!!trial?.exhausted}>
-    <div className="min-h-dvh bg-background pb-10 flex flex-col">
-      {/* Header */}
-      <div className="flex items-center px-6 pt-5 pb-10 relative">
-        <Link
-          href="/account"
-          className="size-10 absolute left-4 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
-          aria-label="Back"
-        >
-          <ArrowLeft className="size-5 text-foreground" />
-        </Link>
+      <div className="min-h-dvh bg-background pb-10 flex flex-col">
+        {/* Header */}
+        <div className="flex items-center px-6 pt-5 pb-10 relative">
+          <Link
+            href="/account"
+            className="size-10 absolute left-4 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
+            aria-label="Back"
+          >
+            <ArrowLeft className="size-5 text-foreground" />
+          </Link>
 
-        <div className="flex-1 min-w-0 text-center">
-          <h1 className="text-xl font-semibold text-foreground">
-            Manage subscription
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            You're on Nuko+ ✨
-          </p>
-        </div>
-      </div>
-
-      <div className="px-6 space-y-4 flex flex-col flex-1">
-        {/* Current plan card */}
-        <div>
-          <p className="text-sm text-subtle font-medium mb-2">Current Plan</p>
-          <div className={`${cardClass} rounded-xl px-4 py-5 space-y-3`}>
-            <div>
-              <div className="flex items-center justify-between">
-                <p className="text-base font-semibold text-[#333333CC]">
-                  {planLabel}
-                </p>
-                <span className={pillClass}>
-                  {isExpired ? "Expired" : "Active"}
-                </span>
-              </div>
-              <p className={valueClass}>{priceLabel}</p>
-            </div>
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-[#333333CC]">
-                {isExpired ? "Expired on" : "Next billing date"}
-              </p>
-              {/* A free plan has no billing date. */}
-              <p className={rowValueClass}>{isFree ? "-- --" : dated}</p>
-            </div>
+          <div className="flex-1 min-w-0 text-center">
+            <h1 className="text-xl font-semibold text-foreground">
+              Manage subscription
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              You're on Nuko+ ✨
+            </p>
           </div>
         </div>
 
-        {/* Change plan */}
-        <Link
-          href="/change-plan"
-          className="flex items-center justify-between p-4 bg-[#E8E6DC] rounded-xl border border-[#E8E6DC] hover:opacity-80 transition-opacity active:scale-[0.98]"
-        >
-          <p className="text-base font-medium text-[#333333CC]">Change Plan</p>
-          <ChevronRight className="size-4.5 text-muted-foreground" />
-        </Link>
-        <Link
-          href="/billing-history"
-          className="flex items-center justify-between p-4 bg-[#E8E6DC] rounded-xl border border-[#E8E6DC] hover:opacity-80 transition-opacity active:scale-[0.98]"
-        >
-          <p className="text-base font-medium text-[#333333CC]">Billing</p>
-          <ChevronRight className="size-4.5 text-muted-foreground" />
-        </Link>
+        <div className="px-6 space-y-4 flex flex-col flex-1">
+          {/* Current plan card */}
+          <div>
+            <p className="text-sm text-subtle font-medium mb-2">Current Plan</p>
+            <div className={`${cardClass} rounded-xl px-4 py-5 space-y-3`}>
+              <div>
+                <div className="flex items-center justify-between">
+                  <p className="text-base font-semibold text-[#333333CC]">
+                    {planLabel}
+                  </p>
+                  <span className={pillClass}>
+                    {isExpired ? "Expired" : "Active"}
+                  </span>
+                </div>
+                <p className={valueClass}>{priceLabel}</p>
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-[#333333CC]">
+                  {isExpired ? "Expired on" : "Next billing date"}
+                </p>
+                {/* A free plan has no billing date. */}
+                <p className={rowValueClass}>{isFree ? "-- --" : dated}</p>
+              </div>
+            </div>
+          </div>
 
-        {/* Support */}
-        <div className="pt-4 text-center mt-auto">
-          <p className="text-base text-grey-c500">
-            Need help?{" "}
-            <a
-              href="mailto:support@nuko.app"
-              className="font-semibold text-mint-green"
-            >
-              Contact Support
-            </a>
-          </p>
+          {/* Change plan */}
+          <Link
+            href="/change-plan"
+            className="flex items-center justify-between p-4 bg-[#E8E6DC] rounded-xl border border-[#E8E6DC] hover:opacity-80 transition-opacity active:scale-[0.98]"
+          >
+            <p className="text-base font-medium text-[#333333CC]">
+              Change Plan
+            </p>
+            <ChevronRight className="size-4.5 text-muted-foreground" />
+          </Link>
+          <Link
+            href="/billing-history"
+            className="flex items-center justify-between p-4 bg-[#E8E6DC] rounded-xl border border-[#E8E6DC] hover:opacity-80 transition-opacity active:scale-[0.98]"
+          >
+            <p className="text-base font-medium text-[#333333CC]">Billing</p>
+            <ChevronRight className="size-4.5 text-muted-foreground" />
+          </Link>
+
+          {/* Support */}
+          <div className="pt-4 text-center mt-auto">
+            <p className="text-base text-grey-c500">
+              Need help?{" "}
+              <a
+                href="mailto:support@nuko.app"
+                className="font-semibold text-mint-green"
+              >
+                Contact Support
+              </a>
+            </p>
+          </div>
         </div>
       </div>
-    </div>
     </FreeTrialExhaustedGate>
   );
 }
