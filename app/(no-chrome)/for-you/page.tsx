@@ -6,11 +6,14 @@ import Link from "next/link";
 import BackButton from "@/components/back-button";
 import { getTopMatches } from "@/actions/for-you";
 import { RecipeCardForYou } from "@/components/RecipeCardForYou";
+import type { Tables } from "@/lib/database.types";
+
+type RecipeWithMatch = Tables<"recipes"> & { matchScore: number };
 
 const Page = () => {
   const [activeType, setActiveType] = React.useState("all");
   const [availableTypes, setAvailableTypes] = React.useState<string[]>([]);
-  const [initialRecipes, setInitialRecipes] = React.useState<any>([]);
+  const [initialRecipes, setInitialRecipes] = React.useState<RecipeWithMatch[]>([]);
   const [ready, setReady] = React.useState(false);
 
   React.useEffect(() => {
