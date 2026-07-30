@@ -3,12 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { getCloudinaryUrl } from "@/lib/cloudinary";
+import { RECIPE_IMAGE_GENERATION_ENABLED } from "@/lib/recipe-visibility";
 
 /**
- * Recipe hero image. Generated recipes are created with `image_url = null`; the
- * image is produced lazily on first view by an awaited request to
- * `/api/recipes/[id]/image` (reliable on serverless, errors observable). The
- * spinner shows while it generates, then the image swaps in — no page reload.
+ * Recipe hero image. While RECIPE_IMAGE_GENERATION_ENABLED is off this is purely
+ * presentational — the detail page only mounts it for recipes that already have an
+ * image, and no generation request is made.
+ *
+ * When generation is reinstated: generated recipes are created with
+ * `image_url = null` and the image is produced lazily on first view by an awaited
+ * request to `/api/recipes/[id]/image` (reliable on serverless, errors
+ * observable). The spinner shows while it generates, then the image swaps in.
  */
 export function RecipeHeroImage({
   recipeId,
@@ -20,7 +25,10 @@ export function RecipeHeroImage({
   initialImageUrl: string | null;
 }) {
   const [imageUrl, setImageUrl] = useState<string | null>(initialImageUrl);
-  const [failed, setFailed] = useState(false);
+  // With generation suspended, "no image" is terminal rather than pending — start
+  // in the failed state so an imageless render shows the placeholder instead of a
+  // spinner that would never resolve.
+  const [failed, setFailed] = useState(!RECIPE_IMAGE_GENERATION_ENABLED);
   const triggered = useRef(false);
 
   useEffect(() => {
@@ -29,7 +37,7 @@ export function RecipeHeroImage({
     // per-effect "cancelled" flag (the cleanup would discard the only in-flight
     // request's result). React safely ignores a setState on a truly unmounted
     // component.
-    if (imageUrl || triggered.current) return;
+    if (imageUrl || triggered.current || !RECIPE_IMAGE_GENERATION_ENABLED) return;
     triggered.current = true;
 
     (async () => {

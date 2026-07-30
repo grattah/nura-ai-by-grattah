@@ -17,6 +17,7 @@ import { MoveRight } from "lucide-react";
 import { FreeTokensModal } from "@/components/tokens/FreeTokensModal";
 import { FeatureRequest } from "@/components/home/feature-request";
 import { ForYouCategory } from "@/components/for-you-category";
+import { DeletionScheduledModal } from "@/components/profile/deletion-scheduled-modal";
 
 type RecipeWithTags = {
   id: string;
@@ -40,7 +41,14 @@ async function getPopularRecipes() {
     .limit(30);
 }
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  // `?deletion=scheduled` is set by the profile page's delete flow, which signs
+  // the user out and lands them here.
+  searchParams: Promise<{ deletion?: string }>;
+}) {
+  const deletionScheduled = (await searchParams).deletion === "scheduled";
   const supabase = await createClient();
 
   const [
@@ -175,6 +183,7 @@ export default async function HomePage() {
         <FeatureRequest />
       </main>
       {showFreeTokens && user && <FreeTokensModal userId={user.id} />}
+      <DeletionScheduledModal show={deletionScheduled} />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { hasActiveSubscription } from "@/lib/subscription";
 import { sanitizeNext } from "@/lib/safe-redirect";
 import { ensureWelcomeEmail } from "@/actions/welcome";
+import { cancelScheduledDeletion } from "@/actions/delete-account";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -22,6 +23,9 @@ export async function GET(request: Request) {
       let destination = next;
 
       if (user) {
+        // Signing in within the grace period recovers a deleted account. This is
+        // the OAuth/magic-link arm of the same rule the client form applies.
+        await cancelScheduledDeletion();
         // First-time accounts (incl. Google sign-ups) get the welcome email once.
         await ensureWelcomeEmail();
         const active = await hasActiveSubscription(supabase, user.id);

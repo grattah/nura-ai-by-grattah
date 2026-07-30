@@ -6,6 +6,7 @@ import { getCachedUser, createServiceRoleClient } from "@/lib/supabase/server";
 import { getAdminIdentity } from "@/lib/admin/auth";
 import { meterUnits } from "@/lib/credits-server";
 import { IMAGE_UNITS } from "@/lib/credits";
+import { RECIPE_IMAGE_GENERATION_ENABLED } from "@/lib/recipe-visibility";
 
 export const maxDuration = 60;
 
@@ -55,6 +56,14 @@ export async function POST(
   const isAdmin = isOwner ? false : !!(await getAdminIdentity());
   if (!isOwner && !isAdmin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  // Generation is suspended. Bail HERE rather than only in the client: this is
+  // what guarantees no Gemini spend and no IMAGE_UNITS charge. Delete this block
+  // to reinstate (see RECIPE_IMAGE_GENERATION_ENABLED). Images are added by an
+  // admin through the recipe form in the meantime.
+  if (!RECIPE_IMAGE_GENERATION_ENABLED) {
+    return NextResponse.json({ imageUrl: null, suspended: true });
   }
 
   try {

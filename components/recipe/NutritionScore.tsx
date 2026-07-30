@@ -2,10 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { HiOutlineInformationCircle } from "react-icons/hi";
 import { FaLock } from "react-icons/fa";
 
-import { createClient } from "@/lib/supabase/client";
+import { NutritionScoreDrawer } from "@/components/recipe/NutritionScoreDrawer";
+import type { NutritionPointInput } from "@/lib/scoring/nutrition-breakdown";
 
 const DISCLAIMER =
   "Personalized based on your preferences - not a substitute for guidance from your doctor or dietitian.";
@@ -21,48 +23,21 @@ const NutritionScore = ({
   match,
   breakdown = [],
   average = null,
+  points,
   hasProfile,
 }: {
-  /** Base Nutrition Score, 1–10 — the same for everyone. */
   baseScore: number;
-  /** §7.1 headline: the highest credit + the condition/goal that produced it. */
   match: { percent: number; label: string };
-  /** §7.2 every credit, already sorted best-first. */
   breakdown?: MatchBreakdownRow[];
-  /** §7.3 mean of all credits. Shown inside the panel only, never as headline. */
   average?: number | null;
+  points: NutritionPointInput;
   hasProfile: boolean;
 }) => {
   const [open, setOpen] = useState(false);
 
-  // §7.2 expandable panel — collapsed by default.
   const [showBreakdown, setShowBreakdown] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  // §7.5 with a single selection the average IS the highest, so showing both
-  // adds no information.
   const showAverage = average != null && breakdown.length > 1;
-
-  const fetchUser = async () => {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("health_profiles")
-      .select("user_id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    if (error) {
-      console.error(error.message);
-      return;
-    }
-
-    const profileExists = !!data;
-  };
 
   // Close on outside click and on Escape.
   useEffect(() => {
@@ -87,7 +62,7 @@ const NutritionScore = ({
 
   return (
     <div
-      className={`relative p-4 rounded-3xl bg-white flex flex-col gap-4 ${
+      className={`relative p-4 rounded-2xl bg-white flex flex-col gap-4 ${
         !hasProfile && "h-57"
       }`}
     >
@@ -112,12 +87,28 @@ const NutritionScore = ({
             <div
               id="nutrition-score-info"
               role="tooltip"
-              className="absolute bottom-full -right-3 mb-2.5 w-64 rounded-2xl bg-[#E6F4EB] border border-[#74A7A0] px-4 py-3 z-20"
+              className="absolute bottom-full space-y-4 -right-3 mb-2.5 w-[85vw] rounded-2xl bg-[#E6F4EB] border border-[#74A7A0] px-4 py-3 pb-0 z-20"
             >
               <p className="text-sm text-base-text leading-snug text-left font-medium">
                 {DISCLAIMER}
               </p>
-              {/* Tail: a rotated square sharing the bubble's fill and border. */}
+              <>
+                <p className="text-sm text-base-text leading-snug text-left font-medium">
+                  <span className="font-semibold text-base-text">
+                    Match Score:
+                  </span>{" "}
+                  A percentage showing how well this recipe fits the health
+                  goals and conditions in your profile, calculated separately
+                  for each one you’ve selected.
+                </p>
+                <p className="text-sm text-base-text leading-snug text-left font-medium">
+                  <span className="font-semibold text-base-text">
+                    Nutri Score:
+                  </span>{" "}
+                  A score out of 10 showing how nutritionally sound this recipe
+                  is, based on its key nutrients.
+                </p>
+              </>
               <span
                 aria-hidden="true"
                 className="absolute -bottom-1.5 right-3.5 size-3 rotate-45 bg-[#E6F4EB] border-r border-b border-[#74A7A0] rounded-br-xs"
@@ -127,42 +118,55 @@ const NutritionScore = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="rounded-2xl bg-success-c100 flex flex-col gap-2 p-3 items-center text-center">
-          <p className="text-success-c700 text-hp-title leading-tight font-semibold">
-            {baseScore}
-            <span className="text-subtle text-sm font-medium">{"/10"}</span>
-          </p>
-          <p className="text-sm font-medium text-subtle">Nutrition score</p>
-        </div>
-        <div className="rounded-2xl bg-info-c100 flex flex-col gap-2 p-3 items-center text-center">
+      <div className="flex items-stretch gap-3">
+        <div className="rounded-2xl flex-1 bg-info-c100 flex flex-col gap-2 px-2 pt-7.5 pb-2 items-center text-center relative">
+          {match.label && (
+            <span className="rounded-full bg-info-c600/10 px-2 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-info-c600 wrap-break-word absolute top-2 left-4">
+              {match.label}
+            </span>
+          )}
           <p className="text-info-c600 text-hp-title leading-tight font-semibold">
             {Math.round(match.percent)}%
           </p>
-          {/* §7.1 — the headline always names what it matched. */}
-          <p className="text-sm font-medium text-subtle wrap-break-word">
-            {match.label}
-          </p>
-        </div>
-      </div>
-
-      {/* §7.2 full breakdown, sorted best-first. */}
-      {breakdown.length > 1 && (
-        <div>
           <button
             type="button"
             onClick={() => setShowBreakdown((v) => !v)}
             aria-expanded={showBreakdown}
             aria-controls="match-breakdown"
-            className="text-sm font-medium text-mint-green underline"
+            className="flex items-center gap-1 text-xs font-semibold text-info-c600 hover:opacity-75 transition-opacity"
           >
-            {showBreakdown
-              ? "Hide details"
-              : "See other goals this recipe supports"}
+            {showBreakdown ? "Hide details" : "See more details"}
+            {showBreakdown ? (
+              <ChevronUp className="size-4" strokeWidth={2} />
+            ) : (
+              <ChevronDown className="size-4" strokeWidth={2} />
+            )}
           </button>
+        </div>
+        <div className="w-px bg-grey-c100 my-1.5" />
+        {/* Nutri score — the whole tile opens the breakdown drawer. */}
+        <NutritionScoreDrawer points={points}>
+          <button
+            type="button"
+            className="rounded-2xl w-[clamp(78px,23vh,98px)] shrink-0 bg-success-c100 flex flex-col gap-2 px-3 pt-7.5 pb-5 text-center hover:opacity-90 transition-opacity"
+          >
+            <p className="text-success-c700 text-hp-title leading-tight font-semibold">
+              {baseScore}
+              <span className="text-subtle text-sm font-medium">{"/10"}</span>
+            </p>
+            <span className="flex items-center gap-1 text-nowrap text-xs font-medium text-subtle">
+              Nutri score
+              <ChevronDown className="size-4" strokeWidth={2} />
+            </span>
+          </button>
+        </NutritionScoreDrawer>
+      </div>
 
-          {showBreakdown && (
-            <ul id="match-breakdown" className="mt-3 flex flex-col gap-2">
+      {showBreakdown && (
+        <div id="match-breakdown" className="flex flex-col gap-4">
+          <div className="flex flex-col gap-y-4">
+            <p className="text-sm text-subtle">This recipe supports</p>
+            <ul className="flex flex-col gap-y-4">
               {breakdown.map((b) => (
                 <li
                   key={b.key}
@@ -176,7 +180,7 @@ const NutritionScore = ({
                   </span>
                 </li>
               ))}
-              {/* §7.3 optional average — secondary, never the headline. */}
+
               {showAverage && (
                 <li className="flex items-center justify-between gap-3 text-sm border-t border-grey-c100 pt-2 mt-1">
                   <span className="text-subtle">Average across all</span>
@@ -186,11 +190,17 @@ const NutritionScore = ({
                 </li>
               )}
             </ul>
-          )}
+          </div>
+          <Link
+            href="/health-profile"
+            className="w-full rounded-full border border-info-c600 py-3 text-center text-xs font-semibold text-info-c600 hover:opacity-75 transition-opacity"
+          >
+            Adjust my goals/conditions
+          </Link>
         </div>
       )}
       {!hasProfile && (
-        <div className="absolute inset-0 rounded-b-3xl backdrop-blur-sm bg-white/30 flex flex-col items-center justify-center gap-3 text-center px-4 z-20">
+        <div className="absolute inset-0 rounded-2xl backdrop-blur-sm bg-white/30 flex flex-col items-center justify-center gap-3 text-center px-4 z-20">
           <div className="bg-[#F0F2EA] p-3 rounded-full">
             <FaLock color="#227B6F" size={16} />
           </div>
