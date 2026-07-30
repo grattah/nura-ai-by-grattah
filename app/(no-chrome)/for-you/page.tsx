@@ -1,37 +1,94 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 
 import BackButton from "@/components/back-button";
 import { getTopMatches } from "@/actions/for-you";
 import { RecipeCardForYou } from "@/components/RecipeCardForYou";
+import type { Tables } from "@/lib/database.types";
 
-const page = async () => {
-  const { recipes } = await getTopMatches(12);
+type RecipeWithMatch = Tables<"recipes"> & { matchScore: number };
+
+const Page = () => {
+  const [activeType, setActiveType] = React.useState("all");
+  const [availableTypes, setAvailableTypes] = React.useState<string[]>([]);
+  const [initialRecipes, setInitialRecipes] = React.useState<RecipeWithMatch[]>([]);
+  const [ready, setReady] = React.useState(false);
+
+  React.useEffect(() => {
+    const fetchRecipes = async () => {
+      try {
+        const { recipes } = await getTopMatches(12);
+        if (recipes) {
+          setInitialRecipes(recipes);
+          setAvailableTypes([
+            "all",
+            ...new Set(recipes.map((r) => r.drink_type)),
+          ]);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setReady(true);
+      }
+    };
+    fetchRecipes();
+  }, []);
+
+  const filteredRecipes =
+    activeType === "all"
+      ? initialRecipes
+      : initialRecipes.filter((r) => r.drink_type === activeType);
 
   return (
     <div className="bg-background pb-10">
       <main className="px-6 pt-3">
-        <div className="flex flex-col gap-10">
+        <div className="flex flex-col gap-6">
+          {/* Header — always shown, doesn't depend on data */}
           <div className="flex items-center justify-between">
             <BackButton className="size-10 grid place-items-center rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
-            <p className="font-semibold text-xl">Recipes for you</p>
+            <p className="font-semibold text-xl">Recommended for you</p>
             <div />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            {recipes.map((recipe, i) => {
-              return (
-                <div key={recipe.id} className="min-w-0">
-                  <RecipeCardForYou
-                    key={recipe.id}
-                    recipe={recipe}
-                    score={recipe.matchScore}
-                    priority={i < 2}
-                  />
+
+          {!ready ? (
+            <ForYouSkeleton />
+          ) : (
+            <>
+              {availableTypes.length > 1 && (
+                <div className="flex gap-2.25 overflow-x-auto w-full hide-scrollbar">
+                  {availableTypes.map((type, i) => (
+                    <button
+                      key={i}
+                      className={`py-3 px-4 rounded-[100px] text-base font-medium capitalize ${
+                        activeType === type
+                          ? "bg-mint-green text-white"
+                          : "bg-white text-base-text"
+                      }`}
+                      onClick={() => setActiveType(type)}
+                    >
+                      {type.replace(/s$/, "")}
+                    </button>
+                  ))}
                 </div>
-              );
-            })}
-          </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                {filteredRecipes.map((recipe, i) => (
+                  <div key={recipe.id} className="min-w-0">
+                    <RecipeCardForYou
+                      recipe={recipe}
+                      score={recipe.matchScore}
+                      priority={i < 2}
+                    />
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
+
         <div className="mt-8 flex justify-center">
           <Link
             href="/health-profile"
@@ -45,4 +102,28 @@ const page = async () => {
   );
 };
 
-export default page;
+const ForYouSkeleton = () => (
+  <>
+    {/* Pill row placeholders */}
+    <div className="flex gap-2.25">
+      {[0, 1, 2, 3, 4].map((i) => (
+        <div
+          key={i}
+          className="h-11 w-20 rounded-[100px] bg-muted animate-pulse"
+        />
+      ))}
+    </div>
+    {/* Card grid placeholders */}
+    <div className="grid grid-cols-2 gap-4">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="min-w-0 space-y-3">
+          <div className="aspect-square w-full rounded-2xl bg-muted animate-pulse" />
+          <div className="h-4 w-3/4 rounded bg-muted animate-pulse" />
+          <div className="h-4 w-16 rounded bg-muted animate-pulse" />
+        </div>
+      ))}
+    </div>
+  </>
+);
+
+export default Page;
