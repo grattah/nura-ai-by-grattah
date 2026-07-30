@@ -59,13 +59,13 @@ const RECIPE_SELECT = "*, recipe_tags(score, tags(name, slug))";
 // The recipe's strongest bioactivities (from recipe_tags) for the supports card.
 function topBioactivities(
   recipeTags: RecipeRecord["recipe_tags"],
-  count = 5
+  count = 5,
 ): SupportScore[] {
   return (recipeTags ?? [])
     .flatMap((rt) =>
       rt.tags && rt.score != null
         ? [{ slug: rt.tags.slug, support: rt.tags.name, score: rt.score }]
-        : []
+        : [],
     )
     .sort((a, b) => b.score - a.score)
     .slice(0, count);
@@ -156,7 +156,7 @@ export default async function RecipeDetailPage({
     likes,
     profiles (id, username, avatar_url),
     comment_likes!comment_id (user_id)
-  `
+  `,
       )
       .eq("recipe_id", recipe.id)
       .is("parent_id", null)
@@ -175,7 +175,7 @@ export default async function RecipeDetailPage({
         ...latestComment,
         hasLiked:
           latestComment.comment_likes?.some(
-            (like: { user_id: string }) => like.user_id === user?.id
+            (like: { user_id: string }) => like.user_id === user?.id,
           ) ?? false,
       }
     : null;
@@ -298,7 +298,9 @@ export default async function RecipeDetailPage({
 
             {/* Title + description — takes over the hero's top spacing when there
                 is no hero. */}
-            <div className={`px-6 mb-8 ${chrome.showHeroImage ? "" : "mt-4.5"}`}>
+            <div
+              className={`px-6 mb-4 ${chrome.showHeroImage ? "" : "mt-4.5"}`}
+            >
               <h1 className="text-2xl font-bold text-foreground mb-1.5 leading-tight">
                 {recipe.title}
               </h1>
@@ -307,9 +309,7 @@ export default async function RecipeDetailPage({
               </p>
             </div>
 
-            <div className="px-6 mb-8 space-y-4">
-              {/* Safety alerts (allergy / medication) — above the supports card
-                  when the personalized evaluation flagged any. */}
+            <div className="px-6 mb-4 space-y-4">
               {personalizedView && personalizedAlerts.length > 0 && (
                 <SafetyAlerts alerts={personalizedAlerts} />
               )}
@@ -323,25 +323,17 @@ export default async function RecipeDetailPage({
                     (recipe.recipe_tags?.length ?? 0) === 0)
                 }
               />
-              {/* Bioactivity tags are unverified until an admin approves the
-                  recipe, so the supports card (and the DetoxCard fallback below)
-                  are withheld on generated recipes. The nutrition score is not:
-                  it comes from the recipe's own nutrition figures. */}
               {chrome.showBioactivity && (
                 <RecipeSupports
                   supports={topBioactivities(recipe.recipe_tags, 5)}
                 />
               )}
-              {/* Base + match when we can personalize; otherwise fall back to the
-                  default card (nutrition % + "complete profile" CTA). A profiled
-                  subscriber with no goals AND no conditions has nothing to match
-                  against, so matchScore is null and they get the default too. */}
 
               {isSubscribed && !hasProfile ? (
                 // subscribed, no profile → locked NutritionScore (blur overlay)
                 <NutritionScore
                   baseScore={recipe.final_score_10 ?? 0}
-                  match={{ percent: 0, label: "" }} // placeholder — it's blurred anyway
+                  match={{ percent: 0, label: "" }}
                   hasProfile={false}
                 />
               ) : personalizedView && matchResult?.highest ? (
@@ -354,16 +346,12 @@ export default async function RecipeDetailPage({
                   hasProfile
                 />
               ) : chrome.showBioactivity ? (
-                <DetoxCard
-                  recipeId={recipe.id}
-                  initialScores={topBioactivities(recipe.recipe_tags, 2)}
+                <NutritionScore
+                  baseScore={recipe.final_score_10 ?? 0}
+                  match={{ percent: 0, label: "" }}
+                  hasProfile={false}
                 />
               ) : null}
-
-              {/* Safety alerts are cached separately and don't depend on the match
-                  score — keep this trigger independent of the card above, or users
-                  who DO have a match score would never have their alerts computed.
-                  Renders no visible chrome once the alerts are cached. */}
               {personalizedView && needsSafetyAlerts && (
                 <RecipePersonalizeTrigger recipeId={recipe.id} canTrigger />
               )}
@@ -390,8 +378,6 @@ export default async function RecipeDetailPage({
                 />
               </div>
 
-              {/* Almost-out token warning — only on freshly generated (pending)
-                  recipes, not the seeded/approved catalogue. Self-hides unless low. */}
               {!chrome.showShareAndSave && <PersonalizedTokenModal />}
 
               <div className="flex justify-between items-center gap-2 mt-8">
