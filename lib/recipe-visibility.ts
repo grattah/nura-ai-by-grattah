@@ -17,6 +17,7 @@ export interface RecipeChrome {
   showHeroImage: boolean;
   showShareAndSave: boolean;
   showBioactivity: boolean;
+  showBioactivitySupports: boolean;
 }
 
 /**
@@ -25,19 +26,29 @@ export interface RecipeChrome {
  * ones hold `image_url = null` forever unless an admin uploads one — so they show
  * no image anywhere, without retroactively blanking existing content.
  *
- * Share/save and the bioactivity cards key off APPROVAL: sharing an unvetted
- * recipe publishes it, and its bioactivity tags are unverified until review. The
+ * Share/save and the score cards key off APPROVAL: sharing an unvetted recipe
+ * publishes it, and its bioactivity tags are unverified until review. The
  * nutrition score is deliberately not gated here — it comes from the recipe's own
  * nutrition figures rather than from tags.
+ *
+ * `showBioactivitySupports` gates the "This recipe supports" list, which is the
+ * fallback for anyone the personalized match can't serve. It additionally hides
+ * once a real match score exists — that user gets the percentage instead, and two
+ * readings of the same tags side by side is noise. Note it is NOT gated on
+ * authentication: bioactivities are public recipe information, so guests see the
+ * same list.
  */
 export function recipeChrome(input: {
   status: string | null;
   imageUrl: string | null;
+  /** True when the Recipe insights card is showing a real match percentage. */
+  hasMatchScore?: boolean;
 }): RecipeChrome {
   const approved = input.status === "approved";
   return {
     showHeroImage: !!input.imageUrl,
     showShareAndSave: approved,
     showBioactivity: approved,
+    showBioactivitySupports: approved && !input.hasMatchScore,
   };
 }
