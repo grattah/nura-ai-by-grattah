@@ -31,6 +31,7 @@ import type { NutritionFacts } from "@/lib/types";
 import type { SupportScore } from "@/lib/wellness-score";
 import { BookmarkProvider } from "@/components/bookmark-provider";
 import PersonalizedTokenModal from "@/components/tokens/PersonalizedTokenModal";
+import { recipeChrome } from "@/lib/recipe-visibility";
 
 type RecipeRecord = Database["public"]["Tables"]["recipes"]["Row"] & {
   recipe_tags:
@@ -58,13 +59,13 @@ const RECIPE_SELECT = "*, recipe_tags(score, tags(name, slug))";
 // The recipe's strongest bioactivities (from recipe_tags) for the supports card.
 function topBioactivities(
   recipeTags: RecipeRecord["recipe_tags"],
-  count = 5
+  count = 5,
 ): SupportScore[] {
   return (recipeTags ?? [])
     .flatMap((rt) =>
       rt.tags && rt.score != null
         ? [{ slug: rt.tags.slug, support: rt.tags.name, score: rt.score }]
-        : []
+        : [],
     )
     .sort((a, b) => b.score - a.score)
     .slice(0, count);
@@ -116,15 +117,15 @@ export async function generateMetadata({
   };
 }
 
+// `?generate=true` (set by /find-recipe after a generation) no longer changes what
+// renders — the layout follows the recipe's own image/status, so a first view and a
+// revisit look identical.
 export default async function RecipeDetailPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { id } = await params;
-  const { generate } = await searchParams;
 
   const [recipe, supabase] = await Promise.all([getRecipe(id), createClient()]);
 
@@ -155,7 +156,7 @@ export default async function RecipeDetailPage({
     likes,
     profiles (id, username, avatar_url),
     comment_likes!comment_id (user_id)
-  `
+  `,
       )
       .eq("recipe_id", recipe.id)
       .is("parent_id", null)
@@ -174,7 +175,7 @@ export default async function RecipeDetailPage({
         ...latestComment,
         hasLiked:
           latestComment.comment_likes?.some(
-            (like: { user_id: string }) => like.user_id === user?.id
+            (like: { user_id: string }) => like.user_id === user?.id,
           ) ?? false,
       }
     : null;
@@ -187,7 +188,13 @@ export default async function RecipeDetailPage({
 
   const nutrition = (recipe.nutrition as NutritionFacts | null) ?? null;
 
-  const shareDisabled = (recipe as { status?: string }).status !== "approved";
+  // A generated recipe is `pending` until an admin reviews it. Until then it
+  // renders without a hero image, without share/save, and without the bioactivity
+  // cards — on first view and on every revisit. See lib/recipe-visibility.ts.
+  const chrome = recipeChrome({
+    status: (recipe as { status?: string }).status ?? null,
+    imageUrl: recipe.image_url,
+  });
 
   let personalizedView = false;
   let isSubscribed = false;
@@ -278,8 +285,10 @@ export default async function RecipeDetailPage({
           </div>
 
           <main className="pb-6">
-            {/* Hero image — LCP element; fills in async for freshly generated recipes */}
-            {!generate && (
+            {/* Hero image — LCP element. Only for recipes that actually have one:
+                image generation is suspended, so a generated recipe carries no
+                image until an admin uploads it. */}
+            {chrome.showHeroImage && (
               <RecipeHeroImage
                 recipeId={recipe.id}
                 title={recipe.title}
@@ -287,8 +296,11 @@ export default async function RecipeDetailPage({
               />
             )}
 
-            {/* Title + description */}
-            <div className={`px-6 mb-8 ${generate && "mt-4.5"}`}>
+            {/* Title + description — takes over the hero's top spacing when there
+                is no hero. */}
+            <div
+              className={`px-6 mb-4 ${chrome.showHeroImage ? "" : "mt-4.5"}`}
+            >
               <h1 className="text-2xl font-bold text-foreground mb-1.5 leading-tight">
                 {recipe.title}
               </h1>
@@ -297,9 +309,7 @@ export default async function RecipeDetailPage({
               </p>
             </div>
 
-            <div className="px-6 mb-8 space-y-4">
-              {/* Safety alerts (allergy / medication) — above the supports card
-                  when the personalized evaluation flagged any. */}
+            <div className="px-6 mb-4 space-y-4">
               {personalizedView && personalizedAlerts.length > 0 && (
                 <SafetyAlerts alerts={personalizedAlerts} />
               )}
@@ -313,19 +323,17 @@ export default async function RecipeDetailPage({
                     (recipe.recipe_tags?.length ?? 0) === 0)
                 }
               />
-              <RecipeSupports
-                supports={topBioactivities(recipe.recipe_tags, 5)}
-              />
-              {/* Base + match when we can personalize; otherwise fall back to the
-                  default card (nutrition % + "complete profile" CTA). A profiled
-                  subscriber with no goals AND no conditions has nothing to match
-                  against, so matchScore is null and they get the default too. */}
+              {chrome.showBioactivity && (
+                <RecipeSupports
+                  supports={topBioactivities(recipe.recipe_tags, 5)}
+                />
+              )}
 
               {isSubscribed && !hasProfile ? (
                 // subscribed, no profile → locked NutritionScore (blur overlay)
                 <NutritionScore
                   baseScore={recipe.final_score_10 ?? 0}
-                  match={{ percent: 0, label: "" }} 
+                  match={{ percent: 0, label: "" }}
                   hasProfile={false}
                 />
               ) : personalizedView && matchResult?.highest ? (
@@ -337,18 +345,13 @@ export default async function RecipeDetailPage({
                   average={matchResult.average}
                   hasProfile
                 />
-              ) : (
+              ) : chrome.showBioactivity ? (
                 <NutritionScore
                   baseScore={recipe.final_score_10 ?? 0}
-                  match={{ percent: 0, label: "" }} 
+                  match={{ percent: 0, label: "" }}
                   hasProfile={false}
                 />
-              )}
-
-              {/* Safety alerts are cached separately and don't depend on the match
-                  score — keep this trigger independent of the card above, or users
-                  who DO have a match score would never have their alerts computed.
-                  Renders no visible chrome once the alerts are cached. */}
+              ) : null}
               {personalizedView && needsSafetyAlerts && (
                 <RecipePersonalizeTrigger recipeId={recipe.id} canTrigger />
               )}
@@ -375,9 +378,7 @@ export default async function RecipeDetailPage({
                 />
               </div>
 
-              {/* Almost-out token warning — only on freshly generated (pending)
-                  recipes, not the seeded/approved catalogue. Self-hides unless low. */}
-              {shareDisabled && <PersonalizedTokenModal />}
+              {!chrome.showShareAndSave && <PersonalizedTokenModal />}
 
               <div className="flex justify-between items-center gap-2 mt-8">
                 <div className="flex items-center gap-2 flex-1">
@@ -397,21 +398,24 @@ export default async function RecipeDetailPage({
                 </p>
               </div>
 
-              <div className="flex gap-4 items-center mt-8 w-full">
-                <ShareButton
-                  recipeId={recipe.id}
-                  recipeTitle={recipe.title}
-                  text="Send this to a friend"
-                  addText="show"
-                  disabled={shareDisabled}
-                />
+              {/* Sharing an unapproved recipe publishes it and saving pins it, so
+                  both are withheld until an admin has reviewed it. */}
+              {chrome.showShareAndSave && (
+                <div className="flex gap-4 items-center mt-8 w-full">
+                  <ShareButton
+                    recipeId={recipe.id}
+                    recipeTitle={recipe.title}
+                    text="Send this to a friend"
+                    addText="show"
+                  />
 
-                <BookmarkButton
-                  text="Save this recipe"
-                  addText="show"
-                  popularStyle=""
-                />
-              </div>
+                  <BookmarkButton
+                    text="Save this recipe"
+                    addText="show"
+                    popularStyle=""
+                  />
+                </div>
+              )}
 
               <div className="mt-8">
                 <Comment

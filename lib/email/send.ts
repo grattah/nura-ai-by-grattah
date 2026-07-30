@@ -11,11 +11,6 @@ export interface SendEmailOptions {
   replyTo?: string;
 }
 
-/**
- * Send one transactional email via Resend. Throws on a Resend error so callers
- * can decide whether to surface it (auth hook) or swallow it (best-effort
- * transactional sends).
- */
 export async function sendEmail({
   to,
   subject,
