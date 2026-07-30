@@ -17,6 +17,7 @@ import { FaHeart } from "react-icons/fa";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { ensureWelcomeEmail } from "@/actions/welcome";
+import { cancelScheduledDeletion } from "@/actions/delete-account";
 
 import loader from "@/public/loader.png";
 import authImage from "@/public/authImage.webp";
@@ -220,7 +221,13 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-  
+
+    // Signing in within the 30-day grace period recovers a deleted account. This
+    // is the single funnel for every client sign-in (password + both OTP steps),
+    // and the purge cron independently re-checks last_sign_in_at, so a miss here
+    // can't cost the user their account.
+    if (user) await cancelScheduledDeletion();
+
     let destination = "/";
   
     if (user) {

@@ -2,6 +2,7 @@ import { type EmailOtpType } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { cancelScheduledDeletion } from "@/actions/delete-account";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -34,6 +35,9 @@ export async function GET(request: NextRequest) {
     });
 
     if (!error) {
+      // A verified link is a sign-in: recover the account if a deletion was
+      // pending. Recovery links included — regaining access is still access.
+      await cancelScheduledDeletion();
       // Password recovery must always land on the reset-password form,
       // regardless of what `next` resolved to (Supabase falls back to the
       // Site URL for `next` if the requested redirect isn't allow-listed).
