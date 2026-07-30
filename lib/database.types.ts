@@ -56,6 +56,21 @@ export type Database = {
         }
         Relationships: []
       }
+      account_deletions: {
+        Row: {
+          scheduled_at: string
+          user_id: string
+        }
+        Insert: {
+          scheduled_at?: string
+          user_id: string
+        }
+        Update: {
+          scheduled_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       activities: {
         Row: {
           action: string | null

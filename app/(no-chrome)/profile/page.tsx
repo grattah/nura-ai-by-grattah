@@ -15,6 +15,7 @@ import { createClient } from "@/lib/supabase/client";
 import { formatRelativeTime } from "@/lib/utils";
 import { updateDisplayName, updatePassword } from "@/actions/profile";
 import { AvatarUpload } from "@/components/profile/avatar-upload";
+import { DeleteAccount } from "@/components/profile/delete-account";
 import {
   PasswordRequirements,
   checkPasswordStrength,
@@ -128,7 +129,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-dvh bg-background pb-10">
+    <div className="min-h-dvh bg-background pb-10 flex flex-col">
       {/* Header */}
       <div className="flex items-center px-6 pt-5 pb-11 relative">
         <button
@@ -140,16 +141,14 @@ export default function ProfilePage() {
         </button>
 
         <div className="flex-1 min-w-0 text-center">
-          <h1 className="text-xl font-semibold text-base-text">
-            Profile
-          </h1>
+          <h1 className="text-xl font-semibold text-base-text">Profile</h1>
           <p className="text-sm text-subtle font-medium mt-0.5">
             Edit your profile
           </p>
         </div>
       </div>
 
-      <div className="px-6 space-y-6">
+      <div className="px-6 space-y-6 flex-1 flex flex-col">
         {/* Avatar */}
         <div className="flex justify-center">
           <AvatarUpload
@@ -342,6 +341,10 @@ export default function ProfilePage() {
               </form>
             )}
           </div>
+        </div>
+
+        <div className="mt-auto">
+          <DeleteAccount />
         </div>
       </div>
     </div>

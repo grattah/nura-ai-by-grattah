@@ -15,6 +15,7 @@ describe("recipeChrome", () => {
       showHeroImage: true,
       showShareAndSave: true,
       showBioactivity: true,
+      showBioactivitySupports: true,
     });
   });
 
@@ -23,6 +24,7 @@ describe("recipeChrome", () => {
       showHeroImage: false,
       showShareAndSave: false,
       showBioactivity: false,
+      showBioactivitySupports: false,
     });
   });
 
@@ -51,5 +53,44 @@ describe("recipeChrome", () => {
 
   it("has image generation suspended", () => {
     expect(RECIPE_IMAGE_GENERATION_ENABLED).toBe(false);
+  });
+});
+
+// The "This recipe supports" list is the fallback for anyone the personalized
+// match can't serve, so it yields to a real match percentage — and, since
+// bioactivities are public recipe information, it ignores authentication.
+describe("recipeChrome — bioactivity supports fallback", () => {
+  const approved = { status: "approved", imageUrl: "https://x/i.webp" };
+
+  it("shows on an approved recipe with no match score", () => {
+    expect(
+      recipeChrome({ ...approved, hasMatchScore: false })
+        .showBioactivitySupports,
+    ).toBe(true);
+  });
+
+  it("shows when hasMatchScore is omitted entirely (guests, no profile)", () => {
+    expect(recipeChrome(approved).showBioactivitySupports).toBe(true);
+  });
+
+  it("hides once a real match score resolved", () => {
+    expect(
+      recipeChrome({ ...approved, hasMatchScore: true }).showBioactivitySupports,
+    ).toBe(false);
+  });
+
+  it("hides on an LLM-generated recipe even without a match score", () => {
+    expect(
+      recipeChrome({ status: "pending", imageUrl: null, hasMatchScore: false })
+        .showBioactivitySupports,
+    ).toBe(false);
+  });
+
+  it("leaves the insights-card gate keyed on approval alone", () => {
+    // showBioactivity still drives the Recipe insights fallback branch, which
+    // renders alongside the supports list — a match score must not hide it.
+    const c = recipeChrome({ ...approved, hasMatchScore: true });
+    expect(c.showBioactivity).toBe(true);
+    expect(c.showBioactivitySupports).toBe(false);
   });
 });

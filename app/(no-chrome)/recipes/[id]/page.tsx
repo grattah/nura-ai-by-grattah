@@ -10,7 +10,6 @@ import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { isBookmarked } from "@/actions/bookmark";
 import { BookmarkButton } from "@/components/bookmark-button";
 import BackButton from "@/components/back-button";
-import { DetoxCard } from "@/components/recipe/DetoxCard";
 import { RecipeSupports } from "@/components/recipe/RecipeSupports";
 import { RecipeHeroImage } from "@/components/recipe/RecipeHeroImage";
 import { RecipeScoreTrigger } from "@/components/recipe/RecipeScoreTrigger";
@@ -188,13 +187,17 @@ export default async function RecipeDetailPage({
 
   const nutrition = (recipe.nutrition as NutritionFacts | null) ?? null;
 
-  // A generated recipe is `pending` until an admin reviews it. Until then it
-  // renders without a hero image, without share/save, and without the bioactivity
-  // cards — on first view and on every revisit. See lib/recipe-visibility.ts.
-  const chrome = recipeChrome({
-    status: (recipe as { status?: string }).status ?? null,
-    imageUrl: recipe.image_url,
-  });
+  // The seven BNS point components. Six feed computeMatchScore below; all seven
+  // feed the Nutri score breakdown drawer (fvl has no part in matching).
+  const nutritionPoints = {
+    sugar: recipe.sugar_points,
+    salt: recipe.salt_points,
+    satFat: recipe.sat_fat_points,
+    energy: recipe.energy_points,
+    fiber: recipe.fiber_points,
+    protein: recipe.protein_points,
+    fvl: recipe.fvl_points,
+  };
 
   let personalizedView = false;
   let isSubscribed = false;
@@ -236,12 +239,12 @@ export default async function RecipeDetailPage({
       matchResult = computeMatchScore({
         bioBySlug,
         points: {
-          sugar: recipe.sugar_points ?? 0,
-          salt: recipe.salt_points ?? 0,
-          satFat: recipe.sat_fat_points ?? 0,
-          energy: recipe.energy_points ?? 0,
-          fiber: recipe.fiber_points ?? 0,
-          protein: recipe.protein_points ?? 0,
+          sugar: nutritionPoints.sugar ?? 0,
+          salt: nutritionPoints.salt ?? 0,
+          satFat: nutritionPoints.satFat ?? 0,
+          energy: nutritionPoints.energy ?? 0,
+          fiber: nutritionPoints.fiber ?? 0,
+          protein: nutritionPoints.protein ?? 0,
         },
         track: recipe.track ?? "Solid Food",
         ironRich: !!recipe.iron_rich,
@@ -261,6 +264,18 @@ export default async function RecipeDetailPage({
       else needsSafetyAlerts = true;
     }
   }
+
+  // A generated recipe is `pending` until an admin reviews it. Until then it
+  // renders without a hero image, without share/save and without the score cards
+  // — on first view and on every revisit. Computed here rather than earlier
+  // because the bioactivity list also depends on whether a match score resolved.
+  // See lib/recipe-visibility.ts.
+  const chrome = recipeChrome({
+    status: (recipe as { status?: string }).status ?? null,
+    imageUrl: recipe.image_url,
+    hasMatchScore: personalizedView && !!matchResult?.highest,
+  });
+
   return (
     <AuthGate>
       <BookmarkProvider
@@ -285,9 +300,6 @@ export default async function RecipeDetailPage({
           </div>
 
           <main className="pb-6">
-            {/* Hero image — LCP element. Only for recipes that actually have one:
-                image generation is suspended, so a generated recipe carries no
-                image until an admin uploads it. */}
             {chrome.showHeroImage && (
               <RecipeHeroImage
                 recipeId={recipe.id}
@@ -296,8 +308,6 @@ export default async function RecipeDetailPage({
               />
             )}
 
-            {/* Title + description — takes over the hero's top spacing when there
-                is no hero. */}
             <div
               className={`px-6 mb-4 ${chrome.showHeroImage ? "" : "mt-4.5"}`}
             >
@@ -323,7 +333,9 @@ export default async function RecipeDetailPage({
                     (recipe.recipe_tags?.length ?? 0) === 0)
                 }
               />
-              {chrome.showBioactivity && (
+              {/* Bioactivity fallback: shown to everyone (guests included) on an
+                  approved recipe, until a real match percentage takes over. */}
+              {chrome.showBioactivitySupports && (
                 <RecipeSupports
                   supports={topBioactivities(recipe.recipe_tags, 5)}
                 />
@@ -334,6 +346,7 @@ export default async function RecipeDetailPage({
                 <NutritionScore
                   baseScore={recipe.final_score_10 ?? 0}
                   match={{ percent: 0, label: "" }}
+                  points={nutritionPoints}
                   hasProfile={false}
                 />
               ) : personalizedView && matchResult?.highest ? (
@@ -343,12 +356,14 @@ export default async function RecipeDetailPage({
                   match={matchResult.highest}
                   breakdown={matchResult.breakdown}
                   average={matchResult.average}
+                  points={nutritionPoints}
                   hasProfile
                 />
               ) : chrome.showBioactivity ? (
                 <NutritionScore
                   baseScore={recipe.final_score_10 ?? 0}
                   match={{ percent: 0, label: "" }}
+                  points={nutritionPoints}
                   hasProfile={false}
                 />
               ) : null}
