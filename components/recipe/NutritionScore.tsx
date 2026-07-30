@@ -87,7 +87,7 @@ const NutritionScore = ({
 
   return (
     <div
-      className={`relative p-4 rounded-3xl bg-white flex flex-col gap-4 ${
+      className={`relative p-4 rounded-2xl bg-white flex flex-col gap-4 ${
         !hasProfile && "h-57"
       }`}
     >
@@ -190,7 +190,7 @@ const NutritionScore = ({
         </div>
       )}
       {!hasProfile && (
-        <div className="absolute inset-0 rounded-b-3xl backdrop-blur-sm bg-white/30 flex flex-col items-center justify-center gap-3 text-center px-4 z-20">
+        <div className="absolute inset-0 rounded-2xl backdrop-blur-sm bg-white/30 flex flex-col items-center justify-center gap-3 text-center px-4 z-20">
           <div className="bg-[#F0F2EA] p-3 rounded-full">
             <FaLock color="#227B6F" size={16} />
           </div>
