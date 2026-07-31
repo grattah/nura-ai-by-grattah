@@ -3,6 +3,7 @@
 import {
   Dialog,
   DialogContent,
+  DialogOverlay,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -12,7 +13,6 @@ import Image from "next/image";
 import FilledLock from "../vectors/filled-lock";
 import { Plan, PLANS } from "@/constants";
 import { useState } from "react";
-import Time from "../vectors/time";
 import { useAccess } from "@/components/providers/access-provider";
 
 interface PaywallModalProps {
@@ -54,26 +54,27 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
+      <DialogOverlay className="bg-white/30 backdrop-blur-xs" />
       <DialogContent
         className="sm:max-w-md p-0 gap-0 overflow-hidden rounded-2xl"
         showCloseButton={false}
+        onEscapeKeyDown={(e) => {
+          e.preventDefault();
+          router.back();
+        }}
+        onPointerDownOutside={(e) => {
+          e.preventDefault();
+          router.back();
+        }}
       >
         <div className="p-6 space-y-6 mt-8">
           <button
-            onClick={() => handleClose(false)}
+            onClick={() => router.back()}
             className="absolute top-4 right-6 size-10 rounded-full bg-grey-c100 p-2 grid place-items-center hover:opacity-75 transition-opacity"
           >
             <X className="size-6 text-grey-c600" />
           </button>
           <DialogHeader className="flex flex-col items-center justify-center text-center space-y-6 gap-0">
-            {!hasEverSubscribed && !isTokensPage && (
-              <div className="py-1.5 px-2 rounded-lg bg-warning-c100 flex items-center gap-x-1">
-                <Time />
-                <span className="text-warning-c900 text-xs font-semibold">
-                  Your free trial has ended
-                </span>
-              </div>
-            )}
             <div className="space-y-3">
               <DialogTitle className="text-2xl max-[350px]:text-xl font-semibold text-black mb-3">
                 Get Nuko+

@@ -87,7 +87,6 @@ export async function POST(
         admin,
         recipe.id,
         bioRes.value.scoresBySlug,
-        bioRes.value.overrides,
       );
       if (isOwner) {
         await meter(

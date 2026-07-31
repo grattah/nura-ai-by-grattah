@@ -226,19 +226,13 @@ const page = () => {
           setShowSignInModal(true);
           setPaywallOpen(false);
           return;
-        } else if (res.status === 403) {
-          setGenerating(false);
-          setPendingRecipe(null);
-          setPaywallOpen(true);
-          setShowSignInModal(false);
-          return;
-        }
+        } 
 
         if (!res.ok) throw new Error("generate failed");
         const data = await res.json();
         if (!data?.id) throw new Error("no id returned");
         refreshCredits();
-        router.replace(`/recipes/${data.id}?generate=true`);
+        router.replace(`/recipes/${data.id}`);
       } catch (err) {
         console.error("[find-recipe] generate", err);
         setGenerating(false);

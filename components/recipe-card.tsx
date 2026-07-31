@@ -2,7 +2,7 @@ import { getCloudinaryUrl } from "@/lib/cloudinary";
 import { Recipe } from "@/lib/types";
 import Image from "next/image";
 import Link from "next/link";
-import { MatchBadge } from "@/components/match-badge";
+import { SupportBadge } from "@/components/support-badge";
 
 export function RecipeCard({
   recipe,
@@ -11,7 +11,10 @@ export function RecipeCard({
 }: {
   recipe: Pick<Recipe, "id" | "title" | "image_url">;
   priority?: boolean;
-  /** CategoryScore for the category being viewed (recipe_categories.score). */
+  /**
+   * CategoryScore for the category being viewed (recipe_categories.score).
+   * A GENERAL score — rendered as "% support", never "% match" (PRD §6.3).
+   */
   score?: number | null;
 }) {
   const imageUrl = recipe.image_url
@@ -38,7 +41,7 @@ export function RecipeCard({
           {recipe.title}
         </p>
 
-        <MatchBadge score={score} />
+        <SupportBadge score={score} />
       </div>
     </Link>
   );

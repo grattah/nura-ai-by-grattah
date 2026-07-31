@@ -130,7 +130,7 @@ export default async function HomePage({
                   title={recipe.title}
                   imageUrl={recipe.image_url ?? undefined}
                   drinkType={recipe.drink_type ?? undefined}
-                  href={`/recipes/${recipe.id}`}
+                  href={`/recipes/${recipe.id}?popular=true`}
                   priority={i < 2}
                   initialBookmarked={bookmarkedIds.has(recipe.id)}
                 />

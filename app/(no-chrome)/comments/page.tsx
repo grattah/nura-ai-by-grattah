@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import profile from "@/public/profile.png";
 import BackButton from "@/components/back-button";
 import CommentsSection from "@/components/recipe/CommentsSection";
+import { RecipePaywallGate } from "@/components/recipe/RecipePaywallGate";
 
 interface PageProps {
   searchParams: Promise<{ recipeId?: string; limit?: string }>;
@@ -20,12 +21,16 @@ const page = async ({ searchParams }: PageProps) => {
   const limit = Math.min(Math.max(parseInt(limitParam ?? "5", 5) || 5, 5), 200);
 
   const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const userId = user?.id;
+
   const [
     { data: recipe },
     { data: comments, count: totalCount },
-    {
-      data: { user },
-    },
+    subResult,
   ] = await Promise.all([
     supabase.from("recipes").select("*").eq("id", recipeId).maybeSingle(),
     supabase
@@ -47,18 +52,25 @@ const page = async ({ searchParams }: PageProps) => {
       profiles (id, username, avatar_url)
     )
   `,
-        { count: "exact" },
+        { count: "exact" }
       )
       .eq("recipe_id", recipeId)
       .is("parent_id", null)
       .order("created_at", { ascending: false })
       .limit(limit),
-    supabase.auth.getUser(),
+      userId
+      ? supabase
+          .from("subscriptions")
+          .select("status")
+          .eq("user_id", userId)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
+
+  const isSubscribed = subResult.data?.status === "active";
 
   if (!recipe) return;
 
-  const userId = user?.id;
   const hasLikedComment = (comment: any) =>
     comment.comment_likes?.some((like: any) => like.user_id === userId) ??
     false;
@@ -72,9 +84,7 @@ const page = async ({ searchParams }: PageProps) => {
           <BackButton className="rounded-full bg-[#E8E6DC] p-3 absolute left-6" />
           <div className="flex flex-col gap-1 items-center w-full">
             <p className="font-semibold text-xl">Comments</p>
-            <p className="font-medium text-[#57605E] text-sm">
-              {recipe.title}
-            </p>
+            <p className="font-medium text-[#57605E] text-sm">{recipe.title}</p>
           </div>
           <div />
         </div>
@@ -109,7 +119,7 @@ const page = async ({ searchParams }: PageProps) => {
               (reply: any) => ({
                 ...reply,
                 hasLiked: hasLikedComment(reply),
-              }),
+              })
             ),
           }))}
           recipeId={recipeId}
@@ -120,6 +130,8 @@ const page = async ({ searchParams }: PageProps) => {
           isAuthenticated={!!user}
         />
       </main>
+      {!isSubscribed && <RecipePaywallGate />}
+      
     </div>
   );
 };

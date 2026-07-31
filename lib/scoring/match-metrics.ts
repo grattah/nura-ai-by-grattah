@@ -4,6 +4,7 @@
 // LOW point value is good, or points/max directly when a HIGH value is good.
 
 import type { BioScores } from "./bioactivity-map";
+import { bonusFor, type BonusContext, type BonusKey } from "./bonuses";
 
 export interface NutrientPoints {
   sugar: number;
@@ -39,6 +40,10 @@ export interface MatchContext {
   maxes: Maxes;
   ironRich: boolean;
   waterContentPercent: number; // 0..1
+  probiotic: boolean;
+  vitaminCDV: number; // % of Daily Value, per serving
+  sodiumMg: number; // per serving
+  potassiumMg: number; // per serving
 }
 
 const avg = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
@@ -113,47 +118,72 @@ export const CONDITION_CREDITS: Record<string, (c: MatchContext) => number> = {
 };
 
 // ── Health Goals (§5) ────────────────────────────────────────────────────────
+// Unlike conditions, a goal's supporting nutrient/ingredient factor is added as a
+// BONUS on top of BioSubtotal, never averaged into it (§5). Averaging capped a
+// recipe that supports the goal strongly through one pathway just because it
+// lacked another — §1: "A recipe strong in relevant bioactivity is never
+// penalised for lacking one specific supporting nutrient if it supports the goal
+// through another valid pathway."
+export function bonusContext(c: MatchContext): BonusContext {
+  return {
+    points: c.points,
+    maxes: c.maxes,
+    ironRich: c.ironRich,
+    probiotic: c.probiotic,
+    vitaminCDV: c.vitaminCDV,
+    waterContentPercent: c.waterContentPercent,
+    sodiumMg: c.sodiumMg,
+    potassiumMg: c.potassiumMg,
+  };
+}
+
+/** §5: Credit = min(1, BioSubtotal÷100 + bonus). */
+const withBonus =
+  (weights: Record<string, number>, key: BonusKey) => (c: MatchContext) =>
+    Math.min(1, bioSubtotal(c.bio, weights) / 100 + bonusFor(key, bonusContext(c)));
+
+/** §5: Goals without a bonus term — Credit = BioSubtotal÷100. */
+const bioOnly = (weights: Record<string, number>) => (c: MatchContext) =>
+  bioSubtotal(c.bio, weights) / 100;
+
 export const GOAL_CREDITS: Record<string, (c: MatchContext) => number> = {
-  "Have more energy": (c) =>
-    avg([
-      bioSubtotal(c.bio, { WeightMetabolic: 90, CellWellness: 85, BloodSugar: 75, BrainCognitive: 55, Antioxidant: 50 }) / 100,
-      c.points.protein / c.maxes.protein,
-      c.points.energy / c.maxes.energy,
-    ]),
-  "Balance my hormones": (c) =>
-    bioSubtotal(c.bio, { Hormonal: 95, Mood: 65, StressResilience: 60 }) / 100,
-  "Drink more water": (c) =>
-    avg([bioSubtotal(c.bio, { Kidney: 95, Temperature: 60 }) / 100, c.waterContentPercent]),
-  "Improve my fitness": (c) =>
-    avg([
-      bioSubtotal(c.bio, { WeightMetabolic: 85, Heart: 75, BoneJoint: 60, BloodSugar: 55, PainComfort: 50 }) / 100,
-      c.points.protein / c.maxes.protein,
-      c.points.energy / c.maxes.energy,
-    ]),
-  "Sharpen my focus": (c) =>
-    bioSubtotal(c.bio, { BrainCognitive: 95, Mood: 60, StressResilience: 55, SleepRelaxation: 50 }) / 100,
-  "Improve my skin & hair": (c) =>
-    bioSubtotal(c.bio, { SkinHealth: 95, HealthyAging: 80, Antioxidant: 70, CellWellness: 55 }) / 100,
-  "Sleep better": (c) =>
-    bioSubtotal(c.bio, { SleepRelaxation: 95, StressResilience: 65, Mood: 55 }) / 100,
-  "Support my body's detox": (c) =>
-    bioSubtotal(c.bio, { Liver: 95, Kidney: 65, Antioxidant: 55 }) / 100,
-  "Improve my gut health": (c) =>
-    avg([bioSubtotal(c.bio, { Gut: 95, Microbiome: 90 }) / 100, c.points.fiber / c.maxes.fiber]),
-  "Boost my immunity": (c) =>
-    bioSubtotal(c.bio, { Immune: 95, NaturalDefense: 90, Inflammation: 55, Antioxidant: 50 }) / 100,
-  "Lose weight": (c) =>
-    avg([
-      bioSubtotal(c.bio, { WeightMetabolic: 95, BloodSugar: 70 }) / 100,
-      1 - c.points.energy / c.maxes.energy,
-      c.points.fiber / c.maxes.fiber,
-    ]),
-  // Trimmed to the ≥50 qualifying bioactivities (the sub-50 tails these two
-  // previously carried are excluded by the PRD's relevance cutoff).
-  "Reduce stress": (c) =>
-    bioSubtotal(c.bio, { StressResilience: 95, Mood: 65, SleepRelaxation: 55 }) / 100,
-  "Improve my mood": (c) =>
-    bioSubtotal(c.bio, { Mood: 95, StressResilience: 65, SleepRelaxation: 50 }) / 100,
+  // §5.1 — with a bonus term.
+  "Have more energy": withBonus(
+    { WeightMetabolic: 90, CellWellness: 85, BloodSugar: 75, BrainCognitive: 55, Antioxidant: 50 },
+    "energy",
+  ),
+  "Improve my fitness": withBonus(
+    { WeightMetabolic: 85, Heart: 75, BoneJoint: 60, BloodSugar: 55, PainComfort: 50 },
+    "fitness",
+  ),
+  "Lose weight": withBonus(
+    { WeightMetabolic: 95, BloodSugar: 70 },
+    "weight-loss",
+  ),
+  "Improve my gut health": withBonus(
+    { Gut: 95, Microbiome: 90 },
+    "gut-health",
+  ),
+  "Drink more water": withBonus({ Kidney: 95, Temperature: 60 }, "hydration"),
+  "Improve my skin & hair": withBonus(
+    { SkinHealth: 95, HealthyAging: 80, Antioxidant: 70, CellWellness: 55 },
+    "beauty",
+  ),
+  "Boost my immunity": withBonus(
+    { Immune: 95, NaturalDefense: 90, Inflammation: 55, Antioxidant: 50 },
+    "immunity",
+  ),
+  "Support my body's detox": withBonus(
+    { Liver: 95, Kidney: 65, Antioxidant: 55 },
+    "detox",
+  ),
+
+  // §5.2 — bioactivity only.
+  "Balance my hormones": bioOnly({ Hormonal: 95, Mood: 65, StressResilience: 60 }),
+  "Sharpen my focus": bioOnly({ BrainCognitive: 95, Mood: 60, StressResilience: 55, SleepRelaxation: 50 }),
+  "Sleep better": bioOnly({ SleepRelaxation: 95, StressResilience: 65, Mood: 55 }),
+  "Reduce stress": bioOnly({ StressResilience: 95, Mood: 65, SleepRelaxation: 55 }),
+  "Improve my mood": bioOnly({ Mood: 95, StressResilience: 65, SleepRelaxation: 50 }),
 };
 
 // ── App health-profile key → PRD formula name ───────────────────────────────
@@ -183,7 +213,11 @@ export const CONDITION_KEY_TO_PRD: Record<string, string> = {
   ibd: "Digestive Sensitivities", // legacy
   gerd: "Digestive Sensitivities", // legacy
   arthritis: "Arthritis",
-  gout: "Arthritis", // legacy
+  // gout is DELIBERATELY absent (PRD §9: "Gout has no defined credit formula and
+  // should not be included in the credit average if disclosed, until a metric is
+  // defined for it"). It previously borrowed Arthritis, which scored users for a
+  // formula that was never designed for their condition. computeMatchScore skips
+  // unmapped keys, so a gout-only profile now correctly shows no Match Score.
   osteoporosis: "Osteoporosis",
   anemia: "Anemia",
 };

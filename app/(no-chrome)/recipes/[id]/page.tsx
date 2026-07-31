@@ -31,6 +31,7 @@ import type { SupportScore } from "@/lib/wellness-score";
 import { BookmarkProvider } from "@/components/bookmark-provider";
 import PersonalizedTokenModal from "@/components/tokens/PersonalizedTokenModal";
 import { recipeChrome } from "@/lib/recipe-visibility";
+import { RecipePaywallGate } from "@/components/recipe/RecipePaywallGate";
 
 type RecipeRecord = Database["public"]["Tables"]["recipes"]["Row"] & {
   recipe_tags:
@@ -58,13 +59,13 @@ const RECIPE_SELECT = "*, recipe_tags(score, tags(name, slug))";
 // The recipe's strongest bioactivities (from recipe_tags) for the supports card.
 function topBioactivities(
   recipeTags: RecipeRecord["recipe_tags"],
-  count = 5,
+  count = 5
 ): SupportScore[] {
   return (recipeTags ?? [])
     .flatMap((rt) =>
       rt.tags && rt.score != null
         ? [{ slug: rt.tags.slug, support: rt.tags.name, score: rt.score }]
-        : [],
+        : []
     )
     .sort((a, b) => b.score - a.score)
     .slice(0, count);
@@ -121,10 +122,14 @@ export async function generateMetadata({
 // revisit look identical.
 export default async function RecipeDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { id } = await params;
+  const { popular } = await searchParams;
+  const isPopularView = popular === "true";
 
   const [recipe, supabase] = await Promise.all([getRecipe(id), createClient()]);
 
@@ -155,7 +160,7 @@ export default async function RecipeDetailPage({
     likes,
     profiles (id, username, avatar_url),
     comment_likes!comment_id (user_id)
-  `,
+  `
       )
       .eq("recipe_id", recipe.id)
       .is("parent_id", null)
@@ -174,7 +179,7 @@ export default async function RecipeDetailPage({
         ...latestComment,
         hasLiked:
           latestComment.comment_likes?.some(
-            (like: { user_id: string }) => like.user_id === user?.id,
+            (like: { user_id: string }) => like.user_id === user?.id
           ) ?? false,
       }
     : null;
@@ -249,6 +254,10 @@ export default async function RecipeDetailPage({
         track: recipe.track ?? "Solid Food",
         ironRich: !!recipe.iron_rich,
         waterContentPercent: recipe.water_content_pct ?? 0,
+        probiotic: !!recipe.probiotic,
+        vitaminCDV: recipe.vitamin_c_dv ?? 0,
+        sodiumMg: recipe.sodium_mg ?? 0,
+        potassiumMg: recipe.potassium_mg ?? 0,
         conditions: profile?.conditions ?? [],
         goals: profile?.goals ?? [],
       });
@@ -275,6 +284,8 @@ export default async function RecipeDetailPage({
     imageUrl: recipe.image_url,
     hasMatchScore: personalizedView && !!matchResult?.highest,
   });
+
+  const canViewFull = isSubscribed || isPopularView;
 
   return (
     <AuthGate>
@@ -333,13 +344,10 @@ export default async function RecipeDetailPage({
                     (recipe.recipe_tags?.length ?? 0) === 0)
                 }
               />
-              {/* Bioactivity fallback: shown to everyone (guests included) on an
-                  approved recipe, until a real match percentage takes over. */}
-              {chrome.showBioactivitySupports && (
-                <RecipeSupports
-                  supports={topBioactivities(recipe.recipe_tags, 5)}
-                />
-              )}
+
+              <RecipeSupports
+                supports={topBioactivities(recipe.recipe_tags, 5)}
+              />
 
               {isSubscribed && !hasProfile ? (
                 // subscribed, no profile → locked NutritionScore (blur overlay)
@@ -443,6 +451,7 @@ export default async function RecipeDetailPage({
               </div>
             </div>
           </main>
+          {user && !canViewFull && <RecipePaywallGate />}
         </div>
       </BookmarkProvider>
     </AuthGate>

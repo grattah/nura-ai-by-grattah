@@ -11,7 +11,7 @@ export function MatchBadge({ score }: { score?: number | null }) {
             : "bg-[#EEE0CA] text-warning-c600"
         }`}
       >
-        {score}% match{/* {strong ? "Strong match" : "Moderate match"} */}
+        {score}% support{/* {strong ? "Strong match" : "Moderate match"} */}
       </p>
       {/* <p
         className={`text-sm ${strong ? "text-mint-green" : "text-warning-c600"}`}

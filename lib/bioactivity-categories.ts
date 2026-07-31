@@ -1,10 +1,18 @@
-// Recipe category population from bioactivity scores (Nuko Category Population
-// Logic PRD). A static 23×14 relevance matrix maps each bioactivity to each
-// category; a recipe's CategoryScore is the relevance-weighted average of its
-// bioactivity scores over the bioactivities that are relevant (≥50) to that
-// category. A recipe qualifies for a category at CategoryScore ≥ 50, or below
-// it via the LLM "trace exception". Keep in sync with the inlined copy in
-// scripts/score-supports.mjs.
+// Recipe category population from bioactivity scores (PRD: Nuko — Category
+// Score). A static 23×14 relevance matrix maps each bioactivity to each
+// category; a recipe's BioSubtotal is the relevance-weighted average of its
+// bioactivity scores over the bioactivities relevant (≥50) to that category.
+//
+// 8 of the 14 categories then add a nutrient/ingredient bonus (§4):
+//   CategoryScore = min(100, BioSubtotal + bonus × 100)
+// That bonus is NOT reimplemented here — §8 requires the same calculation the
+// Recipe Match Score uses for the equivalent goal, so both read
+// lib/scoring/bonuses.ts. The other 6 are BioSubtotal alone (§5).
+//
+// A recipe is shown under a category iff CategoryScore ≥ 40 (§6.1) — there is no
+// exception to that floor. Keep in sync with scripts/score-supports.mjs.
+
+import { bonusFor, type BonusContext } from "@/lib/scoring/bonuses";
 
 // Category slugs, in the column order of the RELEVANCE matrix below.
 export const CATEGORY_SLUGS = [
@@ -26,27 +34,21 @@ export const CATEGORY_SLUGS = [
 
 export type CategorySlug = (typeof CATEGORY_SLUGS)[number];
 
-// A bioactivity contributes to a category when its relevance is ≥ this.
+// A bioactivity contributes to a category when its relevance is ≥ this (§3).
 export const RELEVANCE_THRESHOLD = 50;
-// A recipe qualifies for a category when its CategoryScore is ≥ this.
+// §6.1 display floor: below this a recipe does not appear under the category.
 export const QUALIFY_THRESHOLD = 40;
-// Minimum LLM override confidence for the trace exception to admit a recipe.
-export const TRACE_OVERRIDE_CONFIDENCE = 80;
+// §6.2 tier boundary: ≥ this is "Strong support", 40–59 is "Moderate support".
+export const STRONG_THRESHOLD = 60;
 
-// Ingredients that exert strong biological effects in small quantities — the
-// basis for the trace exception (surfaced in the scoring prompt).
-export const TRACE_INGREDIENTS = [
-  "turmeric",
-  "ginger",
-  "cinnamon",
-  "cloves",
-  "black pepper",
-  "matcha",
-  "saffron",
-  "moringa",
-  "spirulina",
-  "medicinal mushrooms",
-];
+export type SupportTier = "strong" | "moderate" | "none";
+
+/** §6.2. Note the label must never use the word "Match" — see §6.3. */
+export function supportTier(score: number): SupportTier {
+  if (score >= STRONG_THRESHOLD) return "strong";
+  if (score >= QUALIFY_THRESHOLD) return "moderate";
+  return "none";
+}
 
 // Relevance % of each bioactivity (row) to each category (column, CATEGORY_SLUGS
 // order). Reasoned starting point per the PRD appendix — tunable over time.
@@ -76,25 +78,19 @@ export const RELEVANCE: Record<string, number[]> = {
   "cellular-wellness-support": [85, 15, 40, 45, 30, 55, 10, 40, 10, 20, 25, 15, 15, 15],
 };
 
-export interface TraceOverride {
-  category: string;
-  ingredient?: string;
-  confidence: number;
-}
-
 export interface CategoryResult {
   category: CategorySlug;
   score: number; // 0–100, rounded
   qualified: boolean;
-  viaTrace: boolean;
+  tier: SupportTier;
 }
 
 /**
- * Relevance-weighted average of the recipe's bioactivity scores over the
- * bioactivities relevant (≥ RELEVANCE_THRESHOLD) to `category`. Returns 0 when
- * no bioactivity is relevant.
+ * §3 BioSubtotal: relevance-weighted average of the recipe's bioactivity scores
+ * over the bioactivities relevant (≥ RELEVANCE_THRESHOLD) to `category`. Returns
+ * 0 when no bioactivity is relevant.
  */
-export function calculateCategoryScore(
+export function categoryBioSubtotal(
   scoresBySlug: Record<string, number>,
   category: CategorySlug,
 ): number {
@@ -113,35 +109,38 @@ export function calculateCategoryScore(
 }
 
 /**
- * All 14 categories with the recipe's CategoryScore and flags:
- * - `viaTrace`: below `QUALIFY_THRESHOLD` but admitted by a trace override
- *   clearing `TRACE_OVERRIDE_CONFIDENCE`.
- * - `qualified`: `score ≥ QUALIFY_THRESHOLD` OR `viaTrace`.
- * Scores are the real (possibly sub-threshold) values, so trace-admitted recipes
- * rank below regular qualifiers. Non-qualifying scores are retained for future use.
+ * §4: CategoryScore = min(100, BioSubtotal + bonus × 100). Without a
+ * `bonusContext` — or for the 6 categories §5 gives no bonus — this is
+ * BioSubtotal alone, since `bonusFor` returns 0 for a non-bonus key.
+ */
+export function calculateCategoryScore(
+  scoresBySlug: Record<string, number>,
+  category: CategorySlug,
+  bonusCtx?: BonusContext,
+): number {
+  const subtotal = categoryBioSubtotal(scoresBySlug, category);
+  if (!bonusCtx) return subtotal;
+  return Math.min(100, subtotal + bonusFor(category, bonusCtx) * 100);
+}
+
+/**
+ * All 14 categories with the recipe's CategoryScore, its §6.2 tier, and whether
+ * it clears the §6.1 display floor. Sub-floor scores are retained (not zeroed)
+ * so the distribution stays visible for the tuning §8 anticipates.
  */
 export function computeAllCategoryScores(
   scoresBySlug: Record<string, number>,
-  overrides: TraceOverride[] = [],
+  bonusCtx?: BonusContext,
 ): CategoryResult[] {
-  const overrideByCategory = new Map<string, number>();
-  for (const o of overrides) {
-    if (!o || typeof o.category !== "string") continue;
-    const prev = overrideByCategory.get(o.category) ?? 0;
-    overrideByCategory.set(o.category, Math.max(prev, o.confidence ?? 0));
-  }
-
   return CATEGORY_SLUGS.map((category) => {
-    const raw = calculateCategoryScore(scoresBySlug, category);
-    const passesScore = raw >= QUALIFY_THRESHOLD;
-    const viaTrace =
-      !passesScore &&
-      (overrideByCategory.get(category) ?? 0) >= TRACE_OVERRIDE_CONFIDENCE;
+    const score = Math.round(
+      calculateCategoryScore(scoresBySlug, category, bonusCtx),
+    );
     return {
       category,
-      score: Math.round(raw),
-      qualified: passesScore || viaTrace,
-      viaTrace,
+      score,
+      qualified: score >= QUALIFY_THRESHOLD,
+      tier: supportTier(score),
     };
   });
 }
@@ -149,9 +148,9 @@ export function computeAllCategoryScores(
 /** Only the categories a recipe qualifies for (subset of computeAllCategoryScores). */
 export function computeRecipeCategories(
   scoresBySlug: Record<string, number>,
-  overrides: TraceOverride[] = [],
+  bonusCtx?: BonusContext,
 ): CategoryResult[] {
-  return computeAllCategoryScores(scoresBySlug, overrides).filter(
+  return computeAllCategoryScores(scoresBySlug, bonusCtx).filter(
     (c) => c.qualified,
   );
 }

@@ -93,10 +93,6 @@ export function RecipeSupports({ supports }: RecipeSupportsProps) {
 
   return (
     <div className="rounded-3xl bg-white py-3 px-4">
-      <div className="flex items-center gap-2 mb-4">
-        <p className="text-base font-semibold">This recipe supports</p>
-      </div>
-
       <div className="flex items-start justify-between gap-2">
         {supports.map((s) => {
           const Icon = ICONS[s.slug] ?? Leaf;
@@ -111,7 +107,6 @@ export function RecipeSupports({ supports }: RecipeSupportsProps) {
               <p className="text-2xs leading-tight text-subtle line-clamp-2 font-medium text-nowrap">
                 {SHORT_LABELS[s.slug] ?? s.support}
               </p>
-              <p className="text-sm font-semibold text-[#087567]">{s.score}%</p>
             </div>
           );
         })}

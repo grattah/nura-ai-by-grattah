@@ -34,6 +34,8 @@ export interface IngredientRow {
   energy_kcal: number; protein_g: number; total_fat_g: number; sat_fat_g: number;
   carbs_g: number; fiber_g: number; total_sugar_g: number; sodium_mg: number;
   calcium_dv: number; vitamin_c_dv: number; iron_mg: number; water_pct: number;
+  potassium_mg: number;
+  is_probiotic: boolean;
 }
 
 export interface ResolveOptions {
@@ -56,6 +58,9 @@ const FVL_CATEGORIES = /fruit|vegetable|legume|bean|pea|lentil/i;
 const SWEETENER_RE = /honey|syrup|agave|molasses|sugar|nectar|juice concentrate/i;
 const NNUTRITIVE_RE = /stevia|sucralose|aspartame|erythritol|monk fruit|xylitol|saccharin/i;
 const IRON_RICH_RE = /spinach|lentil|beef|liver|tofu|pumpkin seed|chickpea|kale|molasses|fortified/i;
+// Fermented/live-culture foods (Match PRD §2.3 names exactly these). Match PRD is
+// explicit that this is a one-time ingredient classification, NOT a USDA lookup.
+const PROBIOTIC_RE = /yogurt|yoghurt|kefir|kimchi|miso|sauerkraut|kombucha|tempeh|natto/i;
 const WHOLE_RE = /^(fresh |raw |whole )?(fruit|vegetable|leafy|herb|nut|seed|spice|water|ice)/i;
 const ULTRA_RE = /powder|protein|flavored|syrup|artificial|isolate|mix\b/i;
 
@@ -65,6 +70,7 @@ const NovaSchema = z.object({
   is_added_sweetener: z.boolean(),
   is_sweetener_nnutritive: z.boolean(),
   iron_rich: z.boolean(),
+  is_probiotic: z.boolean(),
 });
 type Classification = z.infer<typeof NovaSchema> & { needs_review: boolean };
 
@@ -80,8 +86,9 @@ export function heuristicClassify(name: string, usdaCategory: string): Classific
   const is_added_sweetener = SWEETENER_RE.test(hay) && !/whole|fresh fruit/.test(hay);
   const is_sweetener_nnutritive = NNUTRITIVE_RE.test(hay);
   const iron_rich = IRON_RICH_RE.test(hay);
+  const is_probiotic = PROBIOTIC_RE.test(hay);
   const is_fvl = FVL_CATEGORIES.test(hay) && !is_added_sweetener;
-  const base = { is_fvl, is_added_sweetener, is_sweetener_nnutritive, iron_rich, needs_review: false };
+  const base = { is_fvl, is_added_sweetener, is_sweetener_nnutritive, iron_rich, is_probiotic, needs_review: false };
 
   // Order matters (PRD tiers): artificial/flavored → 4; nutritive sweeteners
   // (honey, maple syrup) → 2 BEFORE the generic ultra keywords, so "maple
@@ -102,7 +109,7 @@ async function llmClassify(name: string, onUsage?: (u: unknown) => void): Promis
     model: anthropic("claude-haiku-4-5"),
     schema: NovaSchema,
     system:
-      "Classify a single food/drink ingredient for nutrition scoring. nova_group: 1 unprocessed/minimally processed (fresh produce, nuts, plain dairy, herbs, water), 2 processed culinary (oils, butter, honey, syrups, nut butters, dried whole-food powders), 3 processed foods (canned goods, cheese, plant milks, bread), 4 ultra-processed (flavored syrups, artificial sweeteners, protein powders with additives, packaged mixes). is_fvl: is it a whole fruit, vegetable, or legume (not a juice/sweetener). is_added_sweetener: honey/syrup/agave/added sugar. is_sweetener_nnutritive: stevia/sucralose/etc. iron_rich: notably iron-rich.",
+      "Classify a single food/drink ingredient for nutrition scoring. nova_group: 1 unprocessed/minimally processed (fresh produce, nuts, plain dairy, herbs, water), 2 processed culinary (oils, butter, honey, syrups, nut butters, dried whole-food powders), 3 processed foods (canned goods, cheese, plant milks, bread), 4 ultra-processed (flavored syrups, artificial sweeteners, protein powders with additives, packaged mixes). is_fvl: is it a whole fruit, vegetable, or legume (not a juice/sweetener). is_added_sweetener: honey/syrup/agave/added sugar. is_sweetener_nnutritive: stevia/sucralose/etc. iron_rich: notably iron-rich. is_probiotic: is it a fermented/live-culture food (yogurt, kefir, kimchi, miso, sauerkraut, kombucha, tempeh, natto).",
     prompt: `Ingredient: "${name}"`,
   });
   onUsage?.(usage);
@@ -128,7 +135,7 @@ const SALT_SODIUM_MG_PER_100G = 38758; // USDA "Salt, table" (FDC 173468)
 const ZERO_NUTRIENTS = {
   energy_kcal: 0, protein_g: 0, total_fat_g: 0, sat_fat_g: 0, carbs_g: 0,
   fiber_g: 0, total_sugar_g: 0, sodium_mg: 0, calcium_dv: 0, vitamin_c_dv: 0,
-  iron_mg: 0, water_pct: 0,
+  iron_mg: 0, water_pct: 0, potassium_mg: 0,
 };
 
 /**
@@ -290,7 +297,7 @@ export async function resolveIngredient(
   if (zero) {
     const row = {
       name: key, nova_group: 1, is_fvl: false, iron_rich: false,
-      is_added_sweetener: false, is_sweetener_nnutritive: false, ...zero,
+      is_added_sweetener: false, is_sweetener_nnutritive: false, is_probiotic: false, ...zero,
     };
     if (opts.dryRun) {
       const t: IngredientRow = { id: `dry-${key}`, needs_review: false, ...row };
@@ -350,7 +357,7 @@ export async function resolveIngredient(
     try {
       cls = await llmClassify(name, opts.onClassifyUsage);
     } catch {
-      cls = { nova_group: 3, is_fvl: false, is_added_sweetener: false, is_sweetener_nnutritive: false, iron_rich: false, needs_review: true };
+      cls = { nova_group: 3, is_fvl: false, is_added_sweetener: false, is_sweetener_nnutritive: false, iron_rich: false, is_probiotic: PROBIOTIC_RE.test(name), needs_review: true };
     }
   }
   const needs_review = cls.needs_review || usdaFailed;
@@ -362,6 +369,7 @@ export async function resolveIngredient(
     iron_rich: cls.iron_rich,
     is_added_sweetener: cls.is_added_sweetener,
     is_sweetener_nnutritive: cls.is_sweetener_nnutritive,
+    is_probiotic: cls.is_probiotic,
     energy_kcal: n.energy_kcal ?? 0,
     protein_g: n.protein_g ?? 0,
     total_fat_g: n.total_fat_g ?? 0,
@@ -374,6 +382,7 @@ export async function resolveIngredient(
     vitamin_c_dv: ((n.vitamin_c_mg ?? 0) / DAILY_VALUES.vitamin_c_mg) * 100,
     iron_mg: n.iron_mg ?? 0,
     water_pct: n.water_g ?? 0,
+    potassium_mg: n.potassium_mg ?? 0,
   };
 
   if (opts.dryRun) {
@@ -401,6 +410,7 @@ function toResolved(ing: IngredientRow, grams: number): ResolvedIngredient {
     sat_fat_g: ing.sat_fat_g, carbs_g: ing.carbs_g, fiber_g: ing.fiber_g,
     total_sugar_g: ing.total_sugar_g, sodium_mg: ing.sodium_mg, calcium_dv: ing.calcium_dv,
     vitamin_c_dv: ing.vitamin_c_dv, iron_mg: ing.iron_mg, water_pct: ing.water_pct,
+    potassium_mg: ing.potassium_mg, is_probiotic: ing.is_probiotic,
   };
 }
 
