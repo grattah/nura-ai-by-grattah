@@ -3,6 +3,7 @@
 import {
   Dialog,
   DialogContent,
+  DialogOverlay,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -53,13 +54,22 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
+      <DialogOverlay className="bg-white/30 backdrop-blur-xs" />
       <DialogContent
         className="sm:max-w-md p-0 gap-0 overflow-hidden rounded-2xl"
         showCloseButton={false}
+        onEscapeKeyDown={(e) => {
+          e.preventDefault();
+          router.back();
+        }}
+        onPointerDownOutside={(e) => {
+          e.preventDefault();
+          router.back();
+        }}
       >
         <div className="p-6 space-y-6 mt-8">
           <button
-            onClick={() => handleClose(false)}
+            onClick={() => router.back()}
             className="absolute top-4 right-6 size-10 rounded-full bg-grey-c100 p-2 grid place-items-center hover:opacity-75 transition-opacity"
           >
             <X className="size-6 text-grey-c600" />
