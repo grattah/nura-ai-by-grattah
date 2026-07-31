@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "usda:build": "esbuild scripts/usda-build.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.usda-build.mjs && node --env-file=.env.local scripts/.usda-build.mjs",
     "classify:drink-types": "esbuild scripts/classify-drink-types.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.classify-drink-types.mjs && node --env-file=.env.local scripts/.classify-drink-types.mjs",
+    "recompute:categories": "esbuild scripts/recompute-categories.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.recompute-categories.mjs && node --env-file=.env.local scripts/.recompute-categories.mjs",
     "vectorise": "node --env-file=.env.local scripts/vectorise.mjs",
     "score-supports": "node --env-file=.env.local scripts/score-supports.mjs",
     "list-models": "node --env-file=.env.local scripts/list-models.mjs"

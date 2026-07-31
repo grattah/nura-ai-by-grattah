@@ -18,6 +18,7 @@ export interface Per100Nutrients {
   vitamin_c_dv: number;
   iron_mg: number;
   water_pct: number;
+  potassium_mg: number;
 }
 
 export interface ResolvedIngredient extends Per100Nutrients {
@@ -28,6 +29,7 @@ export interface ResolvedIngredient extends Per100Nutrients {
   iron_rich: boolean;
   is_added_sweetener?: boolean; // honey/syrup/juice concentrate — added sugar source
   is_sweetener_nnutritive?: boolean; // stevia/sucralose/aspartame — +4 beverage penalty
+  is_probiotic?: boolean; // yogurt/kefir/kimchi… — the Gut Health bonus trigger
 }
 
 const NOVA_TIER_POINTS: Record<number, number> = { 1: 100, 2: 75, 3: 50, 4: 25 };
@@ -44,6 +46,7 @@ export interface RecipeRollup {
   fvl_pct: number; // 0..100, water/ice excluded from denominator
   water_content_pct: number; // 0..1
   iron_rich: boolean;
+  probiotic: boolean; // any fermented/live-culture ingredient present
   sweetener_present: boolean; // any non-nutritive sweetener present
   ingredient_score: number; // 0..100 NOVA-weighted average (water/ice excluded)
 }
@@ -51,6 +54,7 @@ export interface RecipeRollup {
 const NUTRIENT_KEYS: (keyof Per100Nutrients)[] = [
   "energy_kcal", "protein_g", "total_fat_g", "sat_fat_g", "carbs_g", "fiber_g",
   "total_sugar_g", "sodium_mg", "calcium_dv", "vitamin_c_dv", "iron_mg", "water_pct",
+  "potassium_mg",
 ];
 
 export function rollupRecipe(
@@ -119,6 +123,7 @@ export function rollupRecipe(
     fvl_pct,
     water_content_pct,
     iron_rich: ingredients.some((i) => i.iron_rich),
+    probiotic: ingredients.some((i) => i.is_probiotic),
     sweetener_present: ingredients.some((i) => i.is_sweetener_nnutritive),
     ingredient_score,
   };

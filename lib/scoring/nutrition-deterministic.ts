@@ -32,6 +32,8 @@ interface JoinedIngredientRow {
     vitamin_c_dv: number | null;
     iron_mg: number | null;
     water_pct: number | null;
+    potassium_mg: number | null;
+    is_probiotic?: boolean;
   } | null;
 }
 
@@ -60,7 +62,7 @@ export async function scoreNutritionFromDb(
   const { data } = await admin
     .from("recipe_ingredients" as never)
     .select(
-      "grams, ingredients(name, nova_group, is_fvl, iron_rich, is_added_sweetener, is_sweetener_nnutritive, energy_kcal, protein_g, total_fat_g, sat_fat_g, carbs_g, fiber_g, total_sugar_g, sodium_mg, calcium_dv, vitamin_c_dv, iron_mg, water_pct)" as never,
+      "grams, ingredients(name, nova_group, is_fvl, iron_rich, is_added_sweetener, is_sweetener_nnutritive, energy_kcal, protein_g, total_fat_g, sat_fat_g, carbs_g, fiber_g, total_sugar_g, sodium_mg, calcium_dv, vitamin_c_dv, iron_mg, water_pct, potassium_mg, is_probiotic)" as never,
     )
     .eq("recipe_id" as never, recipe.id as never);
 
@@ -89,6 +91,8 @@ export async function scoreNutritionFromDb(
         vitamin_c_dv: ing.vitamin_c_dv ?? 0,
         iron_mg: ing.iron_mg ?? 0,
         water_pct: ing.water_pct ?? 0,
+        potassium_mg: ing.potassium_mg ?? 0,
+        is_probiotic: ing.is_probiotic ?? false,
       };
     });
 
@@ -134,6 +138,12 @@ export async function scoreNutritionFromDb(
     servings,
     water_content_pct: rollup.water_content_pct,
     iron_rich: rollup.iron_rich,
+    // PRD v2 bonus inputs, PER SERVING — "20% of your daily vitamin C" is only a
+    // meaningful claim about a serving, not about 100 g of recipe.
+    vitamin_c_dv: rollup.perServing.vitamin_c_dv,
+    potassium_mg: rollup.perServing.potassium_mg,
+    sodium_mg: rollup.perServing.sodium_mg,
+    probiotic: rollup.probiotic,
     // Per-serving display nutrition (USDA-derived), replacing the LLM estimate.
     nutrition: {
       kcal: Math.round(rollup.perServing.energy_kcal),

@@ -249,6 +249,10 @@ export default async function RecipeDetailPage({
         track: recipe.track ?? "Solid Food",
         ironRich: !!recipe.iron_rich,
         waterContentPercent: recipe.water_content_pct ?? 0,
+        probiotic: !!recipe.probiotic,
+        vitaminCDV: recipe.vitamin_c_dv ?? 0,
+        sodiumMg: recipe.sodium_mg ?? 0,
+        potassiumMg: recipe.potassium_mg ?? 0,
         conditions: profile?.conditions ?? [],
         goals: profile?.goals ?? [],
       });

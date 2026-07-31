@@ -91,6 +91,7 @@ describe("rollupRecipe", () => {
     const zero = {
       protein_g: 0, total_fat_g: 0, sat_fat_g: 0, carbs_g: 0, fiber_g: 0,
       total_sugar_g: 0, sodium_mg: 0, calcium_dv: 0, vitamin_c_dv: 0, iron_mg: 0,
+      potassium_mg: 0,
     };
     const ingredients: ResolvedIngredient[] = [
       // 100g banana: whole food (NOVA1, FVL), 2.6 fiber/100g, ~75% water.
@@ -118,7 +119,7 @@ describe("rollupRecipe", () => {
     const base = {
       energy_kcal: 0, protein_g: 0, total_fat_g: 0, sat_fat_g: 0, carbs_g: 0,
       fiber_g: 0, total_sugar_g: 0, sodium_mg: 0, calcium_dv: 0, vitamin_c_dv: 0,
-      iron_mg: 0, water_pct: 0,
+      iron_mg: 0, water_pct: 0, potassium_mg: 0,
     };
     const r = rollupRecipe(
       [

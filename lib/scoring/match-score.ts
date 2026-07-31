@@ -30,6 +30,12 @@ export interface MatchScoreInput {
   track: string; // "Beverage" | "Solid Food" (sets maxSugar)
   ironRich: boolean;
   waterContentPercent: number; // 0..1
+  // PRD v2 bonus inputs (§2.3), per serving. Default to 0/false so a recipe not
+  // yet re-scored simply misses its bonuses rather than throwing.
+  probiotic?: boolean;
+  vitaminCDV?: number;
+  sodiumMg?: number;
+  potassiumMg?: number;
   conditions: string[]; // app health-profile condition keys
   goals: string[]; // app health-profile goal keys
 }
@@ -69,6 +75,10 @@ export function computeMatchScore(input: MatchScoreInput): MatchScoreResult {
     maxes: maxesForTrack(input.track),
     ironRich: input.ironRich,
     waterContentPercent: input.waterContentPercent,
+    probiotic: input.probiotic ?? false,
+    vitaminCDV: input.vitaminCDV ?? 0,
+    sodiumMg: input.sodiumMg ?? 0,
+    potassiumMg: input.potassiumMg ?? 0,
   };
 
   // Built conditions-first, each in the user's selection order — this ordering IS
