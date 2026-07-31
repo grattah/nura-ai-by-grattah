@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Search, X } from "lucide-react";
+import { HiOutlineInformationCircle } from "react-icons/hi";
+
 import { createClient } from "@/lib/supabase/client";
 import { getCategoryConfig } from "@/lib/category-config";
 import { CategoryBanner } from "@/components/categories/category-banner";
@@ -27,6 +29,7 @@ function SearchCategoryContent() {
 
   const supabase = createClient();
 
+  const [open, setOpen] = useState<boolean>(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<CategoryRecipe[]>([]);
   const [searched, setSearched] = useState(false);
@@ -72,7 +75,7 @@ function SearchCategoryContent() {
         .select(
           categorySlug
             ? "id, title, image_url, display_order, recipe_categories!inner(score, categories!inner(slug))"
-            : "id, title, image_url, display_order",
+            : "id, title, image_url, display_order"
         )
         .eq("status" as never, "approved" as never)
         .ilike("title", `%${q.trim()}%`)
@@ -104,7 +107,7 @@ function SearchCategoryContent() {
       setResults(mapped);
       setIsLoading(false);
     },
-    [supabase, categorySlug],
+    [supabase, categorySlug]
   );
 
   const handleChange = (val: string) => {
@@ -157,7 +160,31 @@ function SearchCategoryContent() {
         {/* Results */}
         {searched && (
           <>
-            <p className="text-sm text-subtle">Search results</p>
+            <div className="relative">
+              <div className="flex justify-between items-center">
+                <p className="text-sm text-subtle">Search results</p>
+                <button onClick={() => setOpen(!open)}>
+                  <HiOutlineInformationCircle
+                    color="#1B1D1D"
+                    className="size-4.5"
+                    strokeWidth={2}
+                  />
+                </button>
+              </div>
+              {open && (
+                <div className="absolute -right-1 top-6 z-20 py-2 px-3 bg-[#E6F4EB] border border-[#74A7A0] rounded-lg">
+                  <p className="text-sm text-subtle font-medium">
+                    This Category Score shows how strongly this recipe supports
+                    this category, based on its ingredients. It’s the same for
+                    everyone.
+                  </p>
+                  <span
+                    aria-hidden="true"
+                    className="absolute -top-1 right-2.5 size-2 rotate-225 bg-[#E6F4EB] border-r border-b border-[#74A7A0] rounded-br-xs"
+                  />
+                </div>
+              )}
+            </div>
 
             {isLoading ? (
               <div className="grid grid-cols-2 gap-4 animate-pulse">
