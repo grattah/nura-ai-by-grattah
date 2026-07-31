@@ -58,13 +58,13 @@ const RECIPE_SELECT = "*, recipe_tags(score, tags(name, slug))";
 // The recipe's strongest bioactivities (from recipe_tags) for the supports card.
 function topBioactivities(
   recipeTags: RecipeRecord["recipe_tags"],
-  count = 5,
+  count = 5
 ): SupportScore[] {
   return (recipeTags ?? [])
     .flatMap((rt) =>
       rt.tags && rt.score != null
         ? [{ slug: rt.tags.slug, support: rt.tags.name, score: rt.score }]
-        : [],
+        : []
     )
     .sort((a, b) => b.score - a.score)
     .slice(0, count);
@@ -155,7 +155,7 @@ export default async function RecipeDetailPage({
     likes,
     profiles (id, username, avatar_url),
     comment_likes!comment_id (user_id)
-  `,
+  `
       )
       .eq("recipe_id", recipe.id)
       .is("parent_id", null)
@@ -174,7 +174,7 @@ export default async function RecipeDetailPage({
         ...latestComment,
         hasLiked:
           latestComment.comment_likes?.some(
-            (like: { user_id: string }) => like.user_id === user?.id,
+            (like: { user_id: string }) => like.user_id === user?.id
           ) ?? false,
       }
     : null;
@@ -333,13 +333,10 @@ export default async function RecipeDetailPage({
                     (recipe.recipe_tags?.length ?? 0) === 0)
                 }
               />
-              {/* Bioactivity fallback: shown to everyone (guests included) on an
-                  approved recipe, until a real match percentage takes over. */}
-              {chrome.showBioactivitySupports && (
-                <RecipeSupports
-                  supports={topBioactivities(recipe.recipe_tags, 5)}
-                />
-              )}
+
+              <RecipeSupports
+                supports={topBioactivities(recipe.recipe_tags, 5)}
+              />
 
               {isSubscribed && !hasProfile ? (
                 // subscribed, no profile → locked NutritionScore (blur overlay)
