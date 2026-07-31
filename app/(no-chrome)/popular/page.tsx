@@ -27,7 +27,7 @@ const page = async () => {
             return (
               <div key={recipe.id} className="flex flex-col gap-2">
                 {recipe.image_url && (
-                  <Link href={`/recipes/${recipe.id}`}>
+                  <Link href={`/recipes/${recipe.id}?popular=true`}>
                     <div className="overflow-hidden rounded-2xl">
                       <Image
                         src={recipe.image_url}

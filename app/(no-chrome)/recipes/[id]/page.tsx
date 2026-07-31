@@ -31,6 +31,7 @@ import type { SupportScore } from "@/lib/wellness-score";
 import { BookmarkProvider } from "@/components/bookmark-provider";
 import PersonalizedTokenModal from "@/components/tokens/PersonalizedTokenModal";
 import { recipeChrome } from "@/lib/recipe-visibility";
+import { RecipePaywallGate } from "@/components/recipe/RecipePaywallGate";
 
 type RecipeRecord = Database["public"]["Tables"]["recipes"]["Row"] & {
   recipe_tags:
@@ -121,10 +122,14 @@ export async function generateMetadata({
 // revisit look identical.
 export default async function RecipeDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { id } = await params;
+  const { popular } = await searchParams;
+  const isPopularView = popular === "true";
 
   const [recipe, supabase] = await Promise.all([getRecipe(id), createClient()]);
 
@@ -275,6 +280,8 @@ export default async function RecipeDetailPage({
     imageUrl: recipe.image_url,
     hasMatchScore: personalizedView && !!matchResult?.highest,
   });
+
+  const canViewFull = isSubscribed || isPopularView;
 
   return (
     <AuthGate>
@@ -440,6 +447,7 @@ export default async function RecipeDetailPage({
               </div>
             </div>
           </main>
+          {user && !canViewFull && <RecipePaywallGate />}
         </div>
       </BookmarkProvider>
     </AuthGate>

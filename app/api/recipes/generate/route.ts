@@ -80,12 +80,12 @@ export async function POST(req: NextRequest) {
     hasEverSubscribed(supabase, user.id),
   ]);
 
-  if (!activeSub && everSubscribed) {
-    return NextResponse.json(
-      { error: "Subscription required", hasEverSubscribed: true },
-      { status: 403 },
-    );
-  }
+  // if (!activeSub && everSubscribed) {
+  //   return NextResponse.json(
+  //     { error: "Subscription required", hasEverSubscribed: true },
+  //     { status: 403 },
+  //   );
+  // }
 
   let name: string;
   let concern: string | undefined;
@@ -102,18 +102,18 @@ export async function POST(req: NextRequest) {
   const cleanName = name.trim();
   const norm = cleanName.toLowerCase();
 
-  if (!activeSub) {
-    // New user in free trial — count this distinct recipe (deduped by name) up
-    // front, so an "existing recipe" dedup hit below still consumes a use. The
-    // 3rd distinct recipe is blocked; re-requesting a counted one is free.
-    const allowed = await tryConsumeFreeView(user.id, SURFACE, norm);
-    if (!allowed) {
-      return NextResponse.json(
-        { error: "Subscription required", hasEverSubscribed: false },
-        { status: 403 },
-      );
-    }
-  }
+  // if (!activeSub) {
+  //   // New user in free trial — count this distinct recipe (deduped by name) up
+  //   // front, so an "existing recipe" dedup hit below still consumes a use. The
+  //   // 3rd distinct recipe is blocked; re-requesting a counted one is free.
+  //   const allowed = await tryConsumeFreeView(user.id, SURFACE, norm);
+  //   if (!allowed) {
+  //     return NextResponse.json(
+  //       { error: "Subscription required", hasEverSubscribed: false },
+  //       { status: 403 },
+  //     );
+  //   }
+  // }
 
   // Trusted sources to ground generation (passed from the page; clamped here).
   const domains = (
