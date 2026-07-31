@@ -423,22 +423,22 @@ export default async function RecipeDetailPage({
 
               {/* Sharing an unapproved recipe publishes it and saving pins it, so
                   both are withheld until an admin has reviewed it. */}
-              {chrome.showShareAndSave && (
-                <div className="flex gap-4 items-center mt-8 w-full">
+
+              <div className="flex gap-4 items-center mt-8 w-full">
+                {chrome.showShareAndSave && (
                   <ShareButton
                     recipeId={recipe.id}
                     recipeTitle={recipe.title}
                     text="Send this to a friend"
                     addText="show"
                   />
-
-                  <BookmarkButton
-                    text="Save this recipe"
-                    addText="show"
-                    popularStyle=""
-                  />
-                </div>
-              )}
+                )}
+                <BookmarkButton
+                  text="Save this recipe"
+                  addText="show"
+                  popularStyle=""
+                />
+              </div>
 
               <div className="mt-8">
                 <Comment

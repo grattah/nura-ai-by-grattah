@@ -70,7 +70,7 @@ export const ForYouCategory = () => {
     <div className="mt-4 flex flex-col gap-2 relative z-10">
       <div className="flex justify-between">
         <p className="text-title text-grey-c950 font-semibold leading-[100%]">
-          For you
+          For your goals
         </p>
         {hasProfile && (
           <Link
