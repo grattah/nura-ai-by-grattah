@@ -571,6 +571,8 @@ export type Database = {
           verified_at: string | null
           vitamin_c_dv: number | null
           water_pct: number | null
+          potassium_mg: number | null
+          is_probiotic: boolean
         }
         Insert: {
           aliases?: string[]
@@ -600,6 +602,8 @@ export type Database = {
           verified_at?: string | null
           vitamin_c_dv?: number | null
           water_pct?: number | null
+          potassium_mg?: number | null
+          is_probiotic?: boolean
         }
         Update: {
           aliases?: string[]
@@ -629,6 +633,8 @@ export type Database = {
           verified_at?: string | null
           vitamin_c_dv?: number | null
           water_pct?: number | null
+          potassium_mg?: number | null
+          is_probiotic?: boolean
         }
         Relationships: []
       }
@@ -1039,6 +1045,10 @@ export type Database = {
           water_content_pct: number | null
           weighted_score: number
           why_it_works: string
+          vitamin_c_dv: number | null
+          potassium_mg: number | null
+          sodium_mg: number | null
+          probiotic: boolean
         }
         Insert: {
           bns_grade?: string | null
@@ -1099,6 +1109,10 @@ export type Database = {
           water_content_pct?: number | null
           weighted_score?: number
           why_it_works: string
+          vitamin_c_dv?: number | null
+          potassium_mg?: number | null
+          sodium_mg?: number | null
+          probiotic?: boolean
         }
         Update: {
           bns_grade?: string | null
@@ -1159,6 +1173,10 @@ export type Database = {
           water_content_pct?: number | null
           weighted_score?: number
           why_it_works?: string
+          vitamin_c_dv?: number | null
+          potassium_mg?: number | null
+          sodium_mg?: number | null
+          probiotic?: boolean
         }
         Relationships: []
       }

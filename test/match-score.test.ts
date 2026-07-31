@@ -11,7 +11,110 @@ function bySlug(abbrevScores: Record<string, number>): Record<string, number> {
   return out;
 }
 
-describe("Recipe Match Score — PRD full worked example → 46.6%", () => {
+// ── §8 Worked Examples (the PRD's own acceptance criteria) ──────────────────
+describe("Recipe Match Score — PRD §8 worked examples", () => {
+  const NONE = { sugar: 0, salt: 0, satFat: 0, energy: 0, protein: 0, fiber: 0 };
+
+  it("§8.1 condition — Diabetes → 66.9%", () => {
+    // BioSubtotal = (74×95 + 24×65) ÷ 160 = 53.7
+    // Credit = (0.537 + (1 − 2÷10)) ÷ 2 = 0.669
+    const r = computeMatchScore({
+      bioBySlug: bySlug({ BloodSugar: 74, WeightMetabolic: 24 }),
+      points: { ...NONE, sugar: 2 },
+      track: "Beverage", // maxSugar = 10
+      ironRich: false,
+      waterContentPercent: 0,
+      conditions: ["diabetes"],
+      goals: [],
+    });
+    expect(r.highest?.percent).toBeCloseTo(66.9, 0);
+  });
+
+  it("§8.2 goal WITH bonus — gut health → 75.1% on probiotic alone", () => {
+    // BioSubtotal 60.1; fiberPoints 0 fails, probioticFlag passes → +0.15.
+    // Under the old averaging model the zero fiber HALVED this to ~30%.
+    const r = computeMatchScore({
+      bioBySlug: bySlug({ Gut: 65, Microbiome: 55 }),
+      points: NONE,
+      track: "Beverage",
+      ironRich: false,
+      waterContentPercent: 0,
+      probiotic: true,
+      conditions: [],
+      goals: ["gut-health"],
+    });
+    expect(r.highest?.percent).toBeCloseTo(75.1, 1);
+  });
+
+  it("§8.3 goal WITHOUT bonus — sleep better → 38.5%", () => {
+    const r = computeMatchScore({
+      bioBySlug: bySlug({ SleepRelaxation: 30, StressResilience: 48, Mood: 42 }),
+      points: NONE,
+      track: "Beverage",
+      ironRich: false,
+      waterContentPercent: 0,
+      conditions: [],
+      goals: ["sleep"],
+    });
+    expect(r.highest?.percent).toBeCloseTo(38.5, 1);
+  });
+
+  it("§8.4 combined → average 60.2%, highest 75.1% (gut health)", () => {
+    const r = computeMatchScore({
+      bioBySlug: bySlug({
+        BloodSugar: 74, WeightMetabolic: 24,
+        Gut: 65, Microbiome: 55,
+        SleepRelaxation: 30, StressResilience: 48, Mood: 42,
+      }),
+      points: { ...NONE, sugar: 2 },
+      track: "Beverage",
+      ironRich: false,
+      waterContentPercent: 0,
+      probiotic: true,
+      conditions: ["diabetes"],
+      goals: ["gut-health", "sleep"],
+    });
+    expect(r.creditCount).toBe(3);
+    expect(r.average).toBeCloseTo(60.2, 0);
+    // §7.1: the headline is the BEST credit, and it names its source.
+    expect(r.highest?.percent).toBeCloseTo(75.1, 1);
+    expect(r.highest?.key).toBe("gut-health");
+  });
+
+  it("§5: a bonus never caps a strong recipe, and the credit clamps at 1", () => {
+    const strong = {
+      bioBySlug: bySlug({ Gut: 95, Microbiome: 95 }),
+      points: NONE,
+      track: "Beverage" as const,
+      ironRich: false,
+      waterContentPercent: 0,
+      conditions: [],
+      goals: ["gut-health"],
+    };
+    const without = computeMatchScore(strong).highest!.credit;
+    const with_ = computeMatchScore({ ...strong, probiotic: true }).highest!.credit;
+    expect(with_).toBeGreaterThan(without); // only ever adds
+    expect(with_).toBeLessThanOrEqual(1); // min(1, …)
+  });
+
+  // §9: "Gout has no defined credit formula and should not be included in the
+  // credit average if disclosed, until a metric is defined for it."
+  it("§9: gout is excluded, not borrowed from Arthritis", () => {
+    const r = computeMatchScore({
+      bioBySlug: bySlug({ Inflammation: 90, PainComfort: 90, BoneJoint: 90, Antioxidant: 90 }),
+      points: NONE,
+      track: "Solid Food",
+      ironRich: false,
+      waterContentPercent: 0,
+      conditions: ["gout"],
+      goals: [],
+    });
+    expect(r.creditCount).toBe(0);
+    expect(r.highest).toBeNull();
+  });
+});
+
+describe("Recipe Match Score — structural cases", () => {
   it("Almond Maca Shake, Diabetes+HBP, 4 goals", () => {
     // PRD §6 Step 1. Kidney/CholLipid/Inflammation are needed by the rewritten
     // weighted condition formulas (the old single-bioactivity ones never read them).
@@ -35,14 +138,18 @@ describe("Recipe Match Score — PRD full worked example → 46.6%", () => {
     expect(byKey["diabetes"]).toBeCloseTo(0.608, 3);
     // (22×95 + 18×60 + 20×55 + 25×50)/260 = 21.2 → (0.212 + 1)/2
     expect(byKey["high-blood-pressure"]).toBeCloseTo(0.606, 3);
-    // §6 Step 4 — goal weights for these four are unchanged by the update.
-    expect(byKey["energy"]).toBeCloseTo(0.454, 2);
+    // Goal weights are unchanged, but `energy` moved to the bonus model: its
+    // BioSubtotal is 27.5 and neither arm fires (protein 2/7 = 0.29, no iron), so
+    // the credit is 0.275. It was 0.454 when proteinPoints and energyPoints were
+    // AVERAGED IN — and that old model counted energyPoints as a POSITIVE, so a
+    // calorie-dense recipe scored better for "have more energy".
+    expect(byKey["energy"]).toBeCloseTo(0.275, 2);
     expect(byKey["hormones"]).toBeCloseTo(0.48, 2);
     expect(byKey["focus"]).toBeCloseTo(0.335, 2);
     expect(byKey["sleep"]).toBeCloseTo(0.314, 2);
     expect(r.creditCount).toBe(6);
-    // §6 Step 5: 2.797 / 6 × 100 = 46.6%
-    expect(r.average).toBeCloseTo(46.6, 1);
+    // 2.618 / 6 × 100 (was 46.6% under the averaging model).
+    expect(r.average).toBeCloseTo(43.6, 1);
     // §7.1: the headline is the BEST credit, not the average — Diabetes at 60.8%.
     expect(r.highest?.key).toBe("diabetes");
     expect(r.highest?.label).toBe("Diabetes");

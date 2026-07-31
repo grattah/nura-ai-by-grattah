@@ -48,6 +48,10 @@ export async function getTopMatches(limit: number) {
         track: r.track ?? "Solid Food",
         ironRich: !!r.iron_rich,
         waterContentPercent: r.water_content_pct ?? 0,
+        probiotic: !!r.probiotic,
+        vitaminCDV: r.vitamin_c_dv ?? 0,
+        sodiumMg: r.sodium_mg ?? 0,
+        potassiumMg: r.potassium_mg ?? 0,
         conditions: profile.conditions ?? [],
         goals: profile.goals ?? [],
       });

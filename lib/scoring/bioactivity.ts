@@ -3,7 +3,6 @@ import { generateObject } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { WELLNESS_SUPPORTS, type ScorableRecipe } from "@/lib/wellness-score";
-import { type TraceOverride } from "@/lib/bioactivity-categories";
 
 export const scoreSchema = z.object({
   bioactivities: z.array(
@@ -12,15 +11,6 @@ export const scoreSchema = z.object({
       bioactivityScore: z.number().min(0).max(100),
     }),
   ),
-  traceOverrides: z
-    .array(
-      z.object({
-        category: z.string(),
-        ingredient: z.string().optional(),
-        confidence: z.number().min(0).max(100),
-      }),
-    )
-    .optional(),
 });
 
 const SCORING_SYSTEM = `You are a clinical bioactivity assistant for the Nuko wellness app. You score how strongly a single recipe supports specific, predefined BIOACTIVITY categories. Bioactivities are effects driven by non-nutritive bioactive compounds (e.g. polyphenols, flavonoids, glucosinolates, allicin, curcuminoids, catechins, terpenes, alkaloids) — this is distinct from nutrition scoring (macro/micronutrient content), which is handled separately.
@@ -40,11 +30,6 @@ Rules:
 - Use the full 0–100 range and be discriminating: a recipe can score high on one bioactivity and low on another depending on which compound classes it actually contains. Avoid clustering scores near the same value.
 - If a recipe contains negligible or no compounds relevant to a given bioactivity, score it low (0–20) rather than omitting it — but only include bioactivities you were explicitly assigned.
 - Base scores on the actual ingredients, quantities, and prep method — not the recipe's name, marketing copy, or intended use case.
-
-TRACE EXCEPTION (category overrides):
-Certain ingredients exert strong, clinically-meaningful biological effects despite small quantities: turmeric, ginger, cinnamon, cloves, black pepper, matcha, saffron, moringa, spirulina, medicinal mushrooms. Averaged category scoring can wrongly exclude such recipes.
-The 14 recipe categories are: energy, hormones, hydration, fitness, focus, anti-aging, sleep, detox, gut-health, immunity, weight-loss, diabetes, menopause, heart.
-In "traceOverrides", list any category this recipe should still be admitted to because it contains a clinically-meaningful amount of a trace-active ingredient strongly associated with that category's primary effect. For each, give the category slug, the ingredient, and your override confidence (0–100). Only include categories you genuinely believe warrant an override; return an empty array otherwise.
 
 Output only the schema fields, nothing else.`;
 
@@ -74,7 +59,6 @@ const clampScore = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
 
 export interface BioactivityResult {
   scoresBySlug: Record<string, number>;
-  overrides: TraceOverride[];
   totalTokens: number;
 }
 
@@ -100,7 +84,6 @@ export async function scoreBioactivities(
 
   return {
     scoresBySlug,
-    overrides: (object.traceOverrides ?? []) as TraceOverride[],
     totalTokens:
       usage?.totalTokens ??
       (usage?.inputTokens ?? 0) + (usage?.outputTokens ?? 0),

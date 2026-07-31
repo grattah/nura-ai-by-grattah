@@ -1,6 +1,6 @@
 // USDA FoodData Central nutrient-number → Nuko field map (PRD: USDA Nutrient
 // Data Integration §3). USDA's API tags nutrients by numeric id, not name. We
-// extract exactly these 12 fields and ignore the rest of USDA's 50+ panel.
+// extract exactly these 13 fields and ignore the rest of USDA's 50+ panel.
 //
 // Note: 2000 "Total sugars" reflects ALL sugar (intrinsic + added). The
 // intrinsic-vs-added distinction (Base Nutrition Score Beverage Juiced/Blended
@@ -18,6 +18,7 @@ export const USDA_NUTRIENT_IDS = {
   1087: "calcium_mg", // raw mg — converted to %DV downstream
   1162: "vitamin_c_mg", // raw mg — converted to %DV downstream
   1089: "iron_mg",
+  1092: "potassium_mg", // raw mg — the Hydration bonus's electrolyte arm
   1051: "water_g", // grams per 100g == water_pct on a 100g basis
 } as const;
 

@@ -254,6 +254,10 @@ export default async function RecipeDetailPage({
         track: recipe.track ?? "Solid Food",
         ironRich: !!recipe.iron_rich,
         waterContentPercent: recipe.water_content_pct ?? 0,
+        probiotic: !!recipe.probiotic,
+        vitaminCDV: recipe.vitamin_c_dv ?? 0,
+        sodiumMg: recipe.sodium_mg ?? 0,
+        potassiumMg: recipe.potassium_mg ?? 0,
         conditions: profile?.conditions ?? [],
         goals: profile?.goals ?? [],
       });
@@ -419,22 +423,22 @@ export default async function RecipeDetailPage({
 
               {/* Sharing an unapproved recipe publishes it and saving pins it, so
                   both are withheld until an admin has reviewed it. */}
-              {chrome.showShareAndSave && (
-                <div className="flex gap-4 items-center mt-8 w-full">
+
+              <div className="flex gap-4 items-center mt-8 w-full">
+                {chrome.showShareAndSave && (
                   <ShareButton
                     recipeId={recipe.id}
                     recipeTitle={recipe.title}
                     text="Send this to a friend"
                     addText="show"
                   />
-
-                  <BookmarkButton
-                    text="Save this recipe"
-                    addText="show"
-                    popularStyle=""
-                  />
-                </div>
-              )}
+                )}
+                <BookmarkButton
+                  text="Save this recipe"
+                  addText="show"
+                  popularStyle=""
+                />
+              </div>
 
               <div className="mt-8">
                 <Comment

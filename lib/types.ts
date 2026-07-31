@@ -25,9 +25,10 @@ export type CategoryRecipe = Pick<
 > & {
   /**
    * The recipe's CategoryScore for the category being viewed
-   * (recipe_categories.score). Used for ORDERING only — it is not a Match Score
-   * and must never be displayed as one (PRD §7.4). Cards get their match from
-   * useMatchScores().
+   * (recipe_categories.score). A GENERAL score, identical for every user: it
+   * drives ordering and renders through SupportBadge as "68% support". It must
+   * never be labelled "match" (Category PRD §6.3) — that word is reserved for
+   * the personalized Recipe Match Score from computeMatchScore().
    */
   score?: number | null;
 };

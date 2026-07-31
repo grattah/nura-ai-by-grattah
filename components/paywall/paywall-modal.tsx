@@ -13,7 +13,6 @@ import Image from "next/image";
 import FilledLock from "../vectors/filled-lock";
 import { Plan, PLANS } from "@/constants";
 import { useState } from "react";
-import Time from "../vectors/time";
 import { useAccess } from "@/components/providers/access-provider";
 
 interface PaywallModalProps {
@@ -76,11 +75,6 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
             <X className="size-6 text-grey-c600" />
           </button>
           <DialogHeader className="flex flex-col items-center justify-center text-center space-y-6 gap-0">
-            {/* {!hasEverSubscribed && !isTokensPage && (
-              <div className="py-1.5 px-2 rounded-lg bg-warning-c100 flex items-center gap-x-1">
-                <Time />
-              </div>
-            )} */}
             <div className="space-y-3">
               <DialogTitle className="text-2xl max-[350px]:text-xl font-semibold text-black mb-3">
                 Get Nuko+
