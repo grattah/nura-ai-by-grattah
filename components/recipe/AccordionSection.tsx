@@ -25,6 +25,7 @@ interface AccordionSectionProps {
   ingredients: { label: string; emoji: string }[];
   howToMake: { step: string; instruction: string }[];
   nutrition: NutritionFacts | null;
+  popular: boolean;
 }
 
 const AccordionSection = ({
@@ -32,10 +33,11 @@ const AccordionSection = ({
   ingredients,
   howToMake,
   nutrition,
+  popular,
 }: AccordionSectionProps) => {
-  const { hasAccess, isLoading } = useAccess();
+  const { isSubscriber, isLoading } = useAccess();
 
-  const lockIcon = isLoading ? null : hasAccess ? (
+  const lockIcon = isLoading ? null : isSubscriber || popular ? (
     <LockKeyholeOpen size={20} color="#9CA5A3" className="ml-auto" />
   ) : (
     <LockKeyhole size={20} color="#9CA5A3" className="ml-auto" />

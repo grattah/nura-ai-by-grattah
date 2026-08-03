@@ -128,7 +128,7 @@ export default async function RecipeDetailPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { id } = await params;
-  const { popular } = await searchParams;
+  const { popular, generate } = await searchParams;
   const isPopularView = popular === "true";
 
   const [recipe, supabase] = await Promise.all([getRecipe(id), createClient()]);
@@ -288,7 +288,7 @@ export default async function RecipeDetailPage({
   const canViewFull = isSubscribed || isPopularView;
 
   return (
-    <AuthGate>
+    <AuthGate popular={canViewFull}>
       <BookmarkProvider
         recipeId={recipe.id}
         initialBookmarked={bookmarked}
@@ -387,6 +387,7 @@ export default async function RecipeDetailPage({
                 ingredients={ingredients}
                 howToMake={howToMake}
                 nutrition={nutrition}
+                popular={canViewFull}
               />
 
               {/* Follow-up questions + RAG chat */}
@@ -459,7 +460,7 @@ export default async function RecipeDetailPage({
               </div>
             </div>
           </main>
-          {user && !canViewFull && <RecipePaywallGate />}
+          {generate && !isSubscribed && user && <RecipePaywallGate />}
         </div>
       </BookmarkProvider>
     </AuthGate>
