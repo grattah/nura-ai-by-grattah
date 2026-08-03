@@ -414,31 +414,39 @@ export default async function RecipeDetailPage({
                     isAuthenticated={!!user}
                   />
                 </div>
-                <p className="font-medium text-sm flex-1 text-nowrap">
+                {/* <p className="font-medium text-sm flex-1 text-nowrap">
                   {recipe.likes ?? 0}{" "}
                   {(recipe.likes ?? 0) > 1 ? "people" : "person"} found this
                   helpful
-                </p>
+                </p> */}
               </div>
 
               {/* Sharing an unapproved recipe publishes it and saving pins it, so
                   both are withheld until an admin has reviewed it. */}
 
-              <div className="flex gap-4 items-center mt-8 w-full">
-                {chrome.showShareAndSave && (
+              {recipe.status === "approved" ? (
+                <div className="flex gap-4 items-center mt-8 w-full">
                   <ShareButton
                     recipeId={recipe.id}
                     recipeTitle={recipe.title}
                     text="Send this to a friend"
                     addText="show"
                   />
-                )}
-                <BookmarkButton
-                  text="Save this recipe"
-                  addText="show"
-                  popularStyle=""
-                />
-              </div>
+                  <BookmarkButton
+                    text="Save this recipe"
+                    addText="show"
+                    popularStyle=""
+                  />
+                </div>
+              ) : recipe.status === "pending" ? (
+                <div className="w-full mt-8">
+                  <BookmarkButton
+                    text="Save this recipe"
+                    addText="show"
+                    popularStyle=""
+                  />
+                </div>
+              ) : null}
 
               <div className="mt-8">
                 <Comment
