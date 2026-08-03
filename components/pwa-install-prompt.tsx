@@ -268,7 +268,7 @@ export function PWAInstallPrompt() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-4 items-center text-center pb-4 px-6 bg-white border border-grey-c200 rounded-4xl">
+                  <div className="flex flex-col gap-3 items-center text-center pb-4 px-6 bg-white border border-grey-c200 rounded-4xl">
                     <Image
                       src={shareButtonSafari}
                       alt="icon image"
@@ -288,7 +288,7 @@ export function PWAInstallPrompt() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-4 items-center text-center pb-4 px-6 bg-white border border-grey-c200 rounded-4xl">
+                  <div className="flex flex-col gap-3 items-center text-center pb-4 px-6 bg-white border border-grey-c200 rounded-4xl">
                     <Image
                       src={addHomeScreen}
                       alt="icon image"
