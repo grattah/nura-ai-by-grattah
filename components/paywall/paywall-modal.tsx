@@ -53,7 +53,7 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
   ];
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={() => handleClose(false)}>
       <DialogOverlay className="bg-white/30 backdrop-blur-xs" />
       <DialogContent
         className="sm:max-w-md p-0 gap-0 overflow-hidden rounded-2xl"
@@ -69,7 +69,7 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
       >
         <div className="p-6 space-y-6 mt-8">
           <button
-            onClick={() => router.back()}
+            onClick={() => handleClose(false)}
             className="absolute top-4 right-6 size-10 rounded-full bg-grey-c100 p-2 grid place-items-center hover:opacity-75 transition-opacity"
           >
             <X className="size-6 text-grey-c600" />
