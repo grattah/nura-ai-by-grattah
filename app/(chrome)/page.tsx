@@ -67,7 +67,7 @@ export default async function HomePage({
   const bookmarkedIds = new Set<string>();
   if (user) {
     const ids = await withTiming("home:getBookmarkedIds", () =>
-      getBookmarkedIds(popularRecipes.map((r) => r.id)),
+      getBookmarkedIds(popularRecipes.map((r) => r.id))
     );
     ids.forEach((id) => bookmarkedIds.add(id));
   }
@@ -76,13 +76,24 @@ export default async function HomePage({
   // flipped by the modal on the client (real mount), never during this render —
   // so prefetch/background renders can't consume it.
   let showFreeTokens = false;
+  let hasHealthProfile = false;
+  
   if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("has_seen_free_tokens")
-      .eq("id", user.id)
-      .maybeSingle();
+    const [{ data: profile }, { data: healthProfile }] = [
+      await supabase
+        .from("profiles")
+        .select("has_seen_free_tokens")
+        .eq("id", user.id)
+        .maybeSingle(),
+      await supabase
+        .from("health_profiles")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+    ];
+
     showFreeTokens = !!profile && !profile.has_seen_free_tokens;
+    hasHealthProfile = !!healthProfile;
   }
 
   const categories = await getCategories();
@@ -107,8 +118,45 @@ export default async function HomePage({
 
         <ForYouCategory />
 
+        {hasHealthProfile && (
+          <div className="border border-[#D3CCBD] rounded-3xl pt-12.5 pb-16 pl-10 pr-9 relative flex flex-col overflow-hidden">
+            <p className="text-base text-[#312817] alan-sans z-10 relative max-w-69.5">
+              Your energy dipped this week? A beef & ginger juice could lift the
+              afternoon slump - want the recipe?
+            </p>
+            <Link
+              href={`/recipes/2307da01-c7a9-4b35-a581-526ae8f5339c`}
+              className="z-10 absolute right-6 bottom-6 bg-mint-green self-end w-fit text-white rounded-full px-6 py-3 flex items-center gap-x-1 transition-transform active:scale-[0.98]"
+            >
+              <span className="alan-sans font-semibold text-sm">View</span>
+              <MoveRight className="size-3.5" />
+            </Link>
+            <Image
+              src="/bottom-right-flower.svg"
+              alt="flower"
+              width={101}
+              height={63}
+              className="absolute right-0 bottom-0 z-0"
+            />
+            <Image
+              src="/right-wellness-fruit.svg"
+              alt="flower"
+              width={25}
+              height={18}
+              className="absolute top-2 right-0 z-0"
+            />
+            <Image
+              src="/left-wellness-flower.svg"
+              alt="flower"
+              width={88}
+              height={115}
+              className="absolute -top-2.5 left-0 z-0 pointer-events-none"
+            />
+          </div>
+        )}
+
         {/* Popular Recipes */}
-        <section className="relative z-10 mt-6">
+        <section className={`relative z-10 mt-6`}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-title leading-none font-semibold text-grey-c950">
               Trending this week
@@ -139,40 +187,42 @@ export default async function HomePage({
           </div>
         </section>
 
-        <div className="border border-[#D3CCBD] rounded-3xl pt-12.5 pb-16 pl-10 pr-9 relative flex flex-col overflow-hidden">
-          <p className="text-base text-[#312817] alan-sans z-10 relative max-w-69.5">
-            Your energy dipped this week? A beef & ginger juice could lift the
-            afternoon slump - want the recipe?
-          </p>
-          <Link
-            href={`/recipes/2307da01-c7a9-4b35-a581-526ae8f5339c`}
-            className="z-10 absolute right-6 bottom-6 bg-mint-green self-end w-fit text-white rounded-full px-6 py-3 flex items-center gap-x-1 transition-transform active:scale-[0.98]"
-          >
-            <span className="alan-sans font-semibold text-sm">View</span>
-            <MoveRight className="size-3.5" />
-          </Link>
-          <Image
-            src="/bottom-right-flower.svg"
-            alt="flower"
-            width={101}
-            height={63}
-            className="absolute right-0 bottom-0 z-0"
-          />
-          <Image
-            src="/right-wellness-fruit.svg"
-            alt="flower"
-            width={25}
-            height={18}
-            className="absolute top-2 right-0 z-0"
-          />
-          <Image
-            src="/left-wellness-flower.svg"
-            alt="flower"
-            width={88}
-            height={115}
-            className="absolute -top-2.5 left-0 z-0 pointer-events-none"
-          />
-        </div>
+        {!hasHealthProfile && (
+          <div className="border border-[#D3CCBD] rounded-3xl pt-12.5 pb-16 pl-10 pr-9 relative flex flex-col overflow-hidden">
+            <p className="text-base text-[#312817] alan-sans z-10 relative max-w-69.5">
+              Your energy dipped this week? A beef & ginger juice could lift the
+              afternoon slump - want the recipe?
+            </p>
+            <Link
+              href={`/recipes/2307da01-c7a9-4b35-a581-526ae8f5339c`}
+              className="z-10 absolute right-6 bottom-6 bg-mint-green self-end w-fit text-white rounded-full px-6 py-3 flex items-center gap-x-1 transition-transform active:scale-[0.98]"
+            >
+              <span className="alan-sans font-semibold text-sm">View</span>
+              <MoveRight className="size-3.5" />
+            </Link>
+            <Image
+              src="/bottom-right-flower.svg"
+              alt="flower"
+              width={101}
+              height={63}
+              className="absolute right-0 bottom-0 z-0"
+            />
+            <Image
+              src="/right-wellness-fruit.svg"
+              alt="flower"
+              width={25}
+              height={18}
+              className="absolute top-2 right-0 z-0"
+            />
+            <Image
+              src="/left-wellness-flower.svg"
+              alt="flower"
+              width={88}
+              height={115}
+              className="absolute -top-2.5 left-0 z-0 pointer-events-none"
+            />
+          </div>
+        )}
 
         {/* Categories */}
         <CategorySection categories={categories} />
