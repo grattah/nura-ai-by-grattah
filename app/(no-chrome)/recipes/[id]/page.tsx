@@ -128,7 +128,7 @@ export default async function RecipeDetailPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { id } = await params;
-  const { popular } = await searchParams;
+  const { popular, generate } = await searchParams;
   const isPopularView = popular === "true";
 
   const [recipe, supabase] = await Promise.all([getRecipe(id), createClient()]);
@@ -288,7 +288,7 @@ export default async function RecipeDetailPage({
   const canViewFull = isSubscribed || isPopularView;
 
   return (
-    <AuthGate>
+    <AuthGate popular={canViewFull}>
       <BookmarkProvider
         recipeId={recipe.id}
         initialBookmarked={bookmarked}
@@ -387,6 +387,7 @@ export default async function RecipeDetailPage({
                 ingredients={ingredients}
                 howToMake={howToMake}
                 nutrition={nutrition}
+                popular={canViewFull}
               />
 
               {/* Follow-up questions + RAG chat */}
@@ -414,31 +415,39 @@ export default async function RecipeDetailPage({
                     isAuthenticated={!!user}
                   />
                 </div>
-                <p className="font-medium text-sm flex-1 text-nowrap">
+                {/* <p className="font-medium text-sm flex-1 text-nowrap">
                   {recipe.likes ?? 0}{" "}
                   {(recipe.likes ?? 0) > 1 ? "people" : "person"} found this
                   helpful
-                </p>
+                </p> */}
               </div>
 
               {/* Sharing an unapproved recipe publishes it and saving pins it, so
                   both are withheld until an admin has reviewed it. */}
 
-              <div className="flex gap-4 items-center mt-8 w-full">
-                {chrome.showShareAndSave && (
+              {recipe.status === "approved" ? (
+                <div className="flex gap-4 items-center mt-8 w-full">
                   <ShareButton
                     recipeId={recipe.id}
                     recipeTitle={recipe.title}
                     text="Send this to a friend"
                     addText="show"
                   />
-                )}
-                <BookmarkButton
-                  text="Save this recipe"
-                  addText="show"
-                  popularStyle=""
-                />
-              </div>
+                  <BookmarkButton
+                    text="Save this recipe"
+                    addText="show"
+                    popularStyle=""
+                  />
+                </div>
+              ) : recipe.status === "pending" ? (
+                <div className="w-full mt-8">
+                  <BookmarkButton
+                    text="Save this recipe"
+                    addText="show"
+                    popularStyle=""
+                  />
+                </div>
+              ) : null}
 
               <div className="mt-8">
                 <Comment
@@ -451,7 +460,7 @@ export default async function RecipeDetailPage({
               </div>
             </div>
           </main>
-          {user && !canViewFull && <RecipePaywallGate />}
+          {generate && !isSubscribed && user && <RecipePaywallGate />}
         </div>
       </BookmarkProvider>
     </AuthGate>

@@ -44,7 +44,7 @@ export default function Comment({
     <section className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-semibold text-[#111312]">
-          Comments ({total})
+          Comments
         </h2>
         <Link
           href={seeAllHref}
@@ -55,7 +55,7 @@ export default function Comment({
       </div>
 
       <div className="rounded-2xl bg-white p-5 flex flex-col gap-5">
-        {latestComment && (
+        {/* {latestComment && (
           <div className="flex items-start gap-3">
             <div className="relative size-12 rounded-full overflow-hidden shrink-0">
               {latestComment && (
@@ -93,7 +93,7 @@ export default function Comment({
               </div>
             </div>
           </div>
-        )}
+        )} */}
         <CommentForm recipeId={recipeId} />
       </div>
     </section>

@@ -76,8 +76,7 @@ export default function CategoryDetailPage() {
   // Separate effect: once we know they're NOT subscribed, start the peek timer.
   useEffect(() => {
     if (recipesLoaded && isSubscribed === false) {
-      const timer = setTimeout(() => setShowPaywall(true), 1_000);
-      return () => clearTimeout(timer);
+      setShowPaywall(true);
     }
   }, [recipesLoaded, isSubscribed]);
 
