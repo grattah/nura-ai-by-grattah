@@ -116,9 +116,9 @@ What to suggest
 
 Name construction
 - Format: [primary ingredients] + [drink type]. The drink type always ends the name. Nothing follows it — no "with Mint," no parentheticals.
-- Exactly two ingredients: "[Ingredient A] & [Ingredient B] [Type]" — e.g. "Beet & Carrot Juice."
-- Three or more: comma-separated with "&" before the last — e.g. "Blueberry, Peach & Carrot Smoothie."
-- Always use "and" rather than "&."
+- Exactly two ingredients: "[Ingredient A] and [Ingredient B] [Type]" — e.g. "Beet and Carrot Juice."
+- Three or more: comma-separated with "and" before the last — e.g. "Blueberry, Peach and Carrot Smoothie."
+- Always use "and" rather than "&"
 - Name the specific ingredient. Never use generic category words like "green," "greens," "citrus," "berry," or "nuts" — use spinach, kale, orange, blueberry, almond.
 - Include only major ingredients. Leave out minor flavorings and garnishes unless they genuinely define the drink.
 - Never include sweeteners or liquid bases in a name: no maple, honey, sugar, water, milk-as-base, yogurt, or agave.
