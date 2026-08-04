@@ -76,10 +76,13 @@ declare global {
   }
 }
 
+const SHEET_MS = 300;
+
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 export function PWAInstallPrompt() {
   const { hasAccess, isLoading, isSubscriber } = useAccess();
+  const [sheetIn, setSheetIn] = useState(false);
   const [mode, setMode] = useState<PromptMode>(null);
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
@@ -148,12 +151,36 @@ export function PWAInstallPrompt() {
     return () => clearTimeout(timer);
   }, [isLoading, deferredPrompt, isSubscriber]);
 
-  const dismiss = () => {
-    setVisible(false);
-    markDismissed();
+  useEffect(() => {
+    if (!visible || mode === "android") return;
+    const id = requestAnimationFrame(() =>
+      requestAnimationFrame(() => setSheetIn(true))
+    );
+    return () => cancelAnimationFrame(id);
+  }, [visible, mode]);
+
+  const finishClose = () => {
+    setSheetIn(false);
+    window.setTimeout(() => setVisible(false), SHEET_MS);
   };
 
-  const closeForNow = () => setVisible(false);
+  const dismiss = () => {
+    if (mode === "android") {
+      setVisible(false);
+      markDismissed();
+      return;
+    }
+    markDismissed();
+    finishClose();
+  };
+
+  const closeForNow = () => {
+    if (mode === "android") {
+      setVisible(false);
+      return;
+    }
+    finishClose();
+  };
 
   const handleAndroidInstall = async () => {
     if (!deferredPrompt) return;
@@ -184,7 +211,11 @@ export function PWAInstallPrompt() {
           <button
             type="button"
             aria-label="Close"
-            className="absolute inset-0 bg-black/20 backdrop-blur-xs"
+            className={cn(
+              "absolute inset-0 bg-black/20 backdrop-blur-xs",
+              mode !== "android" && "transition-opacity duration-300",
+              mode !== "android" && (sheetIn ? "opacity-100" : "opacity-0")
+            )}
             onClick={closeForNow}
           />
 
@@ -193,7 +224,11 @@ export function PWAInstallPrompt() {
               "relative w-full flex flex-col items-center",
               mode === "android"
                 ? "rounded-3xl bg-white p-6 max-w-96.5"
-                : "rounded-t-4xl max-h-[85vh] bg-[#FAFAF9] px-5 pt-3 pb-12 max-w-md"
+                : "rounded-t-4xl max-h-[85vh] bg-[#FAFAF9] px-5 pt-3 pb-12 max-w-md",
+              mode !== "android" &&
+                "transition-transform duration-300 ease-out",
+              mode !== "android" &&
+                (sheetIn ? "translate-y-0" : "translate-y-full")
             )}
           >
             {mode !== "android" && (
