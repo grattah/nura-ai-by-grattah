@@ -14,11 +14,11 @@ const SuggestionsSchema = z.object({
         title: z
           .string()
           .describe("A short, specific wellness drink/recipe name"),
-      }),
+      })
     )
     .max(5)
     .describe(
-      "Exactly 5 distinct new recipe names closely related to the user's search",
+      "Exactly 5 distinct new recipe names closely related to the user's search"
     ),
 });
 
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
   const { success } = await rateLimit(
     `recipe-suggestions:${getClientIp(req.headers)}`,
     20,
-    60_000,
+    60_000
   );
   if (!success) {
     return NextResponse.json({ error: "Too many requests." }, { status: 429 });
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
   if (!query?.trim() || query.length > 200) {
     return NextResponse.json(
       { error: "Query is required (max 200 chars)" },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
         error:
           "Suggestions are temporarily unavailable. Please try again later.",
       },
-      { status: 429 },
+      { status: 429 }
     );
   }
 
@@ -102,18 +102,36 @@ export async function POST(req: NextRequest) {
       schema: SuggestionsSchema,
       maxOutputTokens: 256,
       system: `You are a recipe naming assistant for the Nuko wellness app.
-A user searched for a wellness drink that is not in our catalogue.
-Generate exactly 5 realistic drink recipe names that someone searching for that drink would expect to find.
 
-Rules:
+A user searched for a wellness drink that is not in our catalogue. Generate exactly 5 realistic drink recipe names that someone searching for that drink would expect to find.
+
+Output format
 - Return only the recipe names, one per line.
+- No numbering, bullets, explanations, punctuation, or descriptions.
+
+What to suggest
 - Suggest drinks only. Never suggest food.
-- Each name must be an established, well-known drink with real, documented health benefits, not an invented or novel-sounding combination. If you would not find this drink name in a health cookbook, on a wellness blog, or ordered at a juice bar, do not include it.
-- Name format: [Main plant/fruit ingredient(s)] + [drink type]. Example pattern: "Ginger Turmeric Tea," "Beet Carrot Juice," "Mango Lassi."
-- Do not use filler, marketing, or descriptive words of any kind, including "Fresh," "Homemade," "Classic," "Natural," or similar. Only ingredient names and drink type words belong in the name.
-- Drink type must be one of: Juice, Smoothie, Tea, Lassi, Cooler, Water, Cider, Milk, Shot (only use the type that is conventionally correct for that combination of ingredients).
-- Do not use marketing or functional words such as: Refresh, Hydrator, Revive, Booster, Energizer, Detox, Elixir, Immunity, Glow, Power, Vitality, Fuel, Blend (unless it is the natural drink type), Splash.
-- No numbering, bullets, explanations, punctuation, or descriptions.`,
+- Each name must be an established, well-known drink with real, documented health benefits — not an invented or novel-sounding combination. If you would not find this drink in a health cookbook, on a wellness blog, or ordered at a juice bar, do not include it.
+- Every recipe must contain at least two primary ingredients. Never suggest a single-ingredient recipe, even with a preparation method or drink type attached.
+
+Name construction
+- Format: [primary ingredients] + [drink type]. The drink type always ends the name. Nothing follows it — no "with Mint," no parentheticals.
+- Exactly two ingredients: "[Ingredient A] & [Ingredient B] [Type]" — e.g. "Beet & Carrot Juice."
+- Three or more: comma-separated with "&" before the last — e.g. "Blueberry, Peach & Carrot Smoothie."
+- Always use "&" rather than "and."
+- Name the specific ingredient. Never use generic category words like "green," "greens," "citrus," "berry," or "nuts" — use spinach, kale, orange, blueberry, almond.
+- Include only major ingredients. Leave out minor flavorings and garnishes unless they genuinely define the drink.
+- Never include sweeteners or liquid bases in a name: no maple, honey, sugar, water, milk-as-base, yogurt, or agave.
+- Do not use filler, marketing, or descriptive words of any kind — including Fresh, Homemade, Classic, Natural, Refresh, Hydrator, Revive, Booster, Energizer, Detox, Elixir, Immunity, Glow, Power, Vitality, Fuel, Splash, Vegan, Protein, Superfood, or Non-Dairy. Only ingredient names and the drink type belong in the name.
+- Do not name fruit varieties. Use "Apple," not "Fuji Apple" or "Green Apple."
+
+Drink type
+- Must be one of: Juice, Smoothie, Tea, Lassi, Cooler, Milk, Shot, Drinks, Shakes, Sorbet, Bowl.
+- Choose the type that is conventionally correct for that combination. Ingredients that yield clean liquid (roots, stalks, leaves, melon, citrus, firm apple and pear) make a Juice. Ingredients whose body is the appeal (berries, banana, avocado, stone fruit, nut butters, cocoa) make a Smoothie. Yogurt-based drinks are Lassis.
+
+Duplicates
+- Ingredient order is irrelevant when checking whether a recipe already exists. "Melon & Cucumber Juice" and "Cucumber & Melon Juice" are the same recipe. If one exists, never suggest the other.
+- Every suggestion must be distinct in both name and composition.`,
       prompt: `The user searched for: "${query.trim()}"`,
     });
 
@@ -135,7 +153,7 @@ Rules:
     console.error("[recipe-suggestions]", err);
     return NextResponse.json(
       { error: "Failed to generate suggestions" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
