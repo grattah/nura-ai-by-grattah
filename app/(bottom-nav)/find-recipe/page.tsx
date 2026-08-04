@@ -95,12 +95,17 @@ const page = () => {
     setSearchLoading(true);
     setHasSearched(false);
     const handle = setTimeout(async () => {
-      const words = term.toLowerCase().split(/\s+/).filter(Boolean);
+      const STOPWORDS = new Set(["and", "&", "with", "the", "a"]);
+        const words = term
+          .toLowerCase()
+          .split(/[\s&]+/)          // split on whitespace AND & so "cocoa&mint" also splits
+          .filter(Boolean)
+          .filter((w) => !STOPWORDS.has(w));
       let q = supabase
         .from("recipes")
         .select("id, title")
         .eq("status" as never, "approved" as never);
-      for (const word of words) q = q.ilike("title", `%${word}%`);
+        for (const word of words) q = q.ilike("title", `%${word}%`);
 
       const { data, error } = await q
         .order("title", { ascending: true })
@@ -490,6 +495,7 @@ const page = () => {
                     <Link
                       key={recipe.id}
                       href={`/recipes/${recipe.id}`}
+                      onClick={() => addRecent(recipe.title)}
                       className="flex items-center justify-between border-b border-[#E2E4E4] pb-3"
                     >
                       <div className="flex items-center gap-3">
