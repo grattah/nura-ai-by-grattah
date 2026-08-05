@@ -14,9 +14,7 @@ import {
   ActiveActivitiesIcon,
 } from "../vectors/menu/Activities";
 import { LoginIcon, ActiveLoginIcon } from "../vectors/menu/Login";
-import { Home, Search, Clock, Bookmark } from "lucide-react";
 import { FaCrown } from "react-icons/fa6";
-import { HiOutlineLogout } from "react-icons/hi";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
