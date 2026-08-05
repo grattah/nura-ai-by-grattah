@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Search, Clock, Bookmark } from "lucide-react";
+import { FaCrown } from "react-icons/fa6";
 import { HiOutlineLogout } from "react-icons/hi";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -31,26 +32,26 @@ const GUEST_LINKS = [
 ];
 
 export function MenuPanel({
-	user,
-	open,
-	onRequestClose,
-	onClosed,
-  }: {
-	user: MenuUser | null;
-	open: boolean;
-	onRequestClose: () => void;
-	onClosed: () => void;
-  }) {
-	const pathName = usePathname();
-	const [show, setShow] = useState(false);
-	const closeTimer = useRef<number | null>(null);
+  user,
+  open,
+  onRequestClose,
+  onClosed,
+}: {
+  user: MenuUser | null;
+  open: boolean;
+  onRequestClose: () => void;
+  onClosed: () => void;
+}) {
+  const pathName = usePathname();
+  const [show, setShow] = useState(false);
+  const closeTimer = useRef<number | null>(null);
 
   // Drive the transform off the `open` prop.
   useEffect(() => {
     if (open) {
       // Enter: paint at -translate-y-full first, then flip to 0.
       const id = requestAnimationFrame(() =>
-        requestAnimationFrame(() => setShow(true)),
+        requestAnimationFrame(() => setShow(true))
       );
       return () => cancelAnimationFrame(id);
     } else {
@@ -80,11 +81,13 @@ export function MenuPanel({
 
   return (
     // top-14 ≈ header height (adjust if your header is taller/shorter)
-    <div className={cn(
+    <div
+      className={cn(
         "fixed inset-x-0 top-14 bottom-0 z-40 bg-[#EBE8DA] flex flex-col",
         "transition-transform duration-300 ease-out",
-        show ? "translate-y-0" : "-translate-y-full",
-      )}>
+        show ? "translate-y-0" : "-translate-y-full"
+      )}
+    >
       <nav className="flex-1 px-6 pt-6 flex flex-col gap-4 overflow-y-auto">
         {links.map(({ href, label, icon: Icon }) => {
           const isActive =
@@ -93,7 +96,7 @@ export function MenuPanel({
             <Link
               key={href}
               href={href}
-			  onClick={onRequestClose}
+              onClick={onRequestClose}
               className="flex items-center gap-3 py-3"
             >
               <span
@@ -107,7 +110,9 @@ export function MenuPanel({
               <span
                 className={cn(
                   "text-base",
-                  isActive ? "text-[#0A4A41] font-semibold" : "text-subtle font-medium"
+                  isActive
+                    ? "text-[#0A4A41] font-semibold"
+                    : "text-subtle font-medium"
                 )}
               >
                 {label}
@@ -121,22 +126,25 @@ export function MenuPanel({
         <div className="px-6 pb-8 shrink-0">
           <div className="bg-white rounded-2xl p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div
-                className={`size-11 rounded-full bg-mint-green text-white flex items-center justify-center font-semibold ${
-                  user.isSubscriber ? "border-2 border-mint-green" : ""
-                }`}
-              >
-                {user.avatar.length > 0 ? (
-                  <Image
-                    src={user.avatar}
-                    alt={user.name}
-					width={44}
-					height={44}
-                    className="w-full h-full object-cover rounded-full"
-                  />
-                ) : (
-                  <p>{user.avatarLetter}</p>
-                )}
+              <div className="relative">
+				{user.isSubscriber && <FaCrown size={12} color="#227B6F" className="absolute right-[13px] -top-2.25" />}
+                <div
+                  className={`size-11 rounded-full bg-mint-green text-white flex items-center justify-center font-semibold ${
+                    user.isSubscriber ? "border-2 border-mint-green" : ""
+                  }`}
+                >
+                  {user.avatar.length > 0 ? (
+                    <Image
+                      src={user.avatar}
+                      alt={user.name}
+                      width={44}
+                      height={44}
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  ) : (
+                    <p>{user.avatarLetter}</p>
+                  )}
+                </div>
               </div>
               <div className="flex flex-col">
                 <p className="text-base font-medium text-base-text">
@@ -149,7 +157,7 @@ export function MenuPanel({
             </div>
             <Link
               href="/account"
-			  onClick={onRequestClose}
+              onClick={onRequestClose}
               className="text-mint-green font-semibold text-base"
             >
               View profile
