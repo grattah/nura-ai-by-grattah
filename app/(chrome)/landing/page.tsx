@@ -1,8 +1,10 @@
 import React from "react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import Image from "next/image";
 import { TbBrandLinkedin } from "react-icons/tb";
 import { FaInstagram, FaTiktok } from "react-icons/fa";
+import { createClient } from "@/lib/supabase/server";
 
 import NukoLogo from "@/components/vectors/NukoLogo";
 import { FeatureShowcase } from "@/components/landing/FeatureShowcase";
@@ -46,7 +48,13 @@ const features = [
   },
 ];
 
-const page = () => {
+const page = async() => {
+  const supabase = await createClient();
+
+  const {data: {user}} = await supabase.auth.getUser();
+  if(user) {
+    redirect("/");
+  }
   return (
     <main className="bg-background">
       <div className="px-6 pt-4">
