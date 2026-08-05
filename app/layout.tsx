@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Red_Hat_Text, Lateef, Inter } from "next/font/google";
+import { Red_Hat_Text, Lateef, Inter, Red_Hat_Display } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -16,6 +16,12 @@ import { LiquidGlassFilter } from "@/components/liquid-glass-filter";
 const _redHatText = Red_Hat_Text({
   subsets: ["latin"],
   variable: "--font-redHatText",
+  display: "swap",
+});
+
+const _redHatDisplay = Red_Hat_Display({
+  subsets: ["latin"],
+  variable: "--font-redHatDisplay",
   display: "swap",
 });
 
