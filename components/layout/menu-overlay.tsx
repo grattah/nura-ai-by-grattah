@@ -167,7 +167,7 @@ export function MenuPanel({
                   <FaCrown
                     size={12}
                     color="#227B6F"
-                    className="absolute right-[13px] -top-2.25"
+                    className="absolute right-3.25 -top-2.25"
                   />
                 )}
                 <div

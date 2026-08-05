@@ -317,7 +317,7 @@ const page = () => {
   }
 
   return (
-    <div className="bg-background pb-[calc(4.5rem+env(safe-area-inset-bottom))]">
+    <div className="bg-background pb-12">
       <main className="">
         <div
           className={`px-6 py-5 relative mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A] ${
