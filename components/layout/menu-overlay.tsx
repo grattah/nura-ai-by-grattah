@@ -3,6 +3,17 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { HomeIcon, ActiveHomeIcon } from "@/components/vectors/menu/Home";
+import { SearchIcon, ActiveSearchIcon } from "@/components/vectors/menu/Search";
+import {
+  BookmarkIcon,
+  ActiveBookmarkIcon,
+} from "@/components/vectors/menu/Bookmark";
+import {
+  ActivitiesIcon,
+  ActiveActivitiesIcon,
+} from "../vectors/menu/Activities";
+import { LoginIcon, ActiveLoginIcon } from "../vectors/menu/Login";
 import { Home, Search, Clock, Bookmark } from "lucide-react";
 import { FaCrown } from "react-icons/fa6";
 import { HiOutlineLogout } from "react-icons/hi";
@@ -20,15 +31,40 @@ interface MenuUser {
 }
 
 const AUTHED_LINKS = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/find-recipe", label: "Find recipe", icon: Search },
-  { href: "/community", label: "Activities", icon: Clock },
-  { href: "/bookmarks", label: "Saved", icon: Bookmark },
+  { href: "/", label: "Home", icon: HomeIcon, activeIcon: ActiveHomeIcon },
+  {
+    href: "/find-recipe",
+    label: "Find recipe",
+    icon: SearchIcon,
+    activeIcon: ActiveSearchIcon,
+  },
+  {
+    href: "/community",
+    label: "Activities",
+    icon: ActivitiesIcon,
+    activeIcon: ActiveActivitiesIcon,
+  },
+  {
+    href: "/bookmarks",
+    label: "Saved",
+    icon: BookmarkIcon,
+    activeIcon: ActiveBookmarkIcon,
+  },
 ];
 
 const GUEST_LINKS = [
-  { href: "/features", label: "Features", icon: Clock },
-  { href: "/auth/login", label: "Log in", icon: HiOutlineLogout },
+  {
+    href: "/landing",
+    label: "Features",
+    icon: ActivitiesIcon,
+    activeIcon: ActiveActivitiesIcon,
+  },
+  {
+    href: "/auth/login",
+    label: "Log in",
+    icon: LoginIcon,
+    activeIcon: ActiveLoginIcon,
+  },
 ];
 
 export function MenuPanel({
@@ -89,7 +125,7 @@ export function MenuPanel({
       )}
     >
       <nav className="flex-1 px-6 pt-6 flex flex-col gap-4 overflow-y-auto">
-        {links.map(({ href, label, icon: Icon }) => {
+        {links.map(({ href, label, icon: Icon, activeIcon: ActiveIcon }) => {
           const isActive =
             href === "/" ? pathName === "/" : pathName.startsWith(href);
           return (
@@ -105,7 +141,7 @@ export function MenuPanel({
                   isActive ? "bg-[#155151]" : "bg-[#D3D1C4]"
                 )}
               >
-                <Icon size={18} color={isActive ? "#FFFFFF" : "#57605E"} />
+                {isActive ? <ActiveIcon /> : <Icon />}
               </span>
               <span
                 className={cn(
@@ -127,7 +163,13 @@ export function MenuPanel({
           <div className="bg-white rounded-2xl p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative">
-				{user.isSubscriber && <FaCrown size={12} color="#227B6F" className="absolute right-[13px] -top-2.25" />}
+                {user.isSubscriber && (
+                  <FaCrown
+                    size={12}
+                    color="#227B6F"
+                    className="absolute right-[13px] -top-2.25"
+                  />
+                )}
                 <div
                   className={`size-11 rounded-full bg-mint-green text-white flex items-center justify-center font-semibold ${
                     user.isSubscriber ? "border-2 border-mint-green" : ""
