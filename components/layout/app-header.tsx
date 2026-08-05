@@ -18,8 +18,6 @@ interface AppHeaderProps {
   user: AppHeaderUser | null;
 }
 
-const PANEL_MS = 300;
-
 export function AppHeader({ user }: AppHeaderProps) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
