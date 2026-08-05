@@ -23,7 +23,7 @@ const page = async () => {
   );
 
   return (
-    <div className="bg-background">
+    <div className="bg-background pb-[calc(4.5rem+env(safe-area-inset-bottom))]">
       <main>
         <div className="px-8 py-5 mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A]">
           <p className="text-2xl font-semibold text-[#111312]">Activities</p>

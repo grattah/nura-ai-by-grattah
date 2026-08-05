@@ -21,6 +21,7 @@ const PUBLIC_PREFIXES = [
   "/recipes/", // recipe detail is public (its premium bits gate via AuthGate)
   "/auth/", // login / sign-up / error / callback …
   "/admin", // admin has its own separate auth gate
+  "/landing" 
 ];
 
 function isPublic(pathname: string): boolean {
