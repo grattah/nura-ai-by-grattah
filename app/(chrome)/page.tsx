@@ -73,6 +73,10 @@ export default async function HomePage({
     ids.forEach((id) => bookmarkedIds.add(id));
   }
 
+  if(!user) {
+    redirect("/landing");
+  }
+
   // Non-mutating read: whether to offer the one-time welcome modal. The flag is
   // flipped by the modal on the client (real mount), never during this render —
   // so prefetch/background renders can't consume it.
@@ -96,10 +100,6 @@ export default async function HomePage({
     showFreeTokens = !!profile && !profile.has_seen_free_tokens;
     hasHealthProfile = !!healthProfile;
   }
-
-  // if(!user) {
-  //   redirect("/landing");
-  // }
 
   const categories = await getCategories();
 

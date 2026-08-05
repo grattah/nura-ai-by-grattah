@@ -96,16 +96,16 @@ const page = () => {
     setHasSearched(false);
     const handle = setTimeout(async () => {
       const STOPWORDS = new Set(["and", "&", "with", "the", "a"]);
-        const words = term
-          .toLowerCase()
-          .split(/[\s&]+/)          // split on whitespace AND & so "cocoa&mint" also splits
-          .filter(Boolean)
-          .filter((w) => !STOPWORDS.has(w));
+      const words = term
+        .toLowerCase()
+        .split(/[\s&]+/) // split on whitespace AND & so "cocoa&mint" also splits
+        .filter(Boolean)
+        .filter((w) => !STOPWORDS.has(w));
       let q = supabase
         .from("recipes")
         .select("id, title")
         .eq("status" as never, "approved" as never);
-        for (const word of words) q = q.ilike("title", `%${word}%`);
+      for (const word of words) q = q.ilike("title", `%${word}%`);
 
       const { data, error } = await q
         .order("title", { ascending: true })
@@ -130,12 +130,20 @@ const page = () => {
     }
 
     const fetchSuggestions = async () => {
+      const safe = (t: string) => t.replace(/[(),]/g, " ").trim();
+
       const orFilter = recents
-        .flatMap((term) => [
-          `title.ilike.%${term}%`,
-          `short_description.ilike.%${term}%`,
-        ])
+        .flatMap((term) => {
+          const s = safe(term);
+          return [`title.ilike.%${s}%`, `short_description.ilike.%${s}%`];
+        })
+        .filter(Boolean)
         .join(",");
+
+      if (!orFilter) {
+        setSuggestedRecipes([]);
+        return;
+      }
 
       const { data, error } = await supabase
         .from("recipes")
@@ -231,7 +239,7 @@ const page = () => {
           setShowSignInModal(true);
           setPaywallOpen(false);
           return;
-        } 
+        }
 
         if (!res.ok) throw new Error("generate failed");
         const data = await res.json();
@@ -309,7 +317,7 @@ const page = () => {
   }
 
   return (
-    <div className="bg-background">
+    <div className="bg-background pb-[calc(4.5rem+env(safe-area-inset-bottom))]">
       <main className="">
         <div
           className={`px-6 py-5 relative mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A] ${

@@ -17,7 +17,7 @@ export default async function BookmarksPage() {
   // Guests: show the empty shell behind the sign-in overlay (no user to fetch for).
   if (error || !data?.claims) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pb-[calc(4.5rem+env(safe-area-inset-bottom))]">
         <div className="px-8 py-4.75 mb-5 bg-[#F3F1E8] shadow-[0px_4px_20px_0px_#01261F0A]">
           <h1 className="text-2xl font-semibold text-[#111312]">
             Saved Recipes
