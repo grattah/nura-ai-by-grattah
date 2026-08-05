@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import Image from "next/image";
 import {
   createServiceRoleClient,
@@ -72,6 +73,10 @@ export default async function HomePage({
     ids.forEach((id) => bookmarkedIds.add(id));
   }
 
+  if(!user) {
+    redirect("/landing");
+  }
+
   // Non-mutating read: whether to offer the one-time welcome modal. The flag is
   // flipped by the modal on the client (real mount), never during this render —
   // so prefetch/background renders can't consume it.
@@ -99,7 +104,7 @@ export default async function HomePage({
   const categories = await getCategories();
 
   return (
-    <div className="bg-background">
+    <div className="bg-background pb-[calc(4.5rem+env(safe-area-inset-bottom))]">
       <main className="px-mp pt-2 space-y-8">
         {/* Hero */}
         <section className="relative m-0">

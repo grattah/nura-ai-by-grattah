@@ -1,4 +1,6 @@
 import { getCachedUser } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
+
 import { AppHeader } from "@/components/layout/app-header";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
@@ -32,17 +34,30 @@ export default async function ChromeLayout({
         )
           .charAt(0)
           .toUpperCase(),
+          isSubscriber: false,
       }
     : null;
+
+    if(user) {
+      const supabase = await createClient();
+      const { data } = await supabase
+        .from("subscriptions")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+        if (headerUser) {
+          headerUser.isSubscriber = data?.status === "active";
+        }
+    }
 
   return (
     <div className="min-h-dvh flex flex-col">
       <AuthSync serverAuthed={!!user} />
       <AppHeader user={headerUser} />
-      <main className="flex-1 pb-[calc(4.5rem+env(safe-area-inset-bottom))]">
+      <main className="flex-1 ">
         {children}
       </main>
-      <BottomNav />
+      {/* <BottomNav /> */}
       <PWAInstallPrompt />
     </div>
   );

@@ -1,68 +1,64 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { Menu, X } from "lucide-react";
+import { MenuPanel } from "./menu-overlay";
+
 interface AppHeaderUser {
   name: string;
   email?: string;
   avatar: string;
   avatarLetter: string;
+  isSubscriber?: boolean;
 }
 
 interface AppHeaderProps {
   user: AppHeaderUser | null;
 }
 
+const PANEL_MS = 300;
+
 export function AppHeader({ user }: AppHeaderProps) {
+  const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  const openMenu = () => {
+    setMounted(true);
+    setOpen(true);
+  };
+  const closeMenu = () => setOpen(false);
+
   return (
-    <header className="sticky top-0 z-40 px-6 py-2">
+    <header className="sticky top-0 z-50 px-6 py-2">
       <div className="flex items-center justify-between h-10">
-        {/* Logo */}
         <Link
           href="/"
           className="flex items-center gap-2 py-1 px-3 rounded-full liquid-glass"
         >
-          <Image
-            src="/icon.svg"
-            alt="Nuko Logo"
-            width={20}
-            height={20}
-          />
+          <Image src="/icon.svg" alt="Nuko Logo" width={20} height={20} />
           <span className="text-xl font-semibold text-[#50443B] tracking-tight leading-[32px]">
             Nuko
           </span>
         </Link>
 
-        {/* Right side */}
-        {user ? (
-          <div className="flex items-center gap-2">
-            {/* Avatar — navigates to /account */}
-            <Link
-              href="/account"
-              className="size-8 rounded-full flex items-center justify-center text-sm font-bold text-[#D4C48A] hover:opacity-80 transition-opacity"
-              style={{ backgroundColor: "#5C6B3A" }}
-              aria-label="Account"
-            >
-              {user?.avatar ? (
-                <Image
-                  alt="avatar"
-                  src={user?.avatar}
-                  width={32}
-                  height={32}
-                  className="object-cover size-8 rounded-full"
-                />
-              ) : (
-                user.avatarLetter
-              )}
-            </Link>
-          </div>
-        ) : (
-          <Link
-            href="/auth/login"
-            className="text-base font-semibold text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4 py-1 px-4 rounded-full liquid-glass"
-          >
-            Sign in
-          </Link>
-        )}
+        <button
+          onClick={open ? closeMenu : openMenu}
+          aria-label={open ? "Close menu" : "Open menu"}
+          aria-expanded={open}
+          className="size-10 rounded-full flex items-center justify-center liquid-glass"
+        >
+          {open ? <X size={16} /> : <Menu size={16} />}
+        </button>
       </div>
+
+      {mounted  && (
+        <MenuPanel user={user}
+        open={open}
+        onRequestClose={closeMenu}
+        onClosed={() => setMounted(false)} />
+      )}
     </header>
   );
 }
