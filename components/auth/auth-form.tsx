@@ -247,7 +247,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         destination = "/";
       }
     }
-  
+    router.refresh();
     router.push(destination);
   };
 
