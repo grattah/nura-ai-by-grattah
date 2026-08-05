@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import Image from "next/image";
 import {
   createServiceRoleClient,
@@ -95,6 +96,10 @@ export default async function HomePage({
     showFreeTokens = !!profile && !profile.has_seen_free_tokens;
     hasHealthProfile = !!healthProfile;
   }
+
+  // if(!user) {
+  //   redirect("/landing");
+  // }
 
   const categories = await getCategories();
 
