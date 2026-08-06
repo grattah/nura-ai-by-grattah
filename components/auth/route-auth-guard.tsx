@@ -15,13 +15,14 @@ const PUBLIC_EXACT = new Set<string>([
   "/log-back-in",
   "/return",
   "/buy-tokens/return",
+  "/health-policy",
 ]);
 
 const PUBLIC_PREFIXES = [
   "/recipes/", // recipe detail is public (its premium bits gate via AuthGate)
   "/auth/", // login / sign-up / error / callback …
   "/admin", // admin has its own separate auth gate
-  "/landing" 
+  "/landing",
 ];
 
 function isPublic(pathname: string): boolean {

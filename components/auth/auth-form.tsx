@@ -157,21 +157,21 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
       if (!exists) {
         // New user — verify the email with an OTP before creating a profile
-        const { error: otpError } = await supabase.auth.signInWithOtp({
-          email,
-          options: { shouldCreateUser: true },
-        });
+        // const { error: otpError } = await supabase.auth.signInWithOtp({
+        //   email,
+        //   options: { shouldCreateUser: true },
+        // });
 
-        if (otpError) {
-          setError(
-            isRateLimited(otpError)
-              ? "Please wait a minute before requesting another code."
-              : "We couldn't send a verification code to this email. Please try again."
-          );
-          return;
-        }
+        // if (otpError) {
+        //   setError(
+        //     isRateLimited(otpError)
+        //       ? "Please wait a minute before requesting another code."
+        //       : "We couldn't send a verification code to this email. Please try again."
+        //   );
+        //   return;
+        // }
 
-        savePendingOtp(email, "signup-otp");
+        // savePendingOtp(email, "signup-otp");
         setStep("signup-otp");
         return;
       }
@@ -229,7 +229,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     if (user) await cancelScheduledDeletion();
 
     let destination = "/";
-  
+
     if (user) {
       const { data: sub } = await supabase
         .from("subscriptions")
@@ -237,7 +237,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         .eq("user_id", user.id)
         .eq("status", "active")
         .maybeSingle();
-  
+
       if (sub) {
         destination = "/";
       } else {
@@ -543,7 +543,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 {step === "login" && "Enter your password to login"}
                 {isOtpStep && (
                   <>
-                    We sent an 8-digit code to{" "}
+                    If you have a nuko account, we sent an 8-digit code to{" "}
                     <span className="text-[#1B1D1D] underline inline font-semibold">
                       {email}
                     </span>
@@ -854,6 +854,13 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 >
                   Resend code
                 </button>
+
+                <p className="text-center text-sm text-subtle fixed bottom-20 translate-x-1/2">
+                  Don't have an account?{" "}
+                  <Link href="/landing" className="font-extrabold text-mint-green">
+                    Sign up
+                  </Link>
+                </p>
               </form>
             )}
 

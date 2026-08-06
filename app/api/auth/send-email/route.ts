@@ -28,7 +28,7 @@ function buildEmail(data: SendEmailPayload["email_data"]): EmailContent {
 
   // Use the app's own domain, not the payload's site_url (which resolves to
   // the API/Supabase domain and has no /auth/confirm route).
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://nukohealth.app";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://nuko.health";
 
   const confirmUrl = (type: string) => {
     const u = new URL("/auth/confirm", appUrl);
