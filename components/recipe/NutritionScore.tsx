@@ -206,10 +206,11 @@ const NutritionScore = ({
           </div>
           <div className="flex flex-col gap-2 text-center items-center">
             <p className="font-semibold text-sm text-black">
-              Personalize this recipe
+              See your match score
             </p>
             <p className="text-xs text-subtle w-8/12">
-              Choose your health goals to see if the recipe is right for you.
+              Set your wellness goals to see how well this recipe matches your
+              needs
             </p>
           </div>
           <Link

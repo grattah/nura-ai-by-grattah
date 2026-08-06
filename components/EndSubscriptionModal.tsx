@@ -2,10 +2,8 @@
 
 import React from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 
 const EndSubscriptionModal = ({ onClose }: { onClose?: () => void }) => {
-  const router = useRouter();
   React.useEffect(() => {
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -19,7 +17,7 @@ const EndSubscriptionModal = ({ onClose }: { onClose?: () => void }) => {
       <button
         type="button"
         aria-label="Close"
-        className="absolute h-dvh inset-0 bg-black/20 backdrop-blur-xs"
+        className="absolute h-dvh inset-0 bg-white/20 backdrop-blur-xs"
         onClick={onClose}
       />
 
@@ -45,7 +43,7 @@ const EndSubscriptionModal = ({ onClose }: { onClose?: () => void }) => {
           </div>
           <button
             className="py-4 font-medium text-base text-white rounded-full bg-mint-green"
-            onClick={() => router.push("/")}
+            onClick={onClose}
           >
             Got it
           </button>

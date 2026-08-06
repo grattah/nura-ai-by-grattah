@@ -32,7 +32,7 @@ export function AppHeader({ user }: AppHeaderProps) {
     <header className="sticky top-0 z-50 px-6 py-2">
       <div className="flex items-center justify-between h-10">
         <Link
-          href="/"
+          href={user ? "/" : "/landing"}
           className="flex items-center gap-2 py-1 px-3 rounded-full liquid-glass"
         >
           <Image src="/icon.svg" alt="Nuko Logo" width={20} height={20} />
