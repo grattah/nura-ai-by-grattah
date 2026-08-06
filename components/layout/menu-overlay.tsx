@@ -52,7 +52,7 @@ const AUTHED_LINKS = [
 
 const GUEST_LINKS = [
   {
-    href: "/landing",
+    href: "/landing#features",
     label: "Features",
     icon: ActivitiesIcon,
     activeIcon: ActiveActivitiesIcon,

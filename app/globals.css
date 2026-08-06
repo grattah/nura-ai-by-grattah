@@ -68,6 +68,7 @@
   --grey-c950: oklch(0.1841 0.0038 164.6);
 
   --info-c100: oklch(0.9372 0.0154 269.98);
+  --info-c400: oklch(0.6241 0.1619 264.03);
   --info-c600: oklch(0.4362 0.1795 262.87);
 
   --warning-c50: oklch(0.9796 0.0057 84.57);
@@ -240,6 +241,7 @@
   --color-grey-c950: var(--grey-c950);
 
   --color-info-c100: var(--info-c100);
+  --color-info-c400: var(--info-c400);
   --color-info-c600: var(--info-c600);
 
   --color-warning-c50: var(--warning-c50);

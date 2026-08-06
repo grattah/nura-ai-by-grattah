@@ -15,44 +15,46 @@ const features = [
     title: "Personalized Goal Matching",
     description:
       "Set your health goals, and Nuko scores every recipe against them. See your Match % and Nutri-Score side by side, so you always know what’s working for you.",
-    image: "/personalized-goal.webp",
+    image: "/personalized-goal.png",
   },
 
   {
     id: 2,
-    title: "Explore 1,000+ Curated Recipes",
+    title: "Curated Recipe Library",
     description:
       "Browse our curated collection, plus over 1 million more recipes, or search by ingredient. Every recipe is scored against its bioactivities, so you can find exactly what fits your goals.",
-    image: "/curated-recipes.webp",
+    image: "/curated-recipes.png",
   },
   {
     id: 3,
-    title: "Browse by Health Category",
+    title: "Health Category Browsing",
     description:
       "Explore recipes organized by category, from gut health to skin & hair to energy, so you can quickly find what fits your goals.",
-    image: "/health-category.webp",
+    image: "/health-category.png",
   },
   {
     id: 4,
     title: "Ingredient Safety Insights",
     description:
       "Nuko flags real interactions, like grapefruit and certain medications, right on the recipe, so you can make informed choices without guesswork. Nothing is hidden, you always see the full picture.",
-    image: "/safety.webp",
+    image: "/safety.png",
   },
   {
     id: 5,
     title: "Deep Recipe Guidance",
     description:
       "Every recipe comes with full how-to steps, nutritional breakdowns, and the science behind why it works. Ask follow-up questions to swap in ingredient alternatives, and see what other people are saying in the comments.",
-    image: "/recipe-guidance.webp",
+    image: "/recipe-guidance.png",
   },
 ];
 
-const page = async() => {
+const page = async () => {
   const supabase = await createClient();
 
-  const {data: {user}} = await supabase.auth.getUser();
-  if(user) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
     redirect("/");
   }
   return (
@@ -61,16 +63,13 @@ const page = async() => {
         <div className="pt-2 pb-5 font-redHatDisplay relative">
           <div className="flex flex-col gap-4 relative z-10">
             <div className="flex flex-col gap-4.5">
-              <p className="text-mint-green font-black text-[40px] leading-[44px]">
-                Meet Nuko,
-              </p>
               <p className="font-extrabold text-[32px] text-base-text leading-[120%]">
-                The #1 whole-food solution based on ingredient bioactivity
+                Instant nutri-solutions when you share your wellness goals
               </p>
             </div>
             <p className="text-base text-subtle font-medium leading-[22px] font-redHatDisplay">
-              Every ingredient contains bioactive compounds. Nuko maps them to
-              the everyday goals you actually care about, personalized to you.
+              Log your wellness concern, and get instantly matched to the
+              best-fitting nutri-solutions based on bioactivity science.
             </p>
             <Link
               href="/auth/login"
@@ -108,7 +107,7 @@ const page = async() => {
           />
         </div>
 
-        <div className="mt-16 px-2">
+        <div className="mt-16 px-2" id="features">
           <p className="font-redHatDisplay text-[32px] font-extrabold text-center">
             What does Nuko offer
           </p>
@@ -116,6 +115,43 @@ const page = async() => {
           <div className="mt-8">
             <FeatureShowcase features={features} />
           </div>
+        </div>
+
+        <div className="relative mt-12 overflow-hidden">
+          <div className="w-full bg-white rounded-2xl py-3 flex flex-col gap-4 items-center text-center font-redHatDisplay">
+            <p className="font-medium text-sm text-subtle">
+              Start mapping your food to your goals today
+            </p>
+            <Link
+              href="/auth/login"
+              className="text-white bg-mint-green py-3 px-10 rounded-full text-sm font-semibold"
+            >
+              Sign up
+            </Link>
+            <p className="font-medium text-sm text-subtle">
+              Got an account?{" "}
+              <Link
+                href="/auth/login"
+                className="font-extrabold text-mint-green"
+              >
+                Sign in
+              </Link>
+            </p>
+          </div>
+          <Image
+            src="/search-sec-flower.svg"
+            alt="flower"
+            width={121}
+            height={159}
+            className="absolute -right-7 -bottom-18 z-0"
+          />
+          <Image
+            src="/search-sec-flower.svg"
+            alt="flower"
+            width={121}
+            height={159}
+            className="absolute -left-8 -bottom-20 z-0 rotate-y-180"
+          />
         </div>
       </div>
       <footer className="mt-12 bg-[#155151] text-white py-3 px-6 flex flex-col gap-8">
@@ -127,11 +163,11 @@ const page = async() => {
         <div className="flex flex-col gap-3">
           <p className="font-semibold text-sm leading-[120%]">Legal</p>
           <div className="flex flex-col gap-2">
-            <p className="text-xs leading-[120%]">Privacy policy</p>
-            <p className="text-xs leading-[120%]">Terms of service</p>
-            <p className="text-xs leading-[120%]">
+            <Link href="/terms-and-privacy" className="text-xs leading-[120%]">Privacy policy</Link>
+            <Link href="/terms-and-privacy" className="text-xs leading-[120%]">Terms of service</Link>
+            <Link href="/health-policy" className="text-xs leading-[120%]">
               Washington Health Data Privacy Policy
-            </p>
+            </Link>
           </div>
         </div>
 

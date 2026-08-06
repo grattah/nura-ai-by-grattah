@@ -53,7 +53,7 @@ export function SignInModal({ onClose }: { onClose?: () => void }) {
         </div>
 
         <button
-          onClick={() => router.push("/auth/login")}
+          onClick={() => router.push("/landing")}
           className="w-full py-3 rounded-full bg-mint-green text-white text-sm font-medium hover:opacity-90 transition-opacity"
         >
           Sign up
