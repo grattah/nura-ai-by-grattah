@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Mail,
@@ -93,6 +94,8 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const query = searchParams.get("landing");
 
   // OTP autofill can trigger verification twice (the otpCode effect and the
   // form's onSubmit both fire for the same code). OTP tokens are single-use,
@@ -156,22 +159,24 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       const { exists, hasPassword } = await res.json();
 
       if (!exists) {
-        // New user — verify the email with an OTP before creating a profile
-        // const { error: otpError } = await supabase.auth.signInWithOtp({
-        //   email,
-        //   options: { shouldCreateUser: true },
-        // });
+        if (query === "true") {
+          // New user — verify the email with an OTP before creating a profile
+          const { error: otpError } = await supabase.auth.signInWithOtp({
+            email,
+            options: { shouldCreateUser: true },
+          });
 
-        // if (otpError) {
-        //   setError(
-        //     isRateLimited(otpError)
-        //       ? "Please wait a minute before requesting another code."
-        //       : "We couldn't send a verification code to this email. Please try again."
-        //   );
-        //   return;
-        // }
+          if (otpError) {
+            setError(
+              isRateLimited(otpError)
+                ? "Please wait a minute before requesting another code."
+                : "We couldn't send a verification code to this email. Please try again."
+            );
+            return;
+          }
 
-        // savePendingOtp(email, "signup-otp");
+          savePendingOtp(email, "signup-otp");
+        }
         setStep("signup-otp");
         return;
       }
@@ -857,7 +862,10 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
                 <p className="text-center text-sm text-subtle fixed bottom-20 translate-x-1/2">
                   Don't have an account?{" "}
-                  <Link href="/landing" className="font-extrabold text-mint-green">
+                  <Link
+                    href="/landing"
+                    className="font-extrabold text-mint-green"
+                  >
                     Sign up
                   </Link>
                 </p>
