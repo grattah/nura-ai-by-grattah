@@ -63,7 +63,7 @@ const page = async () => {
         <div className="pt-2 pb-5 font-redHatDisplay relative">
           <div className="flex flex-col gap-4 relative z-10">
             <div className="flex flex-col gap-4.5">
-              <p className="font-extrabold text-[32px] text-base-text leading-[120%]">
+              <p className="font-extrabold text-[32px] max-[400px]:text-[28px] text-base-text leading-[120%]">
                 Instant nutri-solutions when you share your wellness goals
               </p>
             </div>
@@ -72,7 +72,7 @@ const page = async () => {
               best-fitting nutri-solutions based on bioactivity science.
             </p>
             <Link
-              href="/auth/login"
+              href="/auth/login?landing=true"
               className="bg-mint-green text-white w-fit rounded-full py-3 px-10 font-semibold text-sm font-redHatText"
             >
               Sign up
@@ -80,7 +80,7 @@ const page = async () => {
             <p className="text-sm text-subtle font-redHatDisplay">
               Got an account?{" "}
               <Link
-                href="/auth/login"
+                href="/auth/login?landing=true"
                 className="text-mint-green font-extrabold"
               >
                 Sign in
@@ -108,7 +108,7 @@ const page = async () => {
         </div>
 
         <div className="mt-16 px-2" id="features">
-          <p className="font-redHatDisplay text-[32px] font-extrabold text-center">
+          <p className="font-redHatDisplay text-[40px] max-[400px]:text-[32px] font-extrabold text-center">
             What does Nuko offer
           </p>
 
@@ -123,7 +123,7 @@ const page = async () => {
               Start mapping your food to your goals today
             </p>
             <Link
-              href="/auth/login"
+              href="/auth/login?landing=true"
               className="text-white bg-mint-green py-3 px-10 rounded-full text-sm font-semibold"
             >
               Sign up
@@ -131,7 +131,7 @@ const page = async () => {
             <p className="font-medium text-sm text-subtle">
               Got an account?{" "}
               <Link
-                href="/auth/login"
+                href="/auth/login?landing=true"
                 className="font-extrabold text-mint-green"
               >
                 Sign in
