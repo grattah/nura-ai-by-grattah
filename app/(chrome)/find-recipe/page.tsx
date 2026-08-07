@@ -253,7 +253,7 @@ const page = () => {
           setGenerating(false);
           setPendingRecipe(null);
           setShowSignInModal(false);
-          setPaywallOpen(true);
+          setTokenModalOpen(true);
         }
 
         if (!res.ok) throw new Error("generate failed");
@@ -648,7 +648,7 @@ const page = () => {
             onClick={() => setTokenModalOpen(false)}
           />
           <div className="relative w-full max-w-sm">
-            <TokensModal />
+            <TokensModal onClose={() => setTokenModalOpen(false)} />
           </div>
         </div>
       )}
