@@ -63,7 +63,7 @@ const page = async () => {
         <div className="pt-2 pb-5 font-redHatDisplay relative">
           <div className="flex flex-col gap-4 relative z-10">
             <div className="flex flex-col gap-4.5">
-              <p className="font-extrabold text-[32px] max-[400px]:text-[28px] text-base-text leading-[120%]">
+              <p className="font-extrabold text-[32px] max-[400px]:text-[28px] text-base-text leading-[120%] font-redHatDisplay">
                 Instant nutri-solutions when you share your wellness goals
               </p>
             </div>
