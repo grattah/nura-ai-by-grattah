@@ -262,9 +262,9 @@ const page = () => {
               sold their consumer health data; (3) delete their consumer health
               data; or (4) withdraw their consent or authorization relating to
               such data. You can submit these requests to{" "}
-              <Link href="" className="text-info-c400 underline">
+              <span className="text-info-c400 underline">
                 privacy@nuko.health.
-              </Link>
+              </span>
             </p>
           </div>
 
@@ -276,9 +276,9 @@ const page = () => {
               To appeal our decision on your Washington Consumer Health Data
               Rights request, you may contact us using the contact information
               listed below or by emailing us at{" "}
-              <Link href="" className="text-info-c400 underline">
+              <span className="text-info-c400 underline">
                 privacy@nuko.health.
-              </Link>{" "}
+              </span>{" "}
               In submitting your appeal, please enclose a copy of or otherwise
               specifically reference our decision on your data subject request,
               so that we may adequately review and address it. We will respond
@@ -306,9 +306,9 @@ const page = () => {
             <p className="text-base font-medium leading-5.75 text-subtle">
               Newark, DE 19713
             </p>
-            <Link href="" className="text-info-c400 underline">
+            <span className="text-info-c400 underline">
               privacy@nuko.health.
-            </Link>
+            </span>
           </div>
         </div>
       </main>
