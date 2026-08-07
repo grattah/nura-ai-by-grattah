@@ -58,7 +58,7 @@ const GUEST_LINKS = [
     activeIcon: ActiveActivitiesIcon,
   },
   {
-    href: "/auth/login",
+    href: "/auth/login?landing=true",
     label: "Log in",
     icon: LoginIcon,
     activeIcon: ActiveLoginIcon,

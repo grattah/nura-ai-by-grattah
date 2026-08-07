@@ -128,7 +128,7 @@ export default async function RecipeDetailPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { id } = await params;
-  const { popular, generate } = await searchParams;
+  const { popular } = await searchParams;
   const isPopularView = popular === "true";
 
   const [recipe, supabase] = await Promise.all([getRecipe(id), createClient()]);
@@ -460,7 +460,7 @@ export default async function RecipeDetailPage({
               </div>
             </div>
           </main>
-          {generate && !isSubscribed && user && <RecipePaywallGate />}
+          {/* {generate && !isSubscribed && user && <RecipePaywallGate />} */}
         </div>
       </BookmarkProvider>
     </AuthGate>

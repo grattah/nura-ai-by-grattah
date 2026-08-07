@@ -1,9 +1,16 @@
+"use client";
+
+import Link from "next/link";
 import { Zap } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { CoinAnimation } from "./CoinAnimation";
-import Link from "next/link";
 
-const TokensModal = () => {
+const TokensModal = ({ onClose }: { onClose?: () => void }) => {
+  const router = useRouter();
+
+  // If the parent passes onClose, use it. Otherwise fall back to routing home.
+  const handleClose = onClose ?? (() => router.push("/"));
   return (
     <div className="bg-white rounded-2xl py-6.25 px-6 flex flex-col gap-5.5 items-center">
       <div className="bg-[#FFF7EC] rounded-full size-18 grid place-items-center">
@@ -27,9 +34,12 @@ const TokensModal = () => {
             Get extra tokens
           </span>
         </Link>
-        <p className="text-sm font-medium text-subtle text-center">
+        <button
+          onClick={handleClose}
+          className="text-sm font-medium text-subtle text-center"
+        >
           Wait till reset
-        </p>
+        </button>
       </div>
     </div>
   );

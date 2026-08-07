@@ -91,6 +91,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isGoogleSignUpError, setIsGoogleSignUpError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const router = useRouter();
@@ -363,6 +364,11 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   const handleResendOtp = async () => {
     setIsLoading(true);
     setError(null);
+    if (!query) {
+      setError("It seems you don't have an account, sign up to receive code");
+      setIsLoading(false);
+      return;
+    }
     const supabase = createClient();
     const { error: otpError } = await supabase.auth.signInWithOtp({
       email,
@@ -455,6 +461,13 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     setIsGoogleLoading(true);
     setError(null);
 
+    if (!query) {
+      setIsGoogleSignUpError(true);
+      setError("You need to sign up first to continue with Google.");
+      setIsGoogleLoading(false);
+      return;
+    }
+
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -463,11 +476,14 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
           queryParams: { access_type: "offline", prompt: "consent" },
         },
       });
+      setIsGoogleSignUpError(false);
       if (error) throw error;
     } catch (err: unknown) {
+      setIsGoogleSignUpError(false);
       setError(
         err instanceof Error ? err.message : "Failed to sign in with Google."
       );
+      setIsGoogleSignUpError(false);
       setIsGoogleLoading(false);
     }
   };
@@ -611,6 +627,14 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                         </>
                       )}
                     </button>
+                    {isGoogleSignUpError && error && (
+                      <div className="space-y-3 text-center">
+                        <p className="text-sm text-destructive">
+                        {error}
+                      </p>
+                      <Link href="/landing" className="font-extrabold text-mint-green">Sign up</Link>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-3 py-1">
@@ -661,7 +685,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                       {isLoading ? <ButtonLoader /> : "Continue"}
                     </button>
 
-                    {error && (
+                    {!isGoogleSignUpError && error && (
                       <p className="text-sm text-destructive text-center">
                         {error}
                       </p>
@@ -860,7 +884,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                   Resend code
                 </button>
 
-                <p className="text-center text-sm text-subtle fixed bottom-20 translate-x-1/2">
+                <p className="text-center text-sm text-subtle fixed bottom-50 translate-x-1/2">
                   Don't have an account?{" "}
                   <Link
                     href="/landing"
