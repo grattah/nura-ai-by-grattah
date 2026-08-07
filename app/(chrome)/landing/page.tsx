@@ -63,7 +63,9 @@ const page = async () => {
         <div className="pt-2 pb-5 font-redHatDisplay relative">
           <div className="flex flex-col gap-4 relative z-10">
             <div className="flex flex-col gap-4.5">
-              <p className="font-redHatDisplay font-black text-[48px] leading-[44px] text-mint-green">Meet Nuko,</p>
+              <p className="font-redHatDisplay font-black text-[48px] leading-[44px] text-mint-green">
+                Meet Nuko,
+              </p>
               <p className="font-extrabold text-[32px] max-[400px]:text-[30px] text-base-text leading-[120%] font-redHatDisplay">
                 The bioactivity-based whole-food solutions app
               </p>
@@ -178,9 +180,7 @@ const page = async () => {
 
         <div className="flex flex-col gap-3">
           <p className="font-semibold text-sm leading-[120%]">Company</p>
-          <Link href="/help-and-guidance" className="text-xs leading-[120%]">
-            Contact
-          </Link>
+          <p className="text-xs leading-[120%]">support@nukohealth.com</p>
         </div>
 
         <div className="border-t border-[#FFFFFF33] p-4 flex flex-col gap-4 items-center text-center">
