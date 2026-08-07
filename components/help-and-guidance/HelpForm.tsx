@@ -10,9 +10,10 @@ import SuccessModal from "../SuccessModal";
 import { isValidEmail } from "@/lib/utils";
 import { SUPPORT_EMAIL } from "@/lib/email/config";
 
-const HelpForm = ({ email, fullname }: { email: string; fullname: string }) => {
+const HelpForm = ({email, fullName}: {email: string; fullName: string}) => {
   const [message, setMessage] = useState("");
-  const [fullName, setFullName] = useState(fullname);
+  const [name, setName] = useState(fullName || "");
+  const [newUserEmail, setnewUserEmail] = useState(email || "");
   const [success, setSuccess] = useState(false);
 
   const canSubmit = fullName.trim() && isValidEmail(email) && message.trim();
@@ -61,9 +62,10 @@ const HelpForm = ({ email, fullname }: { email: string; fullname: string }) => {
               <div className="relative w-full">
                 <input
                   type="text"
-                  className="font-medium text-[13px] bg-[#E8E6DC] pl-9 pr-3 py-3.5 w-full rounded-lg"
-                  value={email || ""}
-                  readOnly
+                  className={`font-medium text-base-text text-[13px] pl-9 pr-3 py-3.5 w-full rounded-lg ${email ? "bg-[#E8E6DC]" : "bg-white"}`}
+                  value={newUserEmail}
+                  onChange={(e) => setnewUserEmail(e.target.value)}
+                  readOnly={!!email}
                 />
                 <Mail
                   color="#57605E"
@@ -80,9 +82,10 @@ const HelpForm = ({ email, fullname }: { email: string; fullname: string }) => {
               <div className="relative w-full">
                 <input
                   type="text"
-                  className="text-[#1B1D1D] text-[13px] bg-white pl-9 pr-3 py-3.5 w-full rounded-lg"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  className={`text-base-text text-[13px] pl-9 pr-3 py-3.5 w-full rounded-lg ${fullName ? "bg-[#E8E6DC]" : "bg-white"}`}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  readOnly={!!fullName}
                 />
                 <IoPersonOutline
                   color="#57605E"

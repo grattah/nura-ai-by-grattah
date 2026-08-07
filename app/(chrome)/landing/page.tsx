@@ -63,13 +63,14 @@ const page = async () => {
         <div className="pt-2 pb-5 font-redHatDisplay relative">
           <div className="flex flex-col gap-4 relative z-10">
             <div className="flex flex-col gap-4.5">
+              <p className="font-redHatDisplay font-black text-[48px] leading-[44px] text-mint-green">Meet Nuko,</p>
               <p className="font-extrabold text-[32px] max-[400px]:text-[28px] text-base-text leading-[120%] font-redHatDisplay">
-                Instant nutri-solutions when you share your wellness goals
+                The bioactivity-based whole-food solutions app
               </p>
             </div>
             <p className="text-base text-subtle font-medium leading-[22px] font-redHatDisplay">
-              Log your wellness concern, and get instantly matched to the
-              best-fitting nutri-solutions based on bioactivity science.
+              Every ingredient contains bioactive compounds. Nuko maps them to
+              the everyday goals you actually care about, personalized to you.
             </p>
             <Link
               href="/auth/login?landing=true"
@@ -108,8 +109,8 @@ const page = async () => {
         </div>
 
         <div className="mt-16 px-2" id="features">
-          <p className="font-redHatDisplay text-[40px] max-[400px]:text-[32px] font-extrabold text-center">
-            What does Nuko offer
+          <p className="font-redHatDisplay text-[40px] max-[400px]:text-[34px] font-extrabold text-center leading-[120%]">
+            What does Nuko offer?
           </p>
 
           <div className="mt-8">
@@ -163,8 +164,12 @@ const page = async () => {
         <div className="flex flex-col gap-3">
           <p className="font-semibold text-sm leading-[120%]">Legal</p>
           <div className="flex flex-col gap-2">
-            <Link href="/terms-and-privacy" className="text-xs leading-[120%]">Privacy policy</Link>
-            <Link href="/terms-and-privacy" className="text-xs leading-[120%]">Terms of service</Link>
+            <Link href="/terms-and-privacy" className="text-xs leading-[120%]">
+              Privacy policy
+            </Link>
+            <Link href="/terms-and-privacy" className="text-xs leading-[120%]">
+              Terms of service
+            </Link>
             <Link href="/health-policy" className="text-xs leading-[120%]">
               Washington Health Data Privacy Policy
             </Link>
@@ -173,7 +178,9 @@ const page = async () => {
 
         <div className="flex flex-col gap-3">
           <p className="font-semibold text-sm leading-[120%]">Company</p>
-          <p className="text-xs leading-[120%]">Contact</p>
+          <Link href="/help-and-guidance" className="text-xs leading-[120%]">
+            Contact
+          </Link>
         </div>
 
         <div className="border-t border-[#FFFFFF33] p-4 flex flex-col gap-4 items-center text-center">
@@ -184,7 +191,7 @@ const page = async () => {
             <Link href="">
               <FaInstagram size={18} color="#FFFFFF" />
             </Link>
-            <Link href="">
+            <Link href="https://www.linkedin.com/company/nukohealth?trk=blended-typeahead">
               <TbBrandLinkedin size={18} color="#FFFFFF" />
             </Link>
             <Link href="">
