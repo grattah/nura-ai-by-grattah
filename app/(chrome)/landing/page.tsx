@@ -64,7 +64,7 @@ const page = async () => {
           <div className="flex flex-col gap-4 relative z-10">
             <div className="flex flex-col gap-4.5">
               <p className="font-redHatDisplay font-black text-[48px] leading-[44px] text-mint-green">Meet Nuko,</p>
-              <p className="font-extrabold text-[32px] max-[400px]:text-[28px] text-base-text leading-[120%] font-redHatDisplay">
+              <p className="font-extrabold text-[32px] max-[400px]:text-[30px] text-base-text leading-[120%] font-redHatDisplay">
                 The bioactivity-based whole-food solutions app
               </p>
             </div>
