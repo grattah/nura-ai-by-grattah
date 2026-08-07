@@ -16,6 +16,7 @@ const PUBLIC_EXACT = new Set<string>([
   "/return",
   "/buy-tokens/return",
   "/health-policy",
+  "/help-and-guidance",
 ]);
 
 const PUBLIC_PREFIXES = [

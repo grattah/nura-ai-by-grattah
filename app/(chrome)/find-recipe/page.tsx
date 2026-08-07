@@ -128,56 +128,66 @@ const page = () => {
       setSuggestedRecipes([]);
       return;
     }
-
+  
     const fetchSuggestions = async () => {
-      const safe = (t: string) => t.replace(/[(),]/g, " ").trim();
-
-      const orFilter = recents
-        .flatMap((term) => {
-          const s = safe(term);
-          return [`title.ilike.%${s}%`, `short_description.ilike.%${s}%`];
-        })
-        .filter(Boolean)
-        .join(",");
-
-      if (!orFilter) {
+      const STOPWORDS = new Set(["and", "with", "the", "for", "your", "a", "of"]);
+  
+      // Break each clicked title into words, so we match RELATED recipes that
+      // share any word, rather than the exact title (which only matches itself).
+      const words = Array.from(
+        new Set(
+          recents.flatMap((term) =>
+            term
+              .toLowerCase()
+              .split(/[\s&,()]+/) // whitespace, &, commas, parens all become breaks
+              .filter(Boolean)
+              .filter((w) => w.length > 2) // drop stray fragments like "a", "&"
+              .filter((w) => !STOPWORDS.has(w))
+          )
+        )
+      );
+  
+      if (words.length === 0) {
         setSuggestedRecipes([]);
         return;
       }
-
+  
+      const orFilter = words
+        .flatMap((w) => [`title.ilike.%${w}%`, `short_description.ilike.%${w}%`])
+        .join(",");
+  
       const { data, error } = await supabase
         .from("recipes")
         .select("id, title")
         .eq("status" as never, "approved" as never)
         .or(orFilter)
         .limit(10);
-
+  
       if (error) {
         console.error("Failed to fetch suggestions:", error);
         return;
       }
-
-      // Shuffle and take 3 so the user sees variety each visit
+  
       const shuffled = ((data ?? []) as unknown as RecipeHit[]).sort(
         () => Math.random() - 0.5
       );
       setSuggestedRecipes(shuffled.slice(0, 3));
     };
-
+  
     fetchSuggestions();
   }, [recents]);
 
   // A term only "counts" as a search once it has results and has stopped
   // changing for a second — so prefixes ("carr", "carrot") never commit. Both
   // the local recents list and the Activities feed hang off that same settle.
-  React.useEffect(() => {
-    if (!searchTerm.trim() || results.length === 0) return;
-    const timer = setTimeout(() => {
-      addRecent(searchTerm);
-      void logSearch(searchTerm);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [searchTerm, results]);
+  // React.useEffect(() => {
+  //   if (!searchTerm.trim() || results.length === 0) return;
+  //   const timer = setTimeout(() => {
+  //     addRecent(searchTerm);
+  //     void logSearch(searchTerm);
+  //   }, 1000);
+  //   return () => clearTimeout(timer);
+  // }, [searchTerm, results]);
 
   const showingResults =
     !showSuggestions && searchTerm.trim().length > 0 && results.length > 0;
@@ -239,13 +249,18 @@ const page = () => {
           setShowSignInModal(true);
           setPaywallOpen(false);
           return;
+        } if (res.status === 403) {
+          setGenerating(false);
+          setPendingRecipe(null);
+          setShowSignInModal(false);
+          setTokenModalOpen(true);
         }
 
         if (!res.ok) throw new Error("generate failed");
         const data = await res.json();
         if (!data?.id) throw new Error("no id returned");
         refreshCredits();
-        router.replace(`/recipes/${data.id}?generate=true`);
+        router.replace(`/recipes/${data.id}`);
       } catch (err) {
         console.error("[find-recipe] generate", err);
         setGenerating(false);
@@ -503,7 +518,10 @@ const page = () => {
                     <Link
                       key={recipe.id}
                       href={`/recipes/${recipe.id}`}
-                      onClick={() => addRecent(recipe.title)}
+                      onClick={() => {
+                        addRecent(recipe.title);
+                        void logSearch(recipe.title);
+                      }}
                       className="flex items-center justify-between border-b border-[#E2E4E4] pb-3"
                     >
                       <div className="flex items-center gap-3">
@@ -630,7 +648,7 @@ const page = () => {
             onClick={() => setTokenModalOpen(false)}
           />
           <div className="relative w-full max-w-sm">
-            <TokensModal />
+            <TokensModal onClose={() => setTokenModalOpen(false)} />
           </div>
         </div>
       )}
