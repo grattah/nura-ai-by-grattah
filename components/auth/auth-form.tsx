@@ -364,25 +364,50 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   const handleResendOtp = async () => {
     setIsLoading(true);
     setError(null);
-    if (!query) {
-      setError("It seems you don't have an account, sign up to receive code");
-      setIsLoading(false);
-      return;
-    }
     const supabase = createClient();
-    const { error: otpError } = await supabase.auth.signInWithOtp({
-      email,
-      options: { shouldCreateUser: step === "signup-otp" },
-    });
-    if (otpError) {
+    
+    try {
+      /* code */
+      const res = await fetch("/api/auth/check-email", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email }),
+});
+
+if (res.status === 429) {
+  setError("Too many attempts. Please wait a minute and try again.");
+  return;
+}
+if (!res.ok) {
+  setError("We couldn't check that email. Please try again.");
+  return;
+}
+
+const { exists } = await res.json();
+
+if (!exists && !query) {
+  setError("It seems you don't have an account, sign up to receive code");
+  setIsLoading(false);
+  return;
+}
+const { error: otpError } = await supabase.auth.signInWithOtp({
+  email,
+  options: { shouldCreateUser: step === "signup-otp" },
+});
+if (otpError) {
+  setError(
+    isRateLimited(otpError) ?
+    "Please wait a minute before requesting another code." :
+    "Couldn't resend the code. Please try again."
+  );
+}
+setIsLoading(false);
+setOtpCode("");
+    } catch (e) {
       setError(
-        isRateLimited(otpError)
-          ? "Please wait a minute before requesting another code."
-          : "Couldn't resend the code. Please try again."
-      );
+  "Something went wrong while resending your code. Please try again."
+);
     }
-    setIsLoading(false);
-    setOtpCode("");
   };
 
   // ─── Password sign-in ──────────────────────────────────────────────────────
