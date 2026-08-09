@@ -108,7 +108,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   window.history.pushState(
     { step: newStep },
     "",
-    window.location.pathname + window.location.search
+    window.location.href
   );
 
   setStep(newStep);
@@ -143,29 +143,45 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
   // Establish the current page's initial history state.
   window.history.replaceState(
-    { step: initialStep },
-    "",
-    window.location.pathname + window.location.search
-  );
+  
+  { step: initialStep },
+  
+  "",
+  
+  window.location.href
+  
+);
 
   const handlePopState = (event: PopStateEvent) => {
+
     const previousStep = event.state?.step as AuthStep | undefined;
 
-    if (previousStep) {
-      setStep(previousStep);
+    if (!previousStep) {
 
-      // If we're going back to the email step,
-      // there is no longer an OTP step in progress.
-      if (previousStep === "email") {
-        clearPendingOtp();
+      // We have left the auth flow.
 
-        setOtpCode("");
-        setPassword("");
-        setConfirmPassword("");
-        setFullName("");
-        setError(null);
-      }
+      return;
+
     }
+
+    setStep(previousStep);
+
+    if (previousStep === "email") {
+
+      clearPendingOtp();
+
+      setOtpCode("");
+
+      setPassword("");
+
+      setConfirmPassword("");
+
+      setFullName("");
+
+      setError(null);
+
+    }
+
   };
 
   window.addEventListener("popstate", handlePopState);
