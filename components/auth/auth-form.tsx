@@ -106,11 +106,10 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   
   const goToStep = (newStep: AuthStep) => {
   window.history.pushState(
-    { step: newStep },
+    { ...(window.history.state || {}), step: newStep },
     "",
-    window.location.href
+    window.location.pathname + window.location.search
   );
-
   setStep(newStep);
 };
 
@@ -143,14 +142,11 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
   // Establish the current page's initial history state.
   window.history.replaceState(
-  
-  { step: initialStep },
-  
+  { ...(window.history.state || {}), step: initialStep },
   "",
-  
-  window.location.href
-  
+  window.location.pathname + window.location.search
 );
+
 
   const handlePopState = (event: PopStateEvent) => {
 
