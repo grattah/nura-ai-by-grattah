@@ -129,7 +129,7 @@ export function MenuPanel({
           return (
             <Link
               key={href}
-              href={href}
+              href={href === "/auth/login?landing=true" && !pathName.includes("landing") ? "/auth/login" : href}
               onClick={onRequestClose}
               className="flex items-center gap-3 py-3"
             >
