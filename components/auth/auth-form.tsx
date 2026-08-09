@@ -103,77 +103,77 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   // so the loser of that race gets "invalid or expired" — guard against
   // running verifyOtp more than once per code.
   const verifyInFlightRef = useRef(false);
-  
-  const goToStep = (newStep: AuthStep) => {
-  window.history.pushState(
-    { step: newStep },
-    "",
-    window.location.pathname + window.location.search
-  );
 
-  setStep(newStep);
-};
+  const goToStep = (newStep: AuthStep) => {
+    window.history.pushState(
+      { step: newStep },
+      "",
+      window.location.pathname + window.location.search
+    );
+
+    setStep(newStep);
+  };
 
   // Restore an in-progress OTP screen after a refresh / browser-back so the user
   // can enter the code they were already sent (no re-send, no cooldown error).
   useEffect(() => {
-  let initialStep: AuthStep = "email";
+    let initialStep: AuthStep = "email";
 
-  try {
-    const raw = sessionStorage.getItem(OTP_PENDING_KEY);
+    try {
+      const raw = sessionStorage.getItem(OTP_PENDING_KEY);
 
-    if (raw) {
-      const { email: e, step: s, ts } = JSON.parse(raw);
+      if (raw) {
+        const { email: e, step: s, ts } = JSON.parse(raw);
 
-      if (
-        e &&
-        (s === "signup-otp" || s === "login-otp") &&
-        Date.now() - ts < OTP_PENDING_TTL
-      ) {
-        setEmail(e);
-        setStep(s);
-        initialStep = s;
-      } else {
-        clearPendingOtp();
+        if (
+          e &&
+          (s === "signup-otp" || s === "login-otp") &&
+          Date.now() - ts < OTP_PENDING_TTL
+        ) {
+          setEmail(e);
+          setStep(s);
+          initialStep = s;
+        } else {
+          clearPendingOtp();
+        }
       }
+    } catch {
+      /* ignore malformed state */
     }
-  } catch {
-    /* ignore malformed state */
-  }
 
-  // Establish the current page's initial history state.
-  window.history.replaceState(
-    { step: initialStep },
-    "",
-    window.location.pathname + window.location.search
-  );
+    // Establish the current page's initial history state.
+    window.history.replaceState(
+      { step: initialStep },
+      "",
+      window.location.pathname + window.location.search
+    );
 
-  const handlePopState = (event: PopStateEvent) => {
-    const previousStep = event.state?.step as AuthStep | undefined;
+    const handlePopState = (event: PopStateEvent) => {
+      const previousStep = event.state?.step as AuthStep | undefined;
 
-    if (previousStep) {
-      setStep(previousStep);
+      if (previousStep) {
+        setStep(previousStep);
 
-      // If we're going back to the email step,
-      // there is no longer an OTP step in progress.
-      if (previousStep === "email") {
-        clearPendingOtp();
+        // If we're going back to the email step,
+        // there is no longer an OTP step in progress.
+        if (previousStep === "email") {
+          clearPendingOtp();
 
-        setOtpCode("");
-        setPassword("");
-        setConfirmPassword("");
-        setFullName("");
-        setError(null);
+          setOtpCode("");
+          setPassword("");
+          setConfirmPassword("");
+          setFullName("");
+          setError(null);
+        }
       }
-    }
-  };
+    };
 
-  window.addEventListener("popstate", handlePopState);
+    window.addEventListener("popstate", handlePopState);
 
-  return () => {
-    window.removeEventListener("popstate", handlePopState);
-  };
-}, []);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
 
   // ─── Step 1: resolve email ─────────────────────────────────────────────────
 
@@ -359,7 +359,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         user?.user_metadata?.has_password !== true &&
         !user?.user_metadata?.full_name;
       if (needsSetup) {
-       goToStep("signup");
+        goToStep("signup");
         return;
       }
 
@@ -399,7 +399,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       }
 
       clearPendingOtp();
-     goToStep("signup");
+      goToStep("signup");
     } catch {
       setError(
         "Something went wrong while verifying your code. Please try again."
@@ -414,48 +414,48 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     setIsLoading(true);
     setError(null);
     const supabase = createClient();
-    
+
     try {
       /* code */
       const res = await fetch("/api/auth/check-email", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ email }),
-});
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
 
-if (res.status === 429) {
-  setError("Too many attempts. Please wait a minute and try again.");
-  return;
-}
-if (!res.ok) {
-  setError("We couldn't check that email. Please try again.");
-  return;
-}
+      if (res.status === 429) {
+        setError("Too many attempts. Please wait a minute and try again.");
+        return;
+      }
+      if (!res.ok) {
+        setError("We couldn't check that email. Please try again.");
+        return;
+      }
 
-const { exists } = await res.json();
+      const { exists } = await res.json();
 
-if (!exists && !query) {
-  setError("It seems you don't have an account, sign up to receive code");
-  setIsLoading(false);
-  return;
-}
-const { error: otpError } = await supabase.auth.signInWithOtp({
-  email,
-  options: { shouldCreateUser: step === "signup-otp" },
-});
-if (otpError) {
-  setError(
-    isRateLimited(otpError) ?
-    "Please wait a minute before requesting another code." :
-    "Couldn't resend the code. Please try again."
-  );
-}
-setIsLoading(false);
-setOtpCode("");
+      if (!exists && !query) {
+        setError("It seems you don't have an account, sign up to receive code");
+        setIsLoading(false);
+        return;
+      }
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email,
+        options: { shouldCreateUser: step === "signup-otp" },
+      });
+      if (otpError) {
+        setError(
+          isRateLimited(otpError)
+            ? "Please wait a minute before requesting another code."
+            : "Couldn't resend the code. Please try again."
+        );
+      }
+      setIsLoading(false);
+      setOtpCode("");
     } catch (e) {
       setError(
-  "Something went wrong while resending your code. Please try again."
-);
+        "Something went wrong while resending your code. Please try again."
+      );
     }
   };
 
@@ -575,24 +575,24 @@ setOtpCode("");
   // ─── Helpers ───────────────────────────────────────────────────────────────
 
   const goBack = () => {
-  // If we're already at the beginning of the flow,
-  // actually leave /login.
-  if (step === "email") {
-    clearPendingOtp();
-    setPassword("");
-    setConfirmPassword("");
-    setFullName("");
-    setOtpCode("");
-    setError(null);
-    
-    router.back();
-    return;
-  }
-  
-  // Otherwise, let browser history take us
-  // to the previous step.
-  window.history.back();
-};
+    // If we're already at the beginning of the flow,
+    // actually leave /login.
+    if (step === "email") {
+      clearPendingOtp();
+      setPassword("");
+      setConfirmPassword("");
+      setFullName("");
+      setOtpCode("");
+      setError(null);
+
+      router.back();
+      return;
+    }
+
+    // Otherwise, let browser history take us
+    // to the previous step.
+    window.history.back();
+  };
 
   const isEmailStep = step === "email";
   const isOtpStep = step === "login-otp" || step === "signup-otp";
@@ -710,10 +710,13 @@ setOtpCode("");
                     </button>
                     {isGoogleSignUpError && error && (
                       <div className="space-y-3 text-center">
-                        <p className="text-sm text-destructive">
-                        {error}
-                      </p>
-                      <Link href="/landing" className="font-extrabold text-mint-green">Sign up</Link>
+                        <p className="text-sm text-destructive">{error}</p>
+                        <Link
+                          href="/landing"
+                          className="font-extrabold text-mint-green"
+                        >
+                          Sign up
+                        </Link>
                       </div>
                     )}
                   </div>
