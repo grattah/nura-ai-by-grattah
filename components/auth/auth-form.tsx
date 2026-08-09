@@ -103,14 +103,28 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   // so the loser of that race gets "invalid or expired" — guard against
   // running verifyOtp more than once per code.
   const verifyInFlightRef = useRef(false);
+  
+  const goToStep = (newStep: AuthStep) => {
+  window.history.pushState(
+    { step: newStep },
+    "",
+    window.location.pathname + window.location.search
+  );
+
+  setStep(newStep);
+};
 
   // Restore an in-progress OTP screen after a refresh / browser-back so the user
   // can enter the code they were already sent (no re-send, no cooldown error).
   useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(OTP_PENDING_KEY);
-      if (!raw) return;
+  let initialStep: AuthStep = "email";
+
+  try {
+    const raw = sessionStorage.getItem(OTP_PENDING_KEY);
+
+    if (raw) {
       const { email: e, step: s, ts } = JSON.parse(raw);
+
       if (
         e &&
         (s === "signup-otp" || s === "login-otp") &&
@@ -118,13 +132,48 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       ) {
         setEmail(e);
         setStep(s);
+        initialStep = s;
       } else {
         clearPendingOtp();
       }
-    } catch {
-      /* ignore malformed state */
     }
-  }, []);
+  } catch {
+    /* ignore malformed state */
+  }
+
+  // Establish the current page's initial history state.
+  window.history.replaceState(
+    { step: initialStep },
+    "",
+    window.location.pathname + window.location.search
+  );
+
+  const handlePopState = (event: PopStateEvent) => {
+    const previousStep = event.state?.step as AuthStep | undefined;
+
+    if (previousStep) {
+      setStep(previousStep);
+
+      // If we're going back to the email step,
+      // there is no longer an OTP step in progress.
+      if (previousStep === "email") {
+        clearPendingOtp();
+
+        setOtpCode("");
+        setPassword("");
+        setConfirmPassword("");
+        setFullName("");
+        setError(null);
+      }
+    }
+  };
+
+  window.addEventListener("popstate", handlePopState);
+
+  return () => {
+    window.removeEventListener("popstate", handlePopState);
+  };
+}, []);
 
   // ─── Step 1: resolve email ─────────────────────────────────────────────────
 
@@ -178,12 +227,12 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
           savePendingOtp(email, "signup-otp");
         }
-        setStep("signup-otp");
+        goToStep("signup-otp");
         return;
       }
 
       if (hasPassword) {
-        setStep("login");
+        goToStep("login");
         return;
       }
 
@@ -198,7 +247,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         // in their inbox — let them enter it instead of dead-ending here.
         if (isRateLimited(otpError)) {
           savePendingOtp(email, "login-otp");
-          setStep("login-otp");
+          goToStep("login-otp");
           setError(
             "You already have a code in your inbox — enter it below, or wait a minute to resend."
           );
@@ -211,7 +260,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       }
 
       savePendingOtp(email, "login-otp");
-      setStep("login-otp");
+      goToStep("login-otp");
     } catch {
       setError("Network error. Please check your connection.");
     } finally {
@@ -310,7 +359,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         user?.user_metadata?.has_password !== true &&
         !user?.user_metadata?.full_name;
       if (needsSetup) {
-        setStep("signup");
+       goToStep("signup");
         return;
       }
 
@@ -350,7 +399,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       }
 
       clearPendingOtp();
-      setStep("signup");
+     goToStep("signup");
     } catch {
       setError(
         "Something went wrong while verifying your code. Please try again."
@@ -526,17 +575,24 @@ setOtpCode("");
   // ─── Helpers ───────────────────────────────────────────────────────────────
 
   const goBack = () => {
+  // If we're already at the beginning of the flow,
+  // actually leave /login.
+  if (step === "email") {
     clearPendingOtp();
-    setStep("email");
     setPassword("");
     setConfirmPassword("");
     setFullName("");
     setOtpCode("");
     setError(null);
-    if (step === "email") {
-      router.back();
-    }
-  };
+    
+    router.back();
+    return;
+  }
+  
+  // Otherwise, let browser history take us
+  // to the previous step.
+  window.history.back();
+};
 
   const isEmailStep = step === "email";
   const isOtpStep = step === "login-otp" || step === "signup-otp";
