@@ -1,5 +1,6 @@
 "use client";
 
+import Script from "next/script";
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -26,6 +27,9 @@ import authFooterBanner from "@/public/authFooterBanner.webp";
 import LineStack from "../vectors/LineStack";
 import Leaflet from "../vectors/Leaflet";
 import ShieldMark from "../vectors/ShieldMark";
+// import { checkGoogleAccount } from "@/actions/check-google-account";
+
+declare const google: any;
 
 type AuthStep = "email" | "login" | "login-otp" | "signup-otp" | "signup";
 
@@ -82,6 +86,19 @@ function ButtonLoader() {
   );
 }
 
+// module scope: defined once, outside the component
+const generateNonce = async (): Promise<[string, string]> => {
+  const nonce = btoa(
+    String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))
+  );
+  const encoded = new TextEncoder().encode(nonce);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", encoded);
+  const hashedNonce = Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return [nonce, hashedNonce];
+};
+
 export function NuraAuthForm({ className }: NuraAuthFormProps) {
   const [step, setStep] = useState<AuthStep>("email");
   const [email, setEmail] = useState("");
@@ -97,6 +114,10 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const query = searchParams.get("landing");
+  const rawNonceRef = useRef<string>("");
+  const [googleReady, setGoogleReady] = useState(
+    () => typeof google !== "undefined" && !!google?.accounts
+  );
 
   // OTP autofill can trigger verification twice (the otpCode effect and the
   // form's onSubmit both fire for the same code). OTP tokens are single-use,
@@ -530,37 +551,37 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
   // ─── Google ────────────────────────────────────────────────────────────────
 
-  const handleGoogleSignIn = async () => {
-    const supabase = createClient();
-    setIsGoogleLoading(true);
-    setError(null);
+  // const handleGoogleSignIn = async () => {
+  //   const supabase = createClient();
+  //   setIsGoogleLoading(true);
+  //   setError(null);
 
-    if (!query) {
-      setIsGoogleSignUpError(true);
-      setError("You need to sign up first to continue with Google.");
-      setIsGoogleLoading(false);
-      return;
-    }
+  //   if (!query) {
+  //     setIsGoogleSignUpError(true);
+  //     setError("You need to sign up first to continue with Google.");
+  //     setIsGoogleLoading(false);
+  //     return;
+  //   }
 
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: { access_type: "offline", prompt: "consent" },
-        },
-      });
-      setIsGoogleSignUpError(false);
-      if (error) throw error;
-    } catch (err: unknown) {
-      setIsGoogleSignUpError(false);
-      setError(
-        err instanceof Error ? err.message : "Failed to sign in with Google."
-      );
-      setIsGoogleSignUpError(false);
-      setIsGoogleLoading(false);
-    }
-  };
+  //   try {
+  //     const { error } = await supabase.auth.signInWithOAuth({
+  //       provider: "google",
+  //       options: {
+  //         redirectTo: `${window.location.origin}/auth/callback`,
+  //         queryParams: { access_type: "offline", prompt: "consent" },
+  //       },
+  //     });
+  //     setIsGoogleSignUpError(false);
+  //     if (error) throw error;
+  //   } catch (err: unknown) {
+  //     setIsGoogleSignUpError(false);
+  //     setError(
+  //       err instanceof Error ? err.message : "Failed to sign in with Google."
+  //     );
+  //     setIsGoogleSignUpError(false);
+  //     setIsGoogleLoading(false);
+  //   }
+  // };
 
   useEffect(() => {
     if (otpCode.length === 8) {
@@ -571,6 +592,129 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       }
     }
   }, [otpCode]);
+
+  useEffect(() => {
+    if (!googleReady) return;
+
+    const targetId =
+      step === "email"
+        ? "google-btn-email"
+        : step === "login"
+        ? "google-btn-login"
+        : null;
+    if (!targetId) return;
+    if (typeof google === "undefined") return;
+
+    let cancelled = false;
+    (async () => {
+      const [rawNonce, hashedNonce] = await generateNonce();
+      if (cancelled) return;
+      rawNonceRef.current = rawNonce;
+
+      google.accounts.id.initialize({
+        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+        callback: handleGoogleCredential,
+        nonce: hashedNonce,
+      });
+
+      const target = document.getElementById(targetId);
+      if (target) {
+        target.innerHTML = "";
+        google.accounts.id.renderButton(target, {
+          theme: "outline",
+          size: "large",
+          shape: "pill",
+          text: "continue_with",
+          width: 320,
+        });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [step, googleReady]);
+
+  const handleGoogleCredential = async (response: { credential: string }) => {
+    setIsGoogleLoading(true);
+    setError(null);
+    setIsGoogleSignUpError(false);
+    const supabase = createClient();
+
+    try {
+      // Decode the email for a ROUTING decision only (no signature check here).
+      const payload = JSON.parse(
+        atob(
+          response.credential
+            .split(".")[1]
+            .replace(/-/g, "+")
+            .replace(/_/g, "/")
+        )
+      );
+      const emailFromToken = payload.email as string;
+
+      // Reuse the existence check you already built.
+      const res = await fetch("/api/auth/check-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: emailFromToken }),
+      });
+      const { exists } = await res.json();
+
+      // New Google user who did NOT arrive through the signup funnel:
+      // never call signInWithIdToken, so no account is ever created.
+      if (!exists && query !== "true") {
+        setIsGoogleSignUpError(true);
+        setError("You need to sign up first to continue with Google.");
+        setIsGoogleLoading(false);
+        return;
+      }
+
+      // Existing user (any context), or a new user who came from signup:
+      // spend the token -> this is what creates/enters the session.
+      const { error } = await supabase.auth.signInWithIdToken({
+        provider: "google",
+        token: response.credential,
+        nonce: rawNonceRef.current, // RAW form; Google got the HASHED form
+      });
+      if (error) throw error;
+
+      if (!exists) await ensureWelcomeEmail(); // new Google user only
+
+      await redirectAfterAuth(supabase);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to sign in with Google."
+      );
+      setIsGoogleLoading(false);
+    }
+  };
+
+  // const initGoogle = async () => {
+  //   if (googleInitedRef.current || typeof google === "undefined") return;
+  //   googleInitedRef.current = true;
+
+  //   const [rawNonce, hashedNonce] = await generateNonce();
+  //   rawNonceRef.current = rawNonce;
+
+  //   google.accounts.id.initialize({
+  //     client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+  //     callback: handleGoogleCredential,
+  //     nonce: hashedNonce,
+  //     use_fedcm_for_prompt: true,
+  //   });
+
+  //   const target = document.getElementById("google-btn");
+  //   if (target) {
+  //     google.accounts.id.renderButton(target, {
+  //       theme: "outline",
+  //       size: "large",
+  //       shape: "pill",
+  //       text: "continue_with",
+  //       width: 320,
+  //     });
+  //   }
+  // };
 
   // ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -601,6 +745,11 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
   return (
     <div className={cn("min-h-screen flex flex-col", className)}>
+      <Script
+        src="https://accounts.google.com/gsi/client"
+        strategy="afterInteractive"
+        onLoad={() => setGoogleReady(true)}
+      />
       {/* Top bar */}
       <div className="flex items-center justify-end px-4 py-4">
         {isOtpStep && (
@@ -691,7 +840,12 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                     <p className="max-[370px]:text-sm text-subtle font-medium">
                       Continue with
                     </p>
-                    <button
+                    <div
+                      id="google-btn-email"
+                      className="flex justify-center w-full"
+                    />
+
+                    {/*<button
                       onClick={handleGoogleSignIn}
                       disabled={isGoogleLoading}
                       className={cn(
@@ -707,7 +861,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                           Google
                         </>
                       )}
-                    </button>
+                    </button> */}
                     {isGoogleSignUpError && error && (
                       <div className="space-y-3 text-center">
                         <p className="text-sm text-destructive">{error}</p>
@@ -717,6 +871,22 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                         >
                           Sign up
                         </Link>
+                      </div>
+                    )}
+                    {isGoogleLoading && (
+                      <div
+                        className=""
+                        role="status"
+                        aria-label="Signing you in"
+                      >
+                        <Image
+                          src={loader}
+                          alt=""
+                          width={30}
+                          height={30}
+                          className="animate-spin"
+                        />
+                        <span className="sr-only">Signing you in…</span>
                       </div>
                     )}
                   </div>
@@ -896,7 +1066,11 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 </div>
 
                 <div className="flex flex-col gap-2 items-center">
-                  <button
+                  <div
+                    id="google-btn-login"
+                    className="flex justify-center w-full"
+                  />
+                  {/* <button
                     onClick={handleGoogleSignIn}
                     disabled={isGoogleLoading}
                     className={cn(
@@ -912,7 +1086,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                         Continue with Google
                       </>
                     )}
-                  </button>
+                  </button> */}
                 </div>
               </div>
             )}
