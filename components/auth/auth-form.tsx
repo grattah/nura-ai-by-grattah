@@ -719,22 +719,27 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   // ─── Helpers ───────────────────────────────────────────────────────────────
 
   const goBack = () => {
-    // If we're already at the beginning of the flow,
-    // actually leave /login.
     if (step === "email") {
       clearPendingOtp();
-      setPassword("");
-      setConfirmPassword("");
-      setFullName("");
-      setOtpCode("");
+      setPassword(""); setConfirmPassword(""); setFullName(""); setOtpCode("");
       setError(null);
-
       router.back();
       return;
     }
-
-    // Otherwise, let browser history take us
-    // to the previous step.
+  
+    if (isOtpStep) {
+      clearPendingOtp();
+      setOtpCode("");
+      setError(null);
+      goToStep("email");   // deterministically go to email, don't trust history
+      return;
+    }
+  
+    if (step === "login") {
+      goToStep("email");
+      return;
+    }
+  
     window.history.back();
   };
 
