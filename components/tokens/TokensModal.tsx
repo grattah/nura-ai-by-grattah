@@ -1,13 +1,37 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { CoinAnimation } from "./CoinAnimation";
+import { createClient } from "@/lib/supabase/client";
 
 const TokensModal = ({ onClose }: { onClose?: () => void }) => {
   const router = useRouter();
+  const [isSubscriber, setIsSubscriber] = React.useState(false);
+
+  React.useEffect(() => {
+    const fetchUser = async () => {
+      const supabase = await createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        const supabase = await createClient();
+        const { data } = await supabase
+          .from("subscriptions")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (data?.status === "active") {
+          setIsSubscriber(true);
+        }
+      }
+    };
+    fetchUser();
+  }, []);
 
   // If the parent passes onClose, use it. Otherwise fall back to routing home.
   const handleClose = onClose ?? (() => router.push("/"));
@@ -25,15 +49,27 @@ const TokensModal = ({ onClose }: { onClose?: () => void }) => {
         </p>
       </div>
       <div className="w-full flex flex-col gap-4">
-        <Link
-          href="/buy-tokens"
-          className="w-full flex gap-1 justify-center items-center rounded-full py-3.75 bg-mint-green"
-        >
-          <Zap size={18} color="#FFFFFF" strokeWidth={2} />
-          <span className="text-white font-medium text-base">
-            Get extra tokens
-          </span>
-        </Link>
+        {isSubscriber ? (
+          <Link
+            href="/buy-tokens"
+            className="w-full flex gap-1 justify-center items-center rounded-full py-3.75 bg-mint-green"
+          >
+            <Zap size={18} color="#FFFFFF" strokeWidth={2} />
+            <span className="text-white font-medium text-base">
+              Get extra tokens
+            </span>
+          </Link>
+        ) : (
+          <Link
+            href="/change-plan"
+            className="w-full flex gap-1 justify-center items-center rounded-full py-3.75 bg-mint-green"
+          >
+            <Zap size={18} color="#FFFFFF" strokeWidth={2} />
+            <span className="text-white font-medium text-base">
+              Get extra tokens
+            </span>
+          </Link>
+        )}
         <button
           onClick={handleClose}
           className="text-sm font-medium text-subtle text-center"
