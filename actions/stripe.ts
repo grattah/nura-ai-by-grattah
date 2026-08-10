@@ -32,6 +32,7 @@ export async function fetchClientSecretForPlan(
 
   const session = await stripe.checkout.sessions.create({
     ui_mode: "embedded_page",
+    redirect_on_completion: "if_required",
     line_items: [{ price: priceId, quantity: 1 }],
     mode: "subscription",
     return_url: `${origin}/return?session_id={CHECKOUT_SESSION_ID}`,
@@ -57,6 +58,7 @@ export async function fetchClientSecret() {
 
   const session = await stripe.checkout.sessions.create({
     ui_mode: "embedded_page",
+    redirect_on_completion: "if_required",
     line_items: [
       {
         price: process.env.STRIPE_PRICE_ID,
