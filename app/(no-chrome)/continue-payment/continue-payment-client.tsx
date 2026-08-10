@@ -6,6 +6,8 @@ import { ArrowLeft, X } from "lucide-react";
 import { CheckoutEmbed } from "@/components/checkout-embed";
 import { fetchClientSecretForPlan } from "@/actions/stripe";
 
+import SubscribeModal from "@/components/SubscribeModal";
+
 const PLAN_LABELS: Record<
   string,
   { name: string; price: string; description: string }
@@ -30,6 +32,7 @@ function ContinuePaymentContent() {
 
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   useEffect(() => {
     fetchClientSecretForPlan(plan)
@@ -99,8 +102,10 @@ function ContinuePaymentContent() {
             <div className="w-8 h-8 rounded-full border-2 border-muted-foreground border-t-transparent animate-spin" />
           </div>
         ) : (
-          <CheckoutEmbed clientSecret={clientSecret} />
+          <CheckoutEmbed clientSecret={clientSecret} onSuccess={() => setShowSuccessModal(true)} />
         )}
+        
+        {showSuccessModal && <SubscribeModal onClose={() => setShowSuccessModal(false)}/>}
       </div>
     </div>
   );

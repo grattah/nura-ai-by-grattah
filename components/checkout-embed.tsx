@@ -13,6 +13,7 @@ const stripePromise = loadStripe(
 
 interface CheckoutEmbedProps {
   clientSecret: string;
+  onSuccess?: () => void;
 }
 
 /**
@@ -20,7 +21,7 @@ interface CheckoutEmbedProps {
  * client_secret. Use this anywhere you've created the session server-side
  * before rendering (e.g. identity-first guest checkout, authenticated checkout).
  */
-export function CheckoutEmbed({ clientSecret }: CheckoutEmbedProps) {
+export function CheckoutEmbed({ clientSecret, onSuccess }: CheckoutEmbedProps) {
   const fetchClientSecret = useCallback(
     () => Promise.resolve(clientSecret),
     [clientSecret],
@@ -29,7 +30,7 @@ export function CheckoutEmbed({ clientSecret }: CheckoutEmbedProps) {
   return (
     <EmbeddedCheckoutProvider
       stripe={stripePromise}
-      options={{ fetchClientSecret }}
+      options={{ fetchClientSecret, onComplete: onSuccess }}
     >
       <EmbeddedCheckout />
     </EmbeddedCheckoutProvider>
