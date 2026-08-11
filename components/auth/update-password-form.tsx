@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { sendPasswordChangedEmail } from "@/actions/password-changed";
 import { PasswordRequirements, isPasswordValid } from "./PasswordRequirements";
 import { EyeOff, Eye, LockKeyhole, X } from "lucide-react";
 
@@ -39,6 +40,10 @@ export function UpdatePasswordForm({
       const {
         data: { user },
       } = await supabase.auth.getUser();
+
+      // Best-effort confirmation email; must run before sign-out while the
+      // recovery session is still active.
+      await sendPasswordChangedEmail();
 
       // Password changed — sign out of the recovery session and have the
       // user log back in with their new password.

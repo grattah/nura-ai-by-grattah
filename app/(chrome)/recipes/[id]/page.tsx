@@ -367,14 +367,14 @@ export default async function RecipeDetailPage({
                   points={nutritionPoints}
                   hasProfile
                 />
-              ) : chrome.showBioactivity ? (
+              ) : (
                 <NutritionScore
                   baseScore={recipe.final_score_10 ?? 0}
                   match={{ percent: 0, label: "" }}
                   points={nutritionPoints}
                   hasProfile={false}
                 />
-              ) : null}
+              )}
               {personalizedView && needsSafetyAlerts && (
                 <RecipePersonalizeTrigger recipeId={recipe.id} canTrigger />
               )}

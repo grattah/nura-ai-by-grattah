@@ -61,7 +61,7 @@ const TokensModal = ({ onClose }: { onClose?: () => void }) => {
           </Link>
         ) : (
           <Link
-            href="/change-plan"
+            href="/buy-tokens"
             className="w-full flex gap-1 justify-center items-center rounded-full py-3.75 bg-mint-green"
           >
             <Zap size={18} color="#FFFFFF" strokeWidth={2} />

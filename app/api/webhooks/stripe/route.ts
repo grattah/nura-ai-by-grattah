@@ -6,8 +6,16 @@ import { format } from "date-fns";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { activateSubscriptionFromSession } from "@/lib/subscription-activate";
 import { creditTokenPurchaseFromSession } from "@/lib/token-purchase";
+import { getBundle } from "@/lib/credits";
 import { sendEmail } from "@/lib/email/send";
-import { subscriptionConfirmationEmail } from "@/lib/email/templates";
+import {
+  subscriptionConfirmationEmail,
+  resubscriptionEmail,
+  paymentFailedEmail,
+  renewalReceiptEmail,
+  tokenPurchaseReceiptEmail,
+  formatMoney,
+} from "@/lib/email/templates";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -62,7 +70,13 @@ function fmtDate(iso: string | null | undefined): string | null {
 
 // Subscription confirmation, sent from the deduped webhook so it fires once.
 // Reads plan/period-end from the row activateSubscriptionFromSession just wrote.
-async function sendSubscriptionConfirmation(userId: string, email: string) {
+// `isResubscribe` picks the "welcome back" copy over the first-time one.
+async function sendSubscriptionConfirmation(
+  userId: string,
+  email: string,
+  session: Stripe.Checkout.Session,
+  isResubscribe: boolean,
+) {
   const supabase = createServiceRoleClient();
   const { data } = await supabase
     .from("subscriptions")
@@ -70,11 +84,85 @@ async function sendSubscriptionConfirmation(userId: string, email: string) {
     .eq("user_id", userId)
     .maybeSingle();
   const row = data as { plan?: string; expires_at?: string | null } | null;
-  const { subject, html } = subscriptionConfirmationEmail({
+  const amount =
+    typeof session.amount_total === "number"
+      ? formatMoney(session.amount_total, session.currency ?? "gbp")
+      : null;
+  const params = {
     planLabel: planLabel(row?.plan),
     renewsAt: fmtDate(row?.expires_at),
+    amount,
+  };
+  const { subject, html } = isResubscribe
+    ? resubscriptionEmail(params)
+    : subscriptionConfirmationEmail(params);
+  await sendEmail({ to: email, subject, html });
+}
+
+// One-time token-bundle purchase receipt.
+async function sendTokenPurchaseReceipt(
+  session: Stripe.Checkout.Session,
+  email: string,
+) {
+  const credits = parseInt(session.metadata?.credits ?? "0", 10);
+  const bundle = getBundle(session.metadata?.bundleId ?? "");
+  const amount =
+    typeof session.amount_total === "number"
+      ? formatMoney(session.amount_total, session.currency ?? "gbp")
+      : "";
+  const { subject, html } = tokenPurchaseReceiptEmail({
+    credits,
+    amount,
+    bundleLabel: bundle?.label ?? null,
   });
   await sendEmail({ to: email, subject, html });
+}
+
+// Resolve the account behind a Stripe customer id (invoice events don't carry
+// client_reference_id) — reads the newest subscription row's user_id, then the
+// auth user for their email.
+async function getUserForCustomer(
+  customerId: string,
+): Promise<{ userId: string; email: string; plan?: string } | null> {
+  const supabase = createServiceRoleClient();
+  const { data } = await supabase
+    .from("subscriptions")
+    .select("user_id, plan")
+    .eq("stripe_customer_id", customerId)
+    .order("updated_at", { ascending: false })
+    .limit(1);
+  const row = data?.[0] as { user_id: string; plan: string } | undefined;
+  if (!row) return null;
+
+  const { data: userData } = await supabase.auth.admin.getUserById(row.user_id);
+  const email = userData?.user?.email;
+  if (!email) return null;
+  return { userId: row.user_id, email, plan: row.plan };
+}
+
+// Best-effort decline reason from the invoice's PaymentIntent, e.g. "Your card
+// was declined." Invoices don't carry payment_intent directly (API 2025+), so
+// this looks it up via the invoice's InvoicePayment. Falls back to null so the
+// email still sends without one.
+async function paymentFailureReason(
+  invoice: Stripe.Invoice,
+): Promise<string | null> {
+  if (!invoice.id) return null;
+  try {
+    const payments = await stripe.invoicePayments.list({
+      invoice: invoice.id,
+      limit: 1,
+    });
+    const piRef = payments.data[0]?.payment.payment_intent;
+    const piId = typeof piRef === "string" ? piRef : piRef?.id;
+    if (!piId) return null;
+
+    const pi = await stripe.paymentIntents.retrieve(piId);
+    return pi.last_payment_error?.message ?? null;
+  } catch (e) {
+    console.error("[webhook] failed to retrieve decline reason", e);
+    return null;
+  }
 }
 
 export async function POST(req: Request) {
@@ -146,6 +234,14 @@ export async function POST(req: Request) {
         );
         break;
       }
+      case "invoice.payment_succeeded": {
+        await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice);
+        break;
+      }
+      case "invoice.payment_failed": {
+        await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
+        break;
+      }
       default:
         console.log(`[webhook] Unhandled event type: ${event.type}`);
     }
@@ -177,15 +273,33 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   if (session.metadata?.type === "credits") {
     await creditTokenPurchaseFromSession(session);
     console.log(`[webhook] Credited token purchase for ${userId}`);
+    if (email) {
+      try {
+        await sendTokenPurchaseReceipt(session, email);
+      } catch (e) {
+        console.error("[webhook] token purchase receipt email failed", e);
+      }
+    }
     return;
   }
+
+  // A subscriptions row already existing for this user (any status) means this
+  // checkout is a resubscribe, not a first-time signup — picks different email
+  // copy below.
+  const supabase = createServiceRoleClient();
+  const { data: existingRows } = await supabase
+    .from("subscriptions")
+    .select("status")
+    .eq("user_id", userId)
+    .limit(1);
+  const isResubscribe = !!existingRows?.[0];
 
   // Persist the active subscription (shared with the /return synchronous path).
   await activateSubscriptionFromSession(session);
 
   if (email) {
     try {
-      await sendSubscriptionConfirmation(userId, email);
+      await sendSubscriptionConfirmation(userId, email, session, isResubscribe);
     } catch (e) {
       console.error("[webhook] confirmation email failed", e);
     }
@@ -255,4 +369,61 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
   console.log(
     `[webhook] Subscription ${sub.id} updated (status=${status ?? "unchanged"}, cancelAtPeriodEnd=${incomingCancel})`,
   );
+}
+
+// Renewal receipt — fires for every invoice payment, but the very first one
+// (billing_reason "subscription_create") is already covered by the checkout
+// confirmation/resubscription email, so only future charges send here.
+async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
+  if (invoice.billing_reason === "subscription_create") return;
+
+  const customerId =
+    typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
+  if (!customerId) return;
+
+  const user = await getUserForCustomer(customerId);
+  if (!user) {
+    console.log(`[webhook] No user found for customer ${customerId}`);
+    return;
+  }
+
+  const paidAtIso = invoice.status_transitions?.paid_at
+    ? new Date(invoice.status_transitions.paid_at * 1000).toISOString()
+    : new Date(invoice.created * 1000).toISOString();
+
+  try {
+    const { subject, html } = renewalReceiptEmail({
+      planLabel: planLabel(user.plan),
+      amount: formatMoney(invoice.amount_paid, invoice.currency ?? "gbp"),
+      date: fmtDate(paidAtIso) ?? "",
+      invoiceUrl: invoice.hosted_invoice_url ?? invoice.invoice_pdf ?? null,
+    });
+    await sendEmail({ to: user.email, subject, html });
+  } catch (e) {
+    console.error("[webhook] renewal receipt email failed", e);
+  }
+}
+
+async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+  const customerId =
+    typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
+  if (!customerId) return;
+
+  const user = await getUserForCustomer(customerId);
+  if (!user) {
+    console.log(`[webhook] No user found for customer ${customerId}`);
+    return;
+  }
+
+  const reason = await paymentFailureReason(invoice);
+
+  try {
+    const { subject, html } = paymentFailedEmail({
+      planLabel: planLabel(user.plan),
+      reason,
+    });
+    await sendEmail({ to: user.email, subject, html });
+  } catch (e) {
+    console.error("[webhook] payment failed email failed", e);
+  }
 }
