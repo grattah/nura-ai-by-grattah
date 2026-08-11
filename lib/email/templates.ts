@@ -20,7 +20,7 @@ interface LayoutOpts {
 
 function layout({ heading, body, cta, preview }: LayoutOpts): string {
   const button = cta
-    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+    ? `<table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:24px auto;">
          <tr><td style="border-radius:9999px;background:${BRAND.primary};">
            <a href="${esc(cta.url)}" style="display:inline-block;padding:14px 28px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:9999px;">${esc(cta.label)}</a>
          </td></tr>
@@ -41,7 +41,7 @@ function layout({ heading, body, cta, preview }: LayoutOpts): string {
         <tr><td style="padding:8px 32px 32px;">
           <h1 style="margin:0 0 12px;font-size:20px;font-weight:700;color:${BRAND.text};text-align:center;">${esc(heading)}</h1>
           <div style="font-size:15px;line-height:1.6;color:${BRAND.muted};text-align:center;">${body}</div>
-          <div style="text-align:center;display:flex;justify-items:center;">${button}</div>
+          <div style="text-align:center;">${button}</div>
         </td></tr>
       </table>
       <p style="max-width:480px;margin:20px auto 0;font-size:12px;line-height:1.5;color:${BRAND.faint};text-align:center;">
@@ -91,6 +91,19 @@ export function recoveryEmail({ url }: { url: string }): EmailContent {
       preview: "Reset your Nuko password",
       body: `<p style="margin:0;">Click the button below to choose a new password. This link expires shortly. If you didn't request it, ignore this email.</p>`,
       cta: { label: "Reset password", url },
+    }),
+  };
+}
+
+export function passwordChangedEmail(): EmailContent {
+  return {
+    subject: "Your Nuko password was changed",
+    html: layout({
+      heading: "Password changed",
+      preview: "Your Nuko password was changed",
+      body: `<p style="margin:0;">Your password was just changed. You can now log in with your new password.</p>
+        <p style="margin:16px 0 0;font-size:13px;color:${BRAND.faint};">If you didn't make this change, please contact us immediately at <a href="mailto:${SUPPORT_EMAIL}" style="color:${BRAND.faint};">${SUPPORT_EMAIL}</a>.</p>`,
+      cta: { label: "Open Nuko", url: APP_URL },
     }),
   };
 }
