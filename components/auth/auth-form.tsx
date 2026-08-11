@@ -456,7 +456,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       const { exists } = await res.json();
 
       if (!exists && !query) {
-        setError("It seems you don't have an account, sign up to receive code");
         setIsLoading(false);
         return;
       }

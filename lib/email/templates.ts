@@ -20,7 +20,7 @@ interface LayoutOpts {
 
 function layout({ heading, body, cta, preview }: LayoutOpts): string {
   const button = cta
-    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+    ? `<table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:24px auto;">
          <tr><td style="border-radius:9999px;background:${BRAND.primary};">
            <a href="${esc(cta.url)}" style="display:inline-block;padding:14px 28px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:9999px;">${esc(cta.label)}</a>
          </td></tr>
@@ -59,6 +59,15 @@ export interface EmailContent {
   html: string;
 }
 
+/** Format Stripe minor units (e.g. 799 -> "£7.99") in the charge's own currency. */
+export function formatMoney(minor: number, currency = "gbp"): string {
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: currency.toUpperCase(),
+    currencyDisplay: "narrowSymbol",
+  }).format(minor / 100);
+}
+
 // ─── Auth (Supabase Send Email hook) ─────────────────────────────────────────
 
 export function otpEmail({ code }: { code: string }): EmailContent {
@@ -82,6 +91,19 @@ export function recoveryEmail({ url }: { url: string }): EmailContent {
       preview: "Reset your Nuko password",
       body: `<p style="margin:0;">Click the button below to choose a new password. This link expires shortly. If you didn't request it, ignore this email.</p>`,
       cta: { label: "Reset password", url },
+    }),
+  };
+}
+
+export function passwordChangedEmail(): EmailContent {
+  return {
+    subject: "Your Nuko password was changed",
+    html: layout({
+      heading: "Password changed",
+      preview: "Your Nuko password was changed",
+      body: `<p style="margin:0;">Your password was just changed. You can now log in with your new password.</p>
+        <p style="margin:16px 0 0;font-size:13px;color:${BRAND.faint};">If you didn't make this change, please contact us immediately at <a href="mailto:${SUPPORT_EMAIL}" style="color:${BRAND.faint};">${SUPPORT_EMAIL}</a>.</p>`,
+      cta: { label: "Open Nuko", url: APP_URL },
     }),
   };
 }
@@ -113,13 +135,20 @@ export function welcomeEmail({ name }: { name?: string | null }): EmailContent {
   };
 }
 
+interface SubscriptionEmailArgs {
+  planLabel: string;
+  renewsAt?: string | null;
+  amount?: string | null;
+}
+
 export function subscriptionConfirmationEmail({
   planLabel,
   renewsAt,
-}: {
-  planLabel: string;
-  renewsAt?: string | null;
-}): EmailContent {
+  amount,
+}: SubscriptionEmailArgs): EmailContent {
+  const paid = amount
+    ? `<p style="margin:0 0 12px;">You were charged <strong>${esc(amount)}</strong>.</p>`
+    : "";
   const renew = renewsAt
     ? `<p style="margin:12px 0 0;font-size:13px;color:${BRAND.faint};">Next billing date: ${esc(renewsAt)}</p>`
     : "";
@@ -128,8 +157,99 @@ export function subscriptionConfirmationEmail({
     html: layout({
       heading: "You're subscribed to Nuko+",
       preview: "Your Nuko subscription is active",
-      body: `<p style="margin:0;">Thanks for subscribing — your <strong>${esc(planLabel)}</strong> is now active and you have full access.</p>${renew}`,
+      body: `<p style="margin:0;">Thanks for subscribing — your <strong>${esc(planLabel)}</strong> is now active and you have full access.</p>${paid}${renew}`,
       cta: { label: "Start exploring", url: APP_URL },
+    }),
+  };
+}
+
+// Sent instead of subscriptionConfirmationEmail when the user already had a
+// (now lapsed/cancelled) subscription row — i.e. they're subscribing again.
+export function resubscriptionEmail({
+  planLabel,
+  renewsAt,
+  amount,
+}: SubscriptionEmailArgs): EmailContent {
+  const paid = amount
+    ? `<p style="margin:0 0 12px;">You were charged <strong>${esc(amount)}</strong>.</p>`
+    : "";
+  const renew = renewsAt
+    ? `<p style="margin:12px 0 0;font-size:13px;color:${BRAND.faint};">Next billing date: ${esc(renewsAt)}</p>`
+    : "";
+  return {
+    subject: "Welcome back to Nuko ✨",
+    html: layout({
+      heading: "You're resubscribed",
+      preview: "Welcome back to Nuko",
+      body: `<p style="margin:0;">Your <strong>${esc(planLabel)}</strong> is active again — welcome back!</p>${paid}${renew}`,
+      cta: { label: "Start exploring", url: APP_URL },
+    }),
+  };
+}
+
+export function paymentFailedEmail({
+  planLabel,
+  reason,
+}: {
+  planLabel: string;
+  reason?: string | null;
+}): EmailContent {
+  const why = reason
+    ? `<p style="margin:12px 0 0;font-size:13px;color:${BRAND.faint};">Reason: ${esc(reason)}</p>`
+    : "";
+  return {
+    subject: "We couldn't process your Nuko payment",
+    html: layout({
+      heading: "Payment failed",
+      preview: "We couldn't process your Nuko payment",
+      body: `<p style="margin:0;">We tried to renew your <strong>${esc(planLabel)}</strong> but the payment didn't go through.</p>${why}
+        <p style="margin:12px 0 0;">Please update your payment details to keep your access.</p>`,
+      cta: { label: "Update payment method", url: `${APP_URL}/manage-subscription` },
+    }),
+  };
+}
+
+export function renewalReceiptEmail({
+  planLabel,
+  amount,
+  date,
+  invoiceUrl,
+}: {
+  planLabel: string;
+  amount: string;
+  date: string;
+  invoiceUrl?: string | null;
+}): EmailContent {
+  return {
+    subject: "Your Nuko payment receipt",
+    html: layout({
+      heading: "Payment received",
+      preview: "Your Nuko payment receipt",
+      body: `<p style="margin:0;">We charged <strong>${esc(amount)}</strong> for your <strong>${esc(planLabel)}</strong> on ${esc(date)}.</p>`,
+      cta: invoiceUrl
+        ? { label: "View receipt", url: invoiceUrl }
+        : { label: "Manage subscription", url: `${APP_URL}/manage-subscription` },
+    }),
+  };
+}
+
+export function tokenPurchaseReceiptEmail({
+  credits,
+  amount,
+  bundleLabel,
+}: {
+  credits: number;
+  amount: string;
+  bundleLabel?: string | null;
+}): EmailContent {
+  const bundle = bundleLabel ? ` (${esc(bundleLabel)})` : "";
+  return {
+    subject: "Your Nuko token purchase receipt",
+    html: layout({
+      heading: "Tokens added",
+      preview: "Your Nuko token purchase receipt",
+      body: `<p style="margin:0;">You purchased <strong>${credits} tokens</strong>${bundle} for <strong>${esc(amount)}</strong>.</p>`,
+      cta: { label: "Open Nuko", url: APP_URL },
     }),
   };
 }

@@ -253,7 +253,7 @@ const page = () => {
           setGenerating(false);
           setPendingRecipe(null);
           setShowSignInModal(false);
-          setTokenModalOpen(true);
+          setPaywallOpen(true);
         }
 
         if (!res.ok) throw new Error("generate failed");

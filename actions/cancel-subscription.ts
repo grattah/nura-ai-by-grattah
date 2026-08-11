@@ -7,7 +7,7 @@ import {
 } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
 import { sendEmail } from "@/lib/email/send";
-import { cancellationEmail } from "@/lib/email/templates";
+import { cancellationEmail, resubscriptionEmail } from "@/lib/email/templates";
 import { format } from "date-fns";
 
 type Result = { success: true } | { error: string };
@@ -86,7 +86,7 @@ export async function reactivateSubscription(): Promise<Result> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  if (!user?.email) return { error: "Not authenticated" };
 
   const sub = await getActiveSub(user.id);
   if (!sub?.stripe_subscription_id) {
@@ -105,6 +105,18 @@ export async function reactivateSubscription(): Promise<Result> {
     .from("subscriptions")
     .update({ cancel_at_period_end: false } as never)
     .eq("user_id", user.id);
+
+  try {
+    const { subject, html } = resubscriptionEmail({
+      planLabel: planLabel(sub.plan),
+      renewsAt: sub.expires_at
+        ? format(new Date(sub.expires_at), "MMM d, yyyy")
+        : null,
+    });
+    await sendEmail({ to: user.email, subject, html });
+  } catch (e) {
+    console.error("[reactivate-subscription] email failed", e);
+  }
 
   revalidatePath("/manage-subscription");
   return { success: true };
