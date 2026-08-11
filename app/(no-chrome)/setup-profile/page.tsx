@@ -12,6 +12,7 @@ import {
   isPasswordValid,
 } from "@/components/profile/password-requirements";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import SuccessAnimation from "@/components/SuccessAnimation";
 
 export default function SetupProfilePage() {
   const router = useRouter();
@@ -167,14 +168,8 @@ export default function SetupProfilePage() {
       <Dialog open={done}>
         <DialogContent className="sm:max-w-sm p-8 text-center space-y-4 [&>button]:hidden">
           {/* Confetti check */}
-          <div className="flex justify-center">
-            <Image
-              src="/success.svg"
-              alt="success-icon"
-              width={200}
-              height={201}
-              className="shrink-0 object-contain"
-            />
+          <div className="flex justify-center items-center text-center">
+            <SuccessAnimation />
           </div>
           <div>
             <DialogTitle className="text-xl font-bold text-foreground">
@@ -188,14 +183,13 @@ export default function SetupProfilePage() {
           <div className="space-y-3 pt-2">
             <button
               onClick={() => router.push("/profile")}
-              className="w-full py-4 rounded-full text-white font-semibold"
-              style={{ backgroundColor: "var(--mint-green)" }}
+              className="w-full py-4 rounded-full text-white font-medium text-base bg-mint-green"
             >
               Upload profile picture
             </button>
             <button
               onClick={() => router.push("/")}
-              className="w-full py-4 rounded-full bg-muted text-foreground font-semibold"
+              className="w-full py-4 rounded-full bg-grey-c100 text-subtle font-medium text-base"
             >
               Do this later
             </button>
