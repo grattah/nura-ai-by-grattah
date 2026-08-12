@@ -70,7 +70,7 @@ const page = async () => {
                 Instant wellness match with just a search
               </p>
             </div>
-            <p className="text-base text-subtle font-medium leading-[22px] font-redHatDisplay">
+            <p className="text-base text-subtle font-medium leading-[22px] font-redHatDisplay min-[370px]:w-10/12">
               Log your wellness goal, and get instantly matched to bio-solutions
               built for you.
             </p>
