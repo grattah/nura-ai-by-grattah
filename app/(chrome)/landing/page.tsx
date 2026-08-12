@@ -57,6 +57,7 @@ const page = async () => {
   if (user) {
     redirect("/");
   }
+  
   return (
     <main className="bg-background">
       <div className="px-6 pt-4">
