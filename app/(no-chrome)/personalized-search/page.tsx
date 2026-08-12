@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { getCachedUser, getCachedAccess, createClient } from "@/lib/supabase/server";
 import { freeUseCount } from "@/lib/free-trial-server";
-import { FREE_SURFACES, FREE_USES_PER_SURFACE } from "@/lib/credits";
+import { PERSONALIZED_SEARCH_SURFACE, FREE_USES_PER_SURFACE } from "@/lib/credits";
 import { runPersonalizedSearch } from "@/lib/personalized-search-server";
 import { PersonalizedSearchClient } from "./personalized-search-client";
 
@@ -32,7 +32,7 @@ export default async function PersonalizedSearchPage({
   if (access.isAuthenticated && !access.isSubscriber) {
     serverBlocked = access.hasEverSubscribed
       ? true
-      : (await freeUseCount(user.id, FREE_SURFACES.personalizedSearch)) >=
+      : (await freeUseCount(user.id, PERSONALIZED_SEARCH_SURFACE)) >=
         FREE_USES_PER_SURFACE;
   }
 

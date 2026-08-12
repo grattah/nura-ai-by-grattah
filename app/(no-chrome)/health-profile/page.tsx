@@ -12,6 +12,7 @@ import {
   Pill,
   Leaf,
   CloudLightning,
+  ArrowRight,
 } from "lucide-react";
 import BackButton from "@/components/back-button";
 import { useHealthProfile } from "@/components/health-profile/health-profile-provider";
@@ -24,6 +25,7 @@ import {
   summarizeMedications,
 } from "@/lib/health-profile/summarize";
 import Stepper from "@/components/health-profile/stepper";
+import Link from "next/link";
 
 const BASE = "/health-profile";
 
@@ -229,20 +231,28 @@ function PopulatedView() {
           </div>
         ))}
 
-        <p className="text-sm text-subtle pt-2">
+        <Link
+          href="/#for-you"
+          className="flex gap-[10px] items-center justify-center border rounded-full w-full py-3.75 text-mint-green text-base font-medium border-mint-green"
+        >
+          See your recommendation{" "}
+          <ArrowRight color="#227B6F" strokeWidth={1.78} />
+        </Link>
+
+        <p className="text-sm text-subtle pt-2 mt-[22px]">
           You can edit any section anytime.
         </p>
       </div>
 
       <div className="shrink-0 px-6 pt-3 pb-8 bg-background">
-        <button
+        {/* <button
           type="button"
           disabled={saving}
           onClick={removeProfile}
           className="w-full py-4 rounded-full border border-error-c500 text-error-c500 text-base font-semibold hover:opacity-80 transition-opacity disabled:opacity-40"
         >
           Delete health profile
-        </button>
+        </button> */}
       </div>
     </div>
   );

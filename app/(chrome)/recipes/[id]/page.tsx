@@ -390,8 +390,12 @@ export default async function RecipeDetailPage({
                 popular={canViewFull}
               />
 
-              {/* Follow-up questions + RAG chat */}
-              <div className="pt-2">
+              {/* Follow-up questions + RAG chat: exempt from AuthGate's blanket
+                  click-intercept — this surface has its own free-trial gating
+                  (2 free uses for new users before the paywall), so it must
+                  reach FollowUpSection's own fetch-driven sign-in/paywall
+                  handling instead of being blocked upfront. */}
+              <div className="pt-2" data-paywall-passthrough>
                 <FollowUpSection
                   contextId={recipe.id}
                   contextType="recipe"

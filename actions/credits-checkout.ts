@@ -4,6 +4,7 @@ import { stripe } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
 import { headers } from "next/headers";
 import { getBundle } from "@/lib/credits";
+import { hasActiveSubscription } from "@/lib/subscription";
 
 // One-time extra-token purchase. Unlike the subscription flow this uses
 // mode:"payment" with inline price_data (GBP) so no Stripe dashboard prices are
@@ -24,6 +25,10 @@ export async function createTokenCheckout(
 
   if (!user?.id) {
     return { error: "Please sign in to buy tokens." };
+  }
+
+  if (!(await hasActiveSubscription(supabase, user.id))) {
+    return { error: "An active Nuko+ subscription is required to buy extra tokens." };
   }
 
   const session = await stripe.checkout.sessions.create({

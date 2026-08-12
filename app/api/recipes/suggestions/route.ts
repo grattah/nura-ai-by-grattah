@@ -4,8 +4,14 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { recordUsage, usageTokens } from "@/lib/usage-server";
+import { createClient } from "@/lib/supabase/server";
+import { tryConsumeFreeView } from "@/lib/free-trial-server";
+import { hasActiveSubscription, hasEverSubscribed } from "@/lib/subscription";
+import { FREE_SURFACES } from "@/lib/credits";
 
 export const maxDuration = 30;
+
+const SURFACE = FREE_SURFACES.recipeSuggestions;
 
 const SuggestionsSchema = z.object({
   suggestions: z
@@ -58,10 +64,30 @@ export async function POST(req: NextRequest) {
   // IPs, so cap the endpoint's total LLM spend as a circuit breaker. 500 fresh
   // generations/day is far above organic guest traffic; cached hits don't count
   // (checked before the budget below).
-  //
-  // Public by design: anyone (guest or signed-in) can browse suggestions —
-  // /find-recipe is a public page. Only generating a recipe from a suggestion
-  // is gated (/api/recipes/generate).
+
+  // Access model: same as the other gated LLM surfaces — subscribers use the
+  // token system; new (never-subscribed) users get FREE_USES_PER_SURFACE free
+  // suggestion calls; lapsed subscribers are blocked; guests must sign in.
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const [activeSub, everSubscribed] = await Promise.all([
+    hasActiveSubscription(supabase, user.id),
+    hasEverSubscribed(supabase, user.id),
+  ]);
+
+  if (!activeSub && everSubscribed) {
+    return NextResponse.json(
+      { error: "Subscription required", hasEverSubscribed: true },
+      { status: 403 },
+    );
+  }
 
   let query: string;
   try {
@@ -78,6 +104,18 @@ export async function POST(req: NextRequest) {
   }
 
   const normalizedQuery = query.trim().toLowerCase();
+
+  if (!activeSub) {
+    // New user in free trial — count this distinct query up front (deduped by
+    // normalized query), so a cache hit below still consumes a use.
+    const allowed = await tryConsumeFreeView(user.id, SURFACE, normalizedQuery);
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Subscription required", hasEverSubscribed: false },
+        { status: 403 },
+      );
+    }
+  }
 
   const cached = getCachedSuggestions(normalizedQuery);
   if (cached) {

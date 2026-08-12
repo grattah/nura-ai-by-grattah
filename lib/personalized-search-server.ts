@@ -7,9 +7,9 @@ import type { Database } from "@/lib/database.types";
 import { getTokenState, meter, type TokenState } from "@/lib/credits-server";
 import { tryConsumeFreeView } from "@/lib/free-trial-server";
 import { hasActiveSubscription, hasEverSubscribed } from "@/lib/subscription";
-import { MAX_OUTPUT_TOKENS, FREE_SURFACES } from "@/lib/credits";
+import { MAX_OUTPUT_TOKENS, PERSONALIZED_SEARCH_SURFACE } from "@/lib/credits";
 
-const SURFACE = FREE_SURFACES.personalizedSearch;
+const SURFACE = PERSONALIZED_SEARCH_SURFACE;
 
 // Flat schema (no nested objects / arrays-of-objects) so smaller models like
 // Haiku can fill it reliably via the AI SDK's structured-output mode.
