@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,18 +13,38 @@ import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import FilledLock from "../vectors/filled-lock";
 import { Plan, PLANS } from "@/constants";
-import { useAccess } from "@/components/providers/access-provider";
 import Time from "../vectors/time";
 
 export function RecipePaywallGate() {
   const router = useRouter();
   const pathname = usePathname();
-  const { hasEverSubscribed } = useAccess();
-  const isTokensPage = pathname === "/tokens";
 
   const [open, setOpen] = useState(true);
 
   const [selectedPlan, setSelectedPlan] = useState<Plan>("annual");
+
+  // "Your free trial has ended" only applies to a brand-new user who has spent
+  // every free use across all gated surfaces — not guests, not subscribers, and
+  // not lapsed subscribers (who never had a free trial to exhaust). Fetched
+  // rather than derived from `userId` so this works from any caller regardless
+  // of whether it computed trial state itself.
+  const [trialExhausted, setTrialExhausted] = useState(false);
+  useEffect(() => {
+    let active = true;
+    fetch("/api/credits", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body) => {
+        if (active && typeof body?.trialExhausted === "boolean") {
+          setTrialExhausted(body.trialExhausted);
+        }
+      })
+      .catch(() => {
+        // Network hiccup — keep the pill hidden rather than show it wrongly.
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleClose = () => {
     router.back();
@@ -69,7 +89,7 @@ export function RecipePaywallGate() {
             <X className="size-6 text-grey-c600" />
           </button>
           <DialogHeader className="flex flex-col items-center justify-center text-center space-y-6 gap-0">
-            {!hasEverSubscribed && !isTokensPage && (
+            {trialExhausted && (
               <div className="py-1.5 px-2 rounded-lg bg-warning-c100 flex items-center gap-x-1">
                 <Time />
                 <span className="text-warning-c900 text-xs font-semibold">

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
+import { FaHeart } from "react-icons/fa";
 
 import image from "@/public/freeTokenImage.webp";
 import cash from "@/public/cash.webp";
@@ -26,8 +27,11 @@ const FreeTokens = ({ onClose }: { onClose: () => void }) => {
 
       <div className="px-6 w-full flex flex-col items-center justify-center">
         <div className="mt-8.25 flex flex-col gap-3 items-center">
-          <p className="font-semibold font-lateef text-[40px] leading-8.5">
-            Welcome to Nuko+
+          <p className="font-semibold font-lateef text-[40px] leading-8.5 flex items-center gap-1">
+            Welcome to Nuko!{" "}
+            <span>
+              <FaHeart size={20} color="#227B6F" />
+            </span>
           </p>
           <p className="font-medium text-subtle">We’re so happy you’re here.</p>
         </div>
@@ -45,19 +49,17 @@ const FreeTokens = ({ onClose }: { onClose: () => void }) => {
         <div className="flex items-center gap-[10px] py-3 px-6 bg-[#ECECE1] rounded-3xl">
           <Image src={cash} alt="cash" width={48} height={48} />
           <div className="flex flex-col gap-0.75">
-            <p className="text-[#103E2A] font-semibold max-[400px]:text-sm">
+            <p className="text-[#103E2A] font-semibold text-base max-[400px]:text-sm">
               You got free tokens!
             </p>
-            <p className="text-sm max-[400px]:text-xs w-10/12 max-[400px]:w-full">
-              Use them to explore, connect and feel good.
+            <p className="text-sm text-base-text w-10/12 max-[400px]:w-full max-[400px]:text-xs">
+              Use them to explore, find your match and recipes.
             </p>
           </div>
           <div className="relative">
-            <div className="flex flex-col text-center text-white bg-[#3E6C4C] rounded-full py-4 px-6">
-              <p className="font-bold text-title max-[400px]:text-xl">
-                {FREE_UNITS}
-              </p>
-              <p className="text-xs max-[400px]:text-2xs">FREE TOKENS</p>
+            <div className="flex flex-col justify-center text-center text-white bg-[#3E6C4C] rounded-full w-22 h-22">
+              <p className="font-medium text-base">FREE</p>
+              <p className="font-medium text-base">TRIAL</p>
             </div>
             <div className="absolute -top-1 -right-1">
               <LineUp />

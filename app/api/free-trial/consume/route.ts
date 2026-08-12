@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { tryConsumeFreeView } from "@/lib/free-trial-server";
 import { hasActiveSubscription, hasEverSubscribed } from "@/lib/subscription";
-import { FREE_SURFACES } from "@/lib/credits";
+import { PERSONALIZED_SEARCH_SURFACE, type FreeSurface } from "@/lib/credits";
 
 // Distinct-item free-trial gate for personalized-search cache hits (so a cached
 // result still counts toward the per-surface cap without hitting the metered
@@ -10,7 +10,7 @@ import { FREE_SURFACES } from "@/lib/credits";
 //   subscriber → always allowed (no record)
 //   new user   → allowed while under the per-surface cap (idempotent per item)
 //   lapsed sub → denied (they get the upgrade overlay)
-const GATED_SURFACES: string[] = [FREE_SURFACES.personalizedSearch];
+const GATED_SURFACES: string[] = [PERSONALIZED_SEARCH_SURFACE];
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
 
   const allowed = await tryConsumeFreeView(
     user.id,
-    surface as (typeof FREE_SURFACES)[keyof typeof FREE_SURFACES],
+    surface as FreeSurface,
     itemId.trim(),
   );
   return NextResponse.json({ allowed, hasEverSubscribed: false });
