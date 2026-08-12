@@ -16,6 +16,7 @@ describe("freeTrialTokens", () => {
     expect(FREE_TRIALS_TOTAL).toBe(
       Object.keys(FREE_SURFACES).length * FREE_USES_PER_SURFACE,
     );
+    // personalizedSearch is currently excluded (feature unavailable).
     expect(FREE_TRIALS_TOTAL).toBe(6); // 3 surfaces × 2
   });
 

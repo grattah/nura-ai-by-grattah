@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getTokenState, isLowState, type TokenState } from "@/lib/credits-server";
+import { getFreeTrialTokens } from "@/lib/free-trial-server";
 import { hasActiveSubscription, hasEverSubscribed } from "@/lib/subscription";
 import { WEEKLY_UNITS } from "@/lib/credits";
 
@@ -38,6 +39,7 @@ export async function GET() {
       hasAccess: false,
       hasEverSubscribed: false,
       isSubscriber: false,
+      trialExhausted: false,
       isLow: false,
       isOut: true,
       state: EMPTY,
@@ -54,12 +56,20 @@ export async function GET() {
   // subscriber concept (buy-tokens UI) — new users get EMPTY.
   const hasAccess = activeSub || !everSubscribed;
   const state = activeSub ? await getTokenState(user.id) : EMPTY;
+  // Only meaningful for a brand-new (never-subscribed) user: have they used up
+  // every free trial across all gated surfaces? Subscribers and lapsed
+  // subscribers don't have a "free trial" to exhaust.
+  const trialExhausted =
+    !activeSub && !everSubscribed
+      ? (await getFreeTrialTokens(user.id)).exhausted
+      : false;
 
   return NextResponse.json({
     authenticated: true,
     hasAccess,
     hasEverSubscribed: everSubscribed,
     isSubscriber: activeSub,
+    trialExhausted,
     isLow: activeSub ? isLowState(state) : false,
     isOut: activeSub ? state.totalRemaining <= 0 : false,
     state,

@@ -120,7 +120,8 @@ export default async function HomePage({
             className="absolute -right-3.5 -top-12 z-0"
           />
         </section>
-
+        
+        <div id="for-you"></div>
         <ForYouCategory />
 
         {hasHealthProfile && (

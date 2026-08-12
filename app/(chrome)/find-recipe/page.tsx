@@ -300,6 +300,23 @@ const page = () => {
         body: JSON.stringify({ query: searchTerm }),
       });
 
+      // Guest (401) or no active subscription (403): show the paywall/sign-up
+      // modal rather than the generic error, same as handleGenerate.
+      if (res.status === 401) {
+        setShowModalScreenLoader(false);
+        setShowSuggestions(false);
+        setShowSignInModal(true);
+        setPaywallOpen(false);
+        return;
+      }
+      if (res.status === 403) {
+        setShowModalScreenLoader(false);
+        setShowSuggestions(false);
+        setShowSignInModal(false);
+        setPaywallOpen(true);
+        return;
+      }
+
       if (!res.ok) throw new Error("Failed to fetch suggestions");
 
       const data = await res.json();

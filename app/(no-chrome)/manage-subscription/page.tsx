@@ -27,13 +27,13 @@ export default async function ManageSubscriptionPage() {
   const planLabel = isFree
     ? "Free Plan"
     : sub.plan === "monthly"
-      ? "Monthly Plan"
-      : "Premium Plan";
+    ? "Monthly Plan"
+    : "Premium Plan";
   const priceLabel = isFree
-    ? `${trial!.tokensLeft} free token${trial!.tokensLeft === 1 ? "" : "s"}`
+    ? ``
     : sub.plan === "monthly"
-      ? "£7.99/month"
-      : "£79/year";
+    ? "£7.99/month"
+    : "£79/year";
 
   // Expired reuses the card layout with the error palette; free plan has no
   // billing date to show.
@@ -63,11 +63,13 @@ export default async function ManageSubscriptionPage() {
 
           <div className="flex-1 min-w-0 text-center">
             <h1 className="text-xl font-semibold text-foreground">
-              Manage subscription
+              Membership
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              You're on Nuko+ ✨
-            </p>
+            {sub.plan && (
+              <p className="text-sm text-muted-foreground mt-1">
+                You're on Nuko+ ✨
+              </p>
+            )}
           </div>
         </div>
 
@@ -87,13 +89,15 @@ export default async function ManageSubscriptionPage() {
                 </div>
                 <p className={valueClass}>{priceLabel}</p>
               </div>
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-[#333333CC]">
-                  {isExpired ? "Expired on" : "Next billing date"}
-                </p>
-                {/* A free plan has no billing date. */}
-                <p className={rowValueClass}>{isFree ? "-- --" : dated}</p>
-              </div>
+              {sub.plan && (
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-[#333333CC]">
+                    {isExpired ? "Expired on" : "Next billing date"}
+                  </p>
+                  {/* A free plan has no billing date. */}
+                  <p className={rowValueClass}>{dated}</p>
+                </div>
+              )}
             </div>
           </div>
 

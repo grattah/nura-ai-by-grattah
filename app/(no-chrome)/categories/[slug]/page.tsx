@@ -40,6 +40,7 @@ export default function CategoryDetailPage() {
   const [activeType, setActiveType] = useState("all");
   const [availableTypes, setAvailableTypes] = useState<string[]>([]);
 
+
   const [recipes, setRecipes] = useState<CategoryRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);

@@ -45,12 +45,21 @@ export const FREE_USES_PER_SURFACE = 2;
 // content viewing is auth-gated, not paid). Values are the `surface` keys stored
 // in public.free_trial_usage.
 export const FREE_SURFACES = {
-  personalizedSearch: "personalized_search",
+  // personalizedSearch: "personalized_search", // feature currently unavailable — excluded from the free-trial pool
   recipeGenerate: "recipe_generate",
   followupChat: "followup_chat",
+  recipeSuggestions: "recipe_suggestions",
 } as const;
 
-export type FreeSurface = (typeof FREE_SURFACES)[keyof typeof FREE_SURFACES];
+// Kept as a standalone literal (rather than in FREE_SURFACES above) so
+// lib/personalized-search-server.ts and its page/route still compile while the
+// feature is unavailable. Move it back into FREE_SURFACES to resume counting
+// it toward the free trial.
+export const PERSONALIZED_SEARCH_SURFACE = "personalized_search" as const;
+
+export type FreeSurface =
+  | (typeof FREE_SURFACES)[keyof typeof FREE_SURFACES]
+  | typeof PERSONALIZED_SEARCH_SURFACE;
 
 /** Total free trials a new user gets across all paywalled surfaces (3 × 2 = 6). */
 export const FREE_TRIALS_TOTAL =

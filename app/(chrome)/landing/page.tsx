@@ -67,28 +67,19 @@ const page = async () => {
                 Meet Nuko,
               </p>
               <p className="font-extrabold text-[32px] max-[400px]:text-[30px] text-base-text leading-[120%] font-redHatDisplay">
-                The bioactivity-based whole-food solutions app
+                Instant wellness match with just a search
               </p>
             </div>
             <p className="text-base text-subtle font-medium leading-[22px] font-redHatDisplay">
-              Every ingredient contains bioactive compounds. Nuko maps them to
-              the everyday goals you actually care about, personalized to you.
+              Log your wellness goal, and get instantly matched to bio-solutions
+              built for you.
             </p>
             <Link
               href="/auth/login?landing=true"
               className="bg-mint-green text-white w-fit rounded-full py-3 px-10 font-semibold text-sm font-redHatText"
             >
-              Sign up
+              Get started
             </Link>
-            <p className="text-sm text-subtle font-redHatDisplay">
-              Got an account?{" "}
-              <Link
-                href="/auth/login?landing=true"
-                className="text-mint-green font-extrabold"
-              >
-                Sign in
-              </Link>
-            </p>
           </div>
           <Image
             src="/search-sec-flower.svg"
@@ -101,7 +92,7 @@ const page = async () => {
 
         <div className="w-full">
           <Image
-            src="/Landing.webp"
+            src="/landing.png"
             alt="app-image"
             className=""
             width={366}

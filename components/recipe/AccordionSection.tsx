@@ -38,7 +38,7 @@ const AccordionSection = ({
   const { isSubscriber, isLoading } = useAccess();
 
   const lockIcon = isLoading ? null : isSubscriber || popular ? (
-    <LockKeyholeOpen size={20} color="#9CA5A3" className="ml-auto" />
+    <></>
   ) : (
     <LockKeyhole size={20} color="#9CA5A3" className="ml-auto" />
   );
