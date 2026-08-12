@@ -12,7 +12,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import FilledLock from "../vectors/filled-lock";
 import { Plan, PLANS } from "@/constants";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAccess } from "@/components/providers/access-provider";
 import Time from "../vectors/time";
 
@@ -24,14 +24,33 @@ interface PaywallModalProps {
 export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
   const router = useRouter();
   const pathname = usePathname();
-  // Only brand-new users (never subscribed) see the "free trial has ended"
-  // badge; lapsed subscribers just see the plan chooser.
-  const { hasEverSubscribed } = useAccess();
-  const isTokensPage = pathname === "/tokens";
 
   // Plan chooser only — payment renders on the checkout page for the selected
   // plan (passed via ?plan=).
   const [selectedPlan, setSelectedPlan] = useState<Plan>("annual");
+
+  // "Your free trial has ended" only applies to a brand-new user who has spent
+  // every free use across all gated surfaces — not guests, not subscribers, and
+  // not lapsed subscribers (who never had a free trial to exhaust). Fetched
+  // rather than derived from `userId` so this works from any caller regardless
+  // of whether it computed trial state itself.
+  const [trialExhausted, setTrialExhausted] = useState(false);
+  useEffect(() => {
+    let active = true;
+    fetch("/api/credits", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body) => {
+        if (active && typeof body?.trialExhausted === "boolean") {
+          setTrialExhausted(body.trialExhausted);
+        }
+      })
+      .catch(() => {
+        // Network hiccup — keep the pill hidden rather than show it wrongly.
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleClose = (val: boolean) => {
     onOpenChange(val);
@@ -76,7 +95,7 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
             <X className="size-6 text-grey-c600" />
           </button>
           <DialogHeader className="flex flex-col items-center justify-center text-center space-y-6 gap-0">
-          {!hasEverSubscribed && !isTokensPage && (
+            {trialExhausted && (
               <div className="py-1.5 px-2 rounded-lg bg-warning-c100 flex items-center gap-x-1">
                 <Time />
                 <span className="text-warning-c900 text-xs font-semibold">
