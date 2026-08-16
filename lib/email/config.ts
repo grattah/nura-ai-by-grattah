@@ -1,7 +1,7 @@
 // Shared, client-safe email config (no server-only import) so templates can be
 // unit-tested. Email-safe hex colors (clients don't support oklch).
 export const APP_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? "https://nukohealth.app";
+  process.env.NEXT_PUBLIC_APP_URL ?? "https://www.nuko.health";
 
 // Sender identity, e.g. "Nuko <hello@mail.nukohealth.app>". Falls back to
 // Resend's shared onboarding sender for local/dev so nothing throws.
