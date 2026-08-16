@@ -297,3 +297,66 @@ describe("Recipe Match Score — display spec (§7)", () => {
     expect(legacy.highest?.label).toBe("Digestive Sensitivities");
   });
 });
+
+// ── Alias de-duplication ────────────────────────────────────────────────────
+// Several keys alias to one PRD formula. A prod profile holding
+// {gout, gerd, type-2-diabetes, prediabetes, heart-disease, type-1-diabetes}
+// rendered "Diabetes 53%" three times AND divided the average by 6 instead of 4.
+describe("Recipe Match Score — one credit per formula", () => {
+  const flat = {
+    bioBySlug: bySlug({
+      BloodSugar: 60, WeightMetabolic: 40, Heart: 70, CholLipid: 60,
+      Inflammation: 50, Gut: 70, Microbiome: 60,
+    }),
+    points: { sugar: 0, salt: 0, satFat: 0, energy: 0, protein: 0, fiber: 0 },
+    track: "Beverage" as const,
+    ironRich: false,
+    waterContentPercent: 0,
+    goals: [] as string[],
+  };
+
+  it("collapses the three diabetes aliases into a single credit", () => {
+    const r = computeMatchScore({
+      ...flat,
+      conditions: [
+        "gout", "gerd", "type-2-diabetes", "prediabetes",
+        "heart-disease", "type-1-diabetes",
+      ],
+    });
+    // gout is unmapped (§9); the 3 diabetes keys collapse to 1.
+    expect(r.creditCount).toBe(3);
+    const labels = r.breakdown.map((b) => b.label);
+    expect(labels.filter((l) => l === "Diabetes")).toHaveLength(1);
+    expect(new Set(labels).size).toBe(labels.length); // no repeats at all
+  });
+
+  it("keeps the earliest selection when aliases collide (§7.1)", () => {
+    const r = computeMatchScore({ ...flat, conditions: ["prediabetes", "diabetes"] });
+    expect(r.creditCount).toBe(1);
+    expect(r.breakdown[0].key).toBe("prediabetes");
+  });
+
+  it("no longer skews the average by counting one condition three times", () => {
+    const three = computeMatchScore({
+      ...flat,
+      conditions: ["heart-disease", "type-1-diabetes", "type-2-diabetes", "prediabetes"],
+    });
+    const once = computeMatchScore({
+      ...flat,
+      conditions: ["heart-disease", "diabetes"],
+    });
+    expect(three.average).toBeCloseTo(once.average!, 6);
+  });
+
+  it("a condition and a goal sharing a name stay separate credits", () => {
+    // "menopause" the condition and any goal are different formulas — the dedupe
+    // key is scoped by kind so it can never merge across them.
+    const r = computeMatchScore({
+      ...flat,
+      conditions: ["menopause", "perimenopause"],
+      goals: ["sleep"],
+    });
+    expect(r.creditCount).toBe(2);
+    expect(r.breakdown.map((b) => b.kind).sort()).toEqual(["condition", "goal"]);
+  });
+});

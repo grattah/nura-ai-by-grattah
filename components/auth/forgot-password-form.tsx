@@ -28,8 +28,11 @@ export function ForgotPasswordForm({
 
     try {
       // The url which will be included in the email. This URL needs to be configured in your redirect URLs in the Supabase dashboard at https://supabase.com/dashboard/project/_/auth/url-configuration
+      // Derive from the running origin, never a hardcoded host: the app moved
+      // from nukohealth.app to nuko.health and the old literal now 308-redirects,
+      // which breaks the emailed reset link.
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `https://nukohealth.app/auth/update-password`,
+        redirectTo: `${window.location.origin}/auth/update-password`,
       });
       if (error) throw error;
       setShowConfirmModal(false);

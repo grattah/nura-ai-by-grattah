@@ -10,7 +10,7 @@ import { embedder } from "./embedder";
 import { vectorDB } from "./vector-db";
 import { createServiceRoleClient } from "../supabase/server";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://nukohealth.app";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.nuko.health";
 
 export interface RecipeForIngest {
   id: string;
