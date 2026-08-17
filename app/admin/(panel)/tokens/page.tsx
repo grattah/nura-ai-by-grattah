@@ -33,6 +33,11 @@ interface SurfaceRow {
   provider: string;
   model: string;
   calls: number;
+  // The split matters: without it estimateCostUsd blends the input and output
+  // rates, which overstates every surface (worst on input-heavy work at
+  // Sonnet's 5x output premium) and let one surface exceed the page total.
+  input_tokens: number;
+  output_tokens: number;
   total_tokens: number;
   images: number;
 }
@@ -68,14 +73,27 @@ interface RecentRow {
   model: string;
   surface: string;
   source: string;
+  input_tokens: number;
+  output_tokens: number;
   total_tokens: number;
   images: number;
   billed: boolean;
+  /** Credits actually deducted. Null on unbilled calls — see `billed`. */
+  units: number | null;
+  /** Null for offline/cron work that isn't attributable to an account. */
+  user_id: string | null;
 }
 
 const fmt = (n: number) => n.toLocaleString();
 const fmtUsd = (n: number) =>
   n >= 1 ? `$${n.toFixed(2)}` : `$${n.toFixed(3)}`;
+// A single call costs a fraction of a cent, so the per-event column needs finer
+// precision than the aggregate KPIs — 3dp would render most rows as "$0.006".
+const fmtUsdPrecise = (n: number) => {
+  if (n === 0) return "$0";
+  if (n < 0.0001) return "<$0.0001";
+  return `$${n.toFixed(4)}`;
+};
 
 // Preserve the range + both tables' page indices across pagination links.
 function tokensHref(range: string, usersPage: number, eventsPage: number) {
@@ -166,7 +184,7 @@ export default async function TokensPage({
     admin
       .from("token_usage" as never)
       .select(
-        "id, created_at, provider, model, surface, source, total_tokens, images, billed",
+        "id, created_at, provider, model, surface, source, input_tokens, output_tokens, total_tokens, images, billed, units, user_id",
       )
       .gte("created_at" as never, since as never)
       .order("created_at" as never, { ascending: false })
@@ -229,14 +247,24 @@ export default async function TokensPage({
     cost: Number(r.total_tokens) * blendedRate,
   }));
 
-  // Resolve top-user emails (service role).
+  // Resolve emails for BOTH tables in one deduped pass (service role). The two
+  // lists overlap heavily, and getUserById is one round-trip each — resolving
+  // them separately would repeat most of the same lookups.
   const userEmails = new Map<string, string>();
+  const idsToResolve = new Set<string>([
+    ...topUsers.map((u) => u.user_id),
+    ...recent.flatMap((r) => (r.user_id ? [r.user_id] : [])),
+  ]);
   await Promise.all(
-    topUsers.map(async (u) => {
-      const { data } = await admin.auth.admin.getUserById(u.user_id);
-      if (data.user?.email) userEmails.set(u.user_id, data.user.email);
+    [...idsToResolve].map(async (id) => {
+      const { data } = await admin.auth.admin.getUserById(id);
+      if (data.user?.email) userEmails.set(id, data.user.email);
     }),
   );
+
+  /** Email if we resolved one, else a short id, else "—" for system work. */
+  const userLabel = (id: string | null) =>
+    id ? (userEmails.get(id) ?? `${id.slice(0, 8)}…`) : "—";
 
   const kpis = [
     { label: "Total tokens", value: fmt(summary.totalTokens) },
@@ -362,13 +390,23 @@ export default async function TokensPage({
             <p className="text-sm text-muted-foreground">No recent events.</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm overflow-x-auto">
                 <thead>
                   <tr className="text-left text-xs text-muted-foreground">
                     <th className="py-2 pr-3 font-medium">When</th>
+                    <th className="py-2 px-3 font-medium">User</th>
                     <th className="py-2 px-3 font-medium">Surface</th>
                     <th className="py-2 px-3 font-medium">Model</th>
-                    <th className="py-2 pl-3 font-medium text-right">Tokens</th>
+                    <th className="py-2 px-3 font-medium text-right">Tokens</th>
+                    <th className="py-2 px-3 font-medium text-right">
+                      Credits
+                    </th>
+                    <th
+                      className="py-2 pl-3 font-medium text-right"
+                      title="Estimated provider cost for this call, from MODEL_PRICING in lib/usage-pricing.ts"
+                    >
+                      Est. cost
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -382,7 +420,10 @@ export default async function TokensPage({
                           minute: "2-digit",
                         })}
                       </td>
-                      <td className="py-2 px-3 text-foreground break-all">
+                      <td className="py-2 px-3 text-muted-foreground break-all text-nowrap">
+                        {userLabel(r.user_id)}
+                      </td>
+                      <td className="py-2 px-3 text-foreground break-all text-nowrap">
                         {r.surface}
                         {!r.billed && (
                           <span className="ml-1 text-[10px] uppercase text-muted-foreground">
@@ -390,13 +431,26 @@ export default async function TokensPage({
                           </span>
                         )}
                       </td>
-                      <td className="py-2 px-3 text-muted-foreground break-all">
+                      <td className="py-2 px-3 text-muted-foreground break-all text-nowrap">
                         {r.model}
                       </td>
-                      <td className="py-2 pl-3 text-right text-foreground">
+                      <td className="py-2 px-3 text-right text-muted-foreground tabular-nums text-nowrap">
                         {r.images > 0
                           ? `${fmt(Number(r.total_tokens))} +${r.images}🖼`
                           : fmt(Number(r.total_tokens))}
+                      </td>
+                      <td className="py-2 px-3 text-right tabular-nums text-nowrap">
+                        {r.billed && r.units != null ? (
+                          <span className="font-medium text-foreground">
+                            −{fmt(Number(r.units))}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+
+                      <td className="py-2 pl-3 text-right tabular-nums text-nowrap text-muted-foreground">
+                        {fmtUsdPrecise(estimateCostUsd(r))}
                       </td>
                     </tr>
                   ))}
