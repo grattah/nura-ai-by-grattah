@@ -20,7 +20,7 @@ const ProfileSuccessModal = ({
       />
 
       {/* Card */}
-      <div className="relative w-full max-w-95.5 bg-white rounded-3xl px-6 py-8 flex flex-col items-center text-center">
+      <div className="relative w-full max-w-95.5 bg-white rounded-2xl px-6 py-8 flex flex-col items-center text-center">
         <div className="flex justify-center items-center text-center">
           <SuccessAnimation />
         </div>
