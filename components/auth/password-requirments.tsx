@@ -37,7 +37,7 @@ interface PasswordRequirementsProps {
 
 export function PasswordRequirements({ strength }: PasswordRequirementsProps) {
   return (
-    <div className="bg-grey-c100 rounded-xl p-3 space-y-3">
+    <div className="bg-[#E8E6DC] rounded-xl p-3 space-y-3">
       <p className="text-sm font-medium text-base-text">
         Password needs at least:
       </p>
@@ -53,11 +53,11 @@ export function PasswordRequirements({ strength }: PasswordRequirementsProps) {
               />
             ) : (
               <Circle
-                className="w-4 h-4 shrink-0 text-muted-foreground"
+                className="w-4 h-4 shrink-0 text-mint-green"
                 strokeWidth={1.5}
               />
             )}
-            <span className="text-sm text-foreground">{label}</span>
+            <span className="text-sm text-base-text">{label}</span>
           </div>
         );
       })}

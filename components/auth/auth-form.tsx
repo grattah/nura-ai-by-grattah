@@ -32,7 +32,7 @@ import {
   PasswordRequirements,
   checkPasswordStrength,
   isPasswordValid,
-} from "@/components/profile/password-requirements";
+} from "@/components/auth/password-requirments";
 
 declare const google: any;
 
