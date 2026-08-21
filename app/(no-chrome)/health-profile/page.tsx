@@ -279,7 +279,13 @@ function PopulatedView() {
       </div>
 
       {justCompleted && (
-        <ProfileSuccessModal onClose={dismissJustCompleted} />
+        <ProfileSuccessModal
+          onClose={dismissJustCompleted}
+          onSeeRecommendations={() => {
+            dismissJustCompleted();
+            handleSeeRecommendation();
+          }}
+        />
       )}
 
       <PaywallModal open={paywallOpen} onOpenChange={setPaywallOpen} />

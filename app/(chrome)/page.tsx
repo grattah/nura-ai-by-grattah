@@ -19,6 +19,7 @@ import { FreeTokensModal } from "@/components/tokens/FreeTokensModal";
 import { FeatureRequest } from "@/components/home/feature-request";
 import { ForYouCategory } from "@/components/for-you-category";
 import { DeletionScheduledModal } from "@/components/profile/deletion-scheduled-modal";
+import { AddToHomescreenButton } from "@/components/home/add-to-homescreen-button";
 
 type RecipeWithTags = {
   id: string;
@@ -237,9 +238,7 @@ export default async function HomePage({
         <UpgradeBanner />
 
         <FeatureRequest />
-        <p className="mt-11 underline font-semibold text-base text-mint-green">
-          Add the app to your homescreen
-        </p>
+        <AddToHomescreenButton />
       </main>
       {showFreeTokens && user && <FreeTokensModal userId={user.id} />}
       <DeletionScheduledModal show={deletionScheduled} />

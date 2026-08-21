@@ -107,6 +107,7 @@ export default function Comment({
                 </span>
 
                 <CommentLikeButton
+                  key={latestComment?.id}
                   commentId={latestComment?.id || ""}
                   recipeId={recipeId}
                   initialLiked={latestComment?.hasLiked ?? false}

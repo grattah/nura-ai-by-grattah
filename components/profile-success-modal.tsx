@@ -3,7 +3,13 @@
 import React from "react";
 import SuccessAnimation from "./SuccessAnimation";
 
-const ProfileSuccessModal = ({ onClose }: { onClose?: () => void }) => {
+const ProfileSuccessModal = ({
+  onClose,
+  onSeeRecommendations,
+}: {
+  onClose?: () => void;
+  onSeeRecommendations?: () => void;
+}) => {
   return (
     <div className="fixed inset-0 h-dvh z-50 flex items-center justify-center px-6">
       <button
@@ -27,7 +33,7 @@ const ProfileSuccessModal = ({ onClose }: { onClose?: () => void }) => {
         </div>
 
         <button
-          onClick={onClose}
+          onClick={onSeeRecommendations ?? onClose}
           className="w-full py-3 rounded-full bg-mint-green text-white text-sm font-medium hover:opacity-90 transition-opacity"
         >
           See your recommendations

@@ -1,4 +1,5 @@
 import { CheckCircle2, Circle } from "lucide-react";
+import { FaCheckCircle } from "react-icons/fa";
 
 export interface PasswordStrength {
   hasLength: boolean;
@@ -45,7 +46,7 @@ export function PasswordRequirements({ strength }: PasswordRequirementsProps) {
         return (
           <div key={key} className="flex items-center gap-2.5">
             {met ? (
-              <CheckCircle2
+              <FaCheckCircle
                 className="w-4 h-4 shrink-0"
                 style={{ color: "var(--mint-green)" }}
                 strokeWidth={2.5}

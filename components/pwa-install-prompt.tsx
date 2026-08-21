@@ -17,6 +17,7 @@ import SuccessAnimation from "@/components/SuccessAnimation";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "nura_pwa_prompt_dismissed";
+const NEVER_SHOW_KEY = "nura_pwa_prompt_never_show";
 const DISMISS_TTL_DAYS = 2;
 
 type IOSBrowser = "safari" | "crios" | "fxios" | "edgios" | "other";
@@ -58,6 +59,27 @@ function wasDismissedRecently(): boolean {
 function markDismissed() {
   try {
     localStorage.setItem(STORAGE_KEY, String(Date.now()));
+  } catch {}
+}
+
+function wasNeverShowSet(): boolean {
+  try {
+    return localStorage.getItem(NEVER_SHOW_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markNeverShow() {
+  try {
+    localStorage.setItem(NEVER_SHOW_KEY, "1");
+  } catch {}
+}
+
+function clearDismissFlags() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(NEVER_SHOW_KEY);
   } catch {}
 }
 
@@ -113,21 +135,41 @@ export function PWAInstallPrompt() {
       setVisible(false);
       // setModalOpen(true);
     };
+    const onShowRequest = () => {
+      if (!isSubscriber || isStandalone()) return;
+      clearDismissFlags();
+      const browser = getIOSBrowser();
+      if (browser === "safari" || browser === "crios") {
+        setMode(browser === "safari" ? "ios-safari" : "ios-chrome");
+        setVisible(true);
+      } else if (window.__nukoBip) {
+        setDeferredPrompt(window.__nukoBip);
+        setMode("android");
+        setVisible(true);
+      }
+    };
     window.addEventListener("nuko:bip", onBip);
     window.addEventListener("beforeinstallprompt", onDirect);
     window.addEventListener("nuko:installed", onInstalled);
     window.addEventListener("appinstalled", onInstalled);
+    window.addEventListener("nuko:show-install-prompt", onShowRequest);
     return () => {
       window.removeEventListener("nuko:bip", onBip);
       window.removeEventListener("beforeinstallprompt", onDirect);
       window.removeEventListener("nuko:installed", onInstalled);
       window.removeEventListener("appinstalled", onInstalled);
+      window.removeEventListener("nuko:show-install-prompt", onShowRequest);
     };
-  }, []);
+  }, [isSubscriber]);
 
   useEffect(() => {
     if (isLoading) return;
-    if (!isSubscriber || isStandalone() || wasDismissedRecently()) {
+    if (
+      !isSubscriber ||
+      isStandalone() ||
+      wasDismissedRecently() ||
+      wasNeverShowSet()
+    ) {
       setVisible(false);
       return;
     }
@@ -138,6 +180,7 @@ export function PWAInstallPrompt() {
     if (!iosEligible && !androidEligible) return;
 
     const timer = setTimeout(() => {
+      if (wasDismissedRecently() || wasNeverShowSet()) return;
       setMode(
         browser === "safari"
           ? "ios-safari"
@@ -171,6 +214,11 @@ export function PWAInstallPrompt() {
       return;
     }
     markDismissed();
+    finishClose();
+  };
+
+  const neverShowAgain = () => {
+    markNeverShow();
     finishClose();
   };
 
@@ -367,7 +415,7 @@ export function PWAInstallPrompt() {
                   >
                     Done
                   </button>
-                  <button onClick={dismiss} className="text-xs font-medium text-subtle text-center underline">
+                  <button onClick={neverShowAgain} className="text-xs font-medium text-subtle text-center underline">
                     Don’t show this message again
                   </button>
                 </div>
@@ -441,7 +489,7 @@ export function PWAInstallPrompt() {
                   >
                     Done
                   </button>
-                  <button onClick={dismiss} className="text-xs font-medium text-subtle text-center underline">
+                  <button onClick={neverShowAgain} className="text-xs font-medium text-subtle text-center underline">
                     Don’t show this message again
                   </button>
                 </div>
