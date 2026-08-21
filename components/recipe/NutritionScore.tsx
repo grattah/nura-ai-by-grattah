@@ -225,6 +225,7 @@ const NutritionScore = ({
               </div>
               <Link
                 href="/health-profile"
+                data-paywall-passthrough
                 className="bg-mint-green text-white py-2 px-4 rounded-full font-medium text-xs"
               >
                 Choose my goals
