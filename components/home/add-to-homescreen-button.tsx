@@ -1,6 +1,12 @@
 "use client";
 
+import { useAccess } from "@/hooks/use-access";
+
 export function AddToHomescreenButton() {
+  const { isSubscriber } = useAccess();
+
+  if (!isSubscriber) return null;
+
   return (
     <button
       onClick={() => window.dispatchEvent(new Event("nuko:show-install-prompt"))}
