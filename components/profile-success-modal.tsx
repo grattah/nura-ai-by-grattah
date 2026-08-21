@@ -34,7 +34,7 @@ const ProfileSuccessModal = ({
 
         <button
           onClick={onSeeRecommendations ?? onClose}
-          className="w-full py-3 rounded-full bg-mint-green text-white text-sm font-medium hover:opacity-90 transition-opacity"
+          className="w-full py-3.5 rounded-full bg-mint-green text-white text-base font-medium hover:opacity-90 transition-opacity"
         >
           See your recommendations
         </button>
