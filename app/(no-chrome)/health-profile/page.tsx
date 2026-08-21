@@ -25,7 +25,11 @@ import {
   summarizeMedications,
 } from "@/lib/health-profile/summarize";
 import Stepper from "@/components/health-profile/stepper";
-import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import ProfileSuccessModal from "@/components/profile-success-modal";
+import { PaywallModal } from "@/components/paywall/paywall-modal";
+import { useAccess } from "@/components/providers/access-provider";
 
 const BASE = "/health-profile";
 
@@ -114,8 +118,26 @@ function Intro() {
 
 // ── Populated view (profile exists) ─────────────────────────────────────────
 function PopulatedView() {
-  const { draft, enterEdit, removeSection, removeProfile, saving } =
-    useHealthProfile();
+  const {
+    draft,
+    enterEdit,
+    removeSection,
+    removeProfile,
+    saving,
+    justCompleted,
+    dismissJustCompleted,
+  } = useHealthProfile();
+  const { isSubscriber } = useAccess();
+  const router = useRouter();
+  const [paywallOpen, setPaywallOpen] = useState(false);
+
+  const handleSeeRecommendation = () => {
+    if (isSubscriber) {
+      router.push("/#for-you");
+    } else {
+      setPaywallOpen(true);
+    }
+  };
 
   const rows: {
     step: Step;
@@ -231,13 +253,14 @@ function PopulatedView() {
           </div>
         ))}
 
-        <Link
-          href="/#for-you"
+        <button
+          type="button"
+          onClick={handleSeeRecommendation}
           className="flex gap-[10px] items-center justify-center border rounded-full w-full py-3.75 text-mint-green text-base font-medium border-mint-green"
         >
           See your recommendation{" "}
           <ArrowRight color="#227B6F" strokeWidth={1.78} />
-        </Link>
+        </button>
 
         <p className="text-sm text-subtle pt-2 mt-[22px]">
           You can edit any section anytime.
@@ -254,6 +277,12 @@ function PopulatedView() {
           Delete health profile
         </button> */}
       </div>
+
+      {justCompleted && (
+        <ProfileSuccessModal onClose={dismissJustCompleted} />
+      )}
+
+      <PaywallModal open={paywallOpen} onOpenChange={setPaywallOpen} />
     </div>
   );
 }

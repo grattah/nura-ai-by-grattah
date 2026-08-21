@@ -60,7 +60,7 @@ const page = async () => {
   
   return (
     <main className="bg-background">
-      <div className="px-6 pt-4">
+      <div className="px-6 pt-4 max-w-sm mx-auto">
         <div className="pt-2 pb-5 font-redHatDisplay relative">
           <div className="flex flex-col gap-4 relative z-10">
             <div className="flex flex-col gap-4.5">
@@ -76,7 +76,7 @@ const page = async () => {
               built for you.
             </p>
             <Link
-              href="/auth/login?landing=true"
+              href="/auth/login"
               className="bg-mint-green text-white w-fit rounded-full py-3 px-10 font-semibold text-sm font-redHatText"
             >
               Get started
@@ -91,7 +91,7 @@ const page = async () => {
           />
         </div>
 
-        <div className="w-full">
+        <div className="w-full flex items-center justify-center">
           <Image
             src="/landing.png"
             alt="app-image"
@@ -118,7 +118,7 @@ const page = async () => {
               Start mapping your food to your goals today
             </p>
             <Link
-              href="/auth/login?landing=true"
+              href="/auth/login"
               className="text-white bg-mint-green py-3 px-10 rounded-full text-sm font-semibold"
             >
               Sign up
@@ -126,7 +126,7 @@ const page = async () => {
             <p className="font-medium text-sm text-subtle">
               Got an account?{" "}
               <Link
-                href="/auth/login?landing=true"
+                href="/auth/login"
                 className="font-extrabold text-mint-green"
               >
                 Sign in
@@ -149,46 +149,48 @@ const page = async () => {
           />
         </div>
       </div>
-      <footer className="mt-12 bg-[#155151] text-white py-3 px-6 flex flex-col gap-8">
-        <div className="flex items-center gap-2">
-          <NukoLogo />
-          <p className="text-xl font-semibold leading-[32px]">Nuko</p>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <p className="font-semibold text-sm leading-[120%]">Legal</p>
-          <div className="flex flex-col gap-2">
-            <Link href="/terms-and-privacy" className="text-xs leading-[120%]">
-              Privacy policy
-            </Link>
-            <Link href="/terms-and-privacy" className="text-xs leading-[120%]">
-              Terms of service
-            </Link>
-            <Link href="/health-policy" className="text-xs leading-[120%]">
-              Washington Health Data Privacy Policy
-            </Link>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <p className="font-semibold text-sm leading-[120%]">Company</p>
-          <p className="text-xs leading-[120%]">support@nukohealth.com</p>
-        </div>
-
-        <div className="border-t border-[#FFFFFF33] p-4 flex flex-col gap-4 items-center text-center">
-          <p className="text-xs text-[#F0E8DD] leading-[120%]">
-            © Copyright 2026, All rights reserved
-          </p>
+      <footer className="mt-12 bg-[#155151] text-white py-3 px-6">
+        <div className="flex flex-col gap-8 max-w-sm mx-auto">
           <div className="flex items-center gap-2">
-            <Link href="">
-              <FaInstagram size={18} color="#FFFFFF" />
-            </Link>
-            <Link href="https://www.linkedin.com/company/nukohealth?trk=blended-typeahead">
-              <TbBrandLinkedin size={18} color="#FFFFFF" />
-            </Link>
-            <Link href="">
-              <FaTiktok size={18} color="#FFFFFF" />
-            </Link>
+            <NukoLogo />
+            <p className="text-xl font-semibold leading-[32px]">Nuko</p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <p className="font-semibold text-sm leading-[120%]">Legal</p>
+            <div className="flex flex-col gap-2">
+              <Link href="/terms-and-privacy" className="text-xs leading-[120%]">
+                Privacy policy
+              </Link>
+              <Link href="/terms-and-privacy" className="text-xs leading-[120%]">
+                Terms of service
+              </Link>
+              <Link href="/health-policy" className="text-xs leading-[120%]">
+                Washington Health Data Privacy Policy
+              </Link>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <p className="font-semibold text-sm leading-[120%]">Company</p>
+            <p className="text-xs leading-[120%]">support@nukohealth.com</p>
+          </div>
+
+          <div className="border-t border-[#FFFFFF33] p-4 flex flex-col gap-4 items-center text-center">
+            <p className="text-xs text-[#F0E8DD] leading-[120%]">
+              © Copyright 2026, All rights reserved
+            </p>
+            <div className="flex items-center gap-2">
+              <Link href="">
+                <FaInstagram size={18} color="#FFFFFF" />
+              </Link>
+              <Link href="https://www.linkedin.com/company/nukohealth?trk=blended-typeahead">
+                <TbBrandLinkedin size={18} color="#FFFFFF" />
+              </Link>
+              <Link href="">
+                <FaTiktok size={18} color="#FFFFFF" />
+              </Link>
+            </div>
           </div>
         </div>
       </footer>

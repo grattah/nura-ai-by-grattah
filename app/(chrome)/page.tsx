@@ -73,7 +73,7 @@ export default async function HomePage({
     ids.forEach((id) => bookmarkedIds.add(id));
   }
 
-  if(!user) {
+  if (!user) {
     redirect("/landing");
   }
 
@@ -82,7 +82,7 @@ export default async function HomePage({
   // so prefetch/background renders can't consume it.
   let showFreeTokens = false;
   let hasHealthProfile = false;
-  
+
   if (user) {
     const [{ data: profile }, { data: healthProfile }] = [
       await supabase
@@ -120,7 +120,7 @@ export default async function HomePage({
             className="absolute -right-3.5 -top-12 z-0"
           />
         </section>
-        
+
         <div id="for-you"></div>
         <ForYouCategory />
 
@@ -237,6 +237,9 @@ export default async function HomePage({
         <UpgradeBanner />
 
         <FeatureRequest />
+        <p className="mt-11 underline font-semibold text-base text-mint-green">
+          Add the app to your homescreen
+        </p>
       </main>
       {showFreeTokens && user && <FreeTokensModal userId={user.id} />}
       <DeletionScheduledModal show={deletionScheduled} />

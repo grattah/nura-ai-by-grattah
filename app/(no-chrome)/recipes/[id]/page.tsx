@@ -296,9 +296,9 @@ export default async function RecipeDetailPage({
       >
         <div className="min-h-screen bg-background">
           {/* Sub-header */}
-          {/* <div className="flex items-center justify-between px-6 pt-5 pb-3">
+          <div className="flex items-center justify-between px-6 pt-5 pb-3">
             <BackButton className="size-10 grid place-items-center rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <ShareButton
                 recipeId={recipe.id}
                 recipeTitle={recipe.title}
@@ -307,8 +307,8 @@ export default async function RecipeDetailPage({
                 disabled={shareDisabled}
               />
               <BookmarkButton text="" addText="" popularStyle="" />
-            </div>
-          </div> */}
+            </div> */}
+          </div>
 
           <main className="pb-6 mt-5">
             {chrome.showHeroImage && (
@@ -349,15 +349,7 @@ export default async function RecipeDetailPage({
                 supports={topBioactivities(recipe.recipe_tags, 5)}
               />
 
-              {isSubscribed && !hasProfile ? (
-                // subscribed, no profile → locked NutritionScore (blur overlay)
-                <NutritionScore
-                  baseScore={recipe.final_score_10 ?? 0}
-                  match={{ percent: 0, label: "" }}
-                  points={nutritionPoints}
-                  hasProfile={false}
-                />
-              ) : personalizedView && matchResult?.highest ? (
+              {personalizedView && matchResult?.highest ? (
                 // subscribed, has profile, real match → unlocked NutritionScore
                 <NutritionScore
                   baseScore={recipe.final_score_10 ?? 0}
@@ -366,13 +358,17 @@ export default async function RecipeDetailPage({
                   average={matchResult.average}
                   points={nutritionPoints}
                   hasProfile
+                  isSubscribed
                 />
               ) : (
+                // Locked. NutritionScore itself picks the right copy: no
+                // profile yet, vs. has a profile but isn't subscribed.
                 <NutritionScore
                   baseScore={recipe.final_score_10 ?? 0}
                   match={{ percent: 0, label: "" }}
                   points={nutritionPoints}
-                  hasProfile={false}
+                  hasProfile={hasProfile}
+                  isSubscribed={isSubscribed}
                 />
               )}
               {personalizedView && needsSafetyAlerts && (

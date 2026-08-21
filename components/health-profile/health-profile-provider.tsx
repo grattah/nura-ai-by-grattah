@@ -32,6 +32,9 @@ interface HealthProfileContextValue {
   exists: boolean;
   mode: Mode;
   saving: boolean;
+  /** True right after a first-time profile save; drives the success modal on the base page. */
+  justCompleted: boolean;
+  dismissJustCompleted: () => void;
   update: (patch: Partial<HealthProfileDraft>) => void;
   // Navigation
   startOnboarding: () => void;
@@ -72,6 +75,9 @@ export function HealthProfileProvider({
   const [mode, setMode] = useState<Mode>("onboarding");
   const [returnTo, setReturnTo] = useState(`${BASE}/review`);
   const [saving, startSaving] = useTransition();
+  const [justCompleted, setJustCompleted] = useState(false);
+
+  const dismissJustCompleted = useCallback(() => setJustCompleted(false), []);
 
   const update = useCallback((patch: Partial<HealthProfileDraft>) => {
     setDraft((d) => ({ ...d, ...patch }));
@@ -134,6 +140,9 @@ export function HealthProfileProvider({
       router.push(`${BASE}/review`);
       return;
     }
+    // Captured before the save resolves: only a first-time save (onboarding,
+    // not editing an already-existing profile) should trigger the success modal.
+    const firstTime = !exists;
     startSaving(async () => {
       const res = await saveHealthProfile(draft);
       if ("error" in res) {
@@ -141,11 +150,12 @@ export function HealthProfileProvider({
         return;
       }
       setExists(true);
+      if (firstTime) setJustCompleted(true);
       toast.success("Health profile saved.");
       router.refresh();
       router.push(BASE);
     });
-  }, [draft, router]);
+  }, [draft, exists, router]);
 
   const removeSection = useCallback(
     (section: ProfileSection) => {
@@ -182,6 +192,8 @@ export function HealthProfileProvider({
       exists,
       mode,
       saving,
+      justCompleted,
+      dismissJustCompleted,
       update,
       startOnboarding,
       next,
@@ -196,6 +208,8 @@ export function HealthProfileProvider({
       exists,
       mode,
       saving,
+      justCompleted,
+      dismissJustCompleted,
       update,
       startOnboarding,
       next,

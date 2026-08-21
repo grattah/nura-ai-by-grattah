@@ -360,16 +360,16 @@ export function PWAInstallPrompt() {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-1.5 mt-[36px]">
+                <div className="flex flex-col gap-4 mt-[36px]">
                   <button
                     className="text-white py-3 rounded-full bg-mint-green font-medium text-sm"
                     onClick={dismiss}
                   >
                     Done
                   </button>
-                  <p className="text-xs font-medium text-subtle text-center">
-                    You’re all set!
-                  </p>
+                  <button onClick={dismiss} className="text-xs font-medium text-subtle text-center underline">
+                    Don’t show this message again
+                  </button>
                 </div>
               </div>
             )}
@@ -434,16 +434,16 @@ export function PWAInstallPrompt() {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-1.5 mt-[36px]">
+                <div className="flex flex-col gap-4 mt-[36px]">
                   <button
                     className="text-white py-3 rounded-full bg-mint-green font-medium text-sm"
                     onClick={dismiss}
                   >
                     Done
                   </button>
-                  <p className="text-xs font-medium text-subtle text-center">
-                    You’re all set!
-                  </p>
+                  <button onClick={dismiss} className="text-xs font-medium text-subtle text-center underline">
+                    Don’t show this message again
+                  </button>
                 </div>
               </div>
             )}
