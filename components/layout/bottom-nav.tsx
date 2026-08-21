@@ -6,11 +6,13 @@ import { HiMiniHome } from "react-icons/hi2";
 import { FaBookmark } from "react-icons/fa";
 import { CommunityIcon, CommunityIconActive } from "../vectors/community-icon";
 import { SearchIcon } from "@/components/vectors/search-icon";
+import { HomeIcon } from "@/components/vectors/home-icon";
+
 import { Home, Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { label: "Home", href: "/", icon: Home, activeIcon: HiMiniHome },
+  { label: "Home", href: "/", icon: HomeIcon, activeIcon: HomeIcon },
   {
     label: "Find recipe",
     href: "/find-recipe",
