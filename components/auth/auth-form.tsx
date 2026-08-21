@@ -766,7 +766,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 {step === "login" && "Enter your password to login"}
                 {isOtpStep && (
                   <>
-                    If you have a nuko account, we sent an 8-digit code to{" "}
+                    We sent an 8-digit code to{" "}
                     <span className="text-[#1B1D1D] underline inline font-semibold">
                       {email}
                     </span>
@@ -1077,16 +1077,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 >
                   Resend code
                 </button>
-
-                <p className="text-center text-sm text-subtle fixed bottom-50 translate-x-1/2">
-                  Don't have an account?{" "}
-                  <Link
-                    href="/landing"
-                    className="font-extrabold text-mint-green"
-                  >
-                    Sign up
-                  </Link>
-                </p>
               </form>
             )}
 
