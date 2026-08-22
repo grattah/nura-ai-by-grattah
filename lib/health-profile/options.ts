@@ -32,24 +32,33 @@ export const PREGNANCY_STATUS: Option[] = [
 // ── 2.2 Health goals — the app's 14 categories (keys = CATEGORY_CONFIG slugs) ─
 import {
   Activity,
+  ArrowDown,
+  BatteryMedium,
   Brain,
   CircleSlash,
   CircleX,
   CloudLightning,
   CupSoda,
+  Droplet,
+  Droplets,
   Dumbbell,
+  Flame,
   Heart,
+  HeartPulse,
   Hourglass,
   Leaf,
   type LucideIcon,
   MoonStar,
   Scale,
   Scroll,
+  Shield,
   ShieldPlus,
+  Shrink,
   Smile,
   Sparkles,
   Sprout,
   Star,
+  Stethoscope,
   Target,
   Wind,
   Zap,
@@ -66,46 +75,73 @@ import {
 export interface GoalOption extends Option {
   icon: LucideIcon;
 }
+/**
+ * The 24 goals from the AUG 21 design, in design order.
+ *
+ * IMPORTANT — a goal only affects the Match Score if its key resolves through
+ * GOAL_KEY_TO_PRD to a formula in GOAL_CREDITS. There are 13 formulas and 24
+ * goals, so 11 of these are currently DISPLAY-ONLY: computeMatchScore skips an
+ * unmapped key silently, which is why test/match-score-coverage.test.ts pins
+ * the split explicitly rather than letting it drift.
+ *
+ * Several skin goals deliberately share one formula ("Improve my skin & hair").
+ * That is safe: match-score.ts de-duplicates by formula, so picking all three
+ * counts once instead of triple-weighting skin.
+ */
 export const GOALS: GoalOption[] = [
-  { key: "weight-loss", label: "Lose weight", icon: ScaleIcon },
-  { key: "energy", label: "Have more energy", icon: LightningIcon },
-  { key: "sleep", label: "Sleep better", icon: MoonStar },
-  // { key: "fitness", label: "Fitness", icon: Dumbbell },
+  { key: "reduce-bloating", label: "Reduce bloating", icon: Shrink },
+  { key: "skin-brighten", label: "Brighten & firm my skin", icon: Sparkles },
+  { key: "blood-sugar", label: "Balance blood sugar", icon: Activity },
+  { key: "uti-yeast", label: "UTI & yeast balance support", icon: Shield },
+  { key: "iron-levels", label: "Improve my iron levels", icon: BatteryMedium },
+  { key: "muscle-recovery", label: "Muscle recovery support", icon: Dumbbell },
+  { key: "fat-metabolism", label: "Fat metabolism support", icon: Flame },
+  { key: "libido", label: "Libido support", icon: Heart },
   { key: "stress", label: "Reduce stress", icon: Wind },
-  { key: "gut-health", label: "Improve my gut health", icon: GutIcon },
-  // { key: "sleep", label: "Sleep", icon: Moon },
-  // { key: "detox", label: "Detox", icon: CupSoda },
-  { key: "fitness", label: "Improve my fitness", icon: Fitness },
-  { key: "immunity", label: "Boost my immunity", icon: ShieldPlus },
   { key: "mood", label: "Improve my mood", icon: Smile },
-  { key: "skin-hair", label: "Improve my skin & hair", icon: Skin },
+  { key: "immunity", label: "Boost my immunity", icon: ShieldPlus },
   { key: "focus", label: "Sharpen my focus", icon: Target },
-  { key: "hormones", label: "Balance my hormones", icon: Scale },
-  { key: "detox", label: "Body detox", icon: Leaf },
+  { key: "gut-health", label: "Improve gut health", icon: GutIcon },
+  { key: "constipation", label: "Relieve constipation", icon: ArrowDown },
+  { key: "hair-growth", label: "Hair growth support", icon: Sprout },
+  { key: "puffiness", label: "Reduce puffiness", icon: CircleSlash },
+  { key: "joint-comfort", label: "Muscle & joint comfort", icon: Scroll },
+  { key: "blood-pressure", label: "Lower blood pressure", icon: HeartPulse },
+  { key: "cholesterol", label: "Reduce cholesterol", icon: Droplet },
+  { key: "clear-skin", label: "Clear my skin", icon: Skin },
+  { key: "hydrate-skin", label: "Hydrate my skin", icon: Droplets },
+  { key: "testosterone", label: "Testosterone support", icon: Scale },
+  { key: "sleep", label: "Sleep better", icon: MoonStar },
+  { key: "mucus-congestion", label: "Relieve mucus & congestion", icon: Stethoscope },
 ];
 
 // ── 2.3 Existing conditions — full PRD 20-item list (+ free-text "Other") ─────
+/**
+ * The three conditions in the AUG 21 design.
+ *
+ * Reduced from thirteen. The commented-out keys below are NOT dead: users who
+ * completed the questionnaire earlier still hold them in `health_profiles`, and
+ * CONDITION_KEY_TO_PRD still maps every one of them, so those saved profiles
+ * keep producing a Match Score. They simply can no longer be newly selected.
+ * Keeping them listed here documents that, and makes restoring one a one-line
+ * change rather than an archaeology exercise.
+ */
 export const CONDITIONS: Option[] = [
-  // { key: "type-1-diabetes", label: "Type 1 Diabetes" },
-  // { key: "type-2-diabetes", label: "Type 2 Diabetes" },
-  { key: "diabetes", label: "Diabetes" },
-  { key: "heart-disease", label: "Heart disease" },
-  { key: "high-blood-pressure", label: "High blood pressure" },
-  { key: "high-cholesterol", label: "High cholesterol" },
   { key: "pcos", label: "PCOS" },
   { key: "menopause", label: "Menopause" },
-  { key: "digestive-sensitivities", label: "Digestive Sensitivities" },
-  // { key: "perimenopause", label: "Perimenopause" },
-  // { key: "ibs", label: "IBS" },
-  // { key: "ibd", label: "IBD" },
-  { key: "kidney-disease", label: "Kidney disease" },
-  { key: "liver-disease", label: "Liver disease" },
-  // { key: "gout", label: "Gout" },
-  // { key: "gerd", label: "GERD / Acid reflux" },
-  // { key: "celiac-disease", label: "Celiac disease" },
   { key: "osteoporosis", label: "Osteoporosis" },
-  { key: "arthritis", label: "Arthritis" },
-  { key: "anemia", label: "Anemia" },
+  // Retired from the picker in the AUG 21 design — formulas and mappings retained:
+  // { key: "diabetes", label: "Diabetes" },
+  // { key: "heart-disease", label: "Heart disease" },
+  // { key: "high-blood-pressure", label: "High blood pressure" },
+  // { key: "high-cholesterol", label: "High cholesterol" },
+  // { key: "digestive-sensitivities", label: "Digestive Sensitivities" },
+  // { key: "kidney-disease", label: "Kidney disease" },
+  // { key: "liver-disease", label: "Liver disease" },
+  // { key: "arthritis", label: "Arthritis" },
+  // { key: "anemia", label: "Anemia" },
+  // Never in the picker, but mapped for older saved profiles:
+  // type-1-diabetes, type-2-diabetes, prediabetes, perimenopause, ibs, ibd, gerd
 ];
 
 // ── 2.4 Allergies & intolerances — common allergens (+ free-text "Other") ─────

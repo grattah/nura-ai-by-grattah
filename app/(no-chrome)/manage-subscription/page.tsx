@@ -1,3 +1,4 @@
+import { PLANS, PLAN_LABELS, type Plan } from "@/constants";
 import Link from "next/link";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
@@ -5,6 +6,7 @@ import { format } from "date-fns";
 import { getSubscriptionView } from "@/lib/subscription-state";
 import { getFreeTrialTokens } from "@/lib/free-trial-server";
 import { FreeTrialExhaustedGate } from "@/components/subscription/free-trial-exhausted-gate";
+import { CancelSubscriptionButton } from "@/components/subscription/cancel-subscription-button";
 
 export default async function ManageSubscriptionPage() {
   const supabase = await createClient();
@@ -20,33 +22,41 @@ export default async function ManageSubscriptionPage() {
   const isExpired = sub.state === "expired";
   const trial = isFree ? await getFreeTrialTokens(user.id) : null;
 
-  const dated = sub.expiresAt
+  // A cancelled plan is still live until expiresAt, but it will never bill
+  // again — so there is no "next billing date" to show. Showing the period end
+  // there read as an upcoming charge.
+  const isCancelled = sub.cancelAtPeriodEnd && !isExpired;
+  const accessUntil = sub.expiresAt
     ? format(new Date(sub.expiresAt), "MMM d, yyyy")
-    : "—";
+    : null;
+  const dated = isCancelled ? "—" : (accessUntil ?? "—");
 
+  // Derived from constants/index.ts so a price change lands everywhere at once.
+  const planEntry = PLANS.find((p) => p.id === sub.plan);
   const planLabel = isFree
     ? "Free Plan"
-    : sub.plan === "monthly"
-    ? "Monthly Plan"
-    : "Premium Plan";
-  const priceLabel = isFree
-    ? ``
-    : sub.plan === "monthly"
-    ? "£7.99/month"
-    : "£79/year";
+    : (PLAN_LABELS[sub.plan as Plan]?.name ?? "Premium Plan");
+  const priceLabel =
+    isFree || !planEntry ? `` : `${planEntry.price} ${planEntry.per}`;
 
   // Expired reuses the card layout with the error palette; free plan has no
   // billing date to show.
-  const cardClass = isExpired ? "bg-[#DC23231A]" : "bg-mint-green/8";
-  const pillClass = isExpired
+  const alert = isExpired || isCancelled;
+  const cardClass = alert ? "bg-[#DC23231A]" : "bg-mint-green/8";
+  const pillClass = alert
     ? "text-xs bg-white text-[#DC2323] font-semibold px-1.75 py-0.75 rounded-full"
     : "text-xs bg-white text-mint-green font-semibold px-1.75 py-0.75 rounded-full";
-  const valueClass = isExpired
+  const valueClass = alert
     ? "text-base font-semibold text-[#DC2323]"
     : "text-base font-semibold text-mint-green";
-  const rowValueClass = isExpired
+  const rowValueClass = alert
     ? "text-sm font-semibold text-[#DC2323]"
     : "text-sm font-semibold text-mint-green";
+  const statusLabel = isExpired
+    ? "Expired"
+    : isCancelled
+      ? "Cancelled"
+      : "Active";
 
   return (
     <FreeTrialExhaustedGate exhausted={!!trial?.exhausted}>
@@ -83,9 +93,7 @@ export default async function ManageSubscriptionPage() {
                   <p className="text-base font-semibold text-[#333333CC]">
                     {planLabel}
                   </p>
-                  <span className={pillClass}>
-                    {isExpired ? "Expired" : "Active"}
-                  </span>
+                  <span className={pillClass}>{statusLabel}</span>
                 </div>
                 <p className={valueClass}>{priceLabel}</p>
               </div>
@@ -118,6 +126,19 @@ export default async function ManageSubscriptionPage() {
             <p className="text-base font-medium text-[#333333CC]">Billing</p>
             <ChevronRight className="size-4.5 text-muted-foreground" />
           </Link>
+
+          {/* Cancel / resume. Both server actions look up an ACTIVE row, so
+              this is only meaningful while the subscription is live. For a
+              cancelled-but-unexpired plan it renders the "set to cancel"
+              banner with the access-until date, plus Resume. */}
+          {sub.state === "active" && (
+            <div className="pt-2">
+              <CancelSubscriptionButton
+                cancelAtPeriodEnd={sub.cancelAtPeriodEnd}
+                accessUntil={accessUntil ?? "—"}
+              />
+            </div>
+          )}
 
           {/* Support */}
           <div className="pt-4 text-center mt-auto">

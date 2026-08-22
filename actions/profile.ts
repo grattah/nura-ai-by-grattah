@@ -5,6 +5,7 @@ import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
 import { getStripeCustomerId } from "@/lib/billing";
 import { headers } from "next/headers";
+import { isPasswordValid } from "@/lib/password-policy";
 
 // ─── Update display name ───────────────────────────────────────────────────
 
@@ -35,8 +36,11 @@ export async function updatePassword(
 ): Promise<{ success: true } | { error: string }> {
   if (newPassword !== confirmPassword)
     return { error: "Passwords do not match." };
-  if (newPassword.length < 8)
-    return { error: "Password must be at least 8 characters." };
+  if (!isPasswordValid(newPassword))
+    return {
+      error:
+        "Password needs at least 8 characters, upper and lower case, a number, and a special character.",
+    };
 
   const supabase = await createClient();
   const {

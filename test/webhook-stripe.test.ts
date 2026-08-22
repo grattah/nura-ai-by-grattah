@@ -5,6 +5,7 @@ import { makeSupabaseMock } from "./helpers/supabase-mock";
 const h = vi.hoisted(() => ({
   constructEvent: vi.fn(),
   retrieve: vi.fn(),
+  list: vi.fn(),
   headerSig: null as string | null,
   events: null as ReturnType<typeof import("./helpers/supabase-mock").makeSupabaseMock> | null,
   subs: null as ReturnType<typeof import("./helpers/supabase-mock").makeSupabaseMock> | null,
@@ -13,7 +14,7 @@ const h = vi.hoisted(() => ({
 vi.mock("stripe", () => ({
   default: vi.fn(() => ({
     webhooks: { constructEvent: h.constructEvent },
-    subscriptions: { retrieve: h.retrieve },
+    subscriptions: { retrieve: h.retrieve, list: h.list },
   })),
 }));
 
@@ -33,7 +34,8 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 // Email sends are best-effort; stub so no real Resend call happens.
-vi.mock("@/lib/email/send", () => ({ sendEmail: vi.fn() }));
+const sendEmail = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/email/send", () => ({ sendEmail }));
 
 import { POST } from "@/app/api/webhooks/stripe/route";
 
@@ -63,6 +65,9 @@ beforeEach(() => {
   );
   // Default: dedup insert succeeds (first time we see the event).
   h.events.setResult("stripe_webhook_events", { data: null, error: null });
+  // Default: Stripe reports a single subscription (a first-time customer).
+  h.list.mockResolvedValue({ data: [{ id: "sub_1" }] });
+  h.retrieve.mockResolvedValue(subscriptionWith(SECONDS(30)));
 });
 
 describe("Stripe webhook — signature (audit: forged events)", () => {
@@ -170,5 +175,69 @@ describe("Stripe webhook — ordering (audit M2)", () => {
     const updates = h.subs!.callsFor("subscriptions", "update");
     expect(updates.length).toBe(1);
     expect((updates[0].value as { status: string }).status).toBe("cancelled");
+  });
+});
+
+
+// ── Resubscribe detection (QA: first subscription said "resubscribed") ───────
+//
+// /return calls activateSubscriptionFromSession() synchronously, so by the time
+// this webhook runs a subscriptions row for the user ALREADY EXISTS — written by
+// this same checkout. The old check read that row and concluded "returning
+// customer". Detection now asks Stripe, which is the only party that can tell
+// a first subscription from a second.
+describe("Stripe webhook — first-time vs resubscribe email", () => {
+  function checkoutEvent() {
+    h.constructEvent.mockReturnValue({
+      id: "evt_sub_1",
+      type: "checkout.session.completed",
+      created: Math.floor(Date.now() / 1000),
+      data: {
+        object: {
+          id: "cs_1",
+          client_reference_id: "user_1",
+          customer: "cus_1",
+          customer_details: { email: "a@b.com" },
+          metadata: { plan: "monthly" },
+          subscription: "sub_1",
+          amount_total: 999,
+          currency: "usd",
+        },
+      },
+    });
+  }
+
+  it("sends the FIRST-TIME email even though /return already wrote the row", async () => {
+    // The regression: a row exists for this user before the webhook runs.
+    h.subs!.setResult("subscriptions", { data: [{ status: "active" }], error: null });
+    h.list.mockResolvedValue({ data: [{ id: "sub_1" }] }); // Stripe: only ever one
+    checkoutEvent();
+
+    await post();
+
+    const subjects = sendEmail.mock.calls.map((c) => c[0]?.subject);
+    expect(subjects).toContain("Your Nuko subscription is active ✨");
+    expect(subjects).not.toContain("Welcome back to Nuko ✨");
+  });
+
+  it("sends the WELCOME BACK email when Stripe shows a prior subscription", async () => {
+    h.list.mockResolvedValue({ data: [{ id: "sub_old" }, { id: "sub_1" }] });
+    checkoutEvent();
+
+    await post();
+
+    const subjects = sendEmail.mock.calls.map((c) => c[0]?.subject);
+    expect(subjects).toContain("Welcome back to Nuko ✨");
+  });
+
+  it("falls back to first-time copy when the Stripe lookup fails", async () => {
+    // Erring toward "first-time" is the smaller wrong of the two.
+    h.list.mockRejectedValue(new Error("stripe down"));
+    checkoutEvent();
+
+    await post();
+
+    const subjects = sendEmail.mock.calls.map((c) => c[0]?.subject);
+    expect(subjects).not.toContain("Welcome back to Nuko ✨");
   });
 });

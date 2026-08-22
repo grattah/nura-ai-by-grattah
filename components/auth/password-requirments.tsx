@@ -1,4 +1,8 @@
-import { CheckCircle2, Circle } from "lucide-react";
+import { Circle } from "lucide-react";
+import {
+  PASSWORD_REQUIREMENTS,
+  type PasswordStrength,
+} from "@/lib/password-policy";
 import { FaCheckCircle } from "react-icons/fa";
 import localFont from "next/font/local";
 
@@ -8,35 +12,13 @@ const satoshi = localFont({
   display: "swap",
 });
 
-export interface PasswordStrength {
-  hasLength: boolean;
-  hasLower: boolean;
-  hasUpper: boolean;
-  hasSpecial: boolean;
-  hasNumber: boolean;
-}
-
-export function checkPasswordStrength(password: string): PasswordStrength {
-  return {
-    hasLength: password.length >= 8,
-    hasLower: /[a-z]/.test(password),
-    hasUpper: /[A-Z]/.test(password),
-    hasSpecial: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password),
-    hasNumber: /[0-9]/.test(password),
-  };
-}
-
-export function isPasswordValid(s: PasswordStrength): boolean {
-  return s.hasLength && s.hasLower && s.hasUpper && s.hasSpecial && s.hasNumber;
-}
-
-const REQUIREMENTS = [
-  { key: "hasLength" as const, label: "8 characters" },
-  { key: "hasLower" as const, label: "A lowercase letter (a-z)" },
-  { key: "hasUpper" as const, label: "A uppercase letter (A-Z)" },
-  { key: "hasSpecial" as const, label: "A special character (e.g. !@#$)" },
-  { key: "hasNumber" as const, label: "A number (1-9)" },
-];
+// The rules live in lib/password-policy.ts so this component and the server
+// action behind /account cannot drift apart. Only the presentation is local.
+export type { PasswordStrength } from "@/lib/password-policy";
+export {
+  checkPasswordStrength,
+  isStrengthValid as isPasswordValid,
+} from "@/lib/password-policy";
 
 interface PasswordRequirementsProps {
   strength: PasswordStrength;
@@ -48,10 +30,10 @@ export function PasswordRequirements({ strength }: PasswordRequirementsProps) {
       <p className={`text-sm font-medium text-base-text ${satoshi.className}`}>
         Password needs at least:
       </p>
-      {REQUIREMENTS.map(({ key, label }) => {
-        const met = strength[key];
+      {PASSWORD_REQUIREMENTS.map(({ id, label }) => {
+        const met = strength[id];
         return (
-          <div key={key} className="flex items-center gap-2.5">
+          <div key={id} className="flex items-center gap-2.5">
             {met ? (
               <FaCheckCircle
                 className="w-4 h-4 shrink-0"

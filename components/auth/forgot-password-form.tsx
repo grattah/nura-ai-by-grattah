@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
 import { ConfirmEmailModal } from "@/components/auth/ConfirmEmailModal";
+import { useResendCooldown } from "@/hooks/use-resend-cooldown";
 
 export function ForgotPasswordForm({
   className,
@@ -21,16 +22,15 @@ export function ForgotPasswordForm({
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const router = useRouter();
-
-  useEffect(() => {
-    if (resendCooldown <= 0) return;
-    const timer = setInterval(() => {
-      setResendCooldown((prev) => Math.max(prev - 1, 0));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [resendCooldown]);
+  const {
+    remaining,
+    isCoolingDown,
+    start: startCooldown,
+  } = useResendCooldown();
 
   const handleConfirm = async () => {
+    if (isCoolingDown) return;
+
     const supabase = createClient();
     setIsLoading(true);
     setError(null);
@@ -44,6 +44,7 @@ export function ForgotPasswordForm({
         redirectTo: `${window.location.origin}/auth/update-password`,
       });
       if (error) throw error;
+      startCooldown();
       setShowConfirmModal(false);
       setSuccess(true);
       setResendCooldown(60);
@@ -112,13 +113,13 @@ export function ForgotPasswordForm({
           <div className="flex flex-col gap-3">
             <button
               onClick={handleConfirm}
-              disabled={isLoading || resendCooldown > 0}
+              disabled={isLoading || isCoolingDown}
               className="w-full bg-mint-green text-white py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
             >
               {isLoading
                 ? "Resending..."
-                : resendCooldown > 0
-                  ? `Resend email (${resendCooldown}s)`
+                : isCoolingDown
+                  ? `Resend email in ${remaining}s`
                   : "Resend email"}
             </button>
 

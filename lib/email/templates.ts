@@ -1,6 +1,7 @@
 // Branded HTML email builders. Pure functions (no server-only) so they can be
 // unit-tested. Each returns { subject, html } with inline, email-safe styles.
 import { APP_URL, EMAIL_LOGO_URL, SUPPORT_EMAIL, BRAND } from "./config";
+import { APP_CURRENCY, APP_LOCALE } from "@/constants";
 
 function esc(s: string): string {
   return s
@@ -59,9 +60,9 @@ export interface EmailContent {
   html: string;
 }
 
-/** Format Stripe minor units (e.g. 799 -> "£7.99") in the charge's own currency. */
-export function formatMoney(minor: number, currency = "gbp"): string {
-  return new Intl.NumberFormat("en-GB", {
+/** Format Stripe minor units (e.g. 799 -> "$7.99") in the charge's own currency. */
+export function formatMoney(minor: number, currency = APP_CURRENCY): string {
+  return new Intl.NumberFormat(APP_LOCALE, {
     style: "currency",
     currency: currency.toUpperCase(),
     currencyDisplay: "narrowSymbol",
@@ -190,21 +191,44 @@ export function resubscriptionEmail({
 export function paymentFailedEmail({
   planLabel,
   reason,
+  isFirstPayment = false,
 }: {
   planLabel: string;
   reason?: string | null;
+  /** First charge of a new subscription — they never had access to lose. */
+  isFirstPayment?: boolean;
 }): EmailContent {
   const why = reason
     ? `<p style="margin:12px 0 0;font-size:13px;color:${BRAND.faint};">Reason: ${esc(reason)}</p>`
     : "";
+
+  // A first-payment failure and a failed renewal need different copy: one never
+  // started, the other is losing something. The renewal case previously said
+  // nothing about what lapses, which is what QA flagged.
+  if (isFirstPayment) {
+    return {
+      subject: "We couldn't start your Nuko+ subscription",
+      html: layout({
+        heading: "Payment didn't go through",
+        preview: "We couldn't start your Nuko+ subscription",
+        body: `<p style="margin:0;">We couldn't process the payment for <strong>${esc(planLabel)}</strong>, so your subscription hasn't started and you haven't been charged.</p>${why}
+          <p style="margin:12px 0 0;">You can try again whenever you're ready — nothing has been lost.</p>`,
+        cta: { label: "Try again", url: `${APP_URL}/checkout` },
+      }),
+    };
+  }
+
   return {
-    subject: "We couldn't process your Nuko payment",
+    subject: "Your Nuko+ subscription couldn't renew",
     html: layout({
       heading: "Payment failed",
-      preview: "We couldn't process your Nuko payment",
+      preview: "Your Nuko+ subscription couldn't renew",
       body: `<p style="margin:0;">We tried to renew your <strong>${esc(planLabel)}</strong> but the payment didn't go through.</p>${why}
-        <p style="margin:12px 0 0;">Please update your payment details to keep your access.</p>`,
-      cta: { label: "Update payment method", url: `${APP_URL}/manage-subscription` },
+        <p style="margin:16px 0 0;"><strong style="color:${BRAND.text};">What this means</strong></p>
+        <p style="margin:6px 0 0;">Your weekly token allowance stops refreshing, and personalized search, recipe generation and follow-up chat are paused until the subscription is active again.</p>
+        <p style="margin:6px 0 0;">Any tokens you bought separately are kept — they don't expire, and they're spendable again as soon as your subscription is active.</p>
+        <p style="margin:16px 0 0;">Updating your payment details restores everything straight away.</p>`,
+      cta: { label: "Restore my subscription", url: `${APP_URL}/manage-subscription` },
     }),
   };
 }

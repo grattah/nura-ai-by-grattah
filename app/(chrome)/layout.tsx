@@ -1,5 +1,6 @@
 import { getCachedUser } from "@/lib/supabase/server";
 import { createClient } from "@/lib/supabase/server";
+import { hasActiveSubscription } from "@/lib/subscription";
 
 import { AppHeader } from "@/components/layout/app-header";
 import { BottomNav } from "@/components/layout/bottom-nav";
@@ -40,13 +41,16 @@ export default async function ChromeLayout({
 
     if(user) {
       const supabase = await createClient();
-      const { data } = await supabase
-        .from("subscriptions")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
+        // Shared rule: honours the paid-for period after a cancellation, and
+        // (unlike the old check) actually looks at expires_at — a stale
+        // 'active' row used to read as a live subscriber forever. The old
+        // .maybeSingle() also ERRORED on the >1 row a user can legitimately
+        // have, silently reporting "not subscribed".
         if (headerUser) {
-          headerUser.isSubscriber = data?.status === "active";
+          headerUser.isSubscriber = await hasActiveSubscription(
+            supabase,
+            user.id,
+          );
         }
     }
 

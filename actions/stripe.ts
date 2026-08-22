@@ -7,15 +7,26 @@ import {
   getActiveSubscription,
   blockedSubscriptionMessage,
 } from "@/lib/subscription";
+import type { Plan } from "@/constants";
+
+// Each plan maps to its own Stripe price. Falling back to the annual price when
+// a plan's env var is unset would silently charge the wrong amount, so an
+// unconfigured plan is refused instead.
+const PRICE_ID_BY_PLAN: Record<Plan, string | undefined> = {
+  annual: process.env.STRIPE_PRICE_ID,
+  monthly: process.env.STRIPE_PRICE_ID_MONTHLY,
+  weekly: process.env.STRIPE_PRICE_ID_WEEKLY,
+};
 
 export async function fetchClientSecretForPlan(
-  plan: "annual" | "monthly" = "annual",
+  plan: Plan = "annual",
 ): Promise<{ clientSecret: string } | { error: string }> {
   const origin = (await headers()).get("origin");
-  const priceId =
-    plan === "monthly"
-      ? (process.env.STRIPE_PRICE_ID_MONTHLY ?? process.env.STRIPE_PRICE_ID)
-      : process.env.STRIPE_PRICE_ID;
+  const priceId = PRICE_ID_BY_PLAN[plan];
+  if (!priceId) {
+    console.error(`[stripe] No price id configured for plan "${plan}"`);
+    return { error: "That plan isn't available right now." };
+  }
 
   const supabase = await createClient();
   const {

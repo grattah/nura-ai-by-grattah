@@ -4,10 +4,11 @@ import { stripe } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
 import { headers } from "next/headers";
 import { getBundle } from "@/lib/credits";
+import { APP_CURRENCY } from "@/constants";
 import { hasActiveSubscription } from "@/lib/subscription";
 
 // One-time extra-token purchase. Unlike the subscription flow this uses
-// mode:"payment" with inline price_data (GBP) so no Stripe dashboard prices are
+// mode:"payment" with inline price_data (USD) so no Stripe dashboard prices are
 // needed — the bundle catalogue lives in lib/credits.ts. The webhook reads
 // metadata.{type,credits} and tops up the user's "extra" token bucket.
 export async function createTokenCheckout(
@@ -38,7 +39,7 @@ export async function createTokenCheckout(
       {
         quantity: 1,
         price_data: {
-          currency: "gbp",
+          currency: APP_CURRENCY,
           unit_amount: bundle.amount,
           product_data: {
             name: `${bundle.credits} Nuko tokens`,

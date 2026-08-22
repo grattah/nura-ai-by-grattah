@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
       model: "claude-haiku-4-5",
       surface: "followup-questions",
       billed: false,
+      userId: user.id,
       ...usageTokens(usage),
     });
 

@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, Search } from "lucide-react";
 import { HiOutlineInformationCircle } from "react-icons/hi";
 
 import { createClient } from "@/lib/supabase/client";
+import { hasActiveSubscription } from "@/lib/subscription";
 import { getCategoryConfig } from "@/lib/category-config";
 import { CategoryBanner } from "@/components/categories/category-banner";
 import { RecipesEmptyState } from "@/components/categories/recipes-empty-state";
@@ -64,12 +65,9 @@ export default function CategoryDetailPage() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
-      const { data } = await supabase
-        .from("subscriptions")
-        .select("status")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      setIsSubscribed(data?.status === "active");
+      // Shared rule — see lib/subscription.ts. The old inline check ignored
+      // expires_at and paywalled anyone who had cancelled mid-period.
+      setIsSubscribed(await hasActiveSubscription(supabase, user.id));
     };
     check();
   }, [supabase]);

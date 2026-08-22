@@ -6,6 +6,7 @@ import Image from "next/image";
 
 import profile from "@/public/profile.png";
 import { createClient } from "@/lib/supabase/client";
+import { getCurrentUserId } from "@/lib/supabase/current-user";
 import { formatRelativeTime } from "@/lib/format-time";
 import {
   fetchActivitiesPage,
@@ -30,16 +31,16 @@ function timeLabel(createdAt: string): string {
 
 export function CommunityFeed({
   initialActivities,
-  userId,
   actorName,
 }: {
   initialActivities: ActivityItem[];
-  /** Null for guests — the feed is empty and never paginates. */
-  userId: string | null;
   /** The user's name, or "You" when they haven't set one. */
   actorName: string;
 }) {
   const supabase = useMemo(() => createClient(), []);
+  // Resolved from the session on first paginate, then reused. Guests never get
+  // here: their initial page is empty, so hasMoreRef starts false.
+  const userIdRef = useRef<string | null>(null);
 
   const [activities, setActivities] = useState(initialActivities);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -57,7 +58,6 @@ export function CommunityFeed({
 
   const loadMore = useCallback(async () => {
     if (
-      !userId ||
       fetchingRef.current ||
       !hasMoreRef.current ||
       loadMoreErrorRef.current
@@ -76,11 +76,18 @@ export function CommunityFeed({
     }, FETCH_TIMEOUT_MS);
 
     try {
+      userIdRef.current ??= await getCurrentUserId(supabase);
+      if (!userIdRef.current) {
+        hasMoreRef.current = false;
+        setAtEnd(true);
+        return;
+      }
+
       const next = pageRef.current + 1;
       const rows = await fetchActivitiesPage(
         supabase,
         next,
-        userId,
+        userIdRef.current,
         controller.signal,
       );
 
@@ -108,7 +115,7 @@ export function CommunityFeed({
       fetchingRef.current = false;
       setIsLoadingMore(false);
     }
-  }, [supabase, userId]);
+  }, [supabase]);
 
   const retryLoadMore = useCallback(() => {
     loadMoreErrorRef.current = false;

@@ -5,6 +5,7 @@ import {
   GOAL_KEY_TO_PRD,
   CONDITION_CREDITS,
   GOAL_CREDITS,
+  UNSCORED_GOALS,
 } from "@/lib/scoring/match-metrics";
 
 // Regression guard for a whole class of silent bug.
@@ -33,13 +34,38 @@ describe("every live health-profile option maps to a Match Score formula", () =>
     },
   );
 
+  // The AUG 21 picker offers 24 goals but only 13 formulas exist, so a goal is
+  // allowed to be unscored — but ONLY if it is declared in UNSCORED_GOALS. The
+  // original guard is intact: a renamed or typo'd key still fails here instead
+  // of silently dropping out of the Match Score in production.
   it.each(GOALS.map((g) => [g.key, g.label] as const))("goal %s (%s)", (key) => {
     const prd = GOAL_KEY_TO_PRD[key];
-    expect(prd, `goal "${key}" is not in GOAL_KEY_TO_PRD`).toBeDefined();
+    if (prd === undefined) {
+      expect(
+        UNSCORED_GOALS as readonly string[],
+        `goal "${key}" has no formula and is not declared in UNSCORED_GOALS`,
+      ).toContain(key);
+      return;
+    }
     expect(
       GOAL_CREDITS[prd],
       `goal "${key}" maps to "${prd}", which has no credit formula`,
     ).toBeTypeOf("function");
+  });
+
+  it("never declares a goal unscored while also mapping it", () => {
+    const contradictory = (UNSCORED_GOALS as readonly string[]).filter(
+      (k) => GOAL_KEY_TO_PRD[k] !== undefined,
+    );
+    expect(contradictory).toEqual([]);
+  });
+
+  it("keeps every UNSCORED_GOALS entry a real picker option", () => {
+    const live = new Set(GOALS.map((g) => g.key));
+    const stale = (UNSCORED_GOALS as readonly string[]).filter(
+      (k) => !live.has(k),
+    );
+    expect(stale, "UNSCORED_GOALS lists keys the picker no longer offers").toEqual([]);
   });
 });
 
@@ -61,5 +87,47 @@ describe("map integrity", () => {
       expect(o.label, `option "${o.key}" has no label`).toBeTruthy();
       expect(o.label, `option "${o.key}" label is just the key`).not.toBe(o.key);
     }
+  });
+});
+
+// ── Conditions retired from the AUG 21 picker ───────────────────────────────
+//
+// The picker dropped from 13 conditions to 3. Users who answered the earlier
+// questionnaire still hold the retired keys in health_profiles, and their Match
+// Score must keep working — computeMatchScore skips an unmapped key silently,
+// so deleting one of these mappings during a future tidy-up would quietly zero
+// those users' scores with nothing failing.
+describe("retired condition keys still score for existing profiles", () => {
+  const RETIRED = [
+    "diabetes",
+    "type-1-diabetes",
+    "type-2-diabetes",
+    "prediabetes",
+    "heart-disease",
+    "high-blood-pressure",
+    "high-cholesterol",
+    "digestive-sensitivities",
+    "ibs",
+    "ibd",
+    "gerd",
+    "kidney-disease",
+    "liver-disease",
+    "arthritis",
+    "anemia",
+    "perimenopause",
+  ];
+
+  it.each(RETIRED)("%s still resolves to a formula", (key) => {
+    const prd = CONDITION_KEY_TO_PRD[key];
+    expect(prd, `retired key "${key}" lost its mapping`).toBeDefined();
+    expect(CONDITION_CREDITS[prd]).toBeTypeOf("function");
+  });
+
+  it("offers exactly the three conditions the design shows", () => {
+    expect(CONDITIONS.map((c) => c.key)).toEqual([
+      "pcos",
+      "menopause",
+      "osteoporosis",
+    ]);
   });
 });
