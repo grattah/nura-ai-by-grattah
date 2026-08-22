@@ -6,7 +6,7 @@ import { X } from "lucide-react";
 import { fetchClientSecretForPlan } from "@/actions/stripe";
 import { CheckoutEmbed } from "@/components/checkout-embed";
 import BackButton from "./back-button";
-import { PLAN_LABELS, type Plan } from "@/constants";
+import { PLAN_LABELS, PLANS, type Plan } from "@/constants";
 
 interface CheckoutFlowProps {
   user: { id: string; email: string } | null;
@@ -20,7 +20,7 @@ export function CheckoutFlow({ plan }: CheckoutFlowProps) {
   const [error, setError] = useState<string | null>(null);
 
   const planInfo = PLAN_LABELS[plan];
-  const per = plan === "monthly" ? "/ month" : "/ year";
+  const per = PLANS.find((p) => p.id === plan)?.per ?? "/ year";
 
   // Create the embedded Stripe session for the selected plan.
   useEffect(() => {

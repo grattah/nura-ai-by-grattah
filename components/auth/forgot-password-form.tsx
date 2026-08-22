@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
 import { ConfirmEmailModal } from "@/components/auth/ConfirmEmailModal";
+import { useResendCooldown } from "@/hooks/use-resend-cooldown";
 
 export function ForgotPasswordForm({
   className,
@@ -20,8 +21,11 @@ export function ForgotPasswordForm({
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const router = useRouter();
+  const { remaining, isCoolingDown, start: startCooldown } = useResendCooldown();
 
   const handleConfirm = async () => {
+    if (isCoolingDown) return;
+
     const supabase = createClient();
     setIsLoading(true);
     setError(null);
@@ -35,6 +39,7 @@ export function ForgotPasswordForm({
         redirectTo: `${window.location.origin}/auth/update-password`,
       });
       if (error) throw error;
+      startCooldown();
       setShowConfirmModal(false);
       setSuccess(true);
     } catch (error: unknown) {
@@ -102,10 +107,14 @@ export function ForgotPasswordForm({
           <div className="flex flex-col gap-3">
             <button
               onClick={handleConfirm}
-              disabled={isLoading}
+              disabled={isLoading || isCoolingDown}
               className="w-full bg-mint-green text-white py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
             >
-              {isLoading ? "Resending..." : "Resend email"}
+              {isLoading
+                ? "Resending..."
+                : isCoolingDown
+                  ? `Resend email in ${remaining}s`
+                  : "Resend email"}
             </button>
 
             <Link

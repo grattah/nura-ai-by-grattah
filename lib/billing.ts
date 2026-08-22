@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
 import { stripe } from "@/lib/stripe";
 import type Stripe from "stripe";
+import { APP_CURRENCY, APP_LOCALE } from "@/constants";
 
 // Invoices are read from Stripe on demand rather than mirrored into Postgres:
 // Stripe stays the source of truth (so refunds, proration and credits can't drift
@@ -13,7 +14,7 @@ import type Stripe from "stripe";
 /** Display-ready invoice row for the Billing screen. */
 export interface InvoiceView {
   id: string;
-  /** Formatted in the invoice's OWN currency, e.g. "£79.00". */
+  /** Formatted in the invoice's OWN currency, e.g. "$79.00". */
   amount: string;
   /** Capitalised Stripe status, e.g. "Paid" / "Open". */
   status: string;
@@ -47,7 +48,7 @@ export async function getStripeCustomerId(
  * Map a Stripe invoice to the view model. Pure — unit-tested without network.
  *
  * Amounts are formatted from the invoice's own `currency` rather than a hardcoded
- * symbol, so a USD invoice never renders with a "£".
+ * symbol, so a legacy GBP invoice still renders with a "£" after the switch to USD.
  */
 export function toInvoiceView(invoice: Stripe.Invoice): InvoiceView {
   // Stripe amounts are in minor units (7900 → 79.00). Use amount_paid when there
@@ -55,10 +56,10 @@ export function toInvoiceView(invoice: Stripe.Invoice): InvoiceView {
   // through on a zero, so test explicitly.
   const paid = invoice.amount_paid ?? 0;
   const minor = paid > 0 ? paid : (invoice.amount_due ?? 0);
-  const currency = (invoice.currency ?? "gbp").toUpperCase();
-  // narrowSymbol keeps foreign currencies readable — plain en-GB formatting
-  // renders USD as "US$20.00".
-  const amount = new Intl.NumberFormat("en-GB", {
+  const currency = (invoice.currency ?? APP_CURRENCY).toUpperCase();
+  // narrowSymbol keeps foreign currencies readable — plain en-US formatting
+  // renders GBP as "£20.00" but other currencies with a country prefix.
+  const amount = new Intl.NumberFormat(APP_LOCALE, {
     style: "currency",
     currency,
     currencyDisplay: "narrowSymbol",

@@ -8,6 +8,7 @@ import profile from "@/public/profile.png";
 import BackButton from "@/components/back-button";
 import CommentsSection from "@/components/recipe/CommentsSection";
 import { RecipePaywallGate } from "@/components/recipe/RecipePaywallGate";
+import { hasActiveSubscription } from "@/lib/subscription";
 
 interface PageProps {
   searchParams: Promise<{ recipeId?: string; limit?: string }>;
@@ -59,15 +60,13 @@ const page = async ({ searchParams }: PageProps) => {
       .order("created_at", { ascending: false })
       .limit(limit),
       userId
-      ? supabase
-          .from("subscriptions")
-          .select("status")
-          .eq("user_id", userId)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
+      ? hasActiveSubscription(supabase, userId)
+      : Promise.resolve(false),
   ]);
 
-  const isSubscribed = subResult.data?.status === "active";
+  // Uses the shared rule so a user who cancelled mid-period keeps the access
+  // they paid for — the inline active-only check here used to paywall them.
+  const isSubscribed = subResult === true;
 
   if (!recipe) return;
 

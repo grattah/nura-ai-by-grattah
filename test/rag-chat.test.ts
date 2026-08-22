@@ -33,8 +33,9 @@ vi.mock("@/lib/supabase/server", () => ({
       const chain = {
         select: () => chain,
         eq: () => chain,
+        in: () => chain,
         order: () => chain,
-        // getActiveSubscription reads via .order().limit(1) → array of rows.
+        // getEntitledSubscription reads via .in().order().limit() → array of rows.
         limit: async () => ({
           data: [{ status: "active", expires_at: null }],
         }),

@@ -20,6 +20,10 @@ import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { ensureWelcomeEmail } from "@/actions/welcome";
 import { cancelScheduledDeletion } from "@/actions/delete-account";
+import {
+  PasswordRequirements,
+  isPasswordValid,
+} from "@/components/auth/PasswordRequirements";
 
 import loader from "@/public/loader.png";
 import authImage from "@/public/authImage.webp";
@@ -49,7 +53,7 @@ function savePendingOtp(email: string, step: OtpStep) {
   try {
     sessionStorage.setItem(
       OTP_PENDING_KEY,
-      JSON.stringify({ email, step, ts: Date.now() })
+      JSON.stringify({ email, step, ts: Date.now() }),
     );
   } catch {
     /* sessionStorage unavailable — non-critical */
@@ -89,7 +93,7 @@ function ButtonLoader() {
 // module scope: defined once, outside the component
 const generateNonce = async (): Promise<[string, string]> => {
   const nonce = btoa(
-    String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))
+    String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32))),
   );
   const encoded = new TextEncoder().encode(nonce);
   const hashBuffer = await crypto.subtle.digest("SHA-256", encoded);
@@ -116,7 +120,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   const query = searchParams.get("landing");
   const rawNonceRef = useRef<string>("");
   const [googleReady, setGoogleReady] = useState(
-    () => typeof google !== "undefined" && !!google?.accounts
+    () => typeof google !== "undefined" && !!google?.accounts,
   );
 
   // OTP autofill can trigger verification twice (the otpCode effect and the
@@ -129,7 +133,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     window.history.pushState(
       { step: newStep },
       "",
-      window.location.pathname + window.location.search
+      window.location.pathname + window.location.search,
     );
 
     setStep(newStep);
@@ -166,7 +170,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     window.history.replaceState(
       { step: initialStep },
       "",
-      window.location.pathname + window.location.search
+      window.location.pathname + window.location.search,
     );
 
     const handlePopState = (event: PopStateEvent) => {
@@ -241,7 +245,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
             setError(
               isRateLimited(otpError)
                 ? "Please wait a minute before requesting another code."
-                : "We couldn't send a verification code to this email. Please try again."
+                : "We couldn't send a verification code to this email. Please try again.",
             );
             return;
           }
@@ -270,12 +274,12 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
           savePendingOtp(email, "login-otp");
           goToStep("login-otp");
           setError(
-            "You already have a code in your inbox — enter it below, or wait a minute to resend."
+            "You already have a code in your inbox — enter it below, or wait a minute to resend.",
           );
           return;
         }
         setError(
-          "We couldn't send a sign-in code to this email. Please try again."
+          "We couldn't send a sign-in code to this email. Please try again.",
         );
         return;
       }
@@ -292,7 +296,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   // ─── Shared post-auth redirect ─────────────────────────────────────────────
 
   const redirectAfterAuth = async (
-    supabase: ReturnType<typeof createClient>
+    supabase: ReturnType<typeof createClient>,
   ) => {
     const {
       data: { user },
@@ -387,7 +391,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       await redirectAfterAuth(supabase);
     } catch {
       setError(
-        "Something went wrong while verifying your code. Please try again."
+        "Something went wrong while verifying your code. Please try again.",
       );
     } finally {
       setIsLoading(false);
@@ -423,7 +427,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       goToStep("signup");
     } catch {
       setError(
-        "Something went wrong while verifying your code. Please try again."
+        "Something went wrong while verifying your code. Please try again.",
       );
     } finally {
       setIsLoading(false);
@@ -467,14 +471,14 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         setError(
           isRateLimited(otpError)
             ? "Please wait a minute before requesting another code."
-            : "Couldn't resend the code. Please try again."
+            : "Couldn't resend the code. Please try again.",
         );
       }
       setIsLoading(false);
       setOtpCode("");
     } catch (e) {
       setError(
-        "Something went wrong while resending your code. Please try again."
+        "Something went wrong while resending your code. Please try again.",
       );
     }
   };
@@ -499,7 +503,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         err instanceof Error &&
           err.message.includes("Invalid login credentials")
           ? "Incorrect password. Please try again."
-          : "Something went wrong while signing you in. Please try again."
+          : "Something went wrong while signing you in. Please try again.",
       );
     } finally {
       setIsLoading(false);
@@ -512,8 +516,8 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     e.preventDefault();
     setError(null);
 
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+    if (!isPasswordValid(password)) {
+      setError("Please meet all the password requirements below.");
       return;
     }
 
@@ -535,17 +539,11 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       setError(
         err instanceof Error
           ? err.message
-          : "We couldn't save your profile. Please try again."
+          : "We couldn't save your profile. Please try again.",
       );
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleSkipProfile = async () => {
-    const supabase = createClient();
-    await ensureWelcomeEmail();
-    await redirectAfterAuth(supabase);
   };
 
   // ─── Google ────────────────────────────────────────────────────────────────
@@ -599,8 +597,8 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       step === "email"
         ? "google-btn-email"
         : step === "login"
-        ? "google-btn-login"
-        : null;
+          ? "google-btn-login"
+          : null;
     if (!targetId) return;
     if (typeof google === "undefined") return;
 
@@ -647,8 +645,8 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
           response.credential
             .split(".")[1]
             .replace(/-/g, "+")
-            .replace(/_/g, "/")
-        )
+            .replace(/_/g, "/"),
+        ),
       );
       const emailFromToken = payload.email as string;
 
@@ -683,7 +681,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       await redirectAfterAuth(supabase);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to sign in with Google."
+        err instanceof Error ? err.message : "Failed to sign in with Google.",
       );
       setIsGoogleLoading(false);
     }
@@ -720,25 +718,28 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   const goBack = () => {
     if (step === "email") {
       clearPendingOtp();
-      setPassword(""); setConfirmPassword(""); setFullName(""); setOtpCode("");
+      setPassword("");
+      setConfirmPassword("");
+      setFullName("");
+      setOtpCode("");
       setError(null);
       router.back();
       return;
     }
-  
+
     if (isOtpStep) {
       clearPendingOtp();
       setOtpCode("");
       setError(null);
-      goToStep("email");   // deterministically go to email, don't trust history
+      goToStep("email"); // deterministically go to email, don't trust history
       return;
     }
-  
+
     if (step === "login") {
       goToStep("email");
       return;
     }
-  
+
     window.history.back();
   };
 
@@ -937,7 +938,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                       disabled={!email || isLoading}
                       className={cn(
                         "w-full flex items-center justify-center bg-mint-green text-white py-4 rounded-full font-medium border border-border hover:opacity-90 transition-opacity",
-                        isLoading ? "opacity-50" : "disabled:opacity-40"
+                        isLoading ? "opacity-50" : "disabled:opacity-40",
                       )}
                     >
                       {isLoading ? <ButtonLoader /> : "Continue"}
@@ -1056,7 +1057,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                     disabled={isLoading || !password}
                     className={cn(
                       "w-full flex items-center justify-center bg-mint-green text-white py-4 rounded-full font-medium hover:opacity-90 transition-opacity",
-                      isLoading ? "opacity-50" : "disabled:opacity-40"
+                      isLoading ? "opacity-50" : "disabled:opacity-40",
                     )}
                   >
                     {isLoading ? <ButtonLoader /> : "Sign in"}
@@ -1160,105 +1161,95 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
             {/* ── Signup step ── */}
             {step === "signup" && (
-              <>
-                <form onSubmit={handleSignUp} className="space-y-3">
-                  <div>
-                    <p className="text-[#57605E] text-sm font-medium">
-                      Your email address
-                    </p>
-                    <div className="w-full px-4 py-4 rounded-lg bg-muted text-sm flex gap-2 items-center">
-                      <Mail size={20} color="#57605E" />
-                      <p>{email}</p>
-                    </div>
+              <form onSubmit={handleSignUp} className="space-y-3">
+                <div>
+                  <p className="text-[#57605E] text-sm font-medium">
+                    Your email address
+                  </p>
+                  <div className="w-full px-4 py-4 rounded-lg bg-muted text-sm flex gap-2 items-center">
+                    <Mail size={20} color="#57605E" />
+                    <p>{email}</p>
                   </div>
+                </div>
 
-                  <label
-                    htmlFor=""
-                    className="text-[#57605E] text-sm font-medium"
-                  >
-                    Create Password
-                  </label>
-                  <div className="relative">
-                    <LockKeyhole
-                      size={20}
-                      color={password ? "#57605E" : "#9CA5A3"}
-                      className="absolute top-4.75 left-3"
-                    />
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        if (error) setError(null);
-                      }}
-                      autoComplete="new-password"
-                      required
-                      className="w-full pl-10 pr-4 py-4 rounded-lg bg-white text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((prev) => !prev)}
-                      className="absolute top-4.75 right-3"
-                    >
-                      {showPassword ? (
-                        <Eye size={20} color="#57605E" />
-                      ) : (
-                        <EyeOff size={20} color="#9CA5A3" />
-                      )}
-                    </button>
-                  </div>
-
-                  {password.length > 0 && password.length < 8 && (
-                    <p className="text-xs text-muted-foreground text-center">
-                      Password must be at least 8 characters
-                    </p>
-                  )}
-
-                  <label
-                    htmlFor=""
-                    className="text-[#57605E] text-sm font-medium"
-                  >
-                    Your full name
-                  </label>
+                <label
+                  htmlFor=""
+                  className="text-[#57605E] text-sm font-medium"
+                >
+                  Create Password
+                </label>
+                <div className="relative">
+                  <LockKeyhole
+                    size={20}
+                    color={password ? "#57605E" : "#9CA5A3"}
+                    className="absolute top-4.75 left-3"
+                  />
                   <input
-                    type="text"
-                    placeholder="Full name"
-                    value={fullName}
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
                     onChange={(e) => {
-                      setFullName(e.target.value);
+                      setPassword(e.target.value);
                       if (error) setError(null);
                     }}
-                    autoComplete="name"
-                    autoFocus
+                    autoComplete="new-password"
                     required
-                    className="w-full px-4 py-4 rounded-lg bg-white text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
+                    className="w-full pl-10 pr-4 py-4 rounded-lg bg-white text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
                   />
-
-                  {error && (
-                    <p className="text-sm text-destructive text-center">
-                      {error}
-                    </p>
-                  )}
-
                   <button
-                    type="submit"
-                    disabled={isLoading || !fullName || !password}
-                    className={cn(
-                      "w-full flex items-center justify-center bg-[#227B6F] text-white py-4 rounded-full font-medium hover:opacity-90 transition-opacity",
-                      isLoading ? "opacity-50" : "disabled:opacity-40"
-                    )}
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute top-4.75 right-3"
                   >
-                    {isLoading ? <ButtonLoader /> : "Create profile"}
+                    {showPassword ? (
+                      <Eye size={20} color="#57605E" />
+                    ) : (
+                      <EyeOff size={20} color="#9CA5A3" />
+                    )}
                   </button>
-                </form>
-                <button
-                  className="w-full flex items-center justify-center bg-[#E8E6DC] py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
-                  onClick={handleSkipProfile}
+                </div>
+
+                <PasswordRequirements password={password} />
+
+                <label
+                  htmlFor=""
+                  className="text-[#57605E] text-sm font-medium"
                 >
-                  Do this later
+                  Your full name
+                </label>
+                <input
+                  type="text"
+                  placeholder="Full name"
+                  value={fullName}
+                  onChange={(e) => {
+                    setFullName(e.target.value);
+                    if (error) setError(null);
+                  }}
+                  autoComplete="name"
+                  autoFocus
+                  required
+                  className="w-full px-4 py-4 rounded-lg bg-white text-foreground placeholder:text-muted-foreground border border-[#E2E4E4] outline-none"
+                />
+
+                {error && (
+                  <p className="text-sm text-destructive text-center">
+                    {error}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={
+                    isLoading || !fullName || !isPasswordValid(password)
+                  }
+                  className={cn(
+                    "w-full flex items-center justify-center bg-[#227B6F] text-white py-4 rounded-full font-medium hover:opacity-90 transition-opacity",
+                    isLoading ? "opacity-50" : "disabled:opacity-40",
+                  )}
+                >
+                  {isLoading ? <ButtonLoader /> : "Create profile"}
                 </button>
-              </>
+              </form>
             )}
           </div>
         </div>

@@ -1,34 +1,12 @@
 "use client";
 
 import { Check } from "lucide-react";
+import {
+  PASSWORD_REQUIREMENTS,
+  isPasswordValid,
+} from "@/lib/password-policy";
 
-interface PasswordRequirement {
-  label: string;
-  test: (password: string) => boolean;
-}
-
-const requirements: PasswordRequirement[] = [
-  {
-    label: "8 characters",
-    test: (p) => p.length >= 8,
-  },
-  {
-    label: "A lowercase letter (a-z)",
-    test: (p) => /[a-z]/.test(p),
-  },
-  {
-    label: "An uppercase letter (A-Z)",
-    test: (p) => /[A-Z]/.test(p),
-  },
-  {
-    label: "A special character (e.g. !@#$)",
-    test: (p) => /[!@#$%^&*(),.?":{}|<>_\-+=/\\[\]~`';]/.test(p),
-  },
-  {
-    label: "A number (1-9)",
-    test: (p) => /[0-9]/.test(p),
-  },
-];
+export { isPasswordValid };
 
 interface PasswordRequirementsProps {
   password: string;
@@ -41,7 +19,7 @@ export function PasswordRequirements({ password }: PasswordRequirementsProps) {
         Password needs at least:
       </p>
       <ul className="flex flex-col gap-2">
-        {requirements.map((req) => {
+        {PASSWORD_REQUIREMENTS.map((req) => {
           const isMet = req.test(password);
           return (
             <li key={req.label} className="flex items-center gap-2">
@@ -68,9 +46,4 @@ export function PasswordRequirements({ password }: PasswordRequirementsProps) {
       </ul>
     </div>
   );
-}
-
-// Export a helper to check if all requirements are met (useful for the parent form)
-export function isPasswordValid(password: string): boolean {
-  return requirements.every((req) => req.test(password));
 }

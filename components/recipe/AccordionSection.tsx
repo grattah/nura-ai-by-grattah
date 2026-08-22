@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/accordion";
 import { useAccess } from "@/hooks/use-access";
 import type { NutritionFacts } from "@/lib/types";
+import { parseWhyItWorksDetail } from "@/lib/recipe-copy";
 import iconNutritionalValue from "@/public/iconNutritionalValue.svg";
 import iconIngredients from "@/public/ingredients.svg";
 import iconHTMI from "@/public/HTMI.svg";
@@ -20,6 +21,8 @@ import { LockKeyhole, LockKeyholeOpen } from "lucide-react";
 interface AccordionSectionProps {
   recipe: {
     why_it_works: string;
+    /** Per-ingredient breakdown; null on rows generated before QA ⑪. */
+    why_it_works_detail?: unknown;
     inside_tip: string;
   };
   ingredients: { label: string; emoji: string }[];
@@ -35,6 +38,10 @@ const AccordionSection = ({
   nutrition,
   popular,
 }: AccordionSectionProps) => {
+  // Rows generated before QA ⑪ have no structured breakdown — fall back to the
+  // prose rather than showing an empty section.
+  const whyDetail = parseWhyItWorksDetail(recipe.why_it_works_detail);
+
   const { isSubscriber, isLoading } = useAccess();
 
   const lockIcon = isLoading ? null : isSubscriber || popular ? (
@@ -169,9 +176,35 @@ const AccordionSection = ({
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-5 pb-5 pt-0">
-          <p className="text-base text-[#57605E] leading-relaxed bg-[#F2F6F5] p-4 rounded-lg">
-            {recipe.why_it_works}
-          </p>
+          {whyDetail ? (
+            <div className="bg-[#F2F6F5] p-4 rounded-lg space-y-4">
+              {whyDetail.map((entry) => (
+                <div key={entry.ingredient}>
+                  <p className="text-base font-semibold text-base-text">
+                    {entry.ingredient}
+                  </p>
+                  <ul className="mt-1.5 space-y-1.5">
+                    {entry.functions.map((fn) => (
+                      <li
+                        key={fn}
+                        className="flex gap-2 text-base text-[#57605E] leading-relaxed"
+                      >
+                        <span
+                          aria-hidden="true"
+                          className="mt-2 size-1.5 shrink-0 rounded-full bg-mint-green"
+                        />
+                        <span>{fn}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-base text-[#57605E] leading-relaxed bg-[#F2F6F5] p-4 rounded-lg">
+              {recipe.why_it_works}
+            </p>
+          )}
         </AccordionContent>
       </AccordionItem>
 

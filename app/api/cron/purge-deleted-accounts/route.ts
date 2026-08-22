@@ -34,6 +34,23 @@ export async function GET(req: Request) {
   const admin = createServiceRoleClient();
   const now = new Date();
 
+  // Safety net for subscription status. The webhook keeps status current when
+  // events arrive, but they can be missed (they were, for a month, while the
+  // endpoint pointed at the retired domain) — and a missed event left rows
+  // reading "active" long past expires_at. Cheap, idempotent, runs first so a
+  // later failure in the purge below doesn't skip it.
+  let subscriptionsExpired = 0;
+  {
+    const { data, error } = await admin.rpc(
+      "expire_lapsed_subscriptions" as never,
+    );
+    if (error) {
+      console.error("[purge-deleted-accounts] expire sweep failed:", error.message);
+    } else {
+      subscriptionsExpired = (data as number | null) ?? 0;
+    }
+  }
+
   const { data, error } = await admin
     .from("account_deletions")
     .select("user_id, scheduled_at")
@@ -79,11 +96,18 @@ export async function GET(req: Request) {
 
     // Cancel any live Stripe subscription IMMEDIATELY (not at period end) — the
     // account is about to stop existing, so there's nothing left to bill for.
+    //
+    // Every row with a Stripe id is attempted, NOT just the ones our `status`
+    // column calls 'active'. That column can disagree with Stripe (prod has
+    // rows reading 'cancelled' against subscriptions Stripe still reports as
+    // active), and filtering on it would leave a deleted user's card being
+    // charged forever. Cancelling an already-cancelled subscription 404s, which
+    // is handled below, so the wider net costs nothing.
     const { data: subs } = await admin
       .from("subscriptions")
       .select("stripe_subscription_id")
       .eq("user_id", row.user_id)
-      .eq("status", "active");
+      .not("stripe_subscription_id", "is", null);
 
     let stripeFailed = false;
     for (const sub of (subs ?? []) as {
@@ -126,6 +150,7 @@ export async function GET(req: Request) {
 
   return Response.json({
     graceDays: DELETION_GRACE_DAYS,
+    subscriptionsExpired,
     scanned: rows.length,
     deleted,
     reactivated,

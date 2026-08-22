@@ -12,23 +12,17 @@ export default function ExistingConditionsStep() {
     <StepShell
       step="conditions"
       title="Existing conditions"
-      sublabel="Select any three that apply."
+      sublabel="Select all that apply."
       optional
     >
       <div className="space-y-5">
         <Checklist
           options={CONDITIONS}
           selected={draft.conditions}
-          onToggle={(k) => {
-            const conditions = draft.conditions;
-            if (conditions.includes(k)) {
-              update({ conditions: conditions.filter((g) => g !== k) });
-            } else if (conditions.length < 3) {
-              update({ conditions: [...conditions, k] });
-            } else {
-              update({ conditions: [...conditions.slice(0, -1), k] });
-            }
-          }}
+          // "Select all that apply" — unlike goals, conditions are NOT capped
+          // at three. Silently dropping a condition the user ticked would feed
+          // the match score an incomplete picture of who they are.
+          onToggle={(k) => update({ conditions: toggle(draft.conditions, k) })}
         />
         {/* <OtherInput
           value={draft.conditionsOther}

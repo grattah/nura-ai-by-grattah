@@ -8,6 +8,7 @@ import { Bookmark, Clock } from "lucide-react";
 import { FaBookmark, FaHeart } from "react-icons/fa";
 
 import { createClient } from "@/lib/supabase/client";
+import { getCurrentUserId } from "@/lib/supabase/current-user";
 import { truncateText } from "@/lib/truncate-text";
 import { formatRelativeTime } from "@/lib/format-time";
 import {
@@ -24,12 +25,12 @@ function isAbortError(e: unknown): boolean {
 
 export function BookmarksList({
   initialBookmarks,
-  userId,
 }: {
   initialBookmarks: BookmarkedRecipe[];
-  userId: string;
 }) {
   const supabase = useMemo(() => createClient(), []);
+  // Resolved from the session on first paginate, then reused.
+  const userIdRef = useRef<string | null>(null);
 
   const [bookmarks, setBookmarks] = useState(initialBookmarks);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -61,10 +62,17 @@ export function BookmarksList({
     }, FETCH_TIMEOUT_MS);
 
     try {
+      userIdRef.current ??= await getCurrentUserId(supabase);
+      if (!userIdRef.current) {
+        hasMoreRef.current = false;
+        setAtEnd(true);
+        return;
+      }
+
       const next = pageRef.current + 1;
       const rows = await fetchBookmarksPage(
         supabase,
-        userId,
+        userIdRef.current,
         next,
         controller.signal,
       );
@@ -93,7 +101,7 @@ export function BookmarksList({
       fetchingRef.current = false;
       setIsLoadingMore(false);
     }
-  }, [supabase, userId]);
+  }, [supabase]);
 
   const retryLoadMore = useCallback(() => {
     loadMoreErrorRef.current = false;

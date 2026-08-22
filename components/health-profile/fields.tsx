@@ -185,7 +185,7 @@ export function GoalGrid({
 }) {
   return (
     <div className="grid grid-cols-3 gap-3">
-      {goals.map((g, index) => {
+      {goals.map((g) => {
         const active = selected.includes(g.key);
         return (
           <button
@@ -212,7 +212,7 @@ export function GoalGrid({
               <g.icon className={`size-6 text-mint-green`} strokeWidth={1.5} />
             </div>
             <span className="text-xs font-medium text-base-text text-center px-1">
-              {index + 1}. {g.label}
+              {g.label}
             </span>
           </button>
         );

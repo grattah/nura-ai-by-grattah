@@ -18,7 +18,8 @@ const invoice = (over: Partial<Stripe.Invoice> = {}) =>
 
 describe("toInvoiceView", () => {
   it("converts minor units and formats in the invoice's own currency", () => {
-    // The mock UI hardcoded "$79" while the app bills in GBP — the symbol must
+    // A subscription cannot change currency, so invoices raised before the
+    // switch to USD stay in GBP and must keep rendering "£". The symbol must
     // come from the invoice, not a constant.
     expect(toInvoiceView(invoice()).amount).toBe("£79.00");
     expect(
@@ -53,5 +54,23 @@ describe("toInvoiceView", () => {
       toInvoiceView(invoice({ amount_paid: 0, amount_due: 2000, status: "open" }))
         .amount,
     ).toBe("£20.00");
+  });
+});
+
+
+// Currency moved to USD. Amounts still render in each invoice's OWN currency —
+// a subscription's currency is fixed at creation and cannot be migrated — so
+// the change is about what NEW charges use and what an absent currency means.
+describe("USD switchover", () => {
+  it("renders a USD invoice with a dollar sign", () => {
+    const usd = { ...invoice(), currency: "usd" } as Parameters<typeof toInvoiceView>[0];
+    expect(toInvoiceView(usd).amount).toBe("$79.00");
+  });
+
+  it("defaults a currency-less invoice to USD, not GBP", () => {
+    const none = { ...invoice(), currency: undefined } as unknown as Parameters<
+      typeof toInvoiceView
+    >[0];
+    expect(toInvoiceView(none).amount).toBe("$79.00");
   });
 });

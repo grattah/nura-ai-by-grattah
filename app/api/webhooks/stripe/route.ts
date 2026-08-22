@@ -8,6 +8,7 @@ import { activateSubscriptionFromSession } from "@/lib/subscription-activate";
 import { creditTokenPurchaseFromSession } from "@/lib/token-purchase";
 import { getBundle } from "@/lib/credits";
 import { sendEmail } from "@/lib/email/send";
+import { APP_CURRENCY } from "@/constants";
 import {
   subscriptionConfirmationEmail,
   resubscriptionEmail,
@@ -61,7 +62,9 @@ function periodEndToIso(sub: Stripe.Subscription): string | null {
 }
 
 function planLabel(plan: string | null | undefined): string {
-  return plan === "monthly" ? "Monthly Plan" : "Premium Plan";
+  if (plan === "weekly") return "Weekly Plan";
+  if (plan === "monthly") return "Monthly Plan";
+  return "Premium Plan";
 }
 
 function fmtDate(iso: string | null | undefined): string | null {
@@ -86,7 +89,7 @@ async function sendSubscriptionConfirmation(
   const row = data as { plan?: string; expires_at?: string | null } | null;
   const amount =
     typeof session.amount_total === "number"
-      ? formatMoney(session.amount_total, session.currency ?? "gbp")
+      ? formatMoney(session.amount_total, session.currency ?? APP_CURRENCY)
       : null;
   const params = {
     planLabel: planLabel(row?.plan),
@@ -108,7 +111,7 @@ async function sendTokenPurchaseReceipt(
   const bundle = getBundle(session.metadata?.bundleId ?? "");
   const amount =
     typeof session.amount_total === "number"
-      ? formatMoney(session.amount_total, session.currency ?? "gbp")
+      ? formatMoney(session.amount_total, session.currency ?? APP_CURRENCY)
       : "";
   const { subject, html } = tokenPurchaseReceiptEmail({
     credits,
@@ -259,6 +262,29 @@ export async function POST(req: Request) {
 
 // ── Handlers ─────────────────────────────────────────────────────────────────
 
+/**
+ * True when this Stripe customer has subscribed before today's checkout.
+ * Errs toward "first-time" — sending a first-timer's welcome to a returning
+ * customer is a far smaller wrong than the reverse, which is what QA reported.
+ */
+async function hasPriorSubscription(
+  customer: string | Stripe.Customer | Stripe.DeletedCustomer | null,
+): Promise<boolean> {
+  const customerId = typeof customer === "string" ? customer : customer?.id;
+  if (!customerId) return false;
+  try {
+    const subs = await stripe.subscriptions.list({
+      customer: customerId,
+      status: "all",
+      limit: 2,
+    });
+    return subs.data.length > 1;
+  } catch (e) {
+    console.error("[webhook] prior-subscription lookup failed", e);
+    return false;
+  }
+}
+
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const userId = session.client_reference_id; // Supabase user_id
   const email = session.customer_details?.email;
@@ -283,16 +309,19 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return;
   }
 
-  // A subscriptions row already existing for this user (any status) means this
-  // checkout is a resubscribe, not a first-time signup — picks different email
-  // copy below.
-  const supabase = createServiceRoleClient();
-  const { data: existingRows } = await supabase
-    .from("subscriptions")
-    .select("status")
-    .eq("user_id", userId)
-    .limit(1);
-  const isResubscribe = !!existingRows?.[0];
+  // Resubscribe detection asks STRIPE, not our own table.
+  //
+  // This used to check "does a subscriptions row exist for this user?" — but
+  // /return calls activateSubscriptionFromSession() synchronously on redirect,
+  // so by the time this webhook ran the row it was looking for had just been
+  // written by the very same checkout. Every first-time subscriber who reached
+  // /return before the webhook got the "welcome back" copy. The row can't
+  // distinguish the two cases at all: the upsert is keyed on user_id, so a
+  // genuine resubscribe overwrites the same single row.
+  //
+  // Stripe keeps every subscription object it has ever created for a customer
+  // (cancelled ones persist), so >1 means they have subscribed before.
+  const isResubscribe = await hasPriorSubscription(session.customer);
 
   // Persist the active subscription (shared with the /return synchronous path).
   await activateSubscriptionFromSession(session);
@@ -321,10 +350,14 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
   const supabase = createServiceRoleClient();
 
   // Map Stripe status → our status. Keep expiry in sync with the real period end.
-  let status: "active" | "suspended" | null = null;
-  if (sub.status === "past_due" || sub.status === "unpaid")
+  // Every Stripe status we can act on. Terminal states used to fall through to
+  // "no change", which is how rows kept saying "active" after they had ended.
+  let status: "active" | "suspended" | "cancelled" | "expired" | null = null;
+  if (sub.status === "past_due" || sub.status === "unpaid" || sub.status === "paused")
     status = "suspended";
-  else if (sub.status === "active") status = "active";
+  else if (sub.status === "active" || sub.status === "trialing") status = "active";
+  else if (sub.status === "canceled") status = "cancelled";
+  else if (sub.status === "incomplete_expired") status = "expired";
 
   if (!status) {
     console.log(
@@ -381,6 +414,33 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
   if (!customerId) return;
 
+  // Push the period forward FIRST. This used to only send an email, leaving the
+  // row's expires_at on the previous period and relying entirely on
+  // customer.subscription.updated also arriving — so a renewal that delivered
+  // only this event left the subscription looking expired.
+  // Stripe's 2025+ API moved the subscription off the invoice root and under
+  // `parent.subscription_details` — `invoice.subscription` no longer exists.
+  const subRef = invoice.parent?.subscription_details?.subscription;
+  const subId = typeof subRef === "string" ? subRef : subRef?.id;
+  if (subId) {
+    try {
+      const sub = await stripe.subscriptions.retrieve(subId);
+      const end = periodEndToIso(sub);
+      if (end) {
+        await createServiceRoleClient()
+          .from("subscriptions")
+          .update({
+            status: "active",
+            expires_at: end,
+            updated_at: new Date().toISOString(),
+          } as never)
+          .eq("stripe_subscription_id", subId);
+      }
+    } catch (e) {
+      console.error("[webhook] failed to extend period on renewal", e);
+    }
+  }
+
   const user = await getUserForCustomer(customerId);
   if (!user) {
     console.log(`[webhook] No user found for customer ${customerId}`);
@@ -394,7 +454,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
   try {
     const { subject, html } = renewalReceiptEmail({
       planLabel: planLabel(user.plan),
-      amount: formatMoney(invoice.amount_paid, invoice.currency ?? "gbp"),
+      amount: formatMoney(invoice.amount_paid, invoice.currency ?? APP_CURRENCY),
       date: fmtDate(paidAtIso) ?? "",
       invoiceUrl: invoice.hosted_invoice_url ?? invoice.invoice_pdf ?? null,
     });
@@ -409,20 +469,29 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
   if (!customerId) return;
 
+  // getUserForCustomer() resolves via a subscriptions row, which does NOT exist
+  // when the very FIRST payment of a new subscription fails — there was no
+  // successful checkout to write one. That path used to return here silently, so
+  // a failed initial subscription notified nobody. Fall back to the email Stripe
+  // already put on the invoice.
   const user = await getUserForCustomer(customerId);
-  if (!user) {
-    console.log(`[webhook] No user found for customer ${customerId}`);
+  const email = user?.email ?? invoice.customer_email ?? null;
+  if (!email) {
+    console.log(`[webhook] No email to notify for customer ${customerId}`);
     return;
   }
 
   const reason = await paymentFailureReason(invoice);
+  // A first-payment failure means they never had access to lose.
+  const isFirstPayment = !user || invoice.billing_reason === "subscription_create";
 
   try {
     const { subject, html } = paymentFailedEmail({
-      planLabel: planLabel(user.plan),
+      planLabel: planLabel(user?.plan),
       reason,
+      isFirstPayment,
     });
-    await sendEmail({ to: user.email, subject, html });
+    await sendEmail({ to: email, subject, html });
   } catch (e) {
     console.error("[webhook] payment failed email failed", e);
   }

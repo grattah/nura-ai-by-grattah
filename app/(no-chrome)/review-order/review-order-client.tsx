@@ -1,5 +1,6 @@
 "use client";
 
+import { PLANS, type Plan } from "@/constants";
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Info } from "lucide-react";
@@ -7,25 +8,24 @@ import { createClient } from "@/lib/supabase/client";
 import { format } from "date-fns";
 import FilledLock from "@/components/vectors/filled-lock";
 
-const PLAN_CONFIG = {
-  annual: {
-    label: "Annual",
-    price: "£79",
-    priceLabel: "£79 / yearly",
-    total: "£79 / yearly",
-  },
-  monthly: {
-    label: "Monthly",
-    price: "£7.99",
-    priceLabel: "£7.99 / monthly",
-    total: "£7.99 / monthly",
-  },
-};
+// Derived from the single source of truth in constants/index.ts — this used to
+// be a third hardcoded copy of the prices and had drifted to stale GBP values.
+const PLAN_CONFIG = Object.fromEntries(
+  PLANS.map((p) => [
+    p.id,
+    {
+      label: p.label,
+      price: p.price,
+      priceLabel: `${p.price} ${p.per}`,
+      total: `${p.price} ${p.per}`,
+    },
+  ]),
+) as Record<Plan, { label: string; price: string; priceLabel: string; total: string }>;
 
 function ReviewOrderContent() {
   const router = useRouter();
   const params = useSearchParams();
-  const plan = (params.get("plan") ?? "annual") as "annual" | "monthly";
+  const plan = (params.get("plan") ?? "annual") as Plan;
   const config = PLAN_CONFIG[plan] ?? PLAN_CONFIG.annual;
 
   const supabase = createClient();

@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
+import { ENTITLED_STATUSES } from "@/lib/subscription";
 
 /**
  * Which plan card a user should see on /manage-subscription and /billing-history.
@@ -44,15 +45,15 @@ export async function getSubscriptionView(
     return { state: "free", plan: null, expiresAt: null, cancelAtPeriodEnd: false };
   }
 
-  // Expiry is DERIVED, not a status: there is no 'expired' status in the schema.
-  // Three distinct signals all mean lapsed —
-  //   • 'cancelled'  — Stripe fired customer.subscription.deleted
-  //   • 'suspended'  — Stripe past_due/unpaid (failed renewal)
-  //   • 'active' with a past expires_at — reachable because the webhook does NOT
-  //     handle invoice.payment_failed, so a missed event leaves the row stale.
-  // Keying off the status string alone would miss that third case.
+  // Expiry is DERIVED, not a status. Lapsed means either a status that carries
+  // no entitlement ('suspended' — the renewal payment failed; 'expired'), or an
+  // entitled status whose paid period has run out. 'cancelled' is entitled
+  // while expires_at is still ahead: the user paid for that period and keeps it
+  // (see ENTITLED_STATUSES). Keying off the status string alone would both
+  // strand paid-up cancellers and miss an 'active' row left stale by a webhook
+  // event we never received.
   const live =
-    sub.status === "active" &&
+    (ENTITLED_STATUSES as readonly string[]).includes(sub.status) &&
     (!sub.expires_at || new Date(sub.expires_at) > new Date());
 
   return {

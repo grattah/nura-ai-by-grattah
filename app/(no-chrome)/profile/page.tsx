@@ -154,7 +154,6 @@ export default function ProfilePage() {
           <AvatarUpload
             avatarUrl={user.avatarUrl}
             avatarLetter={user.avatarLetter}
-            userId={user.id}
           />
         </div>
 

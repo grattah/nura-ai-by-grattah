@@ -46,7 +46,7 @@ export default async function BookmarksPage() {
 
       <main className="px-6 pb-10">
         {initialBookmarks.length > 0 ? (
-          <BookmarksList initialBookmarks={initialBookmarks} userId={userId || ""} />
+          <BookmarksList initialBookmarks={initialBookmarks} />
         ) : (
           <EmptyBookmarks />
         )}

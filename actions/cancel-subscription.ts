@@ -13,7 +13,9 @@ import { format } from "date-fns";
 type Result = { success: true } | { error: string };
 
 function planLabel(plan: string | null | undefined): string {
-  return plan === "monthly" ? "Monthly Plan" : "Premium Plan";
+  if (plan === "weekly") return "Weekly Plan";
+  if (plan === "monthly") return "Monthly Plan";
+  return "Premium Plan";
 }
 
 /** The caller's most recent active subscription row. */

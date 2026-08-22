@@ -130,7 +130,7 @@ export const MAX_OUTPUT_TOKENS: Record<CreditAction, number> = {
 export interface CreditBundle {
   id: string;
   credits: number; // units granted to the "extra" bucket
-  amount: number; // price in pence (GBP)
+  amount: number; // price in minor units (USD cents)
   label: string;
   blurb: string;
   mostBought?: boolean;
@@ -154,7 +154,7 @@ export function getBundle(id: string): CreditBundle | undefined {
   return BUNDLES.find((b) => b.id === id);
 }
 
-/** Format pence as a GBP price, e.g. 499 -> "£4.99". */
-export function formatPrice(pence: number): string {
-  return `£${(pence / 100).toFixed(2)}`;
+/** Format minor units as a USD price, e.g. 499 -> "$4.99". */
+export function formatPrice(cents: number): string {
+  return `$${(cents / 100).toFixed(2)}`;
 }

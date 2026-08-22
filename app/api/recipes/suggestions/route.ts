@@ -178,6 +178,9 @@ Duplicates
       model: "claude-haiku-4-5",
       surface: "suggestions",
       billed: false,
+      // Unbilled, but still a real per-user cost — without this the row lands
+      // with a NULL user_id and the spend can't be attributed to anyone.
+      userId: user.id,
       ...usageTokens(usage),
     });
 
