@@ -36,7 +36,10 @@ export async function addComment(
 
   if (error) {
     console.error("Failed to insert comment:", error);
-    if (error.code === "42501" || error.message?.includes("row-level security")) {
+    if (
+      error.code === "42501" ||
+      error.message?.includes("row-level security")
+    ) {
       return {
         success: false,
         error: "You need an active subscription to comment.",
@@ -47,6 +50,16 @@ export async function addComment(
 
   if (!data) {
     return { success: false, error: "Comment was rejected." };
+  }
+
+  const { error: activityError } = await supabase.from("activities").insert({
+    user_id: user.id,
+    recipe_id: recipeId,
+    action: "commented on",
+  });
+
+  if (activityError) {
+    console.error("Failed to log comment activity:", activityError);
   }
 
   revalidatePath(`/recipes/${recipeId}`);

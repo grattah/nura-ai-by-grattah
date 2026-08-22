@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Mail, LockKeyhole, X, Check } from "lucide-react";
 
@@ -19,7 +19,16 @@ export function ForgotPasswordForm({
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const router = useRouter();
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => Math.max(prev - 1, 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   const handleConfirm = async () => {
     const supabase = createClient();
@@ -37,6 +46,7 @@ export function ForgotPasswordForm({
       if (error) throw error;
       setShowConfirmModal(false);
       setSuccess(true);
+      setResendCooldown(60);
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
@@ -102,10 +112,14 @@ export function ForgotPasswordForm({
           <div className="flex flex-col gap-3">
             <button
               onClick={handleConfirm}
-              disabled={isLoading}
+              disabled={isLoading || resendCooldown > 0}
               className="w-full bg-mint-green text-white py-4 rounded-full font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
             >
-              {isLoading ? "Resending..." : "Resend email"}
+              {isLoading
+                ? "Resending..."
+                : resendCooldown > 0
+                  ? `Resend email (${resendCooldown}s)`
+                  : "Resend email"}
             </button>
 
             <Link

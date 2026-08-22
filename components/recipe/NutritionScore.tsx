@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { HiOutlineInformationCircle } from "react-icons/hi";
-import { FaLock } from "react-icons/fa";
+import { FaLock, FaStar } from "react-icons/fa";
 
 import { NutritionScoreDrawer } from "@/components/recipe/NutritionScoreDrawer";
+import { PaywallModal } from "@/components/paywall/paywall-modal";
 import type { NutritionPointInput } from "@/lib/scoring/nutrition-breakdown";
 
 const DISCLAIMER =
@@ -25,6 +26,7 @@ const NutritionScore = ({
   average = null,
   points,
   hasProfile,
+  isSubscribed,
 }: {
   baseScore: number;
   match: { percent: number; label: string };
@@ -32,12 +34,18 @@ const NutritionScore = ({
   average?: number | null;
   points: NutritionPointInput;
   hasProfile: boolean;
+  isSubscribed: boolean;
 }) => {
   const [open, setOpen] = useState(false);
 
   const [showBreakdown, setShowBreakdown] = useState(false);
+  const [paywallOpen, setPaywallOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const showAverage = average != null && breakdown.length > 1;
+  // No profile → same as before, prompting them to build one. Profile but no
+  // active subscription → still locked, but the blocker is the paywall now.
+  // Profile + subscribed → the real scores.
+  const unlocked = hasProfile && isSubscribed;
 
   // Close on outside click and on Escape.
   useEffect(() => {
@@ -63,7 +71,7 @@ const NutritionScore = ({
   return (
     <div
       className={`relative p-4 rounded-2xl bg-white flex flex-col gap-4 ${
-        !hasProfile && "h-57"
+        !unlocked && "h-57"
       }`}
     >
       <div className="relative z-30 flex justify-between items-center">
@@ -199,26 +207,48 @@ const NutritionScore = ({
           </Link>
         </div>
       )}
-      {!hasProfile && (
+      {!unlocked && (
         <div className="absolute inset-0 rounded-2xl backdrop-blur-sm bg-white/30 flex flex-col items-center justify-center gap-3 text-center px-4 z-20">
-          <div className="bg-[#F0F2EA] p-3 rounded-full">
-            <FaLock color="#227B6F" size={16} />
-          </div>
-          <div className="flex flex-col gap-2 text-center items-center">
-            <p className="font-semibold text-sm text-black">
-              See your match score
-            </p>
-            <p className="text-xs text-subtle w-8/12">
-              Set your wellness goals to see how well this recipe matches your
-              needs
-            </p>
-          </div>
-          <Link
-            href="/health-profile"
-            className="bg-mint-green text-white py-2 px-4 rounded-full font-medium text-xs"
-          >
-            Choose my goals
-          </Link>
+          {!hasProfile ? (
+            <>
+              <div className="bg-[#F0F2EA] p-3 rounded-full">
+                <FaLock color="#227B6F" size={16} />
+              </div>
+              <div className="flex flex-col gap-2 text-center items-center">
+                <p className="font-semibold text-sm text-black">
+                  See your match score
+                </p>
+                <p className="text-xs text-subtle w-8/12">
+                  Set your wellness goals to see how well this recipe matches
+                  your needs
+                </p>
+              </div>
+              <Link
+                href="/health-profile"
+                data-paywall-passthrough
+                className="bg-mint-green text-white py-2 px-4 rounded-full font-medium text-xs"
+              >
+                Choose my goals
+              </Link>
+            </>
+          ) : (
+            <>
+              <div className="bg-[#F0F2EA] p-3 rounded-full">
+                <FaLock color="#227B6F" size={16} />
+              </div>
+              <div className="flex flex-col gap-2 text-center items-center">
+                <p className="font-semibold text-sm text-black">
+                  Your match is now ready
+                </p>
+              </div>
+              <button
+                type="button"
+                className="bg-mint-green text-white py-2 px-4 rounded-full font-medium text-xs"
+              >
+                Tap to view
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>
