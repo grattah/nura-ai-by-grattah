@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Mail, LockKeyhole, X, Check } from "lucide-react";
 
@@ -20,8 +20,13 @@ export function ForgotPasswordForm({
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const router = useRouter();
-  const { remaining, isCoolingDown, start: startCooldown } = useResendCooldown();
+  const {
+    remaining,
+    isCoolingDown,
+    start: startCooldown,
+  } = useResendCooldown();
 
   const handleConfirm = async () => {
     if (isCoolingDown) return;
@@ -42,6 +47,7 @@ export function ForgotPasswordForm({
       startCooldown();
       setShowConfirmModal(false);
       setSuccess(true);
+      setResendCooldown(60);
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {

@@ -9,6 +9,7 @@ import CommentForm from "./CommentForm";
 import { formatRelativeTime } from "@/lib/utils";
 import profile from "@/public/profile.png";
 import CommentLikeButton from "./CommentLikeButton";
+import { createClient } from "@/lib/supabase/client";
 
 interface Comment {
   id: string;
@@ -40,22 +41,44 @@ export default function Comment({
   recipeId,
   isAuthenticated,
 }: CommentsSectionProps) {
+  const[isSubscriber, setIsSubscriber] = React.useState(false);
+
+
+  React.useEffect(() => {
+    const run = async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        return;
+      }
+      const { data } = await supabase
+        .from("subscriptions")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+        if (data?.status === "active") {
+          setIsSubscriber(true);
+        }
+    };
+    run();
+  }, []);
+
   return (
     <section className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-[#111312]">
-          Comments
-        </h2>
+        <h2 className="text-base font-semibold text-[#111312]">Comments</h2>
         <Link
           href={seeAllHref}
           className="text-mint-green underline font-semibold"
         >
-          See all
+          See comments
         </Link>
       </div>
 
       <div className="rounded-2xl bg-white p-5 flex flex-col gap-5">
-        {/* {latestComment && (
+        {isSubscriber && latestComment && (
           <div className="flex items-start gap-3">
             <div className="relative size-12 rounded-full overflow-hidden shrink-0">
               {latestComment && (
@@ -84,6 +107,7 @@ export default function Comment({
                 </span>
 
                 <CommentLikeButton
+                  key={latestComment?.id}
                   commentId={latestComment?.id || ""}
                   recipeId={recipeId}
                   initialLiked={latestComment?.hasLiked ?? false}
@@ -93,7 +117,7 @@ export default function Comment({
               </div>
             </div>
           </div>
-        )} */}
+        )}
         <CommentForm recipeId={recipeId} />
       </div>
     </section>

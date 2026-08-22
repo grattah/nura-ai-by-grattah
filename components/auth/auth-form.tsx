@@ -32,6 +32,11 @@ import LineStack from "../vectors/LineStack";
 import Leaflet from "../vectors/Leaflet";
 import ShieldMark from "../vectors/ShieldMark";
 // import { checkGoogleAccount } from "@/actions/check-google-account";
+import {
+  PasswordRequirements,
+  checkPasswordStrength,
+  isPasswordValid,
+} from "@/components/auth/password-requirments";
 
 declare const google: any;
 
@@ -122,6 +127,12 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   const [googleReady, setGoogleReady] = useState(
     () => typeof google !== "undefined" && !!google?.accounts,
   );
+  const strength = checkPasswordStrength(password);
+  const canCreateProfileDisabled =
+    password.trim().length < 8 ||
+    !fullName ||
+    !isPasswordValid(strength) ||
+    isLoading;
 
   // OTP autofill can trigger verification twice (the otpCode effect and the
   // form's onSubmit both fire for the same code). OTP tokens are single-use,
@@ -234,24 +245,22 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       const { exists, hasPassword } = await res.json();
 
       if (!exists) {
-        if (query === "true") {
-          // New user — verify the email with an OTP before creating a profile
-          const { error: otpError } = await supabase.auth.signInWithOtp({
-            email,
-            options: { shouldCreateUser: true },
-          });
+        const { error: otpError } = await supabase.auth.signInWithOtp({
+          email,
+          options: { shouldCreateUser: true },
+        });
 
-          if (otpError) {
-            setError(
-              isRateLimited(otpError)
-                ? "Please wait a minute before requesting another code."
-                : "We couldn't send a verification code to this email. Please try again.",
-            );
-            return;
-          }
-
-          savePendingOtp(email, "signup-otp");
+        if (otpError) {
+          setError(
+            isRateLimited(otpError)
+              ? "Please wait a minute before requesting another code."
+              : "We couldn't send a verification code to this email. Please try again.",
+          );
+          return;
         }
+
+        savePendingOtp(email, "signup-otp");
+
         goToStep("signup-otp");
         return;
       }
@@ -548,37 +557,27 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
   // ─── Google ────────────────────────────────────────────────────────────────
 
-  // const handleGoogleSignIn = async () => {
-  //   const supabase = createClient();
-  //   setIsGoogleLoading(true);
-  //   setError(null);
+  const handleGoogleSignIn = async () => {
+    const supabase = createClient();
+    setIsGoogleLoading(true);
+    setError(null);
 
-  //   if (!query) {
-  //     setIsGoogleSignUpError(true);
-  //     setError("You need to sign up first to continue with Google.");
-  //     setIsGoogleLoading(false);
-  //     return;
-  //   }
-
-  //   try {
-  //     const { error } = await supabase.auth.signInWithOAuth({
-  //       provider: "google",
-  //       options: {
-  //         redirectTo: `${window.location.origin}/auth/callback`,
-  //         queryParams: { access_type: "offline", prompt: "consent" },
-  //       },
-  //     });
-  //     setIsGoogleSignUpError(false);
-  //     if (error) throw error;
-  //   } catch (err: unknown) {
-  //     setIsGoogleSignUpError(false);
-  //     setError(
-  //       err instanceof Error ? err.message : "Failed to sign in with Google."
-  //     );
-  //     setIsGoogleSignUpError(false);
-  //     setIsGoogleLoading(false);
-  //   }
-  // };
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: { access_type: "offline", prompt: "consent" },
+        },
+      });
+      if (error) throw error;
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "Failed to sign in with Google.",
+      );
+      setIsGoogleLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (otpCode.length === 8) {
@@ -750,11 +749,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
   return (
     <div className={cn("min-h-screen flex flex-col", className)}>
-      <Script
-        src="https://accounts.google.com/gsi/client"
-        strategy="afterInteractive"
-        onLoad={() => setGoogleReady(true)}
-      />
       {/* Top bar */}
       <div className="flex items-center justify-end px-4 py-4">
         {isOtpStep && (
@@ -793,19 +787,19 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
               <h1 className="text-xl font-semibold text-base-text text-center">
                 {step === "login" && "Enter your password"}
                 {isOtpStep && "Check your email"}
-                {step === "signup" && "Welcome to Nuko"}
+                {step === "signup" && "Set up your profile"}
               </h1>
               <p className="text-subtle font-medium text-center text-sm">
                 {step === "login" && "Enter your password to login"}
                 {isOtpStep && (
                   <>
-                    If you have a nuko account, we sent an 8-digit code to{" "}
+                    We sent an 8-digit code to{" "}
                     <span className="text-[#1B1D1D] underline inline font-semibold">
                       {email}
                     </span>
                   </>
                 )}
-                {step === "signup" && "Create your profile to proceed"}
+                {step === "signup" && "Personalize your experience"}
               </p>
             </div>
 
@@ -815,19 +809,19 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
           <div className="w-full max-w-sm space-y-3">
             {/* ── Email step ── */}
             {step === "email" && (
-              <div className="mt-2">
+              <div className="mt-4">
                 {email.length === 0 && (
                   <div className="flex flex-col gap-1.75 text-center">
-                    <p className="font-lateef font-bold text-[40px] max-[370px]:text-3xl">
-                      Hey there! 👋
+                    <p className="font-lateef font-bold text-40 leading-[32px]">
+                      Instant wellness match with just a search
                     </p>
-                    <div className="items-center flex flex-col">
+                    {/* <div className="items-center flex flex-col">
                       <p className="font-medium text-subtle w-full max-w-75 mx-auto max-[370px]:text-sm max-[370px]:max-w-55">
                         Join Nuko and let’s make feeling good,
                         <span className="text-mint-green"> feel easy.</span>
                       </p>
                       <LineStack />
-                    </div>
+                    </div> */}
                   </div>
                 )}
 
@@ -845,17 +839,12 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                     <p className="max-[370px]:text-sm text-subtle font-medium">
                       Continue with
                     </p>
-                    <div
-                      id="google-btn-email"
-                      className="flex justify-center w-full"
-                    />
-
-                    {/*<button
+                    <button
                       onClick={handleGoogleSignIn}
                       disabled={isGoogleLoading}
                       className={cn(
                         "w-full flex items-center justify-center gap-3 bg-[#FFFCF7] text-[#333333] py-4 rounded-2xl font-semibold hover:opacity-90 transition-opacity",
-                        isGoogleLoading ? "opacity-50" : "disabled:opacity-50"
+                        isGoogleLoading ? "opacity-50" : "disabled:opacity-50",
                       )}
                     >
                       {isGoogleLoading ? (
@@ -866,34 +855,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                           Google
                         </>
                       )}
-                    </button> */}
-                    {isGoogleSignUpError && error && (
-                      <div className="space-y-3 text-center">
-                        <p className="text-sm text-destructive">{error}</p>
-                        <Link
-                          href="/landing"
-                          className="font-extrabold text-mint-green"
-                        >
-                          Sign up
-                        </Link>
-                      </div>
-                    )}
-                    {isGoogleLoading && (
-                      <div
-                        className=""
-                        role="status"
-                        aria-label="Signing you in"
-                      >
-                        <Image
-                          src={loader}
-                          alt=""
-                          width={30}
-                          height={30}
-                          className="animate-spin"
-                        />
-                        <span className="sr-only">Signing you in…</span>
-                      </div>
-                    )}
+                    </button>
                   </div>
 
                   <div className="flex items-center gap-3 py-1">
@@ -1071,16 +1033,12 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 </div>
 
                 <div className="flex flex-col gap-2 items-center">
-                  <div
-                    id="google-btn-login"
-                    className="flex justify-center w-full"
-                  />
-                  {/* <button
+                  <button
                     onClick={handleGoogleSignIn}
                     disabled={isGoogleLoading}
                     className={cn(
                       "w-full flex items-center justify-center gap-3 bg-[#E8E6DC] text-nura-forest py-4 rounded-full font-medium hover:opacity-90 transition-opacity",
-                      isGoogleLoading ? "opacity-50" : "disabled:opacity-50"
+                      isGoogleLoading ? "opacity-50" : "disabled:opacity-50",
                     )}
                   >
                     {isGoogleLoading ? (
@@ -1091,7 +1049,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                         Continue with Google
                       </>
                     )}
-                  </button> */}
+                  </button>
                 </div>
               </div>
             )}
@@ -1146,16 +1104,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 >
                   Resend code
                 </button>
-
-                <p className="text-center text-sm text-subtle fixed bottom-50 translate-x-1/2">
-                  Don't have an account?{" "}
-                  <Link
-                    href="/landing"
-                    className="font-extrabold text-mint-green"
-                  >
-                    Sign up
-                  </Link>
-                </p>
               </form>
             )}
 
