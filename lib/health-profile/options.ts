@@ -116,27 +116,32 @@ export const GOALS: GoalOption[] = [
 ];
 
 // ── 2.3 Existing conditions — full PRD 20-item list (+ free-text "Other") ─────
+/**
+ * The three conditions in the AUG 21 design.
+ *
+ * Reduced from thirteen. The commented-out keys below are NOT dead: users who
+ * completed the questionnaire earlier still hold them in `health_profiles`, and
+ * CONDITION_KEY_TO_PRD still maps every one of them, so those saved profiles
+ * keep producing a Match Score. They simply can no longer be newly selected.
+ * Keeping them listed here documents that, and makes restoring one a one-line
+ * change rather than an archaeology exercise.
+ */
 export const CONDITIONS: Option[] = [
-  // { key: "type-1-diabetes", label: "Type 1 Diabetes" },
-  // { key: "type-2-diabetes", label: "Type 2 Diabetes" },
-  { key: "diabetes", label: "Diabetes" },
-  { key: "heart-disease", label: "Heart disease" },
-  { key: "high-blood-pressure", label: "High blood pressure" },
-  { key: "high-cholesterol", label: "High cholesterol" },
   { key: "pcos", label: "PCOS" },
   { key: "menopause", label: "Menopause" },
-  { key: "digestive-sensitivities", label: "Digestive Sensitivities" },
-  // { key: "perimenopause", label: "Perimenopause" },
-  // { key: "ibs", label: "IBS" },
-  // { key: "ibd", label: "IBD" },
-  { key: "kidney-disease", label: "Kidney disease" },
-  { key: "liver-disease", label: "Liver disease" },
-  // { key: "gout", label: "Gout" },
-  // { key: "gerd", label: "GERD / Acid reflux" },
-  // { key: "celiac-disease", label: "Celiac disease" },
   { key: "osteoporosis", label: "Osteoporosis" },
-  { key: "arthritis", label: "Arthritis" },
-  { key: "anemia", label: "Anemia" },
+  // Retired from the picker in the AUG 21 design — formulas and mappings retained:
+  // { key: "diabetes", label: "Diabetes" },
+  // { key: "heart-disease", label: "Heart disease" },
+  // { key: "high-blood-pressure", label: "High blood pressure" },
+  // { key: "high-cholesterol", label: "High cholesterol" },
+  // { key: "digestive-sensitivities", label: "Digestive Sensitivities" },
+  // { key: "kidney-disease", label: "Kidney disease" },
+  // { key: "liver-disease", label: "Liver disease" },
+  // { key: "arthritis", label: "Arthritis" },
+  // { key: "anemia", label: "Anemia" },
+  // Never in the picker, but mapped for older saved profiles:
+  // type-1-diabetes, type-2-diabetes, prediabetes, perimenopause, ibs, ibd, gerd
 ];
 
 // ── 2.4 Allergies & intolerances — common allergens (+ free-text "Other") ─────

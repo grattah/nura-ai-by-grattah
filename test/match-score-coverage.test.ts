@@ -89,3 +89,45 @@ describe("map integrity", () => {
     }
   });
 });
+
+// ── Conditions retired from the AUG 21 picker ───────────────────────────────
+//
+// The picker dropped from 13 conditions to 3. Users who answered the earlier
+// questionnaire still hold the retired keys in health_profiles, and their Match
+// Score must keep working — computeMatchScore skips an unmapped key silently,
+// so deleting one of these mappings during a future tidy-up would quietly zero
+// those users' scores with nothing failing.
+describe("retired condition keys still score for existing profiles", () => {
+  const RETIRED = [
+    "diabetes",
+    "type-1-diabetes",
+    "type-2-diabetes",
+    "prediabetes",
+    "heart-disease",
+    "high-blood-pressure",
+    "high-cholesterol",
+    "digestive-sensitivities",
+    "ibs",
+    "ibd",
+    "gerd",
+    "kidney-disease",
+    "liver-disease",
+    "arthritis",
+    "anemia",
+    "perimenopause",
+  ];
+
+  it.each(RETIRED)("%s still resolves to a formula", (key) => {
+    const prd = CONDITION_KEY_TO_PRD[key];
+    expect(prd, `retired key "${key}" lost its mapping`).toBeDefined();
+    expect(CONDITION_CREDITS[prd]).toBeTypeOf("function");
+  });
+
+  it("offers exactly the three conditions the design shows", () => {
+    expect(CONDITIONS.map((c) => c.key)).toEqual([
+      "pcos",
+      "menopause",
+      "osteoporosis",
+    ]);
+  });
+});
