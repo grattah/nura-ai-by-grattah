@@ -6,7 +6,7 @@ import { rateLimit, getClientIp } from "@/lib/rate-limit";
 // browser CORS, cache upstream, and normalize the (noisy) candidate names into
 // clean, deduped display strings. Auth-gated (audit S3): it's only used by the
 // signed-in health-profile medications step, so don't leave an open relay to
-// RxNav.
+// RxNav
 
 export const revalidate = 86400;
 

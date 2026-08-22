@@ -140,7 +140,10 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
             {PLANS.map((plan) => {
               const isSelected = selectedPlan === plan.id;
               return (
-                <div className="relative" key={plan.id}>
+                <div
+                  className={`relative ${plan.badge ? "mt-8" : ""}`}
+                  key={plan.id}
+                >
                   {plan.badge && (
                     <span
                       className="text-xs font-semibold px-3 z-0 py-1 pb-3.5 rounded-t-md text-white absolute -top-5 left-0"

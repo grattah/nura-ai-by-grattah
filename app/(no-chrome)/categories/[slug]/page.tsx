@@ -41,7 +41,6 @@ export default function CategoryDetailPage() {
   const [activeType, setActiveType] = useState("all");
   const [availableTypes, setAvailableTypes] = useState<string[]>([]);
 
-
   const [recipes, setRecipes] = useState<CategoryRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -95,7 +94,7 @@ export default function CategoryDetailPage() {
       let query = supabase
         .from("recipe_categories")
         .select(
-          "score, recipes!inner(id, title, image_url, display_order, status, drink_type), categories!inner(slug)"
+          "score, recipes!inner(id, title, image_url, display_order, status, drink_type), categories!inner(slug)",
         )
         .eq("categories.slug", slug)
         .eq("qualified" as never, true as never)
@@ -108,7 +107,7 @@ export default function CategoryDetailPage() {
       if (searchQuery.trim()) {
         query = query.ilike(
           "recipes.title" as never,
-          `%${searchQuery.trim()}%` as never
+          `%${searchQuery.trim()}%` as never,
         );
       }
 
@@ -125,7 +124,7 @@ export default function CategoryDetailPage() {
         (data as unknown as { score: number; recipes: CategoryRecipe }[]) ?? []
       ).map((row) => ({ ...row.recipes, score: row.score }));
     },
-    [supabase, slug, activeType, searchQuery]
+    [supabase, slug, activeType, searchQuery],
   );
 
   const loadMore = useCallback(async () => {
@@ -194,11 +193,11 @@ export default function CategoryDetailPage() {
         ([entry]) => {
           if (entry.isIntersecting) loadMore();
         },
-        { rootMargin: "200px" }
+        { rootMargin: "200px" },
       );
       observerRef.current.observe(node);
     },
-    [loadMore]
+    [loadMore],
   );
 
   useEffect(() => {
@@ -256,16 +255,16 @@ export default function CategoryDetailPage() {
         "category_drink_types" as never,
         {
           p_slug: slug,
-        } as never
+        } as never,
       );
       if (cancelled) return;
       const present = new Set(
         ((data as { drink_type: string }[] | null) ?? []).map(
-          (r) => r.drink_type
-        )
+          (r) => r.drink_type,
+        ),
       );
       setAvailableTypes(
-        DRINK_TYPES.filter((d) => present.has(d.slug)).map((d) => d.slug)
+        DRINK_TYPES.filter((d) => present.has(d.slug)).map((d) => d.slug),
       );
     })();
     return () => {
