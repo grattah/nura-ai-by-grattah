@@ -15,7 +15,10 @@
     "recompute:categories": "esbuild scripts/recompute-categories.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.recompute-categories.mjs && node --env-file=.env.local scripts/.recompute-categories.mjs",
     "vectorise": "node --env-file=.env.local scripts/vectorise.mjs",
     "score-supports": "node --env-file=.env.local scripts/score-supports.mjs",
-    "list-models": "node --env-file=.env.local scripts/list-models.mjs"
+    "list-models": "node --env-file=.env.local scripts/list-models.mjs",
+    "classify:precautions": "esbuild scripts/classify-ingredient-usage.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.classify-precautions.mjs && node --env-file=.env.local scripts/.classify-precautions.mjs",
+    "reconcile:subs": "esbuild scripts/reconcile-subscriptions.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.reconcile-subs.mjs && node --env-file=.env.local scripts/.reconcile-subs.mjs",
+    "rewrite:recipe-copy": "esbuild scripts/rewrite-recipe-copy.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.rewrite-recipe-copy.mjs && node --env-file=.env.local scripts/.rewrite-recipe-copy.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.0",

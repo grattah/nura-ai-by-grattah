@@ -1,29 +1,13 @@
 "use client";
 
+import { PLANS, type Plan } from "@/constants";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Check } from "lucide-react";
 import Link from "next/link";
 import FilledLock from "@/components/vectors/filled-lock";
 
-const PLANS = [
-  {
-    id: "annual" as const,
-    label: "Annual",
-    price: "£79",
-    per: "/ year",
-    description: "Save £16.9, billed yearly.",
-    badge: "BEST VALUE",
-  },
-  {
-    id: "monthly" as const,
-    label: "Monthly",
-    price: "£7.99",
-    per: "/ month",
-    description: "Billed monthly.",
-    badge: null,
-  },
-];
+// Plans come from constants/index.ts — this file used to carry its own copy.
 
 const FEATURES = [
   {
@@ -43,7 +27,7 @@ const FEATURES = [
 
 export function ChangePlanClient() {
   const router = useRouter();
-  const [selected, setSelected] = useState<"annual" | "monthly">("annual");
+  const [selected, setSelected] = useState<Plan>("annual");
 
   return (
     <div className="min-h-dvh pb-10">

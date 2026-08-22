@@ -44,6 +44,7 @@ export function makeSupabaseMock() {
         return builder;
       },
       eq: (..._a: unknown[]) => builder,
+      in: (..._a: unknown[]) => builder,
       not: (..._a: unknown[]) => builder,
       order: (..._a: unknown[]) => builder,
       limit: (..._a: unknown[]) => builder,

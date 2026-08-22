@@ -1,5 +1,5 @@
-import { getCachedUser } from "@/lib/supabase/server";
-import { createClient } from "@/lib/supabase/server";
+import { getCachedUser, createClient } from "@/lib/supabase/server";
+import { hasActiveSubscription } from "@/lib/subscription";
 
 import { AppHeader } from "@/components/layout/app-header";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
@@ -37,17 +37,17 @@ export default async function ChromeLayout({
 	  }
 	: null;
 
-	if(user) {
-	  const supabase = await createClient();
-	  const { data } = await supabase
-		.from("subscriptions")
-		.select("*")
-		.eq("user_id", user.id)
-		.maybeSingle();
-		if (headerUser) {
-		  headerUser.isSubscriber = data?.status === "active";
-		}
-	}
+  // Entitlement goes through the shared helper, never an inline status check.
+  // The inline version this replaces had three separate failure modes:
+  //   • it tested the status column for active only, locking out anyone who
+  //     cancelled mid-period despite having paid through expires_at;
+  //   • it ignored expires_at, so a stale 'active' row read as a subscriber;
+  //   • .maybeSingle() ERRORS when a user legitimately has more than one row
+  //     (re-payments), which reads as null and silently drops the header state.
+  if (user && headerUser) {
+    const supabase = await createClient();
+    headerUser.isSubscriber = await hasActiveSubscription(supabase, user.id);
+  }
 
   return (
 	<div className="min-h-dvh flex flex-col">

@@ -221,19 +221,70 @@ export const CONDITION_KEY_TO_PRD: Record<string, string> = {
   osteoporosis: "Osteoporosis",
   anemia: "Anemia",
 };
+/**
+ * Goal key → PRD formula name.
+ *
+ * The AUG 21 picker offers 24 goals but only 13 formulas exist, so this map is
+ * deliberately partial. computeMatchScore skips a key that isn't here, which is
+ * the correct failure mode — inventing a formula for "UTI & yeast balance
+ * support" would fabricate a health claim — but it is silent, so the goals with
+ * no formula are listed in UNSCORED_GOALS below and pinned by a test.
+ */
 export const GOAL_KEY_TO_PRD: Record<string, string> = {
-  energy: "Have more energy",
-  hormones: "Balance my hormones",
-  hydration: "Drink more water", // formula retained; no live picker option
-  fitness: "Improve my fitness",
-  focus: "Sharpen my focus",
-  "skin-hair": "Improve my skin & hair",
-  beauty: "Improve my skin & hair", // legacy
-  sleep: "Sleep better",
-  detox: "Support my body's detox",
-  "gut-health": "Improve my gut health",
-  immunity: "Boost my immunity",
-  "weight-loss": "Lose weight",
+  // ── Direct matches ────────────────────────────────────────────────────────
   stress: "Reduce stress",
   mood: "Improve my mood",
+  immunity: "Boost my immunity",
+  focus: "Sharpen my focus",
+  "gut-health": "Improve my gut health",
+  sleep: "Sleep better",
+
+  // ── Several picker goals share one formula ────────────────────────────────
+  // match-score.ts de-duplicates by formula, so a user picking all three skin
+  // goals is credited once rather than having skin counted three times.
+  "skin-brighten": "Improve my skin & hair",
+  "hair-growth": "Improve my skin & hair",
+  "clear-skin": "Improve my skin & hair",
+
+  // ── Renamed in the design, same underlying formula ────────────────────────
+  "fat-metabolism": "Lose weight",
+  "muscle-recovery": "Improve my fitness",
+  "hydrate-skin": "Drink more water",
+  testosterone: "Balance my hormones",
+
+  // ── Legacy keys kept so existing saved profiles keep scoring ──────────────
+  // Users who completed the questionnaire before AUG 21 hold these keys in
+  // health_profiles. Dropping them would silently zero their Match Score.
+  energy: "Have more energy",
+  hormones: "Balance my hormones",
+  hydration: "Drink more water",
+  fitness: "Improve my fitness",
+  "skin-hair": "Improve my skin & hair",
+  beauty: "Improve my skin & hair",
+  detox: "Support my body's detox",
+  "weight-loss": "Lose weight",
 };
+
+/**
+ * Goals the picker offers that have NO Match Score formula.
+ *
+ * Selecting one is not an error — it is recorded on the profile and used for
+ * personalization elsewhere — but it contributes nothing to the Match Score.
+ * Five of these (blood-sugar, iron-levels, joint-comfort, blood-pressure,
+ * cholesterol) have a CONDITION formula with the same clinical meaning; wiring
+ * them up needs a product decision, because a user who selects the goal AND
+ * declares the condition would otherwise be counted twice.
+ */
+export const UNSCORED_GOALS = [
+  "reduce-bloating",
+  "blood-sugar",
+  "uti-yeast",
+  "iron-levels",
+  "libido",
+  "constipation",
+  "puffiness",
+  "joint-comfort",
+  "blood-pressure",
+  "cholesterol",
+  "mucus-congestion",
+] as const;

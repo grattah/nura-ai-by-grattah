@@ -2,17 +2,27 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
+import { stripe } from "@/lib/stripe";
 
 type Result = { success: true } | { error: string };
 
 /**
- * Schedule the caller's account for deletion and sign them out.
+ * Schedule the caller's account for deletion, stop the subscription renewing,
+ * and sign them out.
  *
- * Nothing is destroyed here and no Stripe call is made — per the product copy
- * ("If you don't [sign back in], your subscription will be cancelled and your
- * account will be permanently deleted"), both happen when the grace period
- * lapses, in app/api/cron/purge-deleted-accounts. That keeps this step fully
- * reversible: recovery is a single row delete, with no Stripe state to unwind.
+ * The Stripe call is `cancel_at_period_end`, never an outright cancel. That
+ * choice is what makes the 30-day grace period work for a paying user:
+ *
+ *   • they are not billed again while the account sits scheduled for deletion;
+ *   • the subscription stays live until the period they already paid for ends,
+ *     so coming back inside the grace period restores real access;
+ *   • it is reversible — Stripe cannot un-cancel a subscription that has
+ *     actually been cancelled, so an outright cancel here would permanently
+ *     destroy a subscription the user is still entitled to resume.
+ *
+ * Resuming is a deliberate user action on /manage-subscription, not automatic:
+ * signing back in recovers the ACCOUNT, and the user then decides whether they
+ * still want the plan.
  *
  * Writes go through the service role: account_deletions has no client
  * insert/update policy, so a user can't schedule anyone else's deletion.
@@ -40,9 +50,54 @@ export async function scheduleAccountDeletion(): Promise<Result> {
     return { error: "Couldn't schedule the deletion. Please try again." };
   }
 
+  await stopRenewalForDeletion(user.id);
+
   await supabase.auth.signOut();
   revalidatePath("/", "layout");
   return { success: true };
+}
+
+/**
+ * Stop every live subscription the user has from renewing.
+ *
+ * Best-effort: a Stripe failure must not block the deletion request itself, and
+ * the purge cron cancels outright before destroying the account anyway. Reads
+ * every row with a Stripe id rather than filtering on our `status` column,
+ * because that column can disagree with Stripe — a row reading 'cancelled'
+ * while Stripe still bills is exactly the case that must not be missed.
+ */
+async function stopRenewalForDeletion(userId: string): Promise<void> {
+  const admin = createServiceRoleClient();
+  const { data } = await admin
+    .from("subscriptions")
+    .select("stripe_subscription_id")
+    .eq("user_id", userId)
+    .not("stripe_subscription_id", "is", null);
+
+  const rows = (data ?? []) as { stripe_subscription_id: string | null }[];
+
+  for (const row of rows) {
+    if (!row.stripe_subscription_id) continue;
+    try {
+      await stripe.subscriptions.update(row.stripe_subscription_id, {
+        cancel_at_period_end: true,
+      });
+    } catch (e) {
+      // Already-cancelled subscriptions 404 — that is the desired end state.
+      const status = (e as { statusCode?: number })?.statusCode;
+      if (status !== 404) {
+        console.error(
+          `[delete-account] could not stop renewal for ${row.stripe_subscription_id}:`,
+          e instanceof Error ? e.message : e,
+        );
+      }
+    }
+  }
+
+  await admin
+    .from("subscriptions")
+    .update({ cancel_at_period_end: true } as never)
+    .eq("user_id", userId);
 }
 
 /**

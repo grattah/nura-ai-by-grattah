@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import { Camera } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { getCurrentUserId } from "@/lib/supabase/current-user";
 
 const MAX_AVATAR_MB = 5;
 const MAX_AVATAR_BYTES = MAX_AVATAR_MB * 1024 * 1024;
@@ -11,14 +12,12 @@ const MAX_AVATAR_BYTES = MAX_AVATAR_MB * 1024 * 1024;
 interface AvatarUploadProps {
   avatarUrl?: string | null;
   avatarLetter: string;
-  userId: string;
   onUploaded?: (url: string) => void;
 }
 
 export function AvatarUpload({
   avatarUrl,
   avatarLetter,
-  userId,
   onUploaded,
 }: AvatarUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -55,6 +54,18 @@ export function AvatarUpload({
     startTransition(async () => {
       try {
         const supabase = createClient();
+
+        // The storage policy requires the first path segment to equal
+        // auth.uid(), so the id has to come from the live session: a stale one
+        // fails the policy with an opaque "new row violates row-level security"
+        // rather than anything the user could act on.
+        const userId = await getCurrentUserId(supabase);
+        if (!userId) {
+          setError("Your session has expired. Please sign in again.");
+          setPreview(lastGoodUrl.current);
+          return;
+        }
+
         const ext = (file.name.split(".").pop() || "png").toLowerCase();
         const path = `${userId}/avatar.${ext}`;
 

@@ -1,5 +1,7 @@
 "use client";
 
+import { APP_CURRENCY, APP_LOCALE } from "@/constants";
+
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
@@ -37,10 +39,11 @@ const BUNDLES: readonly Bundle[] = [
 
 type Step = "select" | "review" | "card";
 
-const gbp = (n: number) =>
-  new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(
-    n,
-  );
+const money = (n: number) =>
+  new Intl.NumberFormat(APP_LOCALE, {
+    style: "currency",
+    currency: APP_CURRENCY.toUpperCase(),
+  }).format(n);
 
 export default function BuyTokens() {
   const [step, setStep] = useState<Step>("select");
@@ -217,7 +220,7 @@ function SelectStep({
                 >
                   <p>Buy</p>
                   <MoveRight size={14} color="#FFFFFF" />
-                  <p>{gbp(bundle.price)}</p>
+                  <p>{money(bundle.price)}</p>
                 </div>
               </div>
             </button>
@@ -239,7 +242,7 @@ function SelectStep({
           onClick={onContinue}
           className="w-full bg-[#227B6F] text-white font-medium rounded-full py-4 hover:opacity-90 transition-opacity"
         >
-          Buy {selected.tokens} tokens → {gbp(selected.price)}
+          Buy {selected.tokens} tokens → {money(selected.price)}
         </button>
         <p className="text-center mt-3 flex items-center justify-center gap-0.75">
           <IoMdLock size={12} color="#82A198" />{" "}
@@ -269,11 +272,11 @@ function ReviewStep({
             value={`${bundle.tokens} (${bundle.label.toLowerCase()} bundle)`}
           />
           <div className="border-t border-[#0000000A] w-[95%]" />
-          <Row label="Price" value={gbp(bundle.price)} />
+          <Row label="Price" value={money(bundle.price)} />
           <div className="border-t border-[#0000000A] w-[95%]" />
           <Row
             label="Total"
-            value={`${gbp(bundle.price)} / ${bundle.tokens} credits`}
+            value={`${money(bundle.price)} / ${bundle.tokens} credits`}
             bold
           />
           <p className="text-xs text-[#57605E]">Added instantly</p>
@@ -285,7 +288,7 @@ function ReviewStep({
           onClick={onContinue}
           className="w-full bg-[#227B6F] text-white font-medium rounded-full py-4 hover:opacity-90 transition-opacity"
         >
-          Pay {gbp(bundle.price)}
+          Pay {money(bundle.price)}
         </button>
         <p className="text-center mt-3 flex items-center justify-center gap-0.75">
           <IoMdLock size={12} color="#82A198" />{" "}
@@ -316,7 +319,7 @@ function CardStep({
         </div>
 
         <div className="text-end">
-          <p className="text-xl font-semibold">{gbp(bundle.price)}</p>
+          <p className="text-xl font-semibold">{money(bundle.price)}</p>
           <p className="text-sm font-medium">{bundle.tokens} tokens</p>
         </div>
       </div>

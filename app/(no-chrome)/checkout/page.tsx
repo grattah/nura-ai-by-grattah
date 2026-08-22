@@ -21,7 +21,8 @@ export default async function CheckoutPage({
 
   // Plan comes from the paywall modal (?plan=); default to annual.
   const raw = (await searchParams).plan;
-  const plan: Plan = raw === "monthly" ? "monthly" : "annual";
+  const plan: Plan =
+    raw === "monthly" || raw === "weekly" ? raw : "annual";
 
   return (
     <CheckoutFlow

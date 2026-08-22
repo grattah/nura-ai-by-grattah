@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCachedUser, createServiceRoleClient } from "@/lib/supabase/server";
 import { getAdminIdentity } from "@/lib/admin/auth";
 import { meter } from "@/lib/credits-server";
+import { recordUsage } from "@/lib/usage-server";
 import { scoreBioactivities } from "@/lib/scoring/bioactivity";
 import { writeBioactivityAndCategories } from "@/lib/scoring/persist";
 import {
@@ -95,6 +96,18 @@ export async function POST(
           "recipe-score-bioactivity",
           { provider: "anthropic", model: "claude-haiku-4-5" },
         );
+      } else {
+        // Admin-triggered: not charged to anyone, but the LLM call still cost
+        // real money. This used to record nothing at all, so admin scoring was
+        // invisible in token_usage. Log it unbilled, attributed to the admin.
+        void recordUsage({
+          provider: "anthropic",
+          model: "claude-haiku-4-5",
+          surface: "recipe-score-bioactivity",
+          billed: false,
+          userId: user.id,
+          totalTokens: bioRes.value.totalTokens,
+        });
       }
     } else if (bioRes.status === "rejected") {
       console.error("[recipes/score] bioactivity", bioRes.reason);

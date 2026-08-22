@@ -1,31 +1,18 @@
 "use client";
 
+import { PLAN_LABELS, type Plan } from "@/constants";
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, X } from "lucide-react";
 import { CheckoutEmbed } from "@/components/checkout-embed";
 import { fetchClientSecretForPlan } from "@/actions/stripe";
 
-const PLAN_LABELS: Record<
-  string,
-  { name: string; price: string; description: string }
-> = {
-  annual: {
-    name: "Nuko+ (Annual)",
-    price: "£79",
-    description: "Save £16.9, billed yearly.",
-  },
-  monthly: {
-    name: "Nuko+ (Monthly)",
-    price: "£7.99",
-    description: "Billed monthly.",
-  },
-};
+// PLAN_LABELS comes from constants/index.ts (was duplicated here in GBP).
 
 function ContinuePaymentContent() {
   const router = useRouter();
   const params = useSearchParams();
-  const plan = (params.get("plan") ?? "annual") as "annual" | "monthly";
+  const plan = (params.get("plan") ?? "annual") as Plan;
   const planInfo = PLAN_LABELS[plan] ?? PLAN_LABELS.annual;
 
   const [clientSecret, setClientSecret] = useState<string | null>(null);

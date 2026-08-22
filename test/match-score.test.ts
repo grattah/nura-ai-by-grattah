@@ -287,14 +287,26 @@ describe("Recipe Match Score — display spec (§7)", () => {
   });
 
   it("labels come from the picker, not the PRD formula name", () => {
-    // `detox` is labelled "Body detox" in the picker but "Support my body's
-    // detox" in the PRD — show the user what they actually selected.
-    const r = computeMatchScore({ ...flat, conditions: [], goals: ["detox"] });
-    expect(r.highest?.prd).toBe("Support my body's detox");
-    expect(r.highest?.label).toBe("Body detox");
+    // `muscle-recovery` is labelled "Muscle recovery support" in the AUG 21
+    // picker but scores through the PRD's "Improve my fitness" — the user must
+    // see the wording they actually selected.
+    const r = computeMatchScore({
+      ...flat,
+      conditions: [],
+      goals: ["muscle-recovery"],
+    });
+    expect(r.highest?.prd).toBe("Improve my fitness");
+    expect(r.highest?.label).toBe("Muscle recovery support");
+
     // Legacy keys aren't in the picker, so they fall back to the PRD name.
     const legacy = computeMatchScore({ ...flat, conditions: ["ibs"], goals: [] });
     expect(legacy.highest?.label).toBe("Digestive Sensitivities");
+
+    // `detox` kept its formula but lost its picker entry in the AUG 21 design,
+    // so it now takes that same fallback rather than showing "Body detox".
+    const dropped = computeMatchScore({ ...flat, conditions: [], goals: ["detox"] });
+    expect(dropped.highest?.prd).toBe("Support my body's detox");
+    expect(dropped.highest?.label).toBe("Support my body's detox");
   });
 });
 

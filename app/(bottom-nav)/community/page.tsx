@@ -33,7 +33,6 @@ const page = async () => {
           <p className="font-semibold text-base">Recent activity</p>
           <CommunityFeed
             initialActivities={initialActivities}
-            userId={user?.id ?? null}
             actorName={actorName}
           />
         </div>

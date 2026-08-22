@@ -12,6 +12,12 @@ import { classifyDrinkType } from "@/lib/drink-types";
 
 const SURFACE = FREE_SURFACES.recipeGenerate;
 
+import {
+  INTRO_RULE,
+  WHY_IT_WORKS_RULE,
+  WhyItWorksDetailSchema,
+} from "@/lib/recipe-copy";
+
 export const maxDuration = 60;
 
 const MAX_DOMAINS = 8;
@@ -22,7 +28,9 @@ const RecipeSchema = z.object({
     .describe("Short recipe name, e.g. 'Ginger Lemon Soothing Tea'"),
   short_description: z
     .string()
-    .describe("One warm sentence describing the recipe and who it helps"),
+    .describe(
+      "One or two warm sentences on what the drink is, how it tastes, and the everyday benefit. No body systems, organs, or clinical markers.",
+    ),
   recipe_section_title: z
     .string()
     .describe("A short section heading, e.g. 'How to make it'"),
@@ -46,6 +54,7 @@ const RecipeSchema = z.object({
     .describe(
       "2-3 plain sentences on the mechanism — why these ingredients help",
     ),
+  why_it_works_detail: WhyItWorksDetailSchema,
   inside_tip: z.string().describe("One practical preparation or usage tip"),
   nutrition: z
     .object({
@@ -203,6 +212,10 @@ sources such as ${domainList}, then PubMed, NIH, NHS, CDC, and WHO. Avoid forums
 supplement-marketing, and sensationalist or unproven claims. Do not invent statistics or
 make strong clinical claims (e.g. "cures X").
 
+${INTRO_RULE}
+
+${WHY_IT_WORKS_RULE}
+
 NUTRITION: Provide realistic per-serving nutrition (kcal, protein, fat, carbs, fiber)
 estimated from the actual ingredients and their amounts. Use sensible whole/round numbers;
 do not fabricate false precision.`,
@@ -247,6 +260,7 @@ do not fabricate false precision.`,
     how_to_make: recipe.how_to_make,
     preview_ingredients: recipe.preview_ingredients,
     why_it_works: recipe.why_it_works,
+    why_it_works_detail: recipe.why_it_works_detail,
     inside_tip: recipe.inside_tip,
     nutrition: recipe.nutrition,
     follow_up_questions: recipe.follow_up_questions,

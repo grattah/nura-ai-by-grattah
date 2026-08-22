@@ -185,7 +185,7 @@ export function GoalGrid({
 }) {
   return (
     <div className="grid grid-cols-3 gap-3">
-      {goals.map((g, index) => {
+      {goals.map((g) => {
         const active = selected.includes(g.key);
         return (
           <button
@@ -208,11 +208,16 @@ export function GoalGrid({
                 <Check className="size-2.5 text-white" strokeWidth={3} />
               )}
             </span>
-            <div className="size-10 shrink-0 rounded-full flex items-center justify-center bg-[#F1F7F3]">
-              <g.icon className={`size-6 text-mint-green`} strokeWidth={1.5} />
+            <div
+              className={`size-10 shrink-0 rounded-full flex items-center justify-center ${active ? "bg-[#EAF0EA]" : "bg-[#F3F1E8]"}`}
+            >
+              <g.icon
+                className={`size-6 ${active ? "text-mint-green" : "text-grey-c600"}`}
+                strokeWidth={1.5}
+              />
             </div>
             <span className="text-xs font-medium text-base-text text-center px-1">
-              {index + 1}. {g.label}
+              {g.label}
             </span>
           </button>
         );
