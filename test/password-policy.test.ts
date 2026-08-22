@@ -38,13 +38,31 @@ describe("signup requires a password", () => {
     expect(form).not.toContain("handleSkipProfile");
   });
 
-  it("requires both a name and a valid password to submit", () => {
-    expect(form).toContain("isLoading || !fullName || !isPasswordValid(password)");
+  // Asserted through the gate variable rather than a literal expression: the
+  // merge with feature/updated-ui renamed the inline check to
+  // canCreateProfileDisabled, and pinning the old string made a valid
+  // refactor look like a regression.
+  it("gates the submit button on a single computed condition", () => {
+    expect(form).toMatch(/disabled=\{\s*canCreateProfileDisabled\s*\}/);
   });
 
-  it("gates the submit button on the full policy, not just a length check", () => {
-    expect(form).toContain("!isPasswordValid(password)");
+  it("requires both a name and a fully valid password to submit", () => {
+    const gate = form.slice(
+      form.indexOf("const canCreateProfileDisabled"),
+      form.indexOf("isLoading;", form.indexOf("const canCreateProfileDisabled")),
+    );
+    expect(gate).toContain("!fullName");
+    // The full five-rule policy, not a bare length check.
+    expect(gate).toContain("isPasswordValid(strength)");
+  });
+
+  it("no longer settles for a length-only message", () => {
     expect(form).not.toContain('"Password must be at least 8 characters."');
+  });
+
+  it("enforces the same policy in the submit handler, not just the button", () => {
+    // A disabled button is a UI affordance; the handler is the actual guard.
+    expect(form).toContain("isRawPasswordValid(password)");
   });
 });
 

@@ -20,11 +20,6 @@ import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { ensureWelcomeEmail } from "@/actions/welcome";
 import { cancelScheduledDeletion } from "@/actions/delete-account";
-import {
-  PasswordRequirements,
-  isPasswordValid,
-} from "@/components/auth/PasswordRequirements";
-
 import loader from "@/public/loader.png";
 import authImage from "@/public/authImage.webp";
 import authFooterBanner from "@/public/authFooterBanner.webp";
@@ -37,6 +32,7 @@ import {
   checkPasswordStrength,
   isPasswordValid,
 } from "@/components/auth/password-requirments";
+import { isPasswordValid as isRawPasswordValid } from "@/lib/password-policy";
 
 declare const google: any;
 
@@ -525,7 +521,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     e.preventDefault();
     setError(null);
 
-    if (!isPasswordValid(password)) {
+    if (!isRawPasswordValid(password)) {
       setError("Please meet all the password requirements below.");
       return;
     }
@@ -1157,7 +1153,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                   </button>
                 </div>
 
-                <PasswordRequirements password={password} />
+                <PasswordRequirements strength={strength} />
 
                 <label
                   htmlFor=""
@@ -1188,7 +1184,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                 <button
                   type="submit"
                   disabled={
-                    isLoading || !fullName || !isPasswordValid(password)
+                    canCreateProfileDisabled
                   }
                   className={cn(
                     "w-full flex items-center justify-center bg-[#227B6F] text-white py-4 rounded-full font-medium hover:opacity-90 transition-opacity",
