@@ -5,7 +5,7 @@ import Crown from "@/components/vectors/Crown";
 import Support from "@/components/vectors/Support";
 import { ShieldMark2 } from "@/components/vectors/ShieldMark";
 import { Heart } from "lucide-react";
-import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { SettingsRow } from "@/components/account/settings-row";
 import { LogoutButton } from "@/components/auth/logout-button";
 import BackButton from "@/components/back-button";
@@ -21,20 +21,16 @@ export default async function AccountPage() {
   let subscription: { status: string; plan: string | null } | null = null;
 
   if (user) {
-    const adminSupabase = createServiceRoleClient();
-    // The identity lookup and the subscription read are independent — run them
-    // together to save a round-trip.
-    const [{ data: adminUser }, { data: subs }] = await Promise.all([
-      adminSupabase.auth.admin.getUserById(user.id),
-      supabase
-        .from("subscriptions")
-        .select("status, plan")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(1),
-    ]);
     hasPassword =
-      adminUser.user?.identities?.some((i) => i.provider === "email") ?? false;
+      user.user_metadata?.has_password === true ||
+      (user.identities?.some((i) => i.provider === "email") ?? false);
+
+    const { data: subs } = await supabase
+      .from("subscriptions")
+      .select("status, plan")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1);
     subscription = subs?.[0] ?? null;
   }
 

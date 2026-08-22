@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { hasActiveSubscription } from "@/lib/subscription";
 import { CONSENT_VERSION } from "@/lib/health-profile/options";
 import {
   type HealthProfileDraft,
@@ -67,7 +66,7 @@ export async function getHealthProfile(): Promise<HealthProfileDraft | null> {
 }
 
 /**
- * Upsert the current user's health profile. Requires an active subscription.
+ * Upsert the current user's health profile. Free for every user.
  * Basic profile (§2.1) is required; sensitive sections (§2.3–2.5) may only be
  * stored with affirmative consent (PRD §3).
  */
@@ -79,9 +78,6 @@ export async function saveHealthProfile(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated." };
-
-  if (!(await hasActiveSubscription(supabase, user.id)))
-    return { error: "A subscription is required to save a health profile." };
 
   if (!isBasicComplete(draft))
     return { error: "Please complete your basic profile." };

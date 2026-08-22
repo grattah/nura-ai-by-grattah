@@ -62,7 +62,11 @@ export interface MatchScoreResult {
 // Display label for a selection. Prefer what the picker shows (options.ts) over
 // the PRD formula name — they differ for `detox` ("Body detox" vs "Support my
 // body's detox"). Legacy keys no longer in the picker fall back to the PRD name.
-function labelForSelection(key: string, kind: "condition" | "goal", prd: string): string {
+function labelForSelection(
+  key: string,
+  kind: "condition" | "goal",
+  prd: string,
+): string {
   const options = kind === "condition" ? CONDITIONS : GOALS;
   const label = labelFor(options, key);
   return label === key ? prd : label;
@@ -84,7 +88,17 @@ export function computeMatchScore(input: MatchScoreInput): MatchScoreResult {
   // Built conditions-first, each in the user's selection order — this ordering IS
   // the PRD's tie-break rule (condition beats goal; earlier selection beats later).
   const credits: MatchCredit[] = [];
-  const push = (key: string, kind: "condition" | "goal", prd: string, credit: number) =>
+
+  const seenFormulas = new Set<string>();
+  const push = (
+    key: string,
+    kind: "condition" | "goal",
+    prd: string,
+    credit: number,
+  ) => {
+    const formulaId = `${kind}:${prd}`;
+    if (seenFormulas.has(formulaId)) return;
+    seenFormulas.add(formulaId);
     credits.push({
       key,
       kind,
@@ -93,6 +107,7 @@ export function computeMatchScore(input: MatchScoreInput): MatchScoreResult {
       credit,
       percent: credit * 100,
     });
+  };
 
   for (const key of input.conditions ?? []) {
     const prd = CONDITION_KEY_TO_PRD[key];
