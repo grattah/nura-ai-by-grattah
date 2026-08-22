@@ -76,6 +76,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({
@@ -92,7 +93,7 @@ export default async function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${_redHatText.variable}`}
+      className={`${_redHatText.variable} bg-[#F3F1E8]`}
     >
       <head>
         <meta name="apple-mobile-web-app-title" content="Nuko" />
@@ -106,7 +107,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className="font-sans antialiased">
+      <body className="font-sans antialiased bg-[#F3F1E8]">
         <ThemeProvider
           attribute="class"
           forcedTheme="light"
