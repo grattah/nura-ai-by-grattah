@@ -54,7 +54,7 @@ export function BottomNav() {
                 key={href}
                 href={href}
                 className={cn(
-                  "w-20.5 h-[56px] flex justify-center items-center rounded-full transition-all duration-150 active:scale-95",
+                  "w-20.5 h-14 flex justify-center items-center rounded-full transition-all duration-150 active:scale-95",
                   active ? "bg-mint-green" : "",
                 )}
                 aria-label={label}
