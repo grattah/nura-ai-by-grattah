@@ -58,7 +58,7 @@ export default async function ChromeLayout({
     <div className="min-h-dvh flex flex-col">
       <AuthSync serverAuthed={!!user} />
       <AppHeader user={headerUser} />
-      <main className="flex-1">
+      <main className="flex-1 pb-[calc(env(safe-area-inset-bottom,0px)+56px)]">
         {children}
       </main>
       <BottomNav />

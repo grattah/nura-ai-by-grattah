@@ -107,7 +107,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className="bg-[#F3F1E8] font-sans antialiased pb-[calc(env(safe-area-inset-bottom,0px)+56px)]">
+      <body className="bg-[#F3F1E8] font-sans antialiased">
         <ThemeProvider
           attribute="class"
           forcedTheme="light"
