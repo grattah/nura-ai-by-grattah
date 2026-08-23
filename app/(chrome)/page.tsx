@@ -105,7 +105,7 @@ export default async function HomePage({
   const categories = await getCategories();
 
   return (
-    <div className="bg-background pb-[calc(env(safe-area-inset-bottom,0px)+56px)]">
+    <div className="bg-background">
       <main className="px-mp pt-2 space-y-8">
         {/* Hero */}
         <section className="relative m-0">
