@@ -68,7 +68,7 @@ export function EditSearchSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="h-full rounded-t-0 border-0 p-0 flex flex-col bg-background [&>button]:hidden"
+        className="inset-0 rounded-t-0 border-0 p-0 flex flex-col bg-background [&>button]:hidden"
       >
         <SheetTitle className="sr-only">Edit search</SheetTitle>
 
@@ -84,7 +84,7 @@ export function EditSearchSheet({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 pb-8 space-y-5">
+        <div className="flex-1 overflow-y-auto px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] space-y-5">
           {/* Search input */}
           <div className="flex items-center gap-3 bg-card rounded-xl px-3 h-12 border border-mint-green">
             <Search
