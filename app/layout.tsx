@@ -109,23 +109,28 @@ export default async function RootLayout({
         />
       </head>
       <body className="bg-[#F3F1E8] font-sans antialiased">
-        <ThemeProvider
-          attribute="class"
-          forcedTheme="light"
-          disableTransitionOnChange
-        >
-          <MobileGate>
-            <AccessProvider
-              serverHasAccess={hasAccess}
-              serverIsAuthenticated={isAuthenticated}
-              serverHasEverSubscribed={hasEverSubscribed}
-              serverIsSubscriber={isSubscriber}
-            >
-              <CreditsProvider>{children}</CreditsProvider>
-              <RouteAuthGuard />
-            </AccessProvider>
-          </MobileGate>
-        </ThemeProvider>
+        {/* Fixed app shell (body, see globals.css) + this one scrolling
+            container is what keeps Safari's native bottom bar from collapsing:
+            the document never scrolls, only .app-content does. */}
+        <div className="app-content">
+          <ThemeProvider
+            attribute="class"
+            forcedTheme="light"
+            disableTransitionOnChange
+          >
+            <MobileGate>
+              <AccessProvider
+                serverHasAccess={hasAccess}
+                serverIsAuthenticated={isAuthenticated}
+                serverHasEverSubscribed={hasEverSubscribed}
+                serverIsSubscriber={isSubscriber}
+              >
+                <CreditsProvider>{children}</CreditsProvider>
+                <RouteAuthGuard />
+              </AccessProvider>
+            </MobileGate>
+          </ThemeProvider>
+        </div>
         <LiquidGlassFilter />
         <ChatCacheCleaner />
         <Analytics />

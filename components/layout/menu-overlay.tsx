@@ -16,6 +16,7 @@ import {
 import { LoginIcon, ActiveLoginIcon } from "../vectors/menu/Login";
 import { FaCrown } from "react-icons/fa6";
 import { cn } from "@/lib/utils";
+import { lockAppScroll } from "@/lib/scroll-lock";
 import Image from "next/image";
 
 const PANEL_MS = 150;
@@ -104,10 +105,10 @@ export function MenuPanel({
       if (e.key === "Escape") onRequestClose(); // see note below on Escape
     };
     document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
+    const unlock = lockAppScroll();
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
+      unlock();
     };
   }, [onRequestClose]);
 
