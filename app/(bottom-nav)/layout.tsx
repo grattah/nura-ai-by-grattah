@@ -8,7 +8,7 @@ export default function BottomNavLayout({
 }) {
   return (
     <div className="min-h-dvh flex flex-col">
-      <main className="flex-1 pb-16">{children}</main>
+      <main className="flex-1 pb-[calc(env(safe-area-inset-bottom,0px)+56px)]">{children}</main>
       <BottomNav />
       <PWAInstallPrompt />
     </div>
