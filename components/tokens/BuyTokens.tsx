@@ -15,6 +15,7 @@ import BackButton from "@/components/back-button";
 import Link from "next/link";
 import { createTokenCheckout } from "@/actions/credits-checkout";
 import { CheckoutEmbed } from "@/components/checkout-embed";
+import { TOKEN_PACKS } from "@/lib/tokens/spec";
 
 type Bundle = {
   id: string;
@@ -24,18 +25,26 @@ type Bundle = {
   badge?: string; // optional — present only on featured bundles
 };
 
-const BUNDLES: readonly Bundle[] = [
-  { id: "starter", label: "STARTER", tokens: 50, price: 1.99 },
-  {
-    id: "popular",
-    label: "POPULAR",
-    tokens: 150,
-    price: 4.99,
-    badge: "MOST BOUGHT",
-  },
-  { id: "value", label: "VALUE", tokens: 350, price: 9.99 },
-  { id: "power", label: "POWER", tokens: 800, price: 19.99 },
-] as const;
+// Derived from the shared catalogue, never re-typed here. This list used to be
+// a hardcoded copy, and when the packs changed it silently kept the old ids —
+// so every purchase failed with "Unknown token bundle" while still showing the
+// retired prices. The ids MUST come from the same place the server validates
+// against (actions/credits-checkout.ts → getBundle).
+const PACK_LABELS: Record<string, string> = {
+  "pack-10": "STARTER",
+  "pack-45": "POPULAR",
+  "pack-85": "VALUE",
+  "pack-130": "POWER",
+};
+
+const BUNDLES: readonly Bundle[] = TOKEN_PACKS.map((p) => ({
+  id: p.id,
+  label: PACK_LABELS[p.id] ?? p.id.toUpperCase(),
+  tokens: p.tokens,
+  // The catalogue stores minor units (cents); this component renders majors.
+  price: p.amount / 100,
+  badge: p.id === "pack-45" ? "MOST BOUGHT" : undefined,
+}));
 
 type Step = "select" | "review" | "card";
 
@@ -47,9 +56,12 @@ const money = (n: number) =>
 
 export default function BuyTokens() {
   const [step, setStep] = useState<Step>("select");
-  // Default the selection to the popular bundle, matching the mockup's pre-selected radio.
+  // Default to the badged pack, matching the mockup's pre-selected radio.
+  // Falls back to the first pack rather than asserting non-null: a renamed id
+  // would otherwise crash the page at render instead of just losing the
+  // default selection.
   const [selected, setSelected] = useState<Bundle>(
-    BUNDLES.find((b) => b.id === "popular")!,
+    BUNDLES.find((b) => b.badge) ?? BUNDLES[0],
   );
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

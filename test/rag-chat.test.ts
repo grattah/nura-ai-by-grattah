@@ -4,6 +4,15 @@ const h = vi.hoisted(() => ({
   retrieve: vi.fn(),
   streamText: vi.fn(),
   getTokenState: vi.fn(),
+  reserve: vi.fn(async () => ({
+    id: "res-1",
+    action: "followup",
+    costUnits: 1,
+    fromSubscription: 1,
+    fromPurchased: 0,
+  })),
+  settle: vi.fn(),
+  release: vi.fn(),
   meter: vi.fn(),
 }));
 
@@ -21,6 +30,14 @@ vi.mock("@/lib/rag", () => ({
 vi.mock("@/lib/credits-server", () => ({
   getTokenState: (...args: unknown[]) => h.getTokenState(...args),
   meter: (...args: unknown[]) => h.meter(...args),
+}));
+// The route reserves units up front now (spec §6). Default to a successful
+// reservation so these tests exercise chat behaviour, not the token path.
+vi.mock("@/lib/tokens/server", () => ({
+  reserve: (userId: string, action: string) =>
+    (h.reserve as (u: string, a: string) => unknown)(userId, action),
+  settle: (r: unknown) => h.settle(r),
+  release: (r: unknown) => h.release(r),
 }));
 
 // Authenticated subscriber by default — chainable stub for the auth + sub reads.

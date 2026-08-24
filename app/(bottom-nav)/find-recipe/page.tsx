@@ -75,7 +75,7 @@ const page = () => {
   );
 
   const { recents, add: addRecent, clear: clearRecents } = useRecentSearches();
-  const { applyState, refresh: refreshCredits } = useCredits();
+  const { refresh: refreshCredits } = useCredits();
 
   const router = useRouter();
 
@@ -246,7 +246,8 @@ const page = () => {
         // Out of tokens (subscriber): show the "Need more token?" modal on blur.
         if (res.status === 402) {
           const body = await res.json().catch(() => ({}));
-          if (body.state) applyState(body.state);
+          // The 402 no longer carries a wallet — re-read it instead.
+          void refreshCredits();
           setGenerating(false);
           setPendingRecipe(null);
           setTokenModalOpen(true);
@@ -280,7 +281,7 @@ const page = () => {
         setGenerateError(true);
       }
     },
-    [router, applyState, refreshCredits],
+    [router, refreshCredits],
   );
 
   const autoTriggered = React.useRef(false);

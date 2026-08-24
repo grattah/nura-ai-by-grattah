@@ -4,8 +4,7 @@ import { google } from "@ai-sdk/google";
 import sharp from "sharp";
 import { getCachedUser, createServiceRoleClient } from "@/lib/supabase/server";
 import { getAdminIdentity } from "@/lib/admin/auth";
-import { meterUnits } from "@/lib/credits-server";
-import { IMAGE_UNITS } from "@/lib/credits";
+import { recordUsage } from "@/lib/usage-server";
 import { RECIPE_IMAGE_GENERATION_ENABLED } from "@/lib/recipe-visibility";
 
 export const maxDuration = 60;
@@ -59,7 +58,7 @@ export async function POST(
   }
 
   // Generation is suspended. Bail HERE rather than only in the client: this is
-  // what guarantees no Gemini spend and no IMAGE_UNITS charge. Delete this block
+  // what guarantees no Gemini spend. Delete this block
   // to reinstate (see RECIPE_IMAGE_GENERATION_ENABLED). Images are added by an
   // admin through the recipe form in the meantime.
   if (!RECIPE_IMAGE_GENERATION_ENABLED) {
@@ -114,7 +113,14 @@ export async function POST(
       const rawTokens =
         usage?.totalTokens ??
         (usage?.inputTokens ?? 0) + (usage?.outputTokens ?? 0);
-      await meterUnits(user.id, IMAGE_UNITS, "recipe-image", rawTokens, {
+      // Unbilled under the new spec (§2 lists three chargeable actions, and the
+      // hero image is follow-on work from a generation that already paid its
+      // flat 3 units). Still recorded so the real spend stays visible.
+      void recordUsage({
+        surface: "recipe-image",
+        userId: user.id,
+        billed: false,
+        totalTokens: rawTokens,
         provider: "google",
         model: "gemini-3.1-flash-image-preview",
         images: 1,

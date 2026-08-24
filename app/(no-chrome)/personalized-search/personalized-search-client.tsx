@@ -21,7 +21,6 @@ import { PaywallModal } from "@/components/paywall/paywall-modal";
 import { PersonalizedSearchSkeleton } from "@/components/paywall/personalized-search-skeleton";
 import { backOrHome } from "@/lib/navigation";
 import type { PersonalizedSearchResult } from "@/lib/personalized-search-server";
-import type { TokenState } from "@/lib/credits";
 import Cup from "@/components/vectors/cup";
 
 interface PersonalizedSearchClientProps {
@@ -29,7 +28,6 @@ interface PersonalizedSearchClientProps {
   serverBlocked: boolean;
   result?: PersonalizedSearchResult;
   outOfTokens?: boolean;
-  tokenState?: TokenState;
   genError?: boolean;
 }
 
@@ -40,12 +38,11 @@ export function PersonalizedSearchClient({
   serverBlocked,
   result,
   outOfTokens,
-  tokenState,
   genError,
 }: PersonalizedSearchClientProps) {
   const router = useRouter();
   const { isLoading: accessLoading, isAuthenticated } = useAccess();
-  const { applyState, openTokenWall } = useCredits();
+  const { refresh: refreshCredits, openTokenWall } = useCredits();
   const [editOpen, setEditOpen] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [feedback, setFeedback] = useState<"helpful" | "not_helpful" | null>(
@@ -60,9 +57,9 @@ export function PersonalizedSearchClient({
   // Subscriber out of tokens → surface the top-up wall.
   useEffect(() => {
     if (!outOfTokens) return;
-    if (tokenState) applyState(tokenState);
+    if (outOfTokens) void refreshCredits();
     openTokenWall();
-  }, [outOfTokens, tokenState, applyState, openTokenWall]);
+  }, [outOfTokens, refreshCredits, openTokenWall]);
 
   // Guests: RouteAuthGuard overlays the sign-in modal; show the (blurred)
   // result placeholder behind it rather than a blank screen.

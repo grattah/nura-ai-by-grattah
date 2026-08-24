@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
-import { getTokenState } from "@/lib/credits-server";
+import { getBalances } from "@/lib/tokens/server";
+import { walletSnapshot } from "@/lib/tokens/spec";
+import type { Plan } from "@/constants";
 import { hasActiveSubscription } from "@/lib/subscription";
 import TokensCard from "@/components/tokens/TokensCard";
 import TokensModal from "@/components/tokens/TokensModal";
@@ -16,12 +18,28 @@ export default async function TokensPage() {
   if (!user) return null; // guest → RouteAuthGuard sign-in overlay
 
   // Access + token state are independent — fetch them together.
-  const [hasAccess, tokenState] = await Promise.all([
+  const [hasAccess, balances, { data: row }] = await Promise.all([
     hasActiveSubscription(supabase, user.id),
-    getTokenState(user.id),
+    getBalances(user.id),
+    supabase
+      .from("credits")
+      .select("plan, next_allocation_at, last_purchase_at")
+      .eq("user_id", user.id)
+      .maybeSingle<{
+        plan: string | null;
+        next_allocation_at: string | null;
+        last_purchase_at: string | null;
+      }>(),
   ]);
 
-  const state = hasAccess ? tokenState : null;
+  const state = hasAccess
+    ? walletSnapshot({
+        balances,
+        plan: (row?.plan as Plan | null) ?? null,
+        nextAllocationAt: row?.next_allocation_at ?? null,
+        lastPurchaseAt: row?.last_purchase_at ?? null,
+      })
+    : null;
 
   return (
     <div className="min-h-dvh bg-background pb-10">
@@ -46,7 +64,7 @@ export default async function TokensPage() {
           <div className="flex flex-col gap-8">
             <TokensCard variant="weekly" state={state} />
             <div className="w-full border border-[#E2E4E4]" />
-            {state.extraPurchased > 0 ? (
+            {state.purchasedTokens > 0 ? (
               <TokensCard variant="extra" state={state} />
             ) : (
               <TokensModal />
