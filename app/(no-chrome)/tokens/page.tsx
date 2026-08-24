@@ -32,14 +32,17 @@ export default async function TokensPage() {
       }>(),
   ]);
 
-  const state = hasAccess
-    ? walletSnapshot({
-        balances,
-        plan: (row?.plan as Plan | null) ?? null,
-        nextAllocationAt: row?.next_allocation_at ?? null,
-        lastPurchaseAt: row?.last_purchase_at ?? null,
-      })
-    : null;
+  const wallet = walletSnapshot({
+    balances,
+    plan: (row?.plan as Plan | null) ?? null,
+    nextAllocationAt: row?.next_allocation_at ?? null,
+    lastPurchaseAt: row?.last_purchase_at ?? null,
+  });
+
+  // A lapsed subscriber still sees their purchased balance. Spec §7 freezes it
+  // rather than deleting it precisely because it is money already paid —
+  // hiding it would look identical to having destroyed it.
+  const state = hasAccess || wallet.purchasedTokens > 0 ? wallet : null;
 
   return (
     <div className="min-h-dvh bg-background pb-10">
@@ -62,8 +65,12 @@ export default async function TokensPage() {
           <NoTokensYet />
         ) : (
           <div className="flex flex-col gap-8">
-            <TokensCard variant="weekly" state={state} />
-            <div className="w-full border border-[#E2E4E4]" />
+            {hasAccess && (
+              <>
+                <TokensCard variant="weekly" state={state} />
+                <div className="w-full border border-[#E2E4E4]" />
+              </>
+            )}
             {state.purchasedTokens > 0 ? (
               <TokensCard variant="extra" state={state} />
             ) : (

@@ -19,13 +19,11 @@ const TokensCard = ({
   variant?: string;
   state: WalletSnapshot;
 }) => {
-  // Purchased tokens have no "granted" total to measure against — the bar
-  // shows how much of the largest pack's worth remains, which is the only
-  // stable reference point the new model provides.
-  const purchasedPct = Math.min(
-    100,
-    Math.round((state.purchasedTokens / 130) * 100),
-  );
+  // Purchased tokens have no "granted" total to measure against — they are
+  // topped up in arbitrary amounts and never expire, so a percentage would be
+  // measured against a denominator that does not exist. The bar is full while
+  // any remain and empty at zero; the count beside it carries the real detail.
+  const purchasedPct = state.purchasedTokens > 0 ? 100 : 0;
 
   if (variant === "extra") {
     return (
@@ -70,7 +68,9 @@ const TokensCard = ({
               strokeWidth={1.67}
             />
             <p className="font-medium text-sm text-[#1B1D1D]">
-              Extra token are used only after your weekly limit is exhausted
+              {state.purchasedFrozen
+                ? "These are paused while your subscription is inactive. They're kept, and become spendable again as soon as you resubscribe."
+                : "Extra tokens are spent only once your included tokens run out"}
             </p>
           </div>
         </div>
@@ -100,15 +100,17 @@ const TokensCard = ({
     <div className="flex flex-col gap-3.75">
       <div className="flex justify-between items-start">
         <div className="flex flex-col gap-1">
-          <p className="font-semibold text-xl">Weekly limits</p>
+          <p className="font-semibold text-xl">
+            {state.plan === "weekly" ? "Weekly tokens" : "Monthly tokens"}
+          </p>
           <p className="text-subtle font-medium text-sm">
-            Included with your subscription
+            {state.grantTokens} included with your plan
           </p>
         </div>
         <div className="bg-[#227B6F1A] p-2 rounded-lg flex items-center gap-1">
           <Calendar size={16} color="#227B6F" strokeWidth={1.67} />
           <p className="text-xs font-semibold text-mint-green">
-            Resets in {formatResetShort(state.nextAllocationAt)}
+            Renews in {formatResetShort(state.nextAllocationAt)}
           </p>
         </div>
       </div>
@@ -152,10 +154,10 @@ const TokensCard = ({
           )}
           <p className="font-medium text-sm text-[#1B1D1D]">
             {almostOut
-              ? `Only ${state.subscriptionTokens} free weekly token${
+              ? `Only ${state.subscriptionTokens} included token${
                   state.subscriptionTokens === 1 ? "" : "s"
-                } left — top up or wait for the reset.`
-              : "You have plenty of free weekly token remaining, keep going!"}
+                } left — top up, or wait for your plan to renew.`
+              : "You have plenty of included tokens remaining, keep going!"}
           </p>
         </div>
       </div>

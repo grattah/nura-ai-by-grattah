@@ -244,8 +244,9 @@ function SelectStep({
         <InfinityIcon size={20} className="text-[#227B6F] shrink-0 mt-0.5" />
         <p className="text-sm text-[#57605E] font-medium">
           <span className="text-[#1B1D1D]">Extra tokens never expire.</span>{" "}
-          They stay in your account and will be used whenever your free weekly
-          tokens finish.
+          They stay in your account and are used once your plan&apos;s included
+          tokens run out. They&apos;re paused if your subscription lapses, and
+          come back when you resubscribe.
         </p>
       </div>
 
