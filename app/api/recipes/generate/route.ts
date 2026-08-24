@@ -15,7 +15,6 @@ const SURFACE = FREE_SURFACES.recipeGenerate;
 import {
   INTRO_RULE,
   WHY_IT_WORKS_RULE,
-  WhyItWorksDetailSchema,
 } from "@/lib/recipe-copy";
 
 export const maxDuration = 60;
@@ -54,7 +53,6 @@ const RecipeSchema = z.object({
     .describe(
       "2-3 plain sentences on the mechanism — why these ingredients help",
     ),
-  why_it_works_detail: WhyItWorksDetailSchema,
   inside_tip: z.string().describe("One practical preparation or usage tip"),
   nutrition: z
     .object({
@@ -260,7 +258,6 @@ do not fabricate false precision.`,
     how_to_make: recipe.how_to_make,
     preview_ingredients: recipe.preview_ingredients,
     why_it_works: recipe.why_it_works,
-    why_it_works_detail: recipe.why_it_works_detail,
     inside_tip: recipe.inside_tip,
     nutrition: recipe.nutrition,
     follow_up_questions: recipe.follow_up_questions,

@@ -49,45 +49,58 @@ pressure", "liver", "gut health", or similar. Say "keeps you feeling steady
 through the afternoon", not "supports cardiovascular and metabolic health".
 Save every mechanism and nutrient claim for why_it_works.`;
 
-// ── QA ⑪: 3-5 functions per ingredient ──────────────────────────────────────
+// ── QA ⑪: 3-5 functions per ingredient, carried in prose ────────────────────
 
-export const WHY_IT_WORKS_RULE = `WHY IT WORKS (why_it_works_detail): One entry per MAIN ingredient — skip water,
-ice, and pure garnishes. For each, give between 3 and 5 distinct functions:
-what that ingredient contributes and what it does. Each function is one short,
-concrete phrase (roughly 8-20 words), grounded in established nutrition science.
+export const WHY_IT_WORKS_RULE = `WHY IT WORKS (why_it_works): Flowing prose, NOT a list and NOT headed sections.
+
+Cover every MAIN ingredient — skip water, ice, and pure garnishes. For each one,
+give between 3 and 5 distinct functions: what it contributes and what it does,
+grounded in established nutrition science. Body systems and mechanisms ARE
+allowed here; this is the section where the mechanism belongs.
+
+Structure it as 2-4 paragraphs separated by a blank line. Name each ingredient
+inside the sentence that describes it — never as a heading or a label on its own
+line, and never as a bullet. Group related ingredients into the same paragraph
+when they act through the same pathway.
+
+Write it the way you would explain it aloud: "The milk provides tryptophan, an
+amino acid essential for serotonin synthesis, which then converts to melatonin,
+a hormone crucial for regulating sleep cycles."
+
 Do not repeat the same function across ingredients, and do not pad to reach
 three — if an ingredient genuinely has only a couple of established functions,
-choose a different main ingredient to describe instead.
+describe a different main ingredient instead.`;
 
-Also provide why_it_works as 2-3 plain prose sentences covering how the
-ingredients work together. Body systems ARE allowed here; this is the section
-where the mechanism belongs.`;
 
-/** One ingredient's contribution, as shown under "Why it works". */
-export const WhyItWorksEntrySchema = z.object({
-  ingredient: z
-    .string()
-    .describe("The ingredient name alone, no amount — e.g. 'Pineapple'"),
-  functions: z
-    .array(z.string())
-    .min(3)
-    .max(5)
-    .describe("3-5 distinct things this ingredient contributes"),
-});
-
-export const WhyItWorksDetailSchema = z
-  .array(WhyItWorksEntrySchema)
-  .min(1)
-  .describe("Per-ingredient breakdown, one entry per main ingredient");
-
-export type WhyItWorksEntry = z.infer<typeof WhyItWorksEntrySchema>;
-export type WhyItWorksDetail = z.infer<typeof WhyItWorksDetailSchema>;
 
 /**
- * Parses the jsonb column into a usable shape, or null if a row predates the
- * column or holds something unexpected. Callers fall back to the prose.
+ * Why-it-works copy that fails the prose format (QA ⑪).
+ *
+ * The requirement is 3-5 functions per ingredient carried in FLOWING prose —
+ * an earlier pass rendered them as per-ingredient headings with bullet lists,
+ * which fragmented copy that reads better continuous. These are the shapes that
+ * betray the list format surviving into the text.
  */
-export function parseWhyItWorksDetail(raw: unknown): WhyItWorksDetail | null {
-  const parsed = WhyItWorksDetailSchema.safeParse(raw);
-  return parsed.success ? parsed.data : null;
+export function whyItWorksIssues(text: string | null | undefined): string[] {
+  const issues: string[] = [];
+  const body = (text ?? "").trim();
+
+  if (!body) return ["empty"];
+
+  const lines = body.split("\n").map((l) => l.trim()).filter(Boolean);
+
+  // A bullet or dash starting a line is the list format leaking through.
+  if (lines.some((l) => /^[•\-*\u2022]/.test(l))) issues.push("bullets");
+
+  // "Ginger:" or "**Ginger**" alone on a line is a heading, not prose.
+  if (lines.some((l) => /^\*{0,2}[A-Z][A-Za-z'’\- ]{1,30}\*{0,2}:?$/.test(l))) {
+    issues.push("headings");
+  }
+  if (/\*\*/.test(body)) issues.push("markdown");
+
+  // The rule asks for 2-4 paragraphs; one long block is the old summary shape.
+  const paragraphs = body.split(/\n\s*\n/).filter((p) => p.trim());
+  if (paragraphs.length < 2) issues.push("single-paragraph");
+
+  return issues;
 }

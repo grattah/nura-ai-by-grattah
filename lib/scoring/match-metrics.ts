@@ -184,6 +184,79 @@ export const GOAL_CREDITS: Record<string, (c: MatchContext) => number> = {
   "Sleep better": bioOnly({ SleepRelaxation: 95, StressResilience: 65, Mood: 55 }),
   "Reduce stress": bioOnly({ StressResilience: 95, Mood: 65, SleepRelaxation: 55 }),
   "Improve my mood": bioOnly({ Mood: 95, StressResilience: 65, SleepRelaxation: 50 }),
+
+  // ── Goals added with the AUG 21 picker ────────────────────────────────────
+  //
+  // Several of these describe the same physiology as a condition that is no
+  // longer offered in the picker (CONDITIONS is now PCOS / Menopause /
+  // Osteoporosis only). Those formulas are reused verbatim rather than
+  // reinvented: the biology is identical, and a user can no longer select both
+  // the goal and the condition, so there is nothing to double-count.
+  //
+  // Goals whose outcome depends on keeping something LOW carry the same
+  // (1 − points/max) nutrient term the matching condition used — a recipe
+  // cannot credibly serve "Lower blood pressure" while being salt-heavy.
+
+  // Mirrors the retired Diabetes condition.
+  "Balance blood sugar": (c) =>
+    avg([
+      bioSubtotal(c.bio, { BloodSugar: 95, WeightMetabolic: 65 }) / 100,
+      1 - c.points.sugar / c.maxes.sugar,
+    ]),
+  // Mirrors the retired High blood pressure condition.
+  "Lower blood pressure": (c) =>
+    avg([
+      bioSubtotal(c.bio, { Heart: 95, Kidney: 60, CholLipid: 55, Inflammation: 50 }) / 100,
+      1 - c.points.salt / c.maxes.salt,
+    ]),
+  // Mirrors the retired High cholesterol condition.
+  "Reduce cholesterol": (c) =>
+    avg([
+      bioSubtotal(c.bio, { CholLipid: 95, Heart: 70, WeightMetabolic: 50, Inflammation: 50 }) / 100,
+      1 - c.points.satFat / c.maxes.satFat,
+    ]),
+  // Mirrors the retired Arthritis condition.
+  "Support muscle & joint comfort": bioOnly({
+    Inflammation: 95,
+    PainComfort: 80,
+    BoneJoint: 65,
+    Antioxidant: 50,
+  }),
+  // Mirrors the retired Anemia condition: the iron-rich flag is averaged in
+  // rather than used as a bare gate, so a non-iron recipe still scores > 0.
+  "Improve my iron levels": (c) =>
+    avg([bioSubtotal(c.bio, { BrainCognitive: 50 }) / 100, c.ironRich ? 1 : 0]),
+
+  // Puffiness is fluid retention: sodium works directly against it.
+  "Reduce puffiness": (c) =>
+    avg([
+      bioSubtotal(c.bio, { Kidney: 95, Inflammation: 55 }) / 100,
+      1 - c.points.salt / c.maxes.salt,
+    ]),
+
+  // Gut-driven goals reuse the gut-health bonus, which already rewards fibre
+  // and a probiotic ingredient — the two things that actually move them.
+  "Reduce bloating": withBonus(
+    { Gut: 95, Microbiome: 70, PainComfort: 55, Inflammation: 50 },
+    "gut-health",
+  ),
+  "Relieve constipation": withBonus(
+    { Gut: 95, Microbiome: 70, Kidney: 50 },
+    "gut-health",
+  ),
+
+  // Urinary/microbial balance leans on the same defence axes as immunity.
+  "Support UTI & yeast balance": withBonus(
+    { Kidney: 85, Microbiome: 80, Immune: 60, NaturalDefense: 55 },
+    "gut-health",
+  ),
+  "Relieve mucus & congestion": withBonus(
+    { Immune: 85, NaturalDefense: 80, Inflammation: 60, Temperature: 50 },
+    "immunity",
+  ),
+
+  // Libido tracks hormonal balance plus circulation.
+  "Support libido": bioOnly({ Hormonal: 90, Heart: 60, CellWellness: 50 }),
 };
 
 // ── App health-profile key → PRD formula name ───────────────────────────────
@@ -224,37 +297,41 @@ export const CONDITION_KEY_TO_PRD: Record<string, string> = {
 /**
  * Goal key → PRD formula name.
  *
- * The AUG 21 picker offers 24 goals but only 13 formulas exist, so this map is
- * deliberately partial. computeMatchScore skips a key that isn't here, which is
- * the correct failure mode — inventing a formula for "UTI & yeast balance
- * support" would fabricate a health claim — but it is silent, so the goals with
- * no formula are listed in UNSCORED_GOALS below and pinned by a test.
+ * Every goal the picker offers now resolves to a real formula, so the
+ * UNSCORED_GOALS escape hatch is gone. computeMatchScore still skips an
+ * unmapped key silently, which is why test/match-score-coverage.test.ts
+ * asserts total coverage rather than trusting this list by eye.
  */
 export const GOAL_KEY_TO_PRD: Record<string, string> = {
-  // ── Direct matches ────────────────────────────────────────────────────────
+  // ── AUG 21 picker ─────────────────────────────────────────────────────────
+  "reduce-bloating": "Reduce bloating",
+  "skin-brighten": "Improve my skin & hair",
+  "blood-sugar": "Balance blood sugar",
+  "uti-yeast": "Support UTI & yeast balance",
+  "iron-levels": "Improve my iron levels",
+  "muscle-recovery": "Improve my fitness",
+  "fat-metabolism": "Lose weight",
+  libido: "Support libido",
   stress: "Reduce stress",
   mood: "Improve my mood",
   immunity: "Boost my immunity",
   focus: "Sharpen my focus",
   "gut-health": "Improve my gut health",
-  sleep: "Sleep better",
-
-  // ── Several picker goals share one formula ────────────────────────────────
-  // match-score.ts de-duplicates by formula, so a user picking all three skin
-  // goals is credited once rather than having skin counted three times.
-  "skin-brighten": "Improve my skin & hair",
+  constipation: "Relieve constipation",
   "hair-growth": "Improve my skin & hair",
+  puffiness: "Reduce puffiness",
+  "joint-comfort": "Support muscle & joint comfort",
+  "blood-pressure": "Lower blood pressure",
+  cholesterol: "Reduce cholesterol",
   "clear-skin": "Improve my skin & hair",
-
-  // ── Renamed in the design, same underlying formula ────────────────────────
-  "fat-metabolism": "Lose weight",
-  "muscle-recovery": "Improve my fitness",
   "hydrate-skin": "Drink more water",
   testosterone: "Balance my hormones",
+  sleep: "Sleep better",
+  "mucus-congestion": "Relieve mucus & congestion",
 
-  // ── Legacy keys kept so existing saved profiles keep scoring ──────────────
-  // Users who completed the questionnaire before AUG 21 hold these keys in
-  // health_profiles. Dropping them would silently zero their Match Score.
+  // ── Legacy keys ───────────────────────────────────────────────────────────
+  // Held by profiles saved before AUG 21. Dropping them would silently zero
+  // those users' Match Score, so they keep resolving to their old formula.
   energy: "Have more energy",
   hormones: "Balance my hormones",
   hydration: "Drink more water",
@@ -265,26 +342,4 @@ export const GOAL_KEY_TO_PRD: Record<string, string> = {
   "weight-loss": "Lose weight",
 };
 
-/**
- * Goals the picker offers that have NO Match Score formula.
- *
- * Selecting one is not an error — it is recorded on the profile and used for
- * personalization elsewhere — but it contributes nothing to the Match Score.
- * Five of these (blood-sugar, iron-levels, joint-comfort, blood-pressure,
- * cholesterol) have a CONDITION formula with the same clinical meaning; wiring
- * them up needs a product decision, because a user who selects the goal AND
- * declares the condition would otherwise be counted twice.
- */
-export const UNSCORED_GOALS = [
-  "reduce-bloating",
-  "blood-sugar",
-  "uti-yeast",
-  "iron-levels",
-  "libido",
-  "constipation",
-  "puffiness",
-  "joint-comfort",
-  "blood-pressure",
-  "cholesterol",
-  "mucus-congestion",
-] as const;
+

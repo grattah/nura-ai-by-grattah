@@ -1,8 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   mentionsBodySystem,
-  parseWhyItWorksDetail,
-  WhyItWorksDetailSchema,
+  whyItWorksIssues,
 } from "@/lib/recipe-copy";
 
 // QA ⑩ — the intro must stay experiential; mechanism belongs in "Why it works".
@@ -39,40 +38,44 @@ describe("mentionsBodySystem", () => {
 });
 
 // QA ⑪ — 3-5 functions per ingredient.
-describe("WhyItWorksDetailSchema", () => {
-  const entry = (n: number) => ({
-    ingredient: "Ginger",
-    functions: Array.from({ length: n }, (_, i) => `function ${i}`),
-  });
-
-  it("accepts 3, 4 and 5 functions", () => {
-    for (const n of [3, 4, 5]) {
-      expect(WhyItWorksDetailSchema.safeParse([entry(n)]).success).toBe(true);
-    }
-  });
-
-  it("rejects fewer than 3 or more than 5", () => {
-    for (const n of [0, 1, 2, 6]) {
-      expect(WhyItWorksDetailSchema.safeParse([entry(n)]).success).toBe(false);
-    }
-  });
-
-  it("rejects an empty breakdown", () => {
-    expect(WhyItWorksDetailSchema.safeParse([]).success).toBe(false);
-  });
-});
 
 // Rows written before the column existed must keep rendering their prose.
-describe("parseWhyItWorksDetail", () => {
-  it("returns null for legacy rows rather than throwing", () => {
-    for (const raw of [null, undefined, "", "some prose", {}, [{ ingredient: "x" }]]) {
-      expect(parseWhyItWorksDetail(raw)).toBeNull();
-    }
+describe("whyItWorksIssues — prose format (QA ⑪)", () => {
+  const good = `The milk provides tryptophan, an amino acid essential for serotonin synthesis, which then converts to melatonin, a hormone crucial for regulating sleep cycles.
+
+Ginger, rich in gingerols and shogaols, modulates serotonin receptors in the gut, promoting relaxation and accelerating gastric emptying.`;
+
+  it("accepts multi-paragraph prose that names ingredients inline", () => {
+    expect(whyItWorksIssues(good)).toEqual([]);
   });
 
-  it("returns the parsed breakdown when valid", () => {
-    const detail = [{ ingredient: "Ginger", functions: ["a", "b", "c"] }];
-    expect(parseWhyItWorksDetail(detail)).toEqual(detail);
+  it("rejects the bulleted list format", () => {
+    expect(whyItWorksIssues("• Ginger aids digestion\n• Milk provides tryptophan")).toContain(
+      "bullets",
+    );
+  });
+
+  it("rejects per-ingredient headings", () => {
+    // The exact shape being moved away from: ingredient name on its own line.
+    const headed = "Ginger:\nAids digestion and eases nausea.\n\nMilk:\nProvides tryptophan.";
+    expect(whyItWorksIssues(headed)).toContain("headings");
+  });
+
+  it("rejects markdown bold", () => {
+    expect(whyItWorksIssues("**Ginger** aids digestion.\n\nMilk helps too.")).toContain(
+      "markdown",
+    );
+  });
+
+  it("rejects a single block, which is the old summary shape", () => {
+    expect(whyItWorksIssues("One paragraph only, however long it runs on.")).toContain(
+      "single-paragraph",
+    );
+  });
+
+  it("treats empty copy as an issue", () => {
+    expect(whyItWorksIssues("")).toEqual(["empty"]);
+    expect(whyItWorksIssues(null)).toEqual(["empty"]);
   });
 });
 
