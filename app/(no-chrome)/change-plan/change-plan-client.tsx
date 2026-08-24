@@ -58,11 +58,14 @@ export function ChangePlanClient() {
 
       <div className="px-6 space-y-8">
         {/* Plan options */}
-        <div className="space-y-4 mt-12 mb-10">
+        <div className="space-y-2 mt-12 mb-10">
           {PLANS.map((plan) => {
             const isSelected = selected === plan.id;
             return (
-              <div className="relative" key={plan.id}>
+              <div
+                className={`relative ${plan.badge ? "mt-8" : ""}`}
+                key={plan.id}
+              >
                 {plan.badge && (
                   <span
                     className="text-sm font-semibold px-3 z-0 py-1 pb-3.5 rounded-t-md text-white absolute -top-6"

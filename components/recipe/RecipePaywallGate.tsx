@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Check, X } from "lucide-react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import FilledLock from "../vectors/filled-lock";
 import { Plan, PLANS } from "@/constants";
@@ -17,17 +17,10 @@ import Time from "../vectors/time";
 
 export function RecipePaywallGate() {
   const router = useRouter();
-  const pathname = usePathname();
 
   const [open, setOpen] = useState(true);
 
   const [selectedPlan, setSelectedPlan] = useState<Plan>("annual");
-
-  // "Your free trial has ended" only applies to a brand-new user who has spent
-  // every free use across all gated surfaces — not guests, not subscribers, and
-  // not lapsed subscribers (who never had a free trial to exhaust). Fetched
-  // rather than derived from `userId` so this works from any caller regardless
-  // of whether it computed trial state itself.
   const [trialExhausted, setTrialExhausted] = useState(false);
   useEffect(() => {
     let active = true;
@@ -134,7 +127,10 @@ export function RecipePaywallGate() {
             {PLANS.map((plan) => {
               const isSelected = selectedPlan === plan.id;
               return (
-                <div className="relative" key={plan.id}>
+                <div
+                  className={`relative ${plan.badge ? "mt-8" : ""}`}
+                  key={plan.id}
+                >
                   {plan.badge && (
                     <span
                       className="text-xs font-semibold px-3 z-0 py-1 pb-3.5 rounded-t-md text-white absolute -top-5 left-0"

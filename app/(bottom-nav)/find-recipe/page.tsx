@@ -45,12 +45,12 @@ const page = () => {
   const concernParam = searchParams.get("concern");
   const supabase = createClient();
   const [searchTerm, setSearchTerm] = React.useState(
-    query || generateParam || ""
+    query || generateParam || "",
   );
   const [results, setResults] = React.useState<RecipeHit[]>([]);
   const [searchLoading, setSearchLoading] = React.useState(false);
   const [suggestedRecipes, setSuggestedRecipes] = React.useState<RecipeHit[]>(
-    []
+    [],
   );
   const [pendingRecipe, setPendingRecipe] = React.useState<string | null>(null);
   const [generating, setGenerating] = React.useState(false);
@@ -60,7 +60,7 @@ const page = () => {
   const [tokenModalOpen, setTokenModalOpen] = React.useState(false);
   const [showSignInModal, setShowSignInModal] = React.useState(false);
   const [aiSuggestions, setAiSuggestions] = React.useState<RecipeSuggestion[]>(
-    []
+    [],
   );
   const [aiSuggestionsLoading, setAiSuggestionsLoading] = React.useState(false);
   const [aiSuggestionsError, setAiSuggestionsError] = React.useState<
@@ -71,7 +71,7 @@ const page = () => {
     React.useState(false);
   const [hasSearched, setHasSearched] = React.useState(false);
   const suggestionsCache = React.useRef<Map<string, RecipeSuggestion[]>>(
-    new Map()
+    new Map(),
   );
 
   const { recents, add: addRecent, clear: clearRecents } = useRecentSearches();
@@ -128,10 +128,18 @@ const page = () => {
       setSuggestedRecipes([]);
       return;
     }
-  
+
     const fetchSuggestions = async () => {
-      const STOPWORDS = new Set(["and", "with", "the", "for", "your", "a", "of"]);
-  
+      const STOPWORDS = new Set([
+        "and",
+        "with",
+        "the",
+        "for",
+        "your",
+        "a",
+        "of",
+      ]);
+
       // Break each clicked title into words, so we match RELATED recipes that
       // share any word, rather than the exact title (which only matches itself).
       const words = Array.from(
@@ -142,38 +150,41 @@ const page = () => {
               .split(/[\s&,()]+/) // whitespace, &, commas, parens all become breaks
               .filter(Boolean)
               .filter((w) => w.length > 2) // drop stray fragments like "a", "&"
-              .filter((w) => !STOPWORDS.has(w))
-          )
-        )
+              .filter((w) => !STOPWORDS.has(w)),
+          ),
+        ),
       );
-  
+
       if (words.length === 0) {
         setSuggestedRecipes([]);
         return;
       }
-  
+
       const orFilter = words
-        .flatMap((w) => [`title.ilike.%${w}%`, `short_description.ilike.%${w}%`])
+        .flatMap((w) => [
+          `title.ilike.%${w}%`,
+          `short_description.ilike.%${w}%`,
+        ])
         .join(",");
-  
+
       const { data, error } = await supabase
         .from("recipes")
         .select("id, title")
         .eq("status" as never, "approved" as never)
         .or(orFilter)
         .limit(10);
-  
+
       if (error) {
         console.error("Failed to fetch suggestions:", error);
         return;
       }
-  
+
       const shuffled = ((data ?? []) as unknown as RecipeHit[]).sort(
-        () => Math.random() - 0.5
+        () => Math.random() - 0.5,
       );
       setSuggestedRecipes(shuffled.slice(0, 3));
     };
-  
+
     fetchSuggestions();
   }, [recents]);
 
@@ -249,7 +260,8 @@ const page = () => {
           setShowSignInModal(true);
           setPaywallOpen(false);
           return;
-        } if (res.status === 403) {
+        }
+        if (res.status === 403) {
           setGenerating(false);
           setPendingRecipe(null);
           setShowSignInModal(false);
@@ -268,7 +280,7 @@ const page = () => {
         setGenerateError(true);
       }
     },
-    [router, applyState, refreshCredits]
+    [router, applyState, refreshCredits],
   );
 
   const autoTriggered = React.useRef(false);
@@ -612,7 +624,7 @@ const page = () => {
                         onClick={() =>
                           handleGenerate(
                             recipe.title,
-                            searchTerm.trim() || undefined
+                            searchTerm.trim() || undefined,
                           )
                         }
                         className="flex items-center gap-3 p-3 border-b hover:bg-[#E8E6DC] text-left transition-colors"

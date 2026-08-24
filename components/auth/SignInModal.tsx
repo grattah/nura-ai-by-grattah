@@ -6,17 +6,14 @@ import { X } from "lucide-react";
 
 import SignInModalImage from "../vectors/SignInModalImage";
 import Link from "next/link";
+import { lockAppScroll } from "@/lib/scroll-lock";
 
 export function SignInModal({ onClose }: { onClose?: () => void }) {
   const router = useRouter();
 
   // Lock background scroll while the modal is open (it mounts only when open).
   useEffect(() => {
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previous;
-    };
+    return lockAppScroll();
   }, []);
 
   return (
