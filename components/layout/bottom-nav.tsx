@@ -43,7 +43,7 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-2 inset-x-0 z-40 w-84.5 mx-auto pb-safe">
-      <div className="mx-0 flex items-center p-1 rounded-full overflow-hidden liquid-glass-green border-2 backdrop-blur-xs w-fit">
+      <div className="mx-0 flex items-center p-1 rounded-full overflow-hidden liquid-glass border-2 w-fit">
         {NAV_ITEMS.map(
           ({ label, href, icon: Icon, activeIcon: ActiveIcon }) => {
             const active = isActive(href);
