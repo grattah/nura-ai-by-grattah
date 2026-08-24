@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 import { DELETION_GRACE_DAYS } from "@/lib/account-deletion";
+import { lockAppScroll } from "@/lib/scroll-lock";
 
 /**
  * Confirmation shown over the (now signed-out) home page after a deletion is
@@ -20,11 +21,7 @@ export function DeletionScheduledModal({ show }: { show: boolean }) {
 
   useEffect(() => {
     if (!open) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previous;
-    };
+    return lockAppScroll();
   }, [open]);
 
   if (!open) return null;

@@ -318,8 +318,17 @@
   * {
     @apply border-border outline-ring/50 font-redHatText;
   }
+  html {
+    height: 100%;
+  }
   body {
     @apply bg-background text-foreground font-redHatText;
+    /* Fixed app shell: the document itself never scrolls, so Safari's native
+       chrome (address bar, bottom controls) has nothing to react to and stays
+       put. All real scrolling happens in .app-content below. */
+    height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
   }
 
   button:not(:disabled):not([aria-disabled="true"]),
@@ -368,6 +377,15 @@
 
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* The app's one intentional scrolling container — see body rule above. */
+.app-content {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }
 
 .liquid-glass {

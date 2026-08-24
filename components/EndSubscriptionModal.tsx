@@ -2,14 +2,11 @@
 
 import React from "react";
 import Image from "next/image";
+import { lockAppScroll } from "@/lib/scroll-lock";
 
 const EndSubscriptionModal = ({ onClose }: { onClose?: () => void }) => {
   React.useEffect(() => {
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previous;
-    };
+    return lockAppScroll();
   }, []);
 
   return (
