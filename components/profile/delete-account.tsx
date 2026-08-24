@@ -7,6 +7,7 @@ import { X, CircleAlert } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { scheduleAccountDeletion } from "@/actions/delete-account";
 import { DELETION_GRACE_DAYS } from "@/lib/account-deletion";
+import { lockAppScroll } from "@/lib/scroll-lock";
 
 function ConfirmModal({
   onConfirm,
@@ -20,11 +21,7 @@ function ConfirmModal({
   error: string | null;
 }) {
   useEffect(() => {
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previous;
-    };
+    return lockAppScroll();
   }, []);
 
   return (
