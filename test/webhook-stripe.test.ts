@@ -36,6 +36,13 @@ vi.mock("@/lib/supabase/server", () => ({
 // Email sends are best-effort; stub so no real Resend call happens.
 const sendEmail = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/email/send", () => ({ sendEmail }));
+// Activation and renewal now grant subscription tokens (spec §3). Stubbed so
+// these tests stay about subscription state and email, not allocation.
+vi.mock("@/lib/tokens/allocate", () => ({
+  allocateForPayment: vi.fn(async () => 100),
+  lapseBalance: vi.fn(),
+  creditPurchasedUnits: vi.fn(async () => 0),
+}));
 
 import { POST } from "@/app/api/webhooks/stripe/route";
 

@@ -16,7 +16,7 @@ export default function NoTokensYet() {
           No tokens yet
         </p>
         <p className="font-medium text-base text-subtle">
-          Subscribe to Nuko+ to get weekly tokens and keep discovering new
+          Subscribe to Nuko+ for tokens every period and keep discovering new
           recipes.
         </p>
       </div>

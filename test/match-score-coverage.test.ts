@@ -5,7 +5,6 @@ import {
   GOAL_KEY_TO_PRD,
   CONDITION_CREDITS,
   GOAL_CREDITS,
-  UNSCORED_GOALS,
 } from "@/lib/scoring/match-metrics";
 
 // Regression guard for a whole class of silent bug.
@@ -34,38 +33,17 @@ describe("every live health-profile option maps to a Match Score formula", () =>
     },
   );
 
-  // The AUG 21 picker offers 24 goals but only 13 formulas exist, so a goal is
-  // allowed to be unscored — but ONLY if it is declared in UNSCORED_GOALS. The
-  // original guard is intact: a renamed or typo'd key still fails here instead
-  // of silently dropping out of the Match Score in production.
+  // Total coverage again: every goal the picker offers must resolve to a real
+  // formula. The AUG 21 picker briefly outran the formulas and needed an
+  // exemption list; now that all 24 score, an unmapped key is a bug, not a
+  // known gap — so this is back to an unconditional assertion.
   it.each(GOALS.map((g) => [g.key, g.label] as const))("goal %s (%s)", (key) => {
     const prd = GOAL_KEY_TO_PRD[key];
-    if (prd === undefined) {
-      expect(
-        UNSCORED_GOALS as readonly string[],
-        `goal "${key}" has no formula and is not declared in UNSCORED_GOALS`,
-      ).toContain(key);
-      return;
-    }
+    expect(prd, `goal "${key}" is not in GOAL_KEY_TO_PRD`).toBeDefined();
     expect(
       GOAL_CREDITS[prd],
       `goal "${key}" maps to "${prd}", which has no credit formula`,
     ).toBeTypeOf("function");
-  });
-
-  it("never declares a goal unscored while also mapping it", () => {
-    const contradictory = (UNSCORED_GOALS as readonly string[]).filter(
-      (k) => GOAL_KEY_TO_PRD[k] !== undefined,
-    );
-    expect(contradictory).toEqual([]);
-  });
-
-  it("keeps every UNSCORED_GOALS entry a real picker option", () => {
-    const live = new Set(GOALS.map((g) => g.key));
-    const stale = (UNSCORED_GOALS as readonly string[]).filter(
-      (k) => !live.has(k),
-    );
-    expect(stale, "UNSCORED_GOALS lists keys the picker no longer offers").toEqual([]);
   });
 });
 

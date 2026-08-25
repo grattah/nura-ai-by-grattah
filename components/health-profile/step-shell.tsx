@@ -1,6 +1,7 @@
 "use client";
 
 import BackButton from "@/components/back-button";
+import { ArrowLeft } from "lucide-react";
 import { type Step } from "@/lib/health-profile/types";
 import { useHealthProfile } from "./health-profile-provider";
 
@@ -25,14 +26,28 @@ export function StepShell({
   canProceed?: boolean;
   children: React.ReactNode;
 }) {
-  const { mode, next, finishEdit, saving } = useHealthProfile();
+  const { mode, next, finishEdit, cancelEdit, saving } = useHealthProfile();
   const isEdit = mode === "edit";
 
   return (
     <div className="min-h-dvh bg-background flex flex-col">
       {/* Header */}
       <div className="flex items-center px-6 pt-5 pb-4 relative shrink-0">
-        <BackButton className="size-10 absolute left-4 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity" />
+        {/* In edit mode, back means "discard this change" — going back without
+            clearing it left the edit in the draft, where the next save
+            elsewhere in the flow would commit it silently. */}
+        {isEdit ? (
+          <button
+            type="button"
+            onClick={cancelEdit}
+            aria-label="Discard changes and go back"
+            className="size-10 absolute left-4 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity"
+          >
+            <ArrowLeft size={20} />
+          </button>
+        ) : (
+          <BackButton className="size-10 absolute left-4 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity" />
+        )}
         <div className="flex-1 text-center min-w-0">
           <h1 className="text-xl font-semibold text-base-text">{title}</h1>
           {sublabel && (

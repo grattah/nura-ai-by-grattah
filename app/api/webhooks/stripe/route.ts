@@ -6,9 +6,10 @@ import { format } from "date-fns";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { activateSubscriptionFromSession } from "@/lib/subscription-activate";
 import { creditTokenPurchaseFromSession } from "@/lib/token-purchase";
+import { allocateForPayment } from "@/lib/tokens/allocate";
 import { getBundle } from "@/lib/credits";
 import { sendEmail } from "@/lib/email/send";
-import { APP_CURRENCY } from "@/constants";
+import { APP_CURRENCY, type Plan } from "@/constants";
 import {
   subscriptionConfirmationEmail,
   resubscriptionEmail,
@@ -438,6 +439,21 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
       }
     } catch (e) {
       console.error("[webhook] failed to extend period on renewal", e);
+    }
+  }
+
+  // Spec §3 — allocation is gated on payment. This is the ONLY place a renewal
+  // grant happens: a scheduled job would grant tokens to subscribers whose
+  // renewal actually failed. Safe to repeat, because the RPC replaces the
+  // balance rather than adding to it.
+  {
+    const renewed = await getUserForCustomer(customerId);
+    if (renewed?.userId && renewed.plan) {
+      await allocateForPayment({
+        userId: renewed.userId,
+        plan: renewed.plan as Plan,
+        subscriptionStart: invoice.created ? new Date(invoice.created * 1000) : null,
+      });
     }
   }
 

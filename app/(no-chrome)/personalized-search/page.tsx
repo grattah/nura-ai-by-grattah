@@ -57,7 +57,6 @@ export default async function PersonalizedSearchPage({
       serverBlocked={outcome.status === "blocked"}
       result={outcome.status === "ok" ? outcome.result : undefined}
       outOfTokens={outcome.status === "out_of_tokens"}
-      tokenState={outcome.status === "out_of_tokens" ? outcome.state : undefined}
       genError={outcome.status === "error"}
     />
   );

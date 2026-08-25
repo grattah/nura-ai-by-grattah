@@ -1,39 +1,23 @@
+import { TOKEN_PACKS } from "@/lib/tokens/spec";
+
 // Token economy config — shared by client and server. Pure (no I/O).
 //
-// Metered LLM work spends "tokens" (friendly units). Each unit is calibrated from
-// real Claude token usage: a call's actual usage (input + output, the way Claude
-// counts them for claude-sonnet-4-6) is converted to units via UNIT_TOKENS.
-// Subscribers get WEEKLY_UNITS free each week (rolling 7-day window, never carries
-// over); they can also buy "extra" units that never expire and are consumed only
-// after the weekly allowance is exhausted.
+// Free-trial config and the purchased-pack catalogue. The token economy itself
+// (units, action costs, grants, spend routing) lives in lib/tokens/spec.ts.
 
 export type CreditAction = "search" | "followup" | "generate";
 
-// Client-safe token wallet snapshot (shared by the API, server helpers, and UI).
-export interface TokenState {
-  weeklyUnits: number;
-  weeklyUsed: number;
-  weeklyRemaining: number;
-  weeklyPct: number; // 0–100, share of the weekly allowance used
-  extraPurchased: number;
-  extraUsed: number;
-  extraBalance: number;
-  extraPct: number; // 0–100, share of purchased extra used
-  freeGranted: number;
-  freeUsed: number;
-  freeRemaining: number; // one-time trial units left (spent before weekly/extra)
-  totalRemaining: number;
-  resetAt: string | null; // ISO; when the weekly bucket next resets
-  lastPurchaseAt: string | null;
-}
+const PACK_BLURBS: Record<string, string> = {
+  "pack-10": "A quick top-up",
+  "pack-45": "Most popular",
+  "pack-85": "Better value",
+  "pack-130": "Best value",
+};
 
-// Free weekly allowance for subscribers (units). Keep in sync with the SQL
-// constant in the tokens migration.
-export const WEEKLY_UNITS = 50;
+// The wallet shape now lives in lib/tokens/spec.ts (WalletSnapshot). The old
+// TokenState modelled a rolling weekly window and an "extra" bucket, neither of
+// which exists under the 21 Aug 2026 spec.
 
-// One-time free-trial units granted to a new (never-subscribed) user on their
-// first home visit. Now purely cosmetic — drives the FreeTokensModal's "25"
-// copy. Real gating is the per-surface free-use model below.
 export const FREE_UNITS = 25;
 
 // Free-trial v2: a brand-new (never-subscribed) user gets this many successful
@@ -105,20 +89,14 @@ export function freeTrialTokens(usedPerSurface: number[]): FreeTrialTokens {
 
 // Claude tokens per 1 unit. Calibrated so a typical action (~1–3k real tokens)
 // costs ~1–2 units. Output tokens dominate; MAX_OUTPUT_TOKENS bounds the worst case.
-export const UNIT_TOKENS = 1500;
 
 // Show the "almost out" warning once this fraction of the weekly allowance is used.
 export const LOW_WARN_PCT = 0.8;
 
 // Fixed unit cost for a generated hero image (Gemini bills per-image, not per text
 // token, so it can't share the Claude token divisor).
-export const IMAGE_UNITS = 2;
 
 /** Convert real Claude token usage to billable units (min 1 for any real call). */
-export function unitsForTokens(claudeTokens: number): number {
-  if (!Number.isFinite(claudeTokens) || claudeTokens <= 0) return 1;
-  return Math.max(1, Math.ceil(claudeTokens / UNIT_TOKENS));
-}
 
 // Output-token ceilings per metered call, so one action maps to a bounded spend.
 export const MAX_OUTPUT_TOKENS: Record<CreditAction, number> = {
@@ -136,19 +114,22 @@ export interface CreditBundle {
   mostBought?: boolean;
 }
 
-export const BUNDLES: CreditBundle[] = [
-  { id: "starter", credits: 50, amount: 199, label: "Starter", blurb: "Can last you a week" },
-  {
-    id: "popular",
-    credits: 150,
-    amount: 499,
-    label: "Popular",
-    blurb: "Can last you a month",
-    mostBought: true,
-  },
-  { id: "value", credits: 350, amount: 999, label: "Value", blurb: "Can last you 3 months" },
-  { id: "power", credits: 800, amount: 1999, label: "Power", blurb: "Can last you 6 months" },
-];
+/**
+ * Token packs (spec §4). Purchased tokens are 1 unit each, so `credits`
+ * (units granted) equals the token count.
+ *
+ * Re-exported from lib/tokens/spec.ts rather than duplicated — the checkout
+ * charges from `amount` and the webhook credits from `credits`, and those two
+ * disagreeing would either overcharge or over-credit.
+ */
+export const BUNDLES: CreditBundle[] = TOKEN_PACKS.map((p) => ({
+  id: p.id,
+  credits: p.units,
+  amount: p.amount,
+  label: `${p.tokens} tokens`,
+  blurb: PACK_BLURBS[p.id] ?? "",
+  mostBought: p.id === "pack-45",
+}));
 
 export function getBundle(id: string): CreditBundle | undefined {
   return BUNDLES.find((b) => b.id === id);

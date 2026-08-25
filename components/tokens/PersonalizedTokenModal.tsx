@@ -5,47 +5,35 @@ import { Info, Zap } from "lucide-react";
 import Link from "next/link";
 import { useCredits } from "@/components/providers/credits-provider";
 import { formatResetDate } from "@/lib/tokens-format";
-import { LOW_WARN_PCT } from "@/lib/credits";
 
 const PersonalizedTokenModal = () => {
-  const { hasAccess, isLow, isOut, state } = useCredits();
+  const { hasAccess, isLow, isOut, wallet } = useCredits();
 
-  if (
-    !hasAccess ||
-    !isLow ||
-    isOut ||
-    (state.extraPct && state.extraPct < LOW_WARN_PCT * 100)
-  )
-    return null;
+  // Nudge only while the period's grant is nearly spent AND buying more would
+  // actually help. A user already holding purchased tokens is not stuck, and a
+  // user with none left at all sees the full wall instead of this.
+  if (!hasAccess || !isLow || isOut) return null;
 
-  const WHAT_TO_SHOW =
-    state.weeklyPct >= LOW_WARN_PCT * 100
-      ? state.extraPct != null && state.extraPct >= LOW_WARN_PCT * 100
-        ? "SHOWEXTRA"
-        : "SHOWFREE"
-      : null;
+  const hasPurchased = wallet.purchasedTokens > 0 && !wallet.purchasedFrozen;
 
   return (
     <div className="p-4 rounded-2xl bg-white flex flex-col gap-4">
       <div className="flex flex-col gap-3">
         <p className="font-semibold text-black text-base text-center">
-          You're almost out of {WHAT_TO_SHOW === "SHOWEXTRA" ? "extra" : "free"}{" "}
-          credits
+          You&apos;re almost out of{" "}
+          {hasPurchased ? "tokens" : "included tokens"}
         </p>
         <ProgressBar
-          value={
-            WHAT_TO_SHOW === "SHOWEXTRA" ? state.extraPct : state.weeklyPct
-          }
+          value={wallet.subscriptionPct}
           color="#F39128"
           trackColor="#ECEBEA"
         />
         <div className="flex justify-between items-center">
           <p className="font-semibold text-[#F39128] text-sm">
-            {WHAT_TO_SHOW === "SHOWEXTRA" ? state.extraPct : state.weeklyPct}%
-            used
+            {wallet.subscriptionPct}% used
           </p>
           <p className="font-medium text-subtle text-sm">
-            Resets {formatResetDate(state.resetAt)}
+            Renews {formatResetDate(wallet.nextAllocationAt)}
           </p>
         </div>
       </div>

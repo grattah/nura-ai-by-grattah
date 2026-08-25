@@ -27,11 +27,12 @@ const NoTokens = ({ resetAt = null }: { resetAt?: string | null }) => {
             </div>
             <div className="flex flex-col gap-3 justify-center items-center">
               <p className="text-center text-2xl font-semibold text-black">
-                You’ve used all your free weekly tokens
+                You&apos;ve used all your included tokens
               </p>
               <p className="text-center text-subtle">
-                You’ve reached your weekly limit for this feature. Your free
-                tokens will reset at the end of the week.
+                You&apos;ve used this period&apos;s allowance. It refreshes when
+                your plan next renews — or top up with tokens that don&apos;t
+                expire.
               </p>
             </div>
           </div>
@@ -40,7 +41,7 @@ const NoTokens = ({ resetAt = null }: { resetAt?: string | null }) => {
               <Calendar color="#227B6F" size={16} strokeWidth={2} />
             </div>
             <div className="flex flex-col gap-1 flex-1">
-              <p className="font-medium text-sm">Tokens resets in</p>
+              <p className="font-medium text-sm">Tokens refresh in</p>
               <p className="font-semibold text-mint-green text-2xl">
                 {formatResetCountdown(resetAt)}
               </p>

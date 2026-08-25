@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
       );
     case "out_of_tokens":
       return NextResponse.json(
-        { error: "insufficient_tokens", state: outcome.state },
+        { error: "insufficient_tokens" },
         { status: 402 },
       );
     default:
