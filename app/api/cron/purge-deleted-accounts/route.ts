@@ -51,6 +51,19 @@ export async function GET(req: Request) {
     }
   }
 
+  // Spec §7 — subscription units die at period end and purchased units freeze.
+  // Runs beside the expiry sweep above because it depends on it: a row must be
+  // out of its paid period before its balance is lapsed.
+  let balancesLapsed = 0;
+  {
+    const { data, error } = await admin.rpc("lapse_expired_balances" as never);
+    if (error) {
+      console.error("[purge-deleted-accounts] lapse sweep failed:", error.message);
+    } else {
+      balancesLapsed = (data as number | null) ?? 0;
+    }
+  }
+
   const { data, error } = await admin
     .from("account_deletions")
     .select("user_id, scheduled_at")
@@ -151,6 +164,7 @@ export async function GET(req: Request) {
   return Response.json({
     graceDays: DELETION_GRACE_DAYS,
     subscriptionsExpired,
+    balancesLapsed,
     scanned: rows.length,
     deleted,
     reactivated,
