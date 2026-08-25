@@ -398,9 +398,8 @@
   -webkit-backdrop-filter: blur(4px) saturate(120%);
 
   /* Chromium: refract the backdrop through the feDisplacementMap filter
-     (see components/liquid-glass-filter.tsx) for a real liquid-glass bend. */
-  backdrop-filter: url(#liquid-glass) blur(3px) saturate(140%)
-    brightness(1.05);
+     (see components/liquid-glass-filter.tsx) for a real liquid-glass bend */
+  backdrop-filter: url(#liquid-glass) blur(3px) saturate(140%) brightness(1.05);
 
   background: rgba(255, 255, 255, 0.2);
 
