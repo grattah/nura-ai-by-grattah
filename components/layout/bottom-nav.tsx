@@ -2,34 +2,28 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HiMiniHome } from "react-icons/hi2";
-import { FaBookmark } from "react-icons/fa";
-import { CommunityIcon, CommunityIconActive } from "../vectors/community-icon";
+import { CommunityIcon } from "../vectors/community-icon";
 import { SearchIcon } from "@/components/vectors/search-icon";
 import { HomeIcon } from "@/components/vectors/home-icon";
-
-import { Home, Bookmark } from "lucide-react";
+import { BookmarkIcon } from "@/components/vectors/bookmark-icon";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { label: "Home", href: "/", icon: HomeIcon, activeIcon: HomeIcon },
+  { label: "Home", href: "/", icon: HomeIcon },
   {
     label: "Find recipe",
     href: "/find-recipe",
     icon: SearchIcon,
-    activeIcon: SearchIcon,
   },
   {
     label: "Activities",
     href: "/community",
     icon: CommunityIcon,
-    activeIcon: CommunityIconActive,
   },
   {
     label: "Saved",
     href: "/bookmarks",
-    icon: Bookmark,
-    activeIcon: FaBookmark,
+    icon: BookmarkIcon,
   },
 ] as const;
 
@@ -42,44 +36,25 @@ export function BottomNav() {
   };
 
   return (
-    <nav className="fixed bottom-2 inset-x-0 z-40 w-84.5 mx-auto pb-safe">
+    <nav className="fixed bottom-2 mx-auto inset-x-0 w-fit z-40">
       <div className="mx-0 flex items-center p-1 rounded-full overflow-hidden liquid-glass border-2 w-fit">
-        {NAV_ITEMS.map(
-          ({ label, href, icon: Icon, activeIcon: ActiveIcon }) => {
-            const active = isActive(href);
-            const IconComponent = ActiveIcon;
+        {NAV_ITEMS.map(({ label, href, icon }) => {
+          const active = isActive(href);
 
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "w-20.5 h-14 flex justify-center items-center rounded-full transition-all duration-150 active:scale-95",
-                  active ? "bg-mint-green" : "",
-                )}
-                aria-label={label}
-              >
-                <IconComponent
-                  className={cn(
-                    "size-5 transition-all duration-150 text-white",
-                  )}
-                  strokeWidth={active ? 2.3 : 1.67}
-                  size={24}
-                />
-                {/* <span
-                  className={cn(
-                    "text-sm leading-none transition-colors duration-150 text-nowrap",
-                    active
-                      ? "text-[#0A4A41] font-semibold"
-                      : "text-subtle font-medium",
-                  )}
-                >
-                  {label}
-                </span> */}
-              </Link>
-            );
-          },
-        )}
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={cn(
+                "w-[clamp(69.7px,19.07vw,82px)] h-14 flex justify-center items-center rounded-full transition-all duration-150 active:scale-95",
+                active ? "bg-mint-green" : "",
+              )}
+              aria-label={label}
+            >
+              {icon({ className: "size-7 transition-all duration-150" })}
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );
