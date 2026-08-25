@@ -277,7 +277,7 @@ function ReviewStep({
 }) {
   return (
     <>
-      <div className="rounded-2xl bg-[#E8E6DC] py-6 px-4 flex flex-col gap-[23px]">
+      <div className="rounded-2xl bg-[#E8E6DC] py-6 px-4 flex flex-col gap-5.75">
         <p className="font-semibold text-[#111312] mb-4">Order summary</p>
         <div className="flex flex-col gap-3">
           <Row
