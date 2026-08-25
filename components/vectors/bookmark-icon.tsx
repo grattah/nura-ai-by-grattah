@@ -12,7 +12,7 @@ const BookmarkIcon = (props: SVGProps<SVGSVGElement>) => {
     >
       <path
         d="M7 5.5998C7 4.05341 8.2536 2.7998 9.8 2.7998H18.2C19.7464 2.7998 21 4.05341 21 5.5998V25.1998L14 21.6998L7 25.1998V5.5998Z"
-        fill="white"
+        fill="currentColor"
       />
     </svg>
   );
