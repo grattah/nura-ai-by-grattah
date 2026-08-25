@@ -7,6 +7,7 @@ import { SearchIcon } from "@/components/vectors/search-icon";
 import { HomeIcon } from "@/components/vectors/home-icon";
 import { BookmarkIcon } from "@/components/vectors/bookmark-icon";
 import { cn } from "@/lib/utils";
+import { file } from "zod/v4";
 
 const NAV_ITEMS = [
   { label: "Home", href: "/", icon: HomeIcon },
@@ -46,12 +47,14 @@ export function BottomNav() {
               key={href}
               href={href}
               className={cn(
-                "w-[clamp(69.7px,19.07vw,82px)] h-14 flex justify-center items-center rounded-full transition-all duration-150 active:scale-95",
-                active ? "bg-mint-green" : "",
+                "w-[clamp(70.8px,20.58vw,88.5px)] h-14 flex justify-center items-center rounded-full transition-all duration-150 active:scale-95",
+                active ? "bg-mint-green text-white" : "text-[#DBDBDB]",
               )}
               aria-label={label}
             >
-              {icon({ className: "size-7 transition-all duration-150" })}
+              {icon({
+                className: `size-7 transition-all duration-150`,
+              })}
             </Link>
           );
         })}
