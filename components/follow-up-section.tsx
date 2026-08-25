@@ -53,7 +53,7 @@ export function FollowUpSection({
 
   const [input, setInput] = useState("");
 
-  const { applyState, openTokenWall, refresh: refreshCredits } = useCredits();
+  const { openTokenWall, refresh: refreshCredits } = useCredits();
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [signInOpen, setSignInOpen] = useState(false);
 
@@ -74,7 +74,7 @@ export function FollowUpSection({
           .clone()
           .json()
           .then((b) => {
-            if (b?.state) applyState(b.state);
+            void refreshCredits();
           })
           .catch(() => {});
         openTokenWall();
@@ -84,7 +84,7 @@ export function FollowUpSection({
       }
       return res;
     },
-    [applyState, openTokenWall, refreshCredits],
+    [openTokenWall, refreshCredits],
   );
 
   const transport = useMemo(

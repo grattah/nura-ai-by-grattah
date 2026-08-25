@@ -8,7 +8,8 @@ import {
   useMemo,
   useState,
 } from "react";
-import { WEEKLY_UNITS, LOW_WARN_PCT, type TokenState } from "@/lib/credits";
+import { LOW_WARN_PCT } from "@/lib/credits";
+import { EMPTY_WALLET, type WalletSnapshot } from "@/lib/tokens/spec";
 import { createClient } from "@/lib/supabase/client";
 import {
   Dialog,
@@ -17,43 +18,30 @@ import {
 } from "@/components/ui/dialog";
 import NoTokens from "@/components/tokens/NoTokens";
 
-const EMPTY_STATE: TokenState = {
-  weeklyUnits: WEEKLY_UNITS,
-  weeklyUsed: 0,
-  weeklyRemaining: WEEKLY_UNITS,
-  weeklyPct: 0,
-  extraPurchased: 0,
-  extraUsed: 0,
-  extraBalance: 0,
-  extraPct: 0,
-  freeGranted: 0,
-  freeUsed: 0,
-  freeRemaining: 0,
-  totalRemaining: 0,
-  resetAt: null,
-  lastPurchaseAt: null,
-};
+
 
 interface CreditsState {
-  state: TokenState;
-  isLow: boolean; // weekly allowance ≥ LOW_WARN_PCT used
-  isOut: boolean; // no weekly nor extra units left
+  wallet: WalletSnapshot;
+  /** This period's grant is ≥ LOW_WARN_PCT spent. */
+  isLow: boolean;
+  /** The cheapest action is unaffordable. Frozen tokens do not count. */
+  isOut: boolean;
   hasAccess: boolean;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
 
 interface CreditsContextValue extends CreditsState {
-  /** Re-fetch token state from the server (applies the rolling weekly reset). */
+  /** Re-fetch the wallet from the server. */
   refresh: () => Promise<void>;
-  /** Apply a state pushed from a 402 response body. */
-  applyState: (state: TokenState) => void;
+  /** Apply a wallet pushed from a 402 response body. */
+  applyWallet: (wallet: WalletSnapshot) => void;
   /** Show the full-screen "out of tokens" wall. */
   openTokenWall: () => void;
 }
 
 const initialState: CreditsState = {
-  state: EMPTY_STATE,
+  wallet: EMPTY_WALLET,
   isLow: false,
   isOut: false,
   hasAccess: false,
@@ -64,14 +52,16 @@ const initialState: CreditsState = {
 const CreditsContext = createContext<CreditsContextValue>({
   ...initialState,
   refresh: async () => {},
-  applyState: () => {},
+  applyWallet: () => {},
   openTokenWall: () => {},
 });
 
-function deriveFlags(s: TokenState) {
+function deriveFlags(w: WalletSnapshot) {
   return {
-    isLow: s.weeklyPct >= LOW_WARN_PCT * 100,
-    isOut: s.totalRemaining <= 0,
+    isLow: w.subscriptionPct >= LOW_WARN_PCT * 100,
+    // Frozen purchased tokens are retained but unspendable, so "out" is about
+    // what can actually be spent, not what is held.
+    isOut: !w.canSpend,
   };
 }
 
@@ -86,13 +76,12 @@ export function CreditsProvider({ children }: { children: React.ReactNode }) {
       const data = (await res.json()) as {
         authenticated: boolean;
         hasAccess: boolean;
-        isLow: boolean;
         isOut: boolean;
-        state: TokenState;
+        wallet: WalletSnapshot;
       };
       setState({
-        state: data.state,
-        isLow: data.isLow,
+        wallet: data.wallet,
+        ...deriveFlags(data.wallet),
         isOut: data.isOut,
         hasAccess: data.hasAccess,
         isAuthenticated: data.authenticated,
@@ -103,8 +92,8 @@ export function CreditsProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const applyState = useCallback((next: TokenState) => {
-    setState((s) => ({ ...s, state: next, ...deriveFlags(next) }));
+  const applyWallet = useCallback((next: WalletSnapshot) => {
+    setState((s) => ({ ...s, wallet: next, ...deriveFlags(next) }));
   }, []);
 
   const openTokenWall = useCallback(() => setWallOpen(true), []);
@@ -131,8 +120,8 @@ export function CreditsProvider({ children }: { children: React.ReactNode }) {
   }, [refresh]);
 
   const value = useMemo(
-    () => ({ ...state, refresh, applyState, openTokenWall }),
-    [state, refresh, applyState, openTokenWall],
+    () => ({ ...state, refresh, applyWallet, openTokenWall }),
+    [state, refresh, applyWallet, openTokenWall],
   );
 
   return (
@@ -145,7 +134,7 @@ export function CreditsProvider({ children }: { children: React.ReactNode }) {
         >
           <DialogTitle className="sr-only">Out of tokens</DialogTitle>
           <div className="pt-10">
-            <NoTokens resetAt={state.state.resetAt} />
+            <NoTokens resetAt={state.wallet.nextAllocationAt} />
           </div>
         </DialogContent>
       </Dialog>

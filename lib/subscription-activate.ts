@@ -1,6 +1,8 @@
 import "server-only";
 import Stripe from "stripe";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import type { Plan } from "@/constants";
+import { allocateForPayment } from "@/lib/tokens/allocate";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -40,13 +42,15 @@ export async function activateSubscriptionFromSession(
   const supabase = createServiceRoleClient();
   // Upsert on user_id (UNIQUE) so re-payments UPDATE the single row instead of
   // inserting a new active row each time (which broke the access reads).
+  const plan = (session.metadata?.plan ?? "annual") as Plan;
+
   const { error } = await supabase.from("subscriptions").upsert(
     {
       user_id: userId,
       stripe_session_id: session.id,
       stripe_subscription_id: subscriptionId,
       stripe_customer_id: session.customer as string,
-      plan: session.metadata?.plan ?? "annual",
+      plan,
       status: "active",
       expires_at: expiresAt,
       updated_at: new Date().toISOString(),
@@ -56,5 +60,16 @@ export async function activateSubscriptionFromSession(
   if (error) {
     throw new Error(`Failed to activate subscription: ${error.message}`);
   }
+
+  // Spec §3 — the first period's grant, on confirmed payment. Renewals are
+  // granted from invoice.payment_succeeded; this covers the initial checkout,
+  // which produces no renewal invoice. The RPC replaces rather than adds, so
+  // this and the webhook both firing cannot double-grant.
+  await allocateForPayment({
+    userId,
+    plan,
+    subscriptionStart: new Date(),
+  });
+
   return true;
 }
