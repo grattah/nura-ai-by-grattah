@@ -4,6 +4,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { recordUsage, usageTokens } from "@/lib/usage-server";
+import { reserve, settle, release } from "@/lib/tokens/server";
 import { createClient } from "@/lib/supabase/server";
 import { tryConsumeFreeView } from "@/lib/free-trial-server";
 import { hasActiveSubscription, hasEverSubscribed } from "@/lib/subscription";
@@ -134,6 +135,17 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Spec §2 — a suggestion costs 1 unit. Reserved only at this point: the
+  // cache hit above returns without doing any work, and charging for it would
+  // bill the user for someone else's generation.
+  let reservation: Awaited<ReturnType<typeof reserve>> = null;
+  if (activeSub) {
+    reservation = await reserve(user.id, "suggestion");
+    if (!reservation) {
+      return NextResponse.json({ error: "insufficient_tokens" }, { status: 402 });
+    }
+  }
+
   try {
     const { object, usage } = await generateObject({
       model: anthropic("claude-haiku-4-5"),
@@ -177,9 +189,10 @@ Duplicates
       provider: "anthropic",
       model: "claude-haiku-4-5",
       surface: "suggestions",
-      billed: false,
-      // Unbilled, but still a real per-user cost — without this the row lands
-      // with a NULL user_id and the spend can't be attributed to anyone.
+      billed: !!reservation,
+      units: reservation?.costUnits,
+      // Always attributed, billed or not — without this the row lands with a
+      // NULL user_id and the spend can't be traced to anyone.
       userId: user.id,
       ...usageTokens(usage),
     });
@@ -189,9 +202,11 @@ Duplicates
       expiresAt: Date.now() + CACHE_TTL_MS,
     });
 
+    if (reservation) await settle(reservation);
     return NextResponse.json(object);
   } catch (err) {
     console.error("[recipe-suggestions]", err);
+    if (reservation) await release(reservation);
     return NextResponse.json(
       { error: "Failed to generate suggestions" },
       { status: 500 }

@@ -16,7 +16,8 @@ import { type NextRequest } from "next/server";
 import { retrieve, formatContext } from "@/lib/rag";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
-import { getTokenState, meter } from "@/lib/credits-server";
+import { reserve, settle, release } from "@/lib/tokens/server";
+import { recordUsage } from "@/lib/usage-server";
 import { freeUseCount, recordFreeUse } from "@/lib/free-trial-server";
 import { hasActiveSubscription, hasEverSubscribed } from "@/lib/subscription";
 import {
@@ -162,6 +163,10 @@ export async function POST(req: NextRequest) {
     return jsonError("Subscription required", 403, { hasEverSubscribed: true });
   }
 
+  // Declared outside the try so the catch below can refund a reservation taken
+  // before the stream failed.
+  let reservation: Awaited<ReturnType<typeof reserve>> = null;
+
   try {
     const {
       messages,
@@ -199,9 +204,11 @@ export async function POST(req: NextRequest) {
     const shouldMeter = lastMessage?.role === "user" && !!userQuestion.trim();
     if (shouldMeter) {
       if (activeSub) {
-        const state = await getTokenState(user.id);
-        if (state.totalRemaining <= 0) {
-          return jsonError("insufficient_tokens", 402, { state });
+        // Spec §5/§6 — reserve the 1 unit before streaming. Held for the whole
+        // stream and settled in onFinish, so an aborted stream refunds.
+        reservation = await reserve(user.id, "followup");
+        if (!reservation) {
+          return jsonError("insufficient_tokens", 402, {});
         }
       } else {
         // New user free trial — gate on this surface's remaining free uses.
@@ -225,12 +232,18 @@ export async function POST(req: NextRequest) {
         }) => {
           // Fire-and-forget; the stream has already completed for the client.
           // Subscribers meter real tokens; new users consume one free chat use.
-          if (activeSub)
-            void meter(user.id, usageTokens(totalUsage), "follow-up", {
+          if (reservation) {
+            void settle(reservation);
+            void recordUsage({
               provider: "anthropic",
               model: "claude-haiku-4-5",
+              surface: "followup-chat",
+              userId: user.id,
+              totalTokens: usageTokens(totalUsage),
+              units: reservation.costUnits,
+              billed: true,
             });
-          else void recordFreeUse(user.id, SURFACE);
+          } else if (!activeSub) void recordFreeUse(user.id, SURFACE);
         }
       : undefined;
 
@@ -336,6 +349,8 @@ if the preferred domains return no useful results.`,
     return result.toUIMessageStreamResponse();
   } catch (err) {
     console.error("[chat route error]", err);
+    // The stream never reached onFinish, so nothing settled — refund.
+    if (reservation) await release(reservation);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },

@@ -22,7 +22,6 @@ import { computeMatchScore } from "@/lib/scoring/match-score";
 import { hasActiveSubscription } from "@/lib/subscription";
 import Comment from "@/components/recipe/Comment";
 import AccordionSection from "@/components/recipe/AccordionSection";
-import { getRecipePrecautions } from "@/lib/precautions/server";
 import LikeButton from "@/components/recipe/LikeButton";
 import { logRecipeView } from "@/actions/activity";
 import { isLiked } from "@/actions/likes";
@@ -147,7 +146,6 @@ export default async function RecipeDetailPage({
     { data: latestComment },
 
     { count: totalCommentCount },
-    precautions,
   ] = await Promise.all([
     isBookmarked(recipe.id),
     isLiked(recipe.id),
@@ -174,7 +172,6 @@ export default async function RecipeDetailPage({
       .select("*", { count: "exact", head: true })
       .eq("recipe_id", recipe.id)
       .is("parent_id", null),
-    getRecipePrecautions(supabase, recipe.id),
   ]);
 
   const latestCommentWithLike = latestComment
@@ -387,7 +384,6 @@ export default async function RecipeDetailPage({
                 howToMake={howToMake}
                 nutrition={nutrition}
                 popular={canViewFull}
-                precautions={precautions}
               />
 
               {/* Follow-up questions + RAG chat: exempt from AuthGate's blanket

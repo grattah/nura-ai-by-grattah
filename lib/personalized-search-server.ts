@@ -4,7 +4,8 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
-import { getTokenState, meter, type TokenState } from "@/lib/credits-server";
+import { getBalances } from "@/lib/tokens/server";
+import { recordUsage } from "@/lib/usage-server";
 import { tryConsumeFreeView } from "@/lib/free-trial-server";
 import { hasActiveSubscription, hasEverSubscribed } from "@/lib/subscription";
 import { MAX_OUTPUT_TOKENS, PERSONALIZED_SEARCH_SURFACE } from "@/lib/credits";
@@ -49,7 +50,7 @@ export type PersonalizedSearchResult = z.infer<typeof PersonalizedSearchSchema>;
 export type PersonalizedSearchOutcome =
   | { status: "ok"; result: PersonalizedSearchResult }
   | { status: "blocked" } // out of free uses, or a lapsed subscriber
-  | { status: "out_of_tokens"; state: TokenState } // subscriber with no tokens
+  | { status: "out_of_tokens" } // subscriber who cannot afford it
   | { status: "error" };
 
 /**
@@ -85,8 +86,12 @@ export async function runPersonalizedSearch(
   }
 
   if (activeSub) {
-    const state = await getTokenState(userId);
-    if (state.totalRemaining <= 0) return { status: "out_of_tokens", state };
+    // Unbilled surface, but still gated: a subscriber with nothing spendable
+    // should not get free LLM work here either.
+    const b = await getBalances(userId);
+    const spendable =
+      b.subscriptionUnits + (b.purchasedFrozen ? 0 : b.purchasedUnits);
+    if (spendable <= 0) return { status: "out_of_tokens" };
   }
 
   try {
@@ -143,7 +148,13 @@ Provide personalized wellness guidance for this concern.`,
       const tokens =
         usage?.totalTokens ??
         (usage?.inputTokens ?? 0) + (usage?.outputTokens ?? 0);
-      await meter(userId, tokens, "personalized-search", {
+      // Unbilled: personalized search is not one of the spec's three chargeable
+      // actions, and the surface is currently disabled.
+      void recordUsage({
+        surface: "personalized-search",
+        userId,
+        billed: false,
+        totalTokens: tokens,
         provider: "anthropic",
         model: "claude-haiku-4-5",
         inputTokens: usage?.inputTokens,

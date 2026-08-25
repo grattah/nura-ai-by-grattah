@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
   useTransition,
 } from "react";
@@ -35,12 +36,17 @@ interface HealthProfileContextValue {
   /** True right after a first-time profile save; drives the success modal on the base page. */
   justCompleted: boolean;
   dismissJustCompleted: () => void;
-  update: (patch: Partial<HealthProfileDraft>) => void;
+  update: (
+    patch:
+      | Partial<HealthProfileDraft>
+      | ((d: HealthProfileDraft) => Partial<HealthProfileDraft>),
+  ) => void;
   // Navigation
   startOnboarding: () => void;
   next: (current: Step) => void;
   enterEdit: (step: Step, returnTo: string) => void;
   finishEdit: () => void;
+  cancelEdit: () => void;
   saveProfile: () => void;
   removeSection: (section: ProfileSection) => void;
   removeProfile: () => void;
@@ -72,6 +78,9 @@ export function HealthProfileProvider({
     initialProfile ?? EMPTY_DRAFT,
   );
   const [exists, setExists] = useState(initialProfile !== null);
+  // The last state we know is in the DB. `draft` is a working copy that may
+  // hold uncommitted edits; this is what those edits are discarded back to.
+  const savedRef = useRef<HealthProfileDraft>(initialProfile ?? EMPTY_DRAFT);
   const [mode, setMode] = useState<Mode>("onboarding");
   const [returnTo, setReturnTo] = useState(`${BASE}/review`);
   const [saving, startSaving] = useTransition();
@@ -79,9 +88,20 @@ export function HealthProfileProvider({
 
   const dismissJustCompleted = useCallback(() => setJustCompleted(false), []);
 
-  const update = useCallback((patch: Partial<HealthProfileDraft>) => {
-    setDraft((d) => ({ ...d, ...patch }));
-  }, []);
+  // Accepts a function so a handler can derive its patch from the LATEST draft.
+  // Reading `draft` from the render closure meant two taps landing in the same
+  // render both computed from the same stale array, and the second overwrote
+  // the first — which looked like a 3-goal cap only ever reaching 2.
+  const update = useCallback(
+    (
+      patch:
+        | Partial<HealthProfileDraft>
+        | ((d: HealthProfileDraft) => Partial<HealthProfileDraft>),
+    ) => {
+      setDraft((d) => ({ ...d, ...(typeof patch === "function" ? patch(d) : patch) }));
+    },
+    [],
+  );
 
   const startOnboarding = useCallback(() => {
     setMode("onboarding");
@@ -99,12 +119,27 @@ export function HealthProfileProvider({
 
   const enterEdit = useCallback(
     (step: Step, from: string) => {
+      // Start every edit from what is actually persisted.
+      //
+      // The draft outlives a step: leaving without pressing "Save changes" used
+      // to keep the abandoned change in memory, and because finishEdit and
+      // saveProfile write the WHOLE draft, the next save anywhere in the flow
+      // silently committed it. Users saw an edit they had walked away from win
+      // over one they had explicitly saved.
+      setDraft(savedRef.current);
       setMode("edit");
       setReturnTo(from);
       router.push(`${BASE}/${step}`);
     },
     [router],
   );
+
+  /** Leave an edit without saving, discarding the in-progress change. */
+  const cancelEdit = useCallback(() => {
+    setDraft(savedRef.current);
+    setMode("onboarding");
+    router.push(returnTo);
+  }, [returnTo, router]);
 
   // Save-changes from an edit. If the profile already exists, persist the whole
   // draft immediately; otherwise (editing mid-onboarding) just return.
@@ -128,6 +163,7 @@ export function HealthProfileProvider({
         toast.error(res.error);
         return;
       }
+      savedRef.current = draft;
       router.refresh();
       go();
     });
@@ -149,6 +185,7 @@ export function HealthProfileProvider({
         toast.error(res.error);
         return;
       }
+      savedRef.current = draft;
       setExists(true);
       if (firstTime) setJustCompleted(true);
       toast.success("Health profile saved.");
@@ -199,6 +236,7 @@ export function HealthProfileProvider({
       next,
       enterEdit,
       finishEdit,
+      cancelEdit,
       saveProfile,
       removeSection,
       removeProfile,
@@ -215,6 +253,7 @@ export function HealthProfileProvider({
       next,
       enterEdit,
       finishEdit,
+      cancelEdit,
       saveProfile,
       removeSection,
       removeProfile,

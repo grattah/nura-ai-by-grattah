@@ -4,7 +4,8 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { WELLNESS_SOURCES } from "@/lib/wellness-sources";
-import { getTokenState, meter } from "@/lib/credits-server";
+import { reserve, settle, release } from "@/lib/tokens/server";
+import { recordUsage } from "@/lib/usage-server";
 import { tryConsumeFreeView } from "@/lib/free-trial-server";
 import { hasActiveSubscription, hasEverSubscribed } from "@/lib/subscription";
 import { MAX_OUTPUT_TOKENS, FREE_SURFACES } from "@/lib/credits";
@@ -15,7 +16,6 @@ const SURFACE = FREE_SURFACES.recipeGenerate;
 import {
   INTRO_RULE,
   WHY_IT_WORKS_RULE,
-  WhyItWorksDetailSchema,
 } from "@/lib/recipe-copy";
 
 export const maxDuration = 60;
@@ -54,7 +54,6 @@ const RecipeSchema = z.object({
     .describe(
       "2-3 plain sentences on the mechanism — why these ingredients help",
     ),
-  why_it_works_detail: WhyItWorksDetailSchema,
   inside_tip: z.string().describe("One practical preparation or usage tip"),
   nutrition: z
     .object({
@@ -182,11 +181,16 @@ export async function POST(req: NextRequest) {
   // free). Subscribers can pass the access gate yet still be out of tokens here;
   // new users are bounded by their free-use count instead. The real Claude usage
   // is metered after success; the hero image is metered separately.
+  // Spec §5/§6: reserve the 3 units BEFORE doing the work. Reserving rather
+  // than charging afterwards is what stops concurrent requests all passing the
+  // same affordability check; the reservation is released on any failure so the
+  // user is never charged for work that did not happen.
+  let reservation = null as Awaited<ReturnType<typeof reserve>>;
   if (activeSub) {
-    const state = await getTokenState(user.id);
-    if (state.totalRemaining <= 0) {
+    reservation = await reserve(user.id, "generate");
+    if (!reservation) {
       return NextResponse.json(
-        { error: "insufficient_tokens", state },
+        { error: "insufficient_tokens" },
         { status: 402 },
       );
     }
@@ -227,6 +231,7 @@ do not fabricate false precision.`,
     recipeUsage = result.usage;
   } catch (err) {
     console.error("[recipes/generate] text", err);
+    if (reservation) await release(reservation);
     return NextResponse.json(
       { error: "Failed to generate recipe" },
       { status: 500 },
@@ -235,21 +240,6 @@ do not fabricate false precision.`,
 
   // Subscribers meter real token usage; new users already consumed their free
   // use above (deduped by recipe name, before the dedup lookups).
-  if (activeSub) {
-    await meter(
-      user.id,
-      recipeUsage?.totalTokens ??
-        (recipeUsage?.inputTokens ?? 0) + (recipeUsage?.outputTokens ?? 0),
-      cleanName,
-      {
-        provider: "anthropic",
-        model: "claude-haiku-4-5",
-        surface: "recipe-generate",
-        inputTokens: recipeUsage?.inputTokens,
-        outputTokens: recipeUsage?.outputTokens,
-      },
-    );
-  }
 
   // 3. Insert the recipe (pending, owned by the requesting user).
   const insertPayload = {
@@ -260,7 +250,6 @@ do not fabricate false precision.`,
     how_to_make: recipe.how_to_make,
     preview_ingredients: recipe.preview_ingredients,
     why_it_works: recipe.why_it_works,
-    why_it_works_detail: recipe.why_it_works_detail,
     inside_tip: recipe.inside_tip,
     nutrition: recipe.nutrition,
     follow_up_questions: recipe.follow_up_questions,
@@ -292,10 +281,14 @@ do not fabricate false precision.`,
         .limit(1)
         .maybeSingle();
       if (dupe) {
+        // A duplicate means the recipe already exists — nothing new was
+        // produced, so the reservation is refunded rather than settled.
+        if (reservation) await release(reservation);
         return NextResponse.json({ id: dupe.id, existed: true });
       }
     }
     console.error("[recipes/generate] insert", insertErr);
+    if (reservation) await release(reservation);
     return NextResponse.json(
       { error: "Failed to save recipe" },
       { status: 500 },
@@ -306,6 +299,25 @@ do not fabricate false precision.`,
 
   // Bioactivity scores + category membership are populated later by the batch
   // script (scripts/score-supports.mjs); generation no longer assigns tags.
+
+  // Settled here, not earlier: everything above can still fail and refund, and
+  // the user has only actually received a recipe once the row is saved.
+  if (reservation) {
+    await settle(reservation);
+    // Billing is now a flat 3 units, but the real Claude spend still needs
+    // recording for cost observability.
+    void recordUsage({
+      provider: "anthropic",
+      model: "claude-haiku-4-5",
+      surface: "recipe-generate",
+      userId: user.id,
+      inputTokens: recipeUsage?.inputTokens,
+      outputTokens: recipeUsage?.outputTokens,
+      totalTokens: recipeUsage?.totalTokens,
+      units: reservation.costUnits,
+      billed: true,
+    });
+  }
 
   // The hero image is generated lazily on first view of the detail page
   // (POST /api/recipes/[id]/image) — reliable on serverless, unlike `after()`.
