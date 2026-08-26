@@ -9,9 +9,10 @@ import {
   useTransition,
   type ReactNode,
 } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { toggleBookmark } from "@/actions/bookmark";
+import { loginHrefWithNext } from "@/lib/navigation";
 
 interface BookmarkContextValue {
   bookmarked: boolean;
@@ -33,13 +34,14 @@ export function BookmarkProvider({
   children: ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { toast } = useToast();
   const [bookmarked, setBookmarked] = useState(initialBookmarked);
   const [isPending, startTransition] = useTransition();
 
   const toggle = useCallback(() => {
     if (!isAuthenticated) {
-      router.push("/auth/login");
+      router.replace(loginHrefWithNext(pathname));
       return;
     }
 
@@ -66,7 +68,7 @@ export function BookmarkProvider({
         });
       }
     });
-  }, [isAuthenticated, recipeId, router, toast, startTransition]);
+  }, [isAuthenticated, recipeId, router, pathname, toast, startTransition]);
 
   const value = useMemo(
     () => ({ bookmarked, isPending, toggle }),

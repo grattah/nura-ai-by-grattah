@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CommunityIcon } from "../vectors/community-icon";
-import { SearchIcon } from "@/components/vectors/search-icon";
-import { HomeIcon } from "@/components/vectors/home-icon";
-import { BookmarkIcon } from "@/components/vectors/bookmark-icon";
+import { CommunityIcon } from "@/components/vectors/navbar-icons/community-icon";
+import { SearchIcon } from "@/components/vectors/navbar-icons/search-icon";
+import { HomeIcon } from "@/components/vectors/navbar-icons/home-icon";
+import { BookmarkIcon } from "@/components/vectors/navbar-icons/bookmark-icon";
 import { cn } from "@/lib/utils";
 import { file } from "zod/v4";
 

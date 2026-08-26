@@ -44,11 +44,11 @@ export function FollowUpSection({
   savedQuestions,
 }: FollowUpSectionProps) {
   const [questions, setQuestions] = useState<string[]>(
-    savedQuestions?.length ? savedQuestions : [],
+    savedQuestions?.length ? savedQuestions : []
   );
 
   const [questionsLoading, setQuestionsLoading] = useState(
-    !savedQuestions?.length,
+    !savedQuestions?.length
   );
 
   const [input, setInput] = useState("");
@@ -60,7 +60,7 @@ export function FollowUpSection({
   const interceptFetch = useCallback(
     async (
       reqInput: Parameters<typeof fetch>[0],
-      init?: Parameters<typeof fetch>[1],
+      init?: Parameters<typeof fetch>[1]
     ) => {
       const res = await fetch(reqInput, init);
       if (res.status === 401) {
@@ -84,7 +84,7 @@ export function FollowUpSection({
       }
       return res;
     },
-    [openTokenWall, refreshCredits],
+    [openTokenWall, refreshCredits]
   );
 
   const transport = useMemo(
@@ -109,7 +109,7 @@ export function FollowUpSection({
       allowedDomains,
       description,
       context,
-    ],
+    ]
   );
 
   const { messages, sendMessage, status, setMessages } = useChat({ transport });
@@ -290,7 +290,7 @@ function ChatThread({ messages, isLoading }: ChatThreadProps) {
     (lastMsg?.role === "user" ||
       (lastMsg?.role === "assistant" &&
         !lastMsg.parts?.some(
-          (p) => p.type === "text" || p.type === "tool-webSearch",
+          (p) => p.type === "text" || p.type === "tool-webSearch"
         )));
 
   return (
@@ -308,7 +308,7 @@ function ChatThread({ messages, isLoading }: ChatThreadProps) {
             key={m.id}
             className={cn(
               "flex gap-3",
-              m.role === "user" ? "justify-end" : "justify-start",
+              m.role === "user" ? "justify-end" : "justify-start"
             )}
           >
             {m.role === "assistant" && <NuraAvatar />}
@@ -318,7 +318,7 @@ function ChatThread({ messages, isLoading }: ChatThreadProps) {
                 "max-w-[85%] px-4 py-3 rounded-2xl text-base leading-relaxed",
                 m.role === "user"
                   ? "bg-foreground text-background rounded-br-sm"
-                  : "bg-card text-foreground rounded-bl-sm",
+                  : "bg-card text-foreground rounded-bl-sm"
               )}
             >
               {m.role === "user" ? (
@@ -332,7 +332,7 @@ function ChatThread({ messages, isLoading }: ChatThreadProps) {
                     m.parts?.some(
                       (p) =>
                         p.type === "tool-webSearch" &&
-                        p.state !== "output-available",
+                        p.state !== "output-available"
                     );
 
                   const textParts =
@@ -434,9 +434,24 @@ function NuraAvatar() {
   return (
     <div
       className="size-8 rounded-full flex items-center justify-center shrink-0 mt-0.5"
-      style={{ backgroundColor: "#5C6B3A" }}
+      style={{ backgroundColor: "#FFFFFF" }}
     >
-      <Bot className="size-4 text-white" />
+      <svg
+        width="17"
+        height="20"
+        viewBox="0 0 17 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M6.70075 0.0232811C7.47022 -0.0737985 8.2851 0.13107 8.85744 0.669091C9.2472 1.04244 9.50628 1.53148 9.5962 2.06367C9.91827 3.8637 8.64042 4.92467 7.98792 6.41275C7.63292 7.22236 7.49014 8.10444 7.51626 8.98344C7.55329 10.2304 7.91548 11.506 8.48845 12.611C8.65723 12.9388 8.82285 13.2837 9.09956 13.5372C10.049 14.4067 10.8437 13.0228 11.4073 12.4254C12.2269 11.5566 13.3537 10.9921 14.5523 10.9455C15.2263 10.9193 15.9539 11.131 16.4512 11.5969C17.1801 12.2694 17.1828 13.5928 16.4891 14.2904C15.7089 15.075 14.5281 15.009 13.5056 14.9888C12.3127 14.9652 11.2045 15.3498 10.3697 16.224C9.29357 17.3547 9.03339 18.4794 9.04674 19.9839C8.3353 20.0145 7.49559 19.9926 6.77294 19.9894C6.76111 19.9777 6.74929 19.9662 6.73746 19.9545C6.70695 19.5488 6.75265 18.9792 6.70265 18.5885C6.64594 18.1277 6.46344 17.6917 6.17515 17.328C4.84468 15.6598 2.53634 16.9943 0.906826 15.6615C-0.581747 14.4441 -0.210089 12.1974 1.81878 12.0048C3.39456 11.8552 4.84157 12.9287 5.64482 14.2103C5.9604 14.7137 6.38022 15.8516 7.14555 15.7708C8.03123 15.587 7.84409 14.1701 7.59505 13.6077C6.38106 10.8661 3.67642 9.38244 3.14028 6.2147C2.73939 3.84612 4.10336 0.457723 6.70075 0.0232811Z"
+          fill="#50443B"
+        />
+        <path
+          d="M13.547 4.24373C14.9362 4.09099 16.185 5.09657 16.3325 6.48662C16.4799 7.87666 15.4696 9.12176 14.0791 9.26375C12.6963 9.40493 11.4596 8.40124 11.3131 7.01879C11.1666 5.63631 12.1654 4.39562 13.547 4.24373Z"
+          fill="#50443B"
+        />
+      </svg>
     </div>
   );
 }

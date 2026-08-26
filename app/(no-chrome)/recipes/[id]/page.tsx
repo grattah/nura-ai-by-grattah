@@ -18,7 +18,7 @@ import SafetyAlerts, {
   type SafetyAlertItem,
 } from "@/components/recipe/SafetyAlerts";
 import NutritionScore from "@/components/recipe/NutritionScore";
-import { computeMatchScore } from "@/lib/scoring/match-score";
+import { scoreMatch, type MatchScoreView } from "@/lib/scoring/tier-server";
 import { hasActiveSubscription } from "@/lib/subscription";
 import Comment from "@/components/recipe/Comment";
 import AccordionSection from "@/components/recipe/AccordionSection";
@@ -207,7 +207,7 @@ export default async function RecipeDetailPage({
   let personalizedView = false;
   let isSubscribed = false;
   let hasProfile = false;
-  let matchResult: ReturnType<typeof computeMatchScore> | null = null;
+  let matchResult: MatchScoreView | null = null;
   let personalizedAlerts: SafetyAlertItem[] = [];
   let needsSafetyAlerts = false;
   if (user) {
@@ -241,23 +241,10 @@ export default async function RecipeDetailPage({
         if (rt.tags?.slug && rt.score != null)
           bioBySlug[rt.tags.slug] = rt.score;
       }
-      matchResult = computeMatchScore({
-        bioBySlug,
-        points: {
-          sugar: nutritionPoints.sugar ?? 0,
-          salt: nutritionPoints.salt ?? 0,
-          satFat: nutritionPoints.satFat ?? 0,
-          energy: nutritionPoints.energy ?? 0,
-          fiber: nutritionPoints.fiber ?? 0,
-          protein: nutritionPoints.protein ?? 0,
-        },
-        track: recipe.track ?? "Solid Food",
-        ironRich: !!recipe.iron_rich,
-        waterContentPercent: recipe.water_content_pct ?? 0,
-        probiotic: !!recipe.probiotic,
-        vitaminCDV: recipe.vitamin_c_dv ?? 0,
-        sodiumMg: recipe.sodium_mg ?? 0,
-        potassiumMg: recipe.potassium_mg ?? 0,
+      // Ingredient-tier scoring (Category/Match PRD v7). Reads cached tiers +
+      // the calibration tables; no bioactivity subtotals, no nutrient bonuses.
+      matchResult = await scoreMatch({
+        recipeId: recipe.id,
         conditions: profile?.conditions ?? [],
         goals: profile?.goals ?? [],
       });
@@ -347,6 +334,8 @@ export default async function RecipeDetailPage({
 
               <RecipeSupports
                 supports={topBioactivities(recipe.recipe_tags, 5)}
+                isSubscriber={isSubscribed}
+                hasHealthProfile={hasProfile}
               />
 
               {personalizedView && matchResult?.highest ? (

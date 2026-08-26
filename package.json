@@ -12,10 +12,13 @@
     "test:watch": "vitest",
     "usda:build": "esbuild scripts/usda-build.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.usda-build.mjs && node --env-file=.env.local scripts/.usda-build.mjs",
     "classify:drink-types": "esbuild scripts/classify-drink-types.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.classify-drink-types.mjs && node --env-file=.env.local scripts/.classify-drink-types.mjs",
+    "recompute:categories:v7": "esbuild scripts/recompute-category-scores.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.recompute-categories-v7.mjs && node --env-file=.env.local scripts/.recompute-categories-v7.mjs",
     "recompute:categories": "esbuild scripts/recompute-categories.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.recompute-categories.mjs && node --env-file=.env.local scripts/.recompute-categories.mjs",
     "vectorise": "node --env-file=.env.local scripts/vectorise.mjs",
     "score-supports": "node --env-file=.env.local scripts/score-supports.mjs",
     "list-models": "node --env-file=.env.local scripts/list-models.mjs",
+    "classify:tiers": "esbuild scripts/classify-ingredient-tiers.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.classify-tiers.mjs && node --env-file=.env.local scripts/.classify-tiers.mjs",
+    "preview:categories": "esbuild scripts/preview-category-scores.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.preview-categories.mjs && node --env-file=.env.local scripts/.preview-categories.mjs",
     "reconcile:subs": "esbuild scripts/reconcile-subscriptions.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.reconcile-subs.mjs && node --env-file=.env.local scripts/.reconcile-subs.mjs",
     "rewrite:recipe-copy": "esbuild scripts/rewrite-recipe-copy.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.rewrite-recipe-copy.mjs && node --env-file=.env.local scripts/.rewrite-recipe-copy.mjs"
   },

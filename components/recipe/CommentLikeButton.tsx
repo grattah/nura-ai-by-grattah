@@ -2,9 +2,10 @@
 
 import React from "react";
 import { Heart } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { toggleCommentLike } from "@/actions/like-comments";
+import { loginHrefWithNext } from "@/lib/navigation";
 
 interface CommentLikeButtonProps {
   commentId: string;
@@ -22,6 +23,7 @@ export default function CommentLikeButton({
   isAuthenticated,
 }: CommentLikeButtonProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { toast } = useToast();
   const [liked, setLiked] = React.useState(initialLiked);
   const [count, setCount] = React.useState(initialCount);
@@ -29,7 +31,7 @@ export default function CommentLikeButton({
 
   const handleToggle = () => {
     if (!isAuthenticated) {
-      router.push("/auth/login");
+      router.replace(loginHrefWithNext(pathname));
       return;
     }
 
