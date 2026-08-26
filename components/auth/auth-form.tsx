@@ -20,6 +20,7 @@ import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { ensureWelcomeEmail } from "@/actions/welcome";
 import { cancelScheduledDeletion } from "@/actions/delete-account";
+import { sanitizeNext } from "@/lib/safe-redirect";
 import loader from "@/public/loader.png";
 import authImage from "@/public/authImage.webp";
 import authFooterBanner from "@/public/authFooterBanner.webp";
@@ -67,6 +68,24 @@ function clearPendingOtp() {
   } catch {
     /* ignore */
   }
+}
+
+// Paths that aren't worth returning to after login — home is just as good.
+const NO_RETURN_PREFIXES = ["/landing", "/auth"];
+
+// Resolve where to send the user after a successful sign-in: back to the page
+// that sent them to /auth/login (via ?next=), or home if there isn't one worth
+// returning to.
+function resolveNextDestination(rawNext: string | null): string {
+  if (!rawNext) return "/";
+  const sanitized = sanitizeNext(rawNext, window.location.origin);
+  if (
+    sanitized === "/" ||
+    NO_RETURN_PREFIXES.some((p) => sanitized.startsWith(p))
+  ) {
+    return "/";
+  }
+  return sanitized;
 }
 
 function isRateLimited(err: unknown): boolean {
@@ -145,6 +164,25 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
     setStep(newStep);
   };
+
+  // If the user is already signed in, there's nothing to do here — bounce them
+  // home. This is what actually saves anyone who lands back on this page via a
+  // stale /auth/login history entry (e.g. an earlier form step, from before a
+  // prior successful sign-in): rather than depending on history bookkeeping to
+  // keep such entries from ever being reachable, this makes reaching one
+  // harmless by never rendering the form for an authenticated visitor.
+  useEffect(() => {
+    let cancelled = false;
+    createClient()
+      .auth.getUser()
+      .then(({ data: { user } }) => {
+        if (!cancelled && user) router.replace("/");
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Restore an in-progress OTP screen after a refresh / browser-back so the user
   // can enter the code they were already sent (no re-send, no cooldown error).
@@ -331,9 +369,19 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         // exactly once per user, ever.
         destination = "/";
       }
+
+      // Send the user back to the page that sent them to login, if any.
+      destination = resolveNextDestination(searchParams.get("next"));
     }
+
     router.refresh();
-    router.push(destination);
+    // replace, not push: /auth/login was itself pushed onto history to get
+    // here, so a plain push would leave it sandwiched behind this page —
+    // "back" would land right back on the login screen. Any earlier form-step
+    // entries (from goToStep, still at the /auth/login URL) may remain further
+    // back in history, but the already-authenticated guard below sends anyone
+    // who lands back on one of those straight home instead of showing the form.
+    router.replace(destination);
   };
 
   // ─── OTP Form submit ──────────────────────────────────────────────────────

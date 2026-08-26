@@ -1,8 +1,4 @@
-import {
-  Heart,
-  Leaf,
-  type LucideIcon,
-} from "lucide-react";
+import { Heart, Leaf, type LucideIcon } from "lucide-react";
 import {
   Immunity,
   Skin,
@@ -25,7 +21,7 @@ import {
   Inflammation,
   AntiMicrobes,
   Temperature,
-  Relief
+  Relief,
 } from "@/components/vectors/bioactivities";
 import { type SupportScore } from "@/lib/wellness-score";
 
@@ -86,9 +82,15 @@ const SHORT_LABELS: Record<string, string> = {
 interface RecipeSupportsProps {
   /** Top bioactivities for this recipe (from recipe_tags), strongest first. */
   supports: SupportScore[];
+  isSubscriber?: boolean;
+  hasHealthProfile?: boolean;
 }
 
-export function RecipeSupports({ supports }: RecipeSupportsProps) {
+export function RecipeSupports({
+  supports,
+  isSubscriber,
+  hasHealthProfile,
+}: RecipeSupportsProps) {
   if (!supports?.length) return null;
 
   return (
@@ -107,6 +109,19 @@ export function RecipeSupports({ supports }: RecipeSupportsProps) {
               <p className="text-2xs leading-tight text-subtle line-clamp-2 font-medium text-nowrap">
                 {SHORT_LABELS[s.slug] ?? s.support}
               </p>
+              {!isSubscriber && !hasHealthProfile ? (
+                <p className="text-sm font-semibold text-[#087567]">
+                  {s.score}%
+                </p>
+              ) : hasHealthProfile && !isSubscriber ? (
+                <p className="text-sm font-semibold text-[#087567]">
+                  {s.score}%
+                </p>
+              ) : !hasHealthProfile && isSubscriber ? (
+                <p className="text-sm font-semibold text-[#087567]">
+                  {s.score}%
+                </p>
+              ) : null}
             </div>
           );
         })}
