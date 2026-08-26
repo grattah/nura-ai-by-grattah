@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { loginHrefWithNext } from "@/lib/navigation";
 import {
   ArrowLeft,
   Eye,
@@ -33,6 +34,7 @@ interface ProfileUser {
 
 export default function ProfilePage() {
   const router = useRouter();
+  const pathname = usePathname();
   const supabase = createClient();
 
   const [user, setUser] = useState<ProfileUser | null>(null);
@@ -60,7 +62,7 @@ export default function ProfilePage() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user: u } }) => {
       if (!u) {
-        router.replace("/auth/login");
+        router.replace(loginHrefWithNext(pathname));
         return;
       }
       const name =

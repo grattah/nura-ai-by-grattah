@@ -3,10 +3,11 @@
 import React, { useState, useTransition } from "react";
 import { Heart } from "lucide-react";
 import { FaHeart } from "react-icons/fa";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { useToast } from "@/hooks/use-toast";
 import { toggleLike } from "@/actions/likes";
+import { loginHrefWithNext } from "@/lib/navigation";
 
 interface LikeButtonProps {
   recipeId: string;
@@ -20,13 +21,14 @@ const LikeButton = ({
   isAuthenticated,
 }: LikeButtonProps) => {
   const router = useRouter();
+  const pathname = usePathname();
   const { toast } = useToast();
   const [liked, setLiked] = useState(initialLiked);
   const [isPending, startTransition] = useTransition();
 
   const handleToggle = () => {
     if (!isAuthenticated) {
-      router.push("/auth/login");
+      router.replace(loginHrefWithNext(pathname));
       return;
     }
 

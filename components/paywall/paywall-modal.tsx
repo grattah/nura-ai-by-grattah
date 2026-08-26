@@ -66,10 +66,6 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
       title: "The full premium library",
       subtitle: "10,000+ curated recipes by experts.",
     },
-    {
-      title: "Safety ingredient flags",
-      subtitle: "For allergies and medication interactions.",
-    },
   ];
 
   return (
@@ -87,7 +83,7 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
           router.back();
         }}
       >
-        <div className="p-6 space-y-6 mt-8">
+        <div className="p-6 space-y-6">
           <button
             onClick={() => handleClose(false)}
             className="absolute top-4 right-6 size-10 rounded-full bg-grey-c100 p-2 grid place-items-center hover:opacity-75 transition-opacity"
@@ -103,8 +99,8 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
                 </span>
               </div>
             )}
-            <div className="space-y-3">
-              <DialogTitle className="text-2xl max-[350px]:text-xl font-semibold text-black mb-3">
+            <div className="flex flex-col gap-3">
+              <DialogTitle className="text-2xl max-[350px]:text-xl font-semibold text-black">
                 Get Nuko+
               </DialogTitle>
               <Image
@@ -116,7 +112,7 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
             </div>
           </DialogHeader>
 
-          <ul className="rounded-2xl bg-grey-c100 py-4 px-3 space-y-3 mb-9">
+          <ul className="rounded-2xl bg-grey-c100 py-4 px-3 space-y-3">
             {benefits.map((item) => (
               <li key={item.title} className="flex items-center gap-3">
                 <Check
@@ -136,7 +132,7 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
             ))}
           </ul>
 
-          <div className="space-y-3 pt-2">
+          <div className="space-y-3">
             {PLANS.map((plan) => {
               const isSelected = selectedPlan === plan.id;
               return (
