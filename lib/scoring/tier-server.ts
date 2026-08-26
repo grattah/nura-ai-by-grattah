@@ -1,5 +1,6 @@
 import "server-only";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { fetchAll } from "./fetch-all";
 import {
   combineMatch,
   FLAT_PENALTY,
@@ -109,20 +110,35 @@ export async function getTiersByIngredient(
 
   const supabase = createServiceRoleClient();
 
-  // `as never` because ingredient_tiers postdates the generated types; the row
-  // shape is asserted below.
-  const { data, error } = await supabase
-    .from("ingredient_tiers" as never)
-    .select("ingredient_id, outcome, tier")
-    .in("ingredient_id" as never, ingredientIds as never)
-    .not("tier", "is", null);
-
-  if (error) {
-    console.error("[tier-server] tier read failed:", error.message);
+  // PAGED. There are 40 outcomes per ingredient, so a whole-library read is
+  // thousands of rows — far past PostgREST's 1,000-row default, which returns
+  // a prefix with NO error. Unpaged, most ingredients came back with no tiers
+  // at all and scored near zero: the SAME recipe returned 71.2% scored alone
+  // (10 ingredients, one page) and 58.0% inside a 199-recipe batch.
+  //
+  // Ordered, because a paged read without a stable sort has no guarantee that
+  // one page continues where the last stopped.
+  let data: unknown[];
+  try {
+    data = await fetchAll<unknown>((from, to) =>
+      supabase
+        .from("ingredient_tiers" as never)
+        .select("ingredient_id, outcome, tier")
+        .in("ingredient_id" as never, ingredientIds as never)
+        .not("tier", "is", null)
+        .order("ingredient_id", { ascending: true })
+        .order("outcome", { ascending: true })
+        .range(from, to) as never,
+    );
+  } catch (e) {
+    console.error(
+      "[tier-server] tier read failed:",
+      e instanceof Error ? e.message : e,
+    );
     return byIngredient;
   }
 
-  for (const row of (data ?? []) as {
+  for (const row of data as {
     ingredient_id: string;
     outcome: string;
     tier: Tier;
@@ -306,3 +322,113 @@ export async function scoreMatch(
 }
 
 export { penaltiesByOutcome };
+
+
+// ── Bulk scoring for list pages ─────────────────────────────────────────────
+
+export interface RecipeMatchSummary {
+  recipeId: string;
+  /** PRD §8 — the average across every selection, as a percentage. */
+  averagePercent: number;
+  /** PRD §8 — the single highest credit, kept for the detail page. */
+  highest: MatchCreditView | null;
+  breakdown: MatchCreditView[];
+}
+
+/**
+ * Match Score for MANY recipes at once.
+ *
+ * scoreMatch() issues two queries per recipe, which is fine for a detail page
+ * and ruinous for a list of 243. This reads every ingredient and every tier in
+ * two paged passes, then scores in memory.
+ *
+ * Paged deliberately: recipe_ingredients is already past PostgREST's 1,000-row
+ * default, and an unpaged read returns a prefix with no error — which would
+ * silently score later recipes against no ingredients at all.
+ */
+export async function scoreMatchForRecipes(input: {
+  recipeIds: string[];
+  conditions: string[];
+  goals: string[];
+  penaltyFactor?: number;
+}): Promise<Map<string, RecipeMatchSummary>> {
+  const out = new Map<string, RecipeMatchSummary>();
+  if (input.recipeIds.length === 0) return out;
+
+  const tables = [
+    ...input.conditions.map((k) => ["condition", k, CONDITION_TABLE_BY_KEY.get(k)] as const),
+    ...input.goals.map((k) => ["goal", k, GOAL_TABLE_BY_KEY.get(k)] as const),
+  ].filter((t) => !!t[2]);
+
+  // Nothing the user selected maps to a table — every recipe scores nothing,
+  // and saying so explicitly beats returning an empty map the caller has to
+  // interpret.
+  if (tables.length === 0) {
+    for (const id of input.recipeIds) {
+      out.set(id, { recipeId: id, averagePercent: 0, highest: null, breakdown: [] });
+    }
+    return out;
+  }
+
+  const supabase = createServiceRoleClient();
+
+  const riRows = await fetchAll<{
+    recipe_id: string;
+    ingredient_id: string | null;
+    quantity: number | null;
+    ingredients: FactRow | null;
+  }>((from, to) =>
+    supabase
+      .from("recipe_ingredients")
+      .select(
+        "recipe_id, ingredient_id, quantity, grams, ingredients(id, name, protein_g, fiber_g, potassium_mg, sodium_mg, calcium_dv, vitamin_c_dv, iron_mg, iron_rich, water_pct, is_probiotic, sat_fat_g, total_sugar_g, calorie_density, is_added_sweetener)",
+      )
+      .in("recipe_id", input.recipeIds)
+      .gt("grams", 0)
+      // A STABLE sort is mandatory when paging. Without an ORDER BY, Postgres
+      // gives no guarantee that page 2 continues where page 1 stopped — rows
+      // get repeated and others dropped. That silently truncated some recipes'
+      // ingredient lists and scored them low: the same recipe returned 71.2%
+      // when scored alone (one page) and 58.0% in a 199-recipe batch (two).
+      .order("recipe_id", { ascending: true })
+      .order("id", { ascending: true })
+      .range(from, to) as never,
+  );
+
+  const byRecipe = new Map<string, FactRow[]>();
+  const allIngredientIds = new Set<string>();
+  for (const row of riRows) {
+    // PRD §3 — listed with its own quantity, not a garnish or trace mention.
+    if (row.quantity == null || row.quantity <= 0 || !row.ingredients?.id) continue;
+    byRecipe.set(row.recipe_id, [...(byRecipe.get(row.recipe_id) ?? []), row.ingredients]);
+    allIngredientIds.add(row.ingredients.id);
+  }
+
+  const tiers = await getTiersByIngredient([...allIngredientIds]);
+
+  for (const recipeId of input.recipeIds) {
+    const ingredients = byRecipe.get(recipeId) ?? [];
+    const selections: MatchSelection[] = tables.map(([kind, key, table]) => ({
+      key,
+      label: table!.label,
+      kind,
+      score: scoreFromRaw(
+        table!,
+        ingredients,
+        tiers,
+        matchPenalties(ingredients, table!.penalties),
+        input.penaltyFactor,
+      ),
+    }));
+
+    const combined = combineMatch(selections);
+    out.set(recipeId, {
+      recipeId,
+      averagePercent: combined.averagePercent ?? 0,
+      highest: combined.highest ? toView(combined.highest) : null,
+      breakdown: combined.breakdown.map(toView),
+    });
+  }
+
+  return out;
+}

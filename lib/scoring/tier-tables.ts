@@ -297,3 +297,23 @@ const byKey = (tables: CalibrationTable[]) =>
 export const CATEGORY_TABLE_BY_KEY = byKey(CATEGORY_TABLES);
 export const CONDITION_TABLE_BY_KEY = byKey(CONDITION_TABLES);
 export const GOAL_TABLE_BY_KEY = byKey(GOAL_TABLES);
+
+
+/**
+ * v7 table key → the category slug stored in the database, where they differ.
+ *
+ * `heart-health` is the PRD's name for the table; the `categories` row has
+ * always been `heart`, and it is a public URL (/categories/heart), so the slug
+ * stays and the key is mapped. Any key not listed here IS its slug.
+ *
+ * Exported so the recompute script and its test read the same mapping — when
+ * this lived in the script alone, a key that failed to resolve was skipped in
+ * silence and left a whole category on stale scores.
+ */
+export const CATEGORY_SLUG_OVERRIDES: Record<string, string> = {
+  "heart-health": "heart",
+};
+
+/** The database slug for a category table key. */
+export const categorySlugFor = (key: string): string =>
+  CATEGORY_SLUG_OVERRIDES[key] ?? key;
