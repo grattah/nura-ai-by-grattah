@@ -192,8 +192,9 @@ export default async function RecipeDetailPage({
 
   const nutrition = (recipe.nutrition as NutritionFacts | null) ?? null;
 
-  // The seven BNS point components. Six feed computeMatchScore below; all seven
-  // feed the Nutri score breakdown drawer (fvl has no part in matching).
+  // The seven BNS point components, feeding the Nutri score breakdown drawer.
+  // They no longer contribute to the Match Score: v7 scores from ingredient
+  // tiers, not nutrient points.
   const nutritionPoints = {
     sugar: recipe.sugar_points,
     salt: recipe.salt_points,
@@ -236,11 +237,6 @@ export default async function RecipeDetailPage({
     personalizedView = isSub && !!profileUpdatedAt;
     if (personalizedView && recipe.final_score_10 != null) {
       // Fresh match, computed from the recipe's current scores + the profile.
-      const bioBySlug: Record<string, number> = {};
-      for (const rt of recipe.recipe_tags ?? []) {
-        if (rt.tags?.slug && rt.score != null)
-          bioBySlug[rt.tags.slug] = rt.score;
-      }
       // Ingredient-tier scoring (Category/Match PRD v7). Reads cached tiers +
       // the calibration tables; no bioactivity subtotals, no nutrient bonuses.
       matchResult = await scoreMatch({
