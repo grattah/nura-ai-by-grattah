@@ -55,7 +55,7 @@ function savePendingOtp(email: string, step: OtpStep) {
   try {
     sessionStorage.setItem(
       OTP_PENDING_KEY,
-      JSON.stringify({ email, step, ts: Date.now() }),
+      JSON.stringify({ email, step, ts: Date.now() })
     );
   } catch {
     /* sessionStorage unavailable — non-critical */
@@ -113,7 +113,7 @@ function ButtonLoader() {
 // module scope: defined once, outside the component
 const generateNonce = async (): Promise<[string, string]> => {
   const nonce = btoa(
-    String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32))),
+    String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))
   );
   const encoded = new TextEncoder().encode(nonce);
   const hashBuffer = await crypto.subtle.digest("SHA-256", encoded);
@@ -140,7 +140,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   const query = searchParams.get("landing");
   const rawNonceRef = useRef<string>("");
   const [googleReady, setGoogleReady] = useState(
-    () => typeof google !== "undefined" && !!google?.accounts,
+    () => typeof google !== "undefined" && !!google?.accounts
   );
   const strength = checkPasswordStrength(password);
   const canCreateProfileDisabled =
@@ -159,7 +159,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     window.history.pushState(
       { step: newStep },
       "",
-      window.location.pathname + window.location.search,
+      window.location.pathname + window.location.search
     );
 
     setStep(newStep);
@@ -171,12 +171,21 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   // prior successful sign-in): rather than depending on history bookkeeping to
   // keep such entries from ever being reachable, this makes reaching one
   // harmless by never rendering the form for an authenticated visitor.
+  // `checkingSession` stays true (holding the loading screen up) when a
+  // redirect is in flight, so the form itself never gets to flash on screen.
+  const [checkingSession, setCheckingSession] = useState(true);
+
   useEffect(() => {
     let cancelled = false;
     createClient()
       .auth.getUser()
       .then(({ data: { user } }) => {
-        if (!cancelled && user) router.replace("/");
+        if (cancelled) return;
+        if (user) {
+          router.replace("/");
+        } else {
+          setCheckingSession(false);
+        }
       });
     return () => {
       cancelled = true;
@@ -215,7 +224,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     window.history.replaceState(
       { step: initialStep },
       "",
-      window.location.pathname + window.location.search,
+      window.location.pathname + window.location.search
     );
 
     const handlePopState = (event: PopStateEvent) => {
@@ -288,7 +297,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
           setError(
             isRateLimited(otpError)
               ? "Please wait a minute before requesting another code."
-              : "We couldn't send a verification code to this email. Please try again.",
+              : "We couldn't send a verification code to this email. Please try again."
           );
           return;
         }
@@ -317,12 +326,12 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
           savePendingOtp(email, "login-otp");
           goToStep("login-otp");
           setError(
-            "You already have a code in your inbox — enter it below, or wait a minute to resend.",
+            "You already have a code in your inbox — enter it below, or wait a minute to resend."
           );
           return;
         }
         setError(
-          "We couldn't send a sign-in code to this email. Please try again.",
+          "We couldn't send a sign-in code to this email. Please try again."
         );
         return;
       }
@@ -339,7 +348,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   // ─── Shared post-auth redirect ─────────────────────────────────────────────
 
   const redirectAfterAuth = async (
-    supabase: ReturnType<typeof createClient>,
+    supabase: ReturnType<typeof createClient>
   ) => {
     const {
       data: { user },
@@ -444,7 +453,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       await redirectAfterAuth(supabase);
     } catch {
       setError(
-        "Something went wrong while verifying your code. Please try again.",
+        "Something went wrong while verifying your code. Please try again."
       );
     } finally {
       setIsLoading(false);
@@ -480,7 +489,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       goToStep("signup");
     } catch {
       setError(
-        "Something went wrong while verifying your code. Please try again.",
+        "Something went wrong while verifying your code. Please try again."
       );
     } finally {
       setIsLoading(false);
@@ -524,14 +533,14 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         setError(
           isRateLimited(otpError)
             ? "Please wait a minute before requesting another code."
-            : "Couldn't resend the code. Please try again.",
+            : "Couldn't resend the code. Please try again."
         );
       }
       setIsLoading(false);
       setOtpCode("");
     } catch (e) {
       setError(
-        "Something went wrong while resending your code. Please try again.",
+        "Something went wrong while resending your code. Please try again."
       );
     }
   };
@@ -556,7 +565,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         err instanceof Error &&
           err.message.includes("Invalid login credentials")
           ? "Incorrect password. Please try again."
-          : "Something went wrong while signing you in. Please try again.",
+          : "Something went wrong while signing you in. Please try again."
       );
     } finally {
       setIsLoading(false);
@@ -592,7 +601,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       setError(
         err instanceof Error
           ? err.message
-          : "We couldn't save your profile. Please try again.",
+          : "We couldn't save your profile. Please try again."
       );
     } finally {
       setIsLoading(false);
@@ -617,7 +626,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       if (error) throw error;
     } catch (err: unknown) {
       setError(
-        err instanceof Error ? err.message : "Failed to sign in with Google.",
+        err instanceof Error ? err.message : "Failed to sign in with Google."
       );
       setIsGoogleLoading(false);
     }
@@ -640,8 +649,8 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       step === "email"
         ? "google-btn-email"
         : step === "login"
-          ? "google-btn-login"
-          : null;
+        ? "google-btn-login"
+        : null;
     if (!targetId) return;
     if (typeof google === "undefined") return;
 
@@ -688,8 +697,8 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
           response.credential
             .split(".")[1]
             .replace(/-/g, "+")
-            .replace(/_/g, "/"),
-        ),
+            .replace(/_/g, "/")
+        )
       );
       const emailFromToken = payload.email as string;
 
@@ -724,7 +733,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       await redirectAfterAuth(supabase);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to sign in with Google.",
+        err instanceof Error ? err.message : "Failed to sign in with Google."
       );
       setIsGoogleLoading(false);
     }
@@ -790,6 +799,40 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   const isOtpStep = step === "login-otp" || step === "signup-otp";
 
   // ─── Render ────────────────────────────────────────────────────────────────
+
+  if (checkingSession) {
+    return (
+      <div className="bg-background px-4 pt-2 space-y-6">
+        <div className="space-y-4">
+          <div className="h-7 bg-muted rounded-full animate-pulse w-3/4" />
+          <div className="h-14 bg-muted rounded-2xl animate-pulse" />
+        </div>
+
+        <div className="space-y-4">
+          <div className="h-6 bg-muted rounded-full animate-pulse w-40" />
+          <div className="flex gap-x-5 overflow-hidden">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className="shrink-0 w-50 h-44 rounded-2xl bg-muted animate-pulse"
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="h-24 bg-muted rounded-2xl animate-pulse" />
+
+        <div className="space-y-2">
+          <div className="h-6 bg-muted rounded-full animate-pulse w-32" />
+          <div className="grid grid-cols-3 gap-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-16 rounded-lg bg-muted animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("min-h-screen flex flex-col", className)}>
@@ -888,7 +931,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                       disabled={isGoogleLoading}
                       className={cn(
                         "w-full flex items-center justify-center gap-3 bg-[#FFFCF7] text-[#333333] py-4 rounded-2xl font-semibold hover:opacity-90 transition-opacity",
-                        isGoogleLoading ? "opacity-50" : "disabled:opacity-50",
+                        isGoogleLoading ? "opacity-50" : "disabled:opacity-50"
                       )}
                     >
                       {isGoogleLoading ? (
@@ -944,7 +987,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                       disabled={!email || isLoading}
                       className={cn(
                         "w-full flex items-center justify-center bg-mint-green text-white py-4 rounded-full font-medium border border-border hover:opacity-90 transition-opacity",
-                        isLoading ? "opacity-50" : "disabled:opacity-40",
+                        isLoading ? "opacity-50" : "disabled:opacity-40"
                       )}
                     >
                       {isLoading ? <ButtonLoader /> : "Continue"}
@@ -1063,7 +1106,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                     disabled={isLoading || !password}
                     className={cn(
                       "w-full flex items-center justify-center bg-mint-green text-white py-4 rounded-full font-medium hover:opacity-90 transition-opacity",
-                      isLoading ? "opacity-50" : "disabled:opacity-40",
+                      isLoading ? "opacity-50" : "disabled:opacity-40"
                     )}
                   >
                     {isLoading ? <ButtonLoader /> : "Sign in"}
@@ -1082,7 +1125,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                     disabled={isGoogleLoading}
                     className={cn(
                       "w-full flex items-center justify-center gap-3 bg-[#E8E6DC] text-nura-forest py-4 rounded-full font-medium hover:opacity-90 transition-opacity",
-                      isGoogleLoading ? "opacity-50" : "disabled:opacity-50",
+                      isGoogleLoading ? "opacity-50" : "disabled:opacity-50"
                     )}
                   >
                     {isGoogleLoading ? (
@@ -1231,12 +1274,10 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
                 <button
                   type="submit"
-                  disabled={
-                    canCreateProfileDisabled
-                  }
+                  disabled={canCreateProfileDisabled}
                   className={cn(
                     "w-full flex items-center justify-center bg-[#227B6F] text-white py-4 rounded-full font-medium hover:opacity-90 transition-opacity",
-                    isLoading ? "opacity-50" : "disabled:opacity-40",
+                    isLoading ? "opacity-50" : "disabled:opacity-40"
                   )}
                 >
                   {isLoading ? <ButtonLoader /> : "Create profile"}
