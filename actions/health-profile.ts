@@ -10,6 +10,7 @@ import {
   isBasicComplete,
 } from "@/lib/health-profile/types";
 import { needsConsent } from "@/lib/health-profile/consent";
+import { MAX_GOALS } from "@/lib/health-profile/toggle";
 
 // Shape of a `health_profiles` row (table not yet in generated types).
 interface HealthProfileRow {
@@ -122,7 +123,10 @@ export async function saveHealthProfile(
     age_range: draft.basic.ageRange,
     biological_sex: draft.basic.biologicalSex,
     pregnancy_status: draft.basic.pregnancyStatus,
-    goals: draft.goals,
+    // Capped server-side too. The picker enforces 3, but the cap is what feeds
+    // the Match Score average — a crafted request saving ten goals would
+    // silently dilute every score, and nothing downstream re-checks it.
+    goals: draft.goals.slice(0, MAX_GOALS),
     // Dietary-pattern step is disabled for now — always clear the column.
     dietary_pattern: null,
     conditions: draft.conditions,
