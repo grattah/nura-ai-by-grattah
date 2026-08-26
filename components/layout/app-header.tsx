@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { SignInHeaderLink } from "./sign-in-header-link";
 interface AppHeaderUser {
   name: string;
   email?: string;
@@ -56,12 +58,18 @@ export function AppHeader({ user }: AppHeaderProps) {
             </Link>
           </div>
         ) : (
-          <Link
-            href="/auth/login"
-            className="text-base font-semibold text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4 py-1 px-4 rounded-full liquid-glass"
+          <Suspense
+            fallback={
+              <Link
+                href="/auth/login"
+                className="text-base font-semibold text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4 py-1 px-4 rounded-full liquid-glass"
+              >
+                Sign in
+              </Link>
+            }
           >
-            Sign in
-          </Link>
+            <SignInHeaderLink className="text-base font-semibold text-mint-green hover:opacity-75 transition-opacity underline underline-offset-4 py-1 px-4 rounded-full liquid-glass" />
+          </Suspense>
         )}
       </div>
     </header>

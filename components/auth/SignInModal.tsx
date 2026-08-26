@@ -7,7 +7,7 @@ import { X } from "lucide-react";
 import SignInModalImage from "../vectors/SignInModalImage";
 import Link from "next/link";
 import { lockAppScroll } from "@/lib/scroll-lock";
-import { loginHrefWithNext } from "@/lib/navigation";
+import { landingHrefWithNext, loginHrefWithNext } from "@/lib/navigation";
 
 export function SignInModal({ onClose }: { onClose?: () => void }) {
   const router = useRouter();
@@ -52,7 +52,7 @@ export function SignInModal({ onClose }: { onClose?: () => void }) {
         </div>
 
         <button
-          onClick={() => router.push("/landing")}
+          onClick={() => router.replace(landingHrefWithNext(pathname))}
           className="w-full py-3 rounded-full bg-mint-green text-white text-sm font-medium hover:opacity-90 transition-opacity"
         >
           Sign up
