@@ -11,6 +11,7 @@ import { LogoutButton } from "@/components/auth/logout-button";
 import BackButton from "@/components/back-button";
 import FeatureRequestIcon from "@/components/vectors/feature-request";
 import { AddToHomescreenButton } from "@/components/home/add-to-homescreen-button";
+import { hasActiveSubscription } from "@/lib/subscription";
 
 export default async function AccountPage() {
   const supabase = await createClient();
@@ -20,6 +21,10 @@ export default async function AccountPage() {
 
   let hasPassword = false;
   let subscription: { status: string; plan: string | null } | null = null;
+  // Entitlement goes through the shared helper, never an inline status check —
+  // `status` alone is 'cancelled' for a user who cancelled mid-period but has
+  // paid through expires_at, and it ignores expiry entirely for a stale row.
+  let isEntitled = false;
 
   if (user) {
     hasPassword =
@@ -33,6 +38,7 @@ export default async function AccountPage() {
       .order("created_at", { ascending: false })
       .limit(1);
     subscription = subs?.[0] ?? null;
+    isEntitled = await hasActiveSubscription(supabase, user.id);
   }
 
   const isGuest = !user;
@@ -175,7 +181,7 @@ export default async function AccountPage() {
           <LogoutButton />
         </div>
       </div>
-      {subscription?.status === "active" && (
+      {isEntitled && (
         <div className="mt-33.25">
           <AddToHomescreenButton />
         </div>
