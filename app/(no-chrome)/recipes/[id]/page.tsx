@@ -334,6 +334,8 @@ export default async function RecipeDetailPage({
 
               <RecipeSupports
                 supports={topBioactivities(recipe.recipe_tags, 5)}
+                isSubscriber={isSubscribed}
+                hasHealthProfile={hasProfile}
               />
 
               {personalizedView && matchResult?.highest ? (

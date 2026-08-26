@@ -5,6 +5,7 @@ import Image from "next/image";
 import { TbBrandLinkedin } from "react-icons/tb";
 import { FaInstagram, FaTiktok } from "react-icons/fa";
 import { createClient } from "@/lib/supabase/server";
+import { withNextParam } from "@/lib/navigation";
 
 import NukoLogo from "@/components/vectors/NukoLogo";
 import { FeatureShowcase } from "@/components/landing/FeatureShowcase";
@@ -48,7 +49,11 @@ const features = [
   },
 ];
 
-const page = async () => {
+const page = async ({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) => {
   const supabase = await createClient();
 
   const {
@@ -57,7 +62,11 @@ const page = async () => {
   if (user) {
     redirect("/");
   }
-  
+
+  // Forwarded from wherever sent this visitor to /landing (e.g. the sign-in
+  // modal's "Sign up" button), so signing in from here can return them there.
+  const loginHref = withNextParam("/auth/login", (await searchParams).next);
+
   return (
     <main className="bg-background">
       <div className="px-6 pt-4 max-w-sm mx-auto">
@@ -76,7 +85,7 @@ const page = async () => {
               built for you.
             </p>
             <Link
-              href="/auth/login"
+              href={loginHref}
               className="bg-mint-green text-white w-fit rounded-full py-3 px-10 font-semibold text-sm font-redHatText"
             >
               Get started
@@ -118,7 +127,7 @@ const page = async () => {
               Start mapping your food to your goals today
             </p>
             <Link
-              href="/auth/login"
+              href={loginHref}
               className="text-white bg-mint-green py-3 px-10 rounded-full text-sm font-semibold"
             >
               Sign up
@@ -126,7 +135,7 @@ const page = async () => {
             <p className="font-medium text-sm text-subtle">
               Got an account?{" "}
               <Link
-                href="/auth/login"
+                href={loginHref}
                 className="font-extrabold text-mint-green"
               >
                 Sign in

@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ArrowLeft, Eye, EyeOff, LockKeyhole, Mail, User } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { updatePassword, updateDisplayName } from "@/actions/profile";
+import { loginHrefWithNext } from "@/lib/navigation";
 import {
   PasswordRequirements,
   checkPasswordStrength,
@@ -16,6 +17,7 @@ import SuccessAnimation from "@/components/SuccessAnimation";
 
 export default function SetupProfilePage() {
   const router = useRouter();
+  const pathname = usePathname();
   const supabase = createClient();
 
   const [email, setEmail] = useState("");
@@ -33,7 +35,7 @@ export default function SetupProfilePage() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) {
-        router.replace("/auth/login");
+        router.replace(loginHrefWithNext(pathname));
         return;
       }
       setEmail(user.email ?? "");

@@ -1,15 +1,17 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { X } from "lucide-react";
 
 import SignInModalImage from "../vectors/SignInModalImage";
 import Link from "next/link";
 import { lockAppScroll } from "@/lib/scroll-lock";
+import { landingHrefWithNext, loginHrefWithNext } from "@/lib/navigation";
 
 export function SignInModal({ onClose }: { onClose?: () => void }) {
   const router = useRouter();
+  const pathname = usePathname();
 
   // Lock background scroll while the modal is open (it mounts only when open).
   useEffect(() => {
@@ -50,14 +52,18 @@ export function SignInModal({ onClose }: { onClose?: () => void }) {
         </div>
 
         <button
-          onClick={() => router.push("/landing")}
+          onClick={() => router.replace(landingHrefWithNext(pathname))}
           className="w-full py-3 rounded-full bg-mint-green text-white text-sm font-medium hover:opacity-90 transition-opacity"
         >
           Sign up
         </button>
         <p className="text-xs text-subtle mt-2 text-center">
           Got an account?{" "}
-          <Link href="/auth/login" className="text-mint-green font-extrabold">
+          <Link
+            href={loginHrefWithNext(pathname)}
+            replace
+            className="text-mint-green font-extrabold"
+          >
             Sign in
           </Link>
         </p>
