@@ -36,8 +36,24 @@ export async function withRollback<T>(
 ): Promise<T> {
   if (!CONNECTION) throw new Error("BRANCH_DB_URL is not set");
 
-  const client = new Client({ connectionString: CONNECTION });
-  await client.connect();
+  // Short connect timeout. The default waits minutes, so an unreachable
+  // database turned a suite run into 38 separate long timeouts instead of one
+  // quick, obvious failure.
+  const client = new Client({
+    connectionString: CONNECTION,
+    connectionTimeoutMillis: 5_000,
+  });
+
+  try {
+    await client.connect();
+  } catch (e) {
+    const why = e instanceof Error ? e.message : String(e);
+    throw new Error(
+      `Integration tests need the database at BRANCH_DB_URL, and it is not reachable (${why}).\n` +
+        `These tests exercise RLS, constraints and RPCs, which mocks cannot — so they fail rather than silently skipping.\n` +
+        `Run only the unit suite with:  npx vitest run --exclude 'test/integration/**'`,
+    );
+  }
   await client.query("begin");
 
   try {
