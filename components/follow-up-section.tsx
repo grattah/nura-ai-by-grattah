@@ -434,7 +434,6 @@ function NuraAvatar() {
   return (
     <div
       className="size-8 rounded-full flex items-center justify-center shrink-0 mt-0.5"
-      style={{ backgroundColor: "#FFFFFF" }}
     >
       <svg
         width="17"
