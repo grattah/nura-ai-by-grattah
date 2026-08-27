@@ -371,12 +371,12 @@ export default async function RecipeDetailPage({
                 popular={canViewFull}
               />
 
-              {/* Follow-up questions + RAG chat: exempt from AuthGate's blanket
-                  click-intercept — this surface has its own free-trial gating
-                  (2 free uses for new users before the paywall), so it must
-                  reach FollowUpSection's own fetch-driven sign-in/paywall
-                  handling instead of being blocked upfront. */}
-              <div className="pt-2" data-paywall-passthrough>
+              {/* Follow-up questions + RAG chat: only exempt from AuthGate's
+                  blanket click-intercept when the page itself is already
+                  ungated (subscribed or popular view) — AuthGate's selector
+                  matches on attribute presence, not value, so the attribute
+                  must be omitted entirely rather than set to false. */}
+              <div className="pt-2" {...(canViewFull ? { "data-paywall-passthrough": true } : {})}>
                 <FollowUpSection
                   contextId={recipe.id}
                   contextType="recipe"
