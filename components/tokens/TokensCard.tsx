@@ -20,10 +20,18 @@ const TokensCard = ({
   state: WalletSnapshot;
 }) => {
   // Purchased tokens have no "granted" total to measure against — they are
-  // topped up in arbitrary amounts and never expire, so a percentage would be
-  // measured against a denominator that does not exist. The bar is full while
-  // any remain and empty at zero; the count beside it carries the real detail.
-  const purchasedPct = state.purchasedTokens > 0 ? 100 : 0;
+  // topped up in arbitrary amounts and never expire, so any percentage would be
+  // measured against a denominator that does not exist.
+  //
+  // The bar therefore reads as "you have some" / "you have none", and the label
+  // beside it states the COUNT. It previously said "{purchasedPct}% used", which
+  // rendered a freshly-bought balance as "100% used" — the exact inverse of the
+  // truth, because a full bar here means tokens remaining, not tokens spent.
+  const hasPurchased = state.purchasedTokens > 0;
+  const purchasedPct = hasPurchased ? 100 : 0;
+  const purchasedLabel = state.purchasedFrozen
+    ? `${state.purchasedTokens} paused`
+    : `${state.purchasedTokens} token${state.purchasedTokens === 1 ? "" : "s"} left`;
 
   if (variant === "extra") {
     return (
@@ -46,13 +54,13 @@ const TokensCard = ({
           <div className="flex flex-col gap-3">
             <ProgressBar
               value={purchasedPct}
-              color={state.purchasedTokens === 0 ? "#F90000" : "#F39128"}
-              trackColor={state.purchasedTokens === 0 ? "#FFDBD6" : "#ECEBEA"}
+              color={hasPurchased ? "#F39128" : "#F90000"}
+              trackColor={hasPurchased ? "#ECEBEA" : "#FFDBD6"}
             />
             <p
-              className={`${state.purchasedTokens === 0 ? "text-[#F90000]" : "text-[#F39128]"} text-sm font-semibold`}
+              className={`${hasPurchased ? "text-[#F39128]" : "text-[#F90000]"} text-sm font-semibold`}
             >
-              {purchasedPct}% used
+              {purchasedLabel}
             </p>
           </div>
           <div
