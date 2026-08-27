@@ -20,6 +20,7 @@ import { FeatureRequest } from "@/components/home/feature-request";
 import { ForYouCategory } from "@/components/for-you-category";
 import { DeletionScheduledModal } from "@/components/profile/deletion-scheduled-modal";
 import { AddToHomescreenButton } from "@/components/home/add-to-homescreen-button";
+import { getHomePromo } from "@/lib/home-promo-server";
 
 type RecipeWithTags = {
   id: string;
@@ -69,7 +70,7 @@ export default async function HomePage({
   const bookmarkedIds = new Set<string>();
   if (user) {
     const ids = await withTiming("home:getBookmarkedIds", () =>
-      getBookmarkedIds(popularRecipes.map((r) => r.id))
+      getBookmarkedIds(popularRecipes.map((r) => r.id)),
     );
     ids.forEach((id) => bookmarkedIds.add(id));
   }
@@ -82,6 +83,9 @@ export default async function HomePage({
   // flipped by the modal on the client (real mount), never during this render —
   // so prefetch/background renders can't consume it.
   let showFreeTokens = false;
+  // Editable from /admin/home-promo; null when unset or unreadable.
+  const promo = await getHomePromo();
+
   let hasHealthProfile = false;
 
   if (user) {
@@ -125,19 +129,22 @@ export default async function HomePage({
         <div id="for-you"></div>
         <ForYouCategory />
 
-        {hasHealthProfile && (
+        {hasHealthProfile && promo && (
           <div className="border border-[#D3CCBD] rounded-3xl pt-12.5 pb-16 pl-10 pr-9 relative flex flex-col overflow-hidden">
             <p className="text-base text-[#312817] alan-sans z-10 relative max-w-69.5">
-              Your energy dipped this week? A beef & ginger juice could lift the
-              afternoon slump - want the recipe?
+              {promo.body}
             </p>
-            <Link
-              href={`/recipes/2307da01-c7a9-4b35-a581-526ae8f5339c`}
-              className="z-10 absolute right-6 bottom-6 bg-mint-green self-end w-fit text-white rounded-full px-6 py-3 flex items-center gap-x-1 transition-transform active:scale-[0.98]"
-            >
-              <span className="alan-sans font-semibold text-sm">View</span>
-              <MoveRight className="size-3.5" />
-            </Link>
+            {/* No linked recipe → text only. The card still reads fine, and a
+                button pointing nowhere would be worse than no button. */}
+            {promo.recipeId && (
+              <Link
+                href={`/recipes/${promo.recipeId}`}
+                className="z-10 absolute right-6 bottom-6 bg-mint-green self-end w-fit text-white rounded-full px-6 py-3 flex items-center gap-x-1 transition-transform active:scale-[0.98]"
+              >
+                <span className="alan-sans font-semibold text-sm">View</span>
+                <MoveRight className="size-3.5" />
+              </Link>
+            )}
             <Image
               src="/bottom-right-flower.svg"
               alt="flower"

@@ -19,6 +19,7 @@ const LINKS = [
   { href: "/admin", label: "Dashboard", exact: true },
   { href: "/admin/recipes", label: "Recipes" },
   { href: "/admin/tokens", label: "Tokens" },
+  { href: "/admin/home-promo", label: "Homepage card" },
   { href: "/admin/members", label: "Members", membersOnly: true },
 ];
 

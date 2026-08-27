@@ -23,12 +23,7 @@ export function AppHeader({ user }: AppHeaderProps) {
           href="/"
           className="flex items-center gap-1 py-1 px-3 rounded-full liquid-glass"
         >
-          <Image
-            src="/icon.svg"
-            alt="Nuko Logo"
-            width={20}
-            height={20}
-          />
+          <Image src="/icon.svg" alt="Nuko Logo" width={20} height={20} />
           <span className="text-xl font-semibold text-brown tracking-tight">
             Nuko
           </span>
