@@ -8,14 +8,37 @@ interface BackCapableRouter {
 /**
  * Return the user to the page they came from, falling back to the homepage when
  * there's no in-app history (e.g. a direct deep link / fresh tab). Used when
- * cancelling the sign-in or Get Nuko+ gates.
+ * cancelling the sign-in or Get Nuko+ gates, and by the default back button.
  */
 export function backOrHome(router: BackCapableRouter) {
-  if (typeof window !== "undefined" && window.history.length > 1) {
-    router.back();
-  } else {
+  if (typeof window === "undefined") {
     router.push("/");
+    return;
   }
+
+  if (window.history.length <= 1) {
+    router.push("/");
+    return;
+  }
+
+  // Beyond that first check, history.length can't be trusted: it counts every
+  // entry ever created in this tab regardless of *current position*, so it
+  // can still read >1 with nothing actually behind us — e.g. this same
+  // fallback ran once already, pushed "/", and the user returned here via the
+  // browser's own back button, leaving that "/" entry sitting ahead (not
+  // behind) and still inflating the count. So confirm the back navigation
+  // actually happens; if nothing fires, there was truly nowhere to go —
+  // fall back home instead of router.back() silently doing nothing.
+  let navigated = false;
+  const onPopState = () => {
+    navigated = true;
+  };
+  window.addEventListener("popstate", onPopState);
+  router.back();
+  window.setTimeout(() => {
+    window.removeEventListener("popstate", onPopState);
+    if (!navigated) router.push("/");
+  }, 200);
 }
 
 // Paths that aren't worth returning to after login — sending the user home
