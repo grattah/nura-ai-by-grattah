@@ -16,6 +16,10 @@ import iconHTMI from "@/public/HTMI.svg";
 import iconWIW from "@/public/WIW.svg";
 import { FaInfoCircle } from "react-icons/fa";
 import { LockKeyhole, LockKeyholeOpen, CircleAlert } from "lucide-react";
+import {
+  USAGE_FIELDS,
+  type IngredientPrecaution,
+} from "@/lib/precautions/types";
 
 interface AccordionSectionProps {
   recipe: {
@@ -27,6 +31,8 @@ interface AccordionSectionProps {
   howToMake: { step: string; instruction: string }[];
   nutrition: NutritionFacts | null;
   popular: boolean;
+  /** PRD §5 — one block per qualifying ingredient; [] renders the empty state. */
+  precautions?: IngredientPrecaution[];
 }
 
 /** Split copy on blank lines; a single block stays a single paragraph. */
@@ -42,6 +48,7 @@ const AccordionSection = ({
   howToMake,
   nutrition,
   popular,
+  precautions = [],
 }: AccordionSectionProps) => {
   const { isSubscriber, isLoading } = useAccess();
 
@@ -197,7 +204,71 @@ const AccordionSection = ({
         </AccordionContent>
       </AccordionItem>
 
-      {/* 5 — Inside Tip */}
+      {/* 5 — Precautions (PRD-4 §5). Always rendered: an empty tab is
+          reassuring, a missing tab reads as "we didn't check". Informational
+          only — unlike an allergy exclusion it never blocks access, so no
+          paywall lock here. */}
+      <AccordionItem
+        value="precautions"
+        data-paywall-passthrough
+        className="border-0 rounded-xl overflow-hidden bg-white"
+      >
+        <AccordionTrigger className="px-5 py-4 hover:no-underline min-h-14">
+          <div className="flex items-center gap-2.5">
+            <CircleAlert size={20} className="text-[#57605E] shrink-0" />
+            <span className="text-base font-medium text-base-text">
+              Precautions
+            </span>
+          </div>
+        </AccordionTrigger>
+        <AccordionContent className="px-5 pb-5 pt-0">
+          <div className="bg-[#F4F4F2] p-4 rounded-lg space-y-4">
+            {precautions.length === 0 ? (
+              <p className="text-base text-[#57605E] leading-relaxed">
+                No specific usage precautions for this recipe&apos;s ingredients.
+              </p>
+            ) : (
+              precautions.map((entry) => (
+                <div key={entry.ingredientId}>
+                  <p className="text-base font-semibold text-base-text capitalize">
+                    {entry.name}
+                  </p>
+                  <ul className="mt-1.5 space-y-1.5">
+                    {USAGE_FIELDS.filter(([key]) => entry.profile[key]).map(
+                      ([key, label]) => (
+                        <li
+                          key={key}
+                          className="flex gap-2 text-base text-[#57605E] leading-relaxed"
+                        >
+                          <span
+                            aria-hidden="true"
+                            className="mt-2 size-1.5 shrink-0 rounded-full bg-[#9CA5A3]"
+                          />
+                          <span>
+                            <span className="font-medium text-base-text">
+                              {label}:
+                            </span>{" "}
+                            {entry.profile[key]}
+                          </span>
+                        </li>
+                      ),
+                    )}
+                  </ul>
+                </div>
+              ))
+            )}
+            {/* No "Sources:" line — PRD-4 removed live search, so there is
+                nothing verifiable to cite and an unverifiable one would only
+                lend borrowed authority. */}
+            <p className="text-xs text-[#9CA5A3] leading-relaxed pt-1">
+              General information only — not medical advice. Check with your
+              doctor if you take medication or have a health condition.
+            </p>
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+
+      {/* 6 — Inside Tip */}
       <AccordionItem
         value="tip"
         className="border-0 rounded-xl overflow-hidden bg-[#EEF4FB]"
