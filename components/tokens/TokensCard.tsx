@@ -115,12 +115,12 @@ const TokensCard = ({
             {state.grantTokens} included with your plan
           </p>
         </div>
-        <div className="bg-[#227B6F1A] p-2 rounded-lg flex items-center gap-1">
+        {/* <div className="bg-[#227B6F1A] p-2 rounded-lg flex items-center gap-1">
           <Calendar size={16} color="#227B6F" strokeWidth={1.67} />
           <p className="text-xs font-semibold text-mint-green">
             Renews in {formatResetShort(state.nextAllocationAt)}
           </p>
-        </div>
+        </div> */}
       </div>
       <div className="bg-white rounded-2xl p-4 flex flex-col gap-1.75">
         <div className="flex flex-col gap-3">
@@ -141,7 +141,9 @@ const TokensCard = ({
             >
               {state.subscriptionPct}% used
             </p>
-            <p className="text-sm text-subtle font-medium">Renews each period</p>
+            <p className="text-sm text-subtle font-medium">
+              Renews each period
+            </p>
           </div>
         </div>
         <div
