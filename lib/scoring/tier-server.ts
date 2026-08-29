@@ -165,29 +165,41 @@ export async function getTiersByIngredient(
  * has tiered more ingredients than the table lists, so it is capped. Without
  * the cap a recipe would display above 100%.
  */
-function scoreFromRaw(
+export function scoreFromRaw(
   table: CalibrationTable,
   ingredients: FactRow[],
-  tiersByIngredient: Map<string, Map<string, Tier>>,
   penaltiesPresent: string[],
   penaltyFactor?: number,
 ): TierScore {
   const max = table.entries.reduce((s, e) => s + TIER_POINTS[e.tier], 0);
 
-  // 1. Table rows this recipe satisfies — each counted once.
+  // PRD §4 Step 1 — table rows this recipe satisfies, each counted once.
+  //
+  // ONLY table rows. There used to be a second pass here that gave every
+  // ingredient matching no row its own classified tier from `ingredient_tiers`,
+  // which is not in either PRD and broke the score in three ways:
+  //
+  //   • It mixed universes. The numerator drew on every ingredient in the
+  //     recipe while MaxPossible stayed the table's four rows, so RawSubtotal
+  //     routinely exceeded it — Beetroot & Celery Juice scored 130/120 for
+  //     Reduce bloating — and `Math.min(subtotal, max)` silently rounded that
+  //     to a clean 100% instead of failing loudly.
+  //   • Water is classified Secondary for most outcomes and is in nearly every
+  //     drink, so it added a free +20 floor to every recipe for every goal.
+  //     That alone was the whole 20% "Support UTI & yeast balance" on a juice
+  //     containing neither cranberry nor probiotics.
+  //   • It did not even work. It was added to rescue empty category pages;
+  //     Detox stayed at 7 qualifying recipes out of 433 while Hydration went to
+  //     401/433 at a 91% median.
+  //
+  // Because matchRowsForRecipe keys by row label, each row counts at most once
+  // and the subtotal is now bounded by `max` structurally — no cap needed, and
+  // an overflow would be a real bug rather than something to clamp away.
   const matchedRows = matchRowsForRecipe(ingredients, table.entries);
   let subtotal = 0;
   for (const row of matchedRows.values()) subtotal += TIER_POINTS[row.tier];
 
-  // 2. Ingredients that matched no row fall through to their classified tier.
-  for (const ing of ingredients) {
-    if (matchRowsForRecipe([ing], table.entries).size > 0) continue;
-    const t = tiersByIngredient.get(ing.id)?.get(table.label);
-    if (t) subtotal += TIER_POINTS[t];
-  }
-
-  const capped = Math.min(subtotal, max);
-  const score1to10 = max > 0 ? 1 + (capped / max) * 9 : 1;
+  const score1to10 = max > 0 ? 1 + (subtotal / max) * 9 : 1;
 
   const penaltySet = new Set(penaltiesPresent.map((p) => p.trim().toLowerCase()));
   const applied = table.penalties.filter((p) =>
@@ -204,7 +216,7 @@ function scoreFromRaw(
 
   const credit = (finalScore - 1) / 9;
   return {
-    rawSubtotal: capped,
+    rawSubtotal: subtotal,
     maxPossible: max,
     score1to10,
     finalScore,
@@ -228,7 +240,15 @@ export async function scoreCategories(
   input: RecipeScoringInput,
 ): Promise<Map<string, TierScore>> {
   const ingredients = await getPresentIngredients(input.recipeId);
-  const tiers = await getTiersByIngredient(ingredients.map((i) => i.id));
+  // NOTE: ingredient_tiers is deliberately NOT read here any more.
+  //
+  // PRD §7 says ingredients absent from a calibration table should still be
+  // tiered by the classification pipeline and counted. Implementing that as a
+  // numerator-only addition is what produced the 100% scores (see scoreFromRaw),
+  // because MaxPossible stayed the table's handful of rows. Re-enabling §7 means
+  // growing the DENOMINATOR with it — MaxPossible for an outcome becomes the sum
+  // over every ingredient classified for that outcome — not restoring the old
+  // fall-through. `getTiersByIngredient` is kept for that work.
 
   const out = new Map<string, TierScore>();
   for (const [key, table] of CATEGORY_TABLE_BY_KEY) {
@@ -237,7 +257,6 @@ export async function scoreCategories(
       scoreFromRaw(
         table,
         ingredients,
-        tiers,
         matchPenalties(ingredients, table.penalties),
         input.penaltyFactor,
       ),
@@ -280,7 +299,6 @@ export async function scoreMatch(
   input: RecipeScoringInput & { conditions: string[]; goals: string[] },
 ): Promise<MatchScoreView> {
   const ingredients = await getPresentIngredients(input.recipeId);
-  const tiers = await getTiersByIngredient(ingredients.map((i) => i.id));
 
   const selections: MatchSelection[] = [];
   const seen = new Set<string>();
@@ -302,7 +320,6 @@ export async function scoreMatch(
       score: scoreFromRaw(
         table,
         ingredients,
-        tiers,
         matchPenalties(ingredients, table.penalties),
         input.penaltyFactor,
       ),
@@ -372,28 +389,53 @@ export async function scoreMatchForRecipes(input: {
 
   const supabase = createServiceRoleClient();
 
-  const riRows = await fetchAll<{
+  // CHUNKED. `.in("recipe_id", ids)` puts every id in the query STRING, and
+  // PostgREST/undici reject the request once it grows past ~16KB of header —
+  // as `TypeError: fetch failed`, with no status and no cause, so it reads like
+  // a network blip rather than a request that was too big.
+  //
+  // 389 approved recipes produced a ~14.8KB URL and threw; the for-you page
+  // passes the WHOLE approved library, so it broke for every user the moment
+  // the library crossed roughly 360 recipes. 150 keeps the URL near 6KB, which
+  // leaves room for the library to grow several times over.
+  const CHUNK = 150;
+  const idChunks: string[][] = [];
+  for (let i = 0; i < input.recipeIds.length; i += CHUNK) {
+    idChunks.push(input.recipeIds.slice(i, i + CHUNK));
+  }
+
+  const riRows: {
     recipe_id: string;
     ingredient_id: string | null;
     quantity: number | null;
     ingredients: FactRow | null;
-  }>((from, to) =>
-    supabase
-      .from("recipe_ingredients")
-      .select(
+  }[] = [];
+
+  for (const chunk of idChunks) {
+    const rows = await fetchAll<{
+      recipe_id: string;
+      ingredient_id: string | null;
+      quantity: number | null;
+      ingredients: FactRow | null;
+    }>((from, to) =>
+      supabase
+        .from("recipe_ingredients")
+        .select(
         "recipe_id, ingredient_id, quantity, grams, ingredients(id, name, protein_g, fiber_g, potassium_mg, sodium_mg, calcium_dv, vitamin_c_dv, iron_mg, iron_rich, water_pct, is_probiotic, sat_fat_g, total_sugar_g, calorie_density, is_added_sweetener)",
       )
-      .in("recipe_id", input.recipeIds)
-      .gt("grams", 0)
-      // A STABLE sort is mandatory when paging. Without an ORDER BY, Postgres
-      // gives no guarantee that page 2 continues where page 1 stopped — rows
-      // get repeated and others dropped. That silently truncated some recipes'
-      // ingredient lists and scored them low: the same recipe returned 71.2%
-      // when scored alone (one page) and 58.0% in a 199-recipe batch (two).
-      .order("recipe_id", { ascending: true })
-      .order("id", { ascending: true })
-      .range(from, to) as never,
-  );
+        .in("recipe_id", chunk)
+        .gt("grams", 0)
+        // A STABLE sort is mandatory when paging. Without an ORDER BY, Postgres
+        // gives no guarantee that page 2 continues where page 1 stopped — rows
+        // get repeated and others dropped. That silently truncated some recipes'
+        // ingredient lists and scored them low: the same recipe returned 71.2%
+        // when scored alone (one page) and 58.0% in a 199-recipe batch (two).
+        .order("recipe_id", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, to) as never,
+    );
+    riRows.push(...rows);
+  }
 
   const byRecipe = new Map<string, FactRow[]>();
   const allIngredientIds = new Set<string>();
@@ -404,7 +446,6 @@ export async function scoreMatchForRecipes(input: {
     allIngredientIds.add(row.ingredients.id);
   }
 
-  const tiers = await getTiersByIngredient([...allIngredientIds]);
 
   for (const recipeId of input.recipeIds) {
     const ingredients = byRecipe.get(recipeId) ?? [];
@@ -415,7 +456,6 @@ export async function scoreMatchForRecipes(input: {
       score: scoreFromRaw(
         table!,
         ingredients,
-        tiers,
         matchPenalties(ingredients, table!.penalties),
         input.penaltyFactor,
       ),
