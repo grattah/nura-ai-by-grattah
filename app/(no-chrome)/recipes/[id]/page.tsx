@@ -18,7 +18,7 @@ import SafetyAlerts, {
   type SafetyAlertItem,
 } from "@/components/recipe/SafetyAlerts";
 import NutritionScore from "@/components/recipe/NutritionScore";
-import { scoreMatch, type MatchScoreView } from "@/lib/scoring/tier-server";
+import { computeMatchScore } from "@/lib/scoring/match-score";
 import { hasActiveSubscription } from "@/lib/subscription";
 import Comment from "@/components/recipe/Comment";
 import AccordionSection from "@/components/recipe/AccordionSection";
@@ -211,7 +211,7 @@ export default async function RecipeDetailPage({
   let personalizedView = false;
   let isSubscribed = false;
   let hasProfile = false;
-  let matchResult: MatchScoreView | null = null;
+  let matchResult: ReturnType<typeof computeMatchScore> | null = null;
   let personalizedAlerts: SafetyAlertItem[] = [];
   let needsSafetyAlerts = false;
   if (user) {
@@ -240,10 +240,29 @@ export default async function RecipeDetailPage({
     personalizedView = isSub && !!profileUpdatedAt;
     if (personalizedView && recipe.final_score_10 != null) {
       // Fresh match, computed from the recipe's current scores + the profile.
-      // Ingredient-tier scoring (Category/Match PRD v7). Reads cached tiers +
-      // the calibration tables; no bioactivity subtotals, no nutrient bonuses.
-      matchResult = await scoreMatch({
-        recipeId: recipe.id,
+      //
+      // REVERTED to the bioactivity Match Score alongside the 12-goal picker.
+      // The ingredient-tier scorer (Category/Match PRD v7) is still what writes
+      // recipe_categories, so Category Score is untouched — only this personal
+      // number goes back to the earlier formula.
+      const bioBySlug: Record<string, number> = {};
+      for (const rt of recipe.recipe_tags ?? []) {
+        if (rt.tags?.slug && rt.score != null)
+          bioBySlug[rt.tags.slug] = rt.score;
+      }
+      matchResult = computeMatchScore({
+        bioBySlug,
+        points: {
+          sugar: recipe.sugar_points ?? 0,
+          salt: recipe.salt_points ?? 0,
+          satFat: recipe.sat_fat_points ?? 0,
+          energy: recipe.energy_points ?? 0,
+          fiber: recipe.fiber_points ?? 0,
+          protein: recipe.protein_points ?? 0,
+        },
+        track: recipe.track ?? "Solid Food",
+        ironRich: !!recipe.iron_rich,
+        waterContentPercent: recipe.water_content_pct ?? 0,
         conditions: profile?.conditions ?? [],
         goals: profile?.goals ?? [],
       });

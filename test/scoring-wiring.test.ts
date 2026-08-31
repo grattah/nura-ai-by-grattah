@@ -21,24 +21,32 @@ const RECIPE_PAGE = "app/(no-chrome)/recipes/[id]/page.tsx";
 const FOR_YOU = "actions/for-you.ts";
 const RECOMPUTE = "scripts/recompute-category-scores.ts";
 
-describe("v2 scoring is not reachable from any live surface", () => {
+describe("Match Score is wired to the same engine on every live surface", () => {
+  // REVERTED: the personal Match Score is the v2 bioactivity engine again,
+  // alongside the 12-goal picker. The direction flipped; the guard did not.
+  // What matters is that BOTH surfaces call the SAME scorer — the failure this
+  // file exists for is one screen showing 13% and another 91% for the same
+  // recipe, which happened because the recipe page moved engines and for-you
+  // did not.
   it.each([
     ["recipe page", RECIPE_PAGE],
     ["for-you", FOR_YOU],
-  ])("%s does not call computeMatchScore", (_name, path) => {
-    expect(read(path)).not.toContain("computeMatchScore");
+  ])("%s scores through computeMatchScore", (_name, path) => {
+    const src = read(path);
+    expect(src).toContain("computeMatchScore");
+    expect(src).toContain("@/lib/scoring/match-score");
   });
 
-  it("the recipe page scores through the tier engine", () => {
-    const src = read(RECIPE_PAGE);
-    expect(src).toContain("scoreMatch");
-    expect(src).toContain("@/lib/scoring/tier-server");
-  });
-
-  it("for-you scores through the tier engine", () => {
-    const src = read(FOR_YOU);
-    expect(src).toContain("scoreMatchForRecipes");
-    expect(src).toContain("@/lib/scoring/tier-server");
+  it.each([
+    ["recipe page", RECIPE_PAGE],
+    ["for-you", FOR_YOU],
+  ])("%s does not also call the tier match engine", (_name, path) => {
+    // scoreCategories/tier-tables remain in use for the CATEGORY score; only
+    // the personal match number came back to v2. Calling both here is what
+    // produced two different percentages for one recipe.
+    const src = read(path);
+    expect(src).not.toMatch(/\bscoreMatch\b/);
+    expect(src).not.toMatch(/\bscoreMatchForRecipes\b/);
   });
 });
 
@@ -50,7 +58,9 @@ describe("for-you ranks and displays the same number", () => {
     // is the opposite question — which recipe serves most of what I asked for —
     // and ranking on the highest credit promotes a recipe that nails one goal
     // and ignores the rest.
-    expect(src).toContain("averagePercent");
+    // v2 returns `average` on the result object; the earlier tier engine
+    // called it `averagePercent`. The number shown is unchanged.
+    expect(src).toMatch(/match\.average/);
     expect(src).not.toMatch(/highest\??\.percent/);
   });
 

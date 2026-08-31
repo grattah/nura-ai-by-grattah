@@ -33,10 +33,10 @@ describe("every live health-profile option maps to a Match Score formula", () =>
     },
   );
 
-  // Total coverage again: every goal the picker offers must resolve to a real
-  // formula. The AUG 21 picker briefly outran the formulas and needed an
-  // exemption list; now that all 24 score, an unmapped key is a bug, not a
-  // known gap — so this is back to an unconditional assertion.
+  // Every goal the picker offers must resolve to a real formula. The AUG 21
+  // 24-goal picker outran the formulas — 11 goals were display-only and scored
+  // nothing. The reverted 12 all resolve, so an unmapped key is a bug rather
+  // than a known gap and this stays unconditional.
   it.each(GOALS.map((g) => [g.key, g.label] as const))("goal %s (%s)", (key) => {
     const prd = GOAL_KEY_TO_PRD[key];
     expect(prd, `goal "${key}" is not in GOAL_KEY_TO_PRD`).toBeDefined();
@@ -70,9 +70,10 @@ describe("map integrity", () => {
 
 // ── Conditions retired from the AUG 21 picker ───────────────────────────────
 //
-// The picker dropped from 13 conditions to 3. Users who answered the earlier
-// questionnaire still hold the retired keys in health_profiles, and their Match
-// Score must keep working — computeMatchScore skips an unmapped key silently,
+// Most of these are back in the picker after the revert; the rest
+// (type-1/type-2-diabetes, prediabetes, ibs, ibd, gerd, perimenopause) were
+// consolidated away and are still held by users who answered the earlier
+// questionnaire. Either way their Match Score must keep working — computeMatchScore skips an unmapped key silently,
 // so deleting one of these mappings during a future tidy-up would quietly zero
 // those users' scores with nothing failing.
 describe("retired condition keys still score for existing profiles", () => {
@@ -101,11 +102,24 @@ describe("retired condition keys still score for existing profiles", () => {
     expect(CONDITION_CREDITS[prd]).toBeTypeOf("function");
   });
 
-  it("offers exactly the three conditions the design shows", () => {
+  it("offers the restored twelve conditions", () => {
+    // REVERTED from the 3-condition AUG 21 set. Nothing was lost in this
+    // direction — PCOS, Menopause and Osteoporosis were all in this list
+    // already, so no saved profile changed meaning; nine options simply became
+    // selectable again.
     expect(CONDITIONS.map((c) => c.key)).toEqual([
+      "diabetes",
+      "heart-disease",
+      "high-blood-pressure",
+      "high-cholesterol",
       "pcos",
       "menopause",
+      "digestive-sensitivities",
+      "kidney-disease",
+      "liver-disease",
       "osteoporosis",
+      "arthritis",
+      "anemia",
     ]);
   });
 });

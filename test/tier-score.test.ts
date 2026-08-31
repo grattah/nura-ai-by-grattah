@@ -222,19 +222,20 @@ describe("calibration tables", () => {
     expect(GOAL_TABLES).toHaveLength(24);
   });
 
-  it("gives every live picker option a table", () => {
-    // The v2 gap this replaces: 11 of the 24 goals had no formula at all, so
-    // selecting one silently contributed nothing to the Match Score.
-    for (const goal of GOALS) {
+  it("gives every category a table", () => {
+    // Categories are the only surface still scored by these tables. The
+    // personal Match Score reverted to the v2 bioactivity engine alongside the
+    // 12-goal picker, so GOALS/CONDITIONS keys no longer resolve here — the
+    // equivalent guarantee for them ("every live picker option resolves to a
+    // real formula") moved to test/match-score-coverage.test.ts, which asserts
+    // it against GOAL_KEY_TO_PRD / GOAL_CREDITS.
+    //
+    // GOAL_TABLES and CONDITION_TABLES are kept rather than deleted: they are
+    // the transcribed PRD and the only record of that calibration.
+    for (const table of CATEGORY_TABLES) {
       expect(
-        GOAL_TABLE_BY_KEY.get(goal.key),
-        `goal "${goal.key}" (${goal.label}) has no calibration table`,
-      ).toBeDefined();
-    }
-    for (const condition of CONDITIONS) {
-      expect(
-        CONDITION_TABLE_BY_KEY.get(condition.key),
-        `condition "${condition.key}" has no calibration table`,
+        CATEGORY_TABLE_BY_KEY.get(table.key),
+        `category "${table.key}" has no calibration table`,
       ).toBeDefined();
     }
   });
