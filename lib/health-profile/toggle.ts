@@ -7,6 +7,15 @@ export function toggle(arr: string[], key: string): string[] {
 export const MAX_GOALS = 3;
 
 /**
+ * The most existing conditions a user may hold at once.
+ *
+ * Three, matching goals. The 24-goal revision briefly made conditions
+ * uncapped ("Select all that apply"); reverting to the earlier set restores
+ * the cap the picker copy has always described.
+ */
+export const MAX_CONDITIONS = 3;
+
+/**
  * Toggle `key` while never exceeding `max` selections.
  *
  * Deselect always works. Selecting past the cap replaces the OLDEST selection

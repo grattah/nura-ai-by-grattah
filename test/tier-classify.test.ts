@@ -107,28 +107,53 @@ describe("penalties are not tiered", () => {
   });
 });
 
-// ── The pipeline is authoritative for RawSubtotal ───────────────────────────
+// ── The TABLE is authoritative for RawSubtotal ──────────────────────────────
 //
-// §6 calls the tables "starting calibration examples, not exhaustive", so a
-// table row seeds the outcome — it does not override a classified tier. The
-// live score therefore comes entirely from ingredient_tiers.
+// REVERSED. This previously pinned the opposite rule — that ingredient_tiers
+// was authoritative and a table row merely "seeded" the outcome — and that rule
+// is what broke the score:
 //
-// This is the decision that makes a classified tier able to disagree with a
-// printed table row (beetroot classifies `secondary` for Heart Health while
-// §8's worked example prints Primary), so it is pinned rather than left to
-// be inferred from the code.
+//   • The numerator drew on every ingredient in the recipe while MaxPossible
+//     stayed the table's four rows, so RawSubtotal could exceed it and a cap
+//     rounded the overflow to a clean 100%.
+//   • Water classifies Secondary for most outcomes and is in nearly every
+//     drink, so every recipe collected free points for every category.
+//
+// It also broke §8. The worked example prints beetroot as Primary for Heart
+// Health, while the classifier calls it `secondary` — under the old rule the
+// classified tier won and the PRD's own example could not be reproduced. Under
+// this one the table wins and §8 returns its stated 41.7%.
+//
+// ingredient_tiers is now used to VALIDATE the row matchers, not to score.
 describe("scoring source of truth", () => {
-  it("builds RawSubtotal from the tier cache, never from table tiers", async () => {
+  // Comments are stripped before matching. The scorer's own comments explain
+  // the reversal below and name both `ingredient_tiers` and the old
+  // `Math.min(subtotal, max)` cap, so matching raw source would fail on the
+  // explanation rather than on the code.
+  const code = async () => {
     const src = (await import("node:fs")).readFileSync(
-      "lib/scoring/tier-server.ts",
+      "lib/scoring/tier-score.ts",
       "utf8",
     );
-    // The subtotal is summed from ingredient_tiers rows...
-    expect(src).toContain('.from("ingredient_tiers" as never)');
+    return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  };
+
+  it("builds RawSubtotal from matched table rows, not the tier cache", async () => {
+    const src = await code();
+    // Subtotal comes from rows the recipe actually satisfies...
+    expect(src).toContain("matchRowsForRecipe(ingredients, table.entries)");
     expect(src).toContain("TIER_POINTS[row.tier]");
-    // ...and the table is consulted only for the denominator and penalties.
-    expect(src).toContain("table.entries.reduce");
-    expect(src).toContain("table.penalties.filter");
+    // ...and nothing reads a classified tier while scoring.
+    expect(src).not.toContain("ingredient_tiers");
+    expect(src).not.toMatch(/tiersByIngredient/);
+  });
+
+  it("needs no cap, because the subtotal is bounded by construction", async () => {
+    // matchRowsForRecipe keys by row label, so each row counts at most once and
+    // the subtotal cannot exceed MaxPossible. `Math.min(subtotal, max)` is not a
+    // safety net — it is what hid the overflow for as long as it did.
+    const src = await code();
+    expect(src).not.toMatch(/Math\.min\(\s*subtotal/);
   });
 
   it("still takes MaxPossible from the table, keeping the denominator fixed", async () => {

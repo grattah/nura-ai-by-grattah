@@ -17,7 +17,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { parseIngredient } from "./parse-ingredient";
 import { toGrams } from "./units";
 import { searchFoods, getFoods } from "./client";
-import { extractNutrients, DAILY_VALUES } from "./nutrient-ids";
+import { extractNutrients, deriveComposites, DAILY_VALUES } from "./nutrient-ids";
 import type { ResolvedIngredient } from "./rollup";
 
 type DB = SupabaseClient;
@@ -36,6 +36,14 @@ export interface IngredientRow {
   calcium_dv: number; vitamin_c_dv: number; iron_mg: number; water_pct: number;
   potassium_mg: number;
   is_probiotic: boolean;
+  // Category PRD-3 §6. Nullable, unlike the fields above: these columns were
+  // added after most ingredients were resolved, and null means "not backfilled
+  // / not reported by USDA" rather than a real zero.
+  magnesium_dv: number | null;
+  zinc_dv: number | null;
+  omega3_g: number | null;
+  tryptophan_g: number | null;
+  b_vitamin_dv: number | null;
 }
 
 export interface ResolveOptions {
@@ -136,6 +144,10 @@ const ZERO_NUTRIENTS = {
   energy_kcal: 0, protein_g: 0, total_fat_g: 0, sat_fat_g: 0, carbs_g: 0,
   fiber_g: 0, total_sugar_g: 0, sodium_mg: 0, calcium_dv: 0, vitamin_c_dv: 0,
   iron_mg: 0, water_pct: 0, potassium_mg: 0,
+  // Category PRD-3 §6 nutrients. A genuine zero here, not "unmeasured": plain
+  // water and salt contain none of these, so 0 is the honest value and the
+  // matchers correctly refuse to count them.
+  magnesium_dv: 0, zinc_dv: 0, omega3_g: 0, tryptophan_g: 0, b_vitamin_dv: 0,
 };
 
 /**
@@ -362,6 +374,12 @@ export async function resolveIngredient(
   }
   const needs_review = cls.needs_review || usdaFailed;
 
+  // Category PRD-3 §6 additions. `dv` returns null rather than 0 when USDA did
+  // not report the nutrient, so an unmeasured value never reads as a real zero.
+  const composites = deriveComposites(n);
+  const dv = (raw: number | undefined, daily: number): number | null =>
+    typeof raw === "number" && Number.isFinite(raw) ? (raw / daily) * 100 : null;
+
   const row: Omit<IngredientRow, "id" | "needs_review"> = {
     name: key,
     nova_group: cls.nova_group,
@@ -383,6 +401,15 @@ export async function resolveIngredient(
     iron_mg: n.iron_mg ?? 0,
     water_pct: n.water_g ?? 0,
     potassium_mg: n.potassium_mg ?? 0,
+    // Category PRD-3 §6 rows that had no data behind them. Null rather than 0
+    // when USDA did not report the nutrient, so "not measured" stays
+    // distinguishable from a real zero — scripts/backfill-category-nutrients.ts
+    // fills these for ingredients resolved before the columns existed.
+    magnesium_dv: dv(n.magnesium_mg, DAILY_VALUES.magnesium_mg),
+    zinc_dv: dv(n.zinc_mg, DAILY_VALUES.zinc_mg),
+    omega3_g: composites.omega3_g ?? null,
+    tryptophan_g: n.tryptophan_g ?? null,
+    b_vitamin_dv: composites.b_vitamin_dv ?? null,
   };
 
   if (opts.dryRun) {

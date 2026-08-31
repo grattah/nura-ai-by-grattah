@@ -1,3 +1,5 @@
+import { matchRowsForRecipe, type IngredientFacts } from "./tier-match";
+
 // Ingredient-tier scoring — the shared engine behind BOTH scores.
 //
 // Category Score PRD §4 and Recipe Match Score PRD §4 specify an identical
@@ -210,5 +212,75 @@ export function combineMatch(selections: MatchSelection[]): CombinedMatch {
     highest: breakdown[0],
     averagePercent: (total / selections.length) * 100,
     breakdown,
+  };
+}
+
+// ── Scoring a real recipe against a table ───────────────────────────────────
+//
+// Lives HERE, not in tier-server, because tier-server imports `server-only`
+// and cannot be bundled into a Node script. scripts/recompute-category-scores.ts
+// therefore carried its own copy of this function — and kept the classified-tier
+// fall-through and the Math.min cap after both were removed from the app, so the
+// writer and the reader computed different numbers from the same tables.
+// Category PRD §8: "Implement this calculation once […] rather than maintaining
+// two separate calculations that could drift apart."
+export function scoreFromRaw(
+  table: CalibrationTable,
+  ingredients: IngredientFacts[],
+  penaltiesPresent: string[],
+  penaltyFactor?: number,
+): TierScore {
+  const max = table.entries.reduce((s, e) => s + TIER_POINTS[e.tier], 0);
+
+  // PRD §4 Step 1 — table rows this recipe satisfies, each counted once.
+  //
+  // ONLY table rows. There used to be a second pass here that gave every
+  // ingredient matching no row its own classified tier from `ingredient_tiers`,
+  // which is not in either PRD and broke the score in three ways:
+  //
+  //   • It mixed universes. The numerator drew on every ingredient in the
+  //     recipe while MaxPossible stayed the table's four rows, so RawSubtotal
+  //     routinely exceeded it — Beetroot & Celery Juice scored 130/120 for
+  //     Reduce bloating — and `Math.min(subtotal, max)` silently rounded that
+  //     to a clean 100% instead of failing loudly.
+  //   • Water is classified Secondary for most outcomes and is in nearly every
+  //     drink, so it added a free +20 floor to every recipe for every goal.
+  //     That alone was the whole 20% "Support UTI & yeast balance" on a juice
+  //     containing neither cranberry nor probiotics.
+  //   • It did not even work. It was added to rescue empty category pages;
+  //     Detox stayed at 7 qualifying recipes out of 433 while Hydration went to
+  //     401/433 at a 91% median.
+  //
+  // Because matchRowsForRecipe keys by row label, each row counts at most once
+  // and the subtotal is now bounded by `max` structurally — no cap needed, and
+  // an overflow would be a real bug rather than something to clamp away.
+  const matchedRows = matchRowsForRecipe(ingredients, table.entries);
+  let subtotal = 0;
+  for (const row of matchedRows.values()) subtotal += TIER_POINTS[row.tier];
+
+  const score1to10 = max > 0 ? 1 + (subtotal / max) * 9 : 1;
+
+  const penaltySet = new Set(penaltiesPresent.map((p) => p.trim().toLowerCase()));
+  const applied = table.penalties.filter((p) =>
+    penaltySet.has(p.ingredient.trim().toLowerCase()),
+  );
+
+  let finalScore = score1to10;
+  if (applied.some((p) => p.type === "multiplier")) {
+    finalScore = score1to10 * (penaltyFactor ?? 1);
+  }
+  const flat = applied.filter((p) => p.type === "flat").length;
+  if (flat > 0) finalScore -= FLAT_PENALTY * flat;
+  finalScore = Math.max(1, finalScore);
+
+  const credit = (finalScore - 1) / 9;
+  return {
+    rawSubtotal: subtotal,
+    maxPossible: max,
+    score1to10,
+    finalScore,
+    credit,
+    percent: credit * 100,
+    penaltiesApplied: applied.map((p) => p.ingredient),
   };
 }

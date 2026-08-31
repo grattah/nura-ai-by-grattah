@@ -2,7 +2,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { scoreMatchForRecipes } from "@/lib/scoring/tier-server";
+import { computeMatchScore } from "@/lib/scoring/match-score";
 
 /**
  * The "For you" list: recipes ranked for one user's own profile.
@@ -15,8 +15,10 @@ import { scoreMatchForRecipes } from "@/lib/scoring/tier-server";
  * would put a recipe that nails one goal and ignores the other two above one
  * that serves all three.
  *
- * Scoring is bulk — two queries for the whole library rather than two per
- * recipe.
+ * REVERTED to the bioactivity Match Score alongside the 12-goal picker. The
+ * formula changed; the choice of number did not — average, not highest, for the
+ * reason above. computeMatchScore is pure and synchronous, so the whole library
+ * is scored from a single query with no per-recipe round trip.
  */
 export async function getTopMatches(limit: number) {
   const supabase = await createClient();
@@ -38,7 +40,7 @@ export async function getTopMatches(limit: number) {
 
   const { data: recipes, error } = await supabase
     .from("recipes")
-    .select("*")
+    .select("*, recipe_tags(score, tags(slug))")
     .eq("status", "approved");
 
   if (error) {
@@ -49,19 +51,38 @@ export async function getTopMatches(limit: number) {
   const rows = recipes ?? [];
   if (rows.length === 0) return { recipes: [] };
 
-  const scores = await scoreMatchForRecipes({
-    recipeIds: rows.map((r) => r.id as string),
-    conditions: profile.conditions ?? [],
-    goals: profile.goals ?? [],
-  });
-
   const scored = rows
-    .map((r) => ({
-      recipe: r,
-      // The displayed and sorted number are the SAME value — a list sorted by
-      // one number while showing another is impossible for a user to read.
-      score: scores.get(r.id as string)?.averagePercent ?? 0,
-    }))
+    .map((r) => {
+      const recipe = r as typeof r & {
+        recipe_tags?: { score: number | null; tags: { slug: string } | null }[];
+      };
+      const bioBySlug: Record<string, number> = {};
+      for (const rt of recipe.recipe_tags ?? []) {
+        if (rt.tags?.slug && rt.score != null) bioBySlug[rt.tags.slug] = rt.score;
+      }
+      const match = computeMatchScore({
+        bioBySlug,
+        points: {
+          sugar: recipe.sugar_points ?? 0,
+          salt: recipe.salt_points ?? 0,
+          satFat: recipe.sat_fat_points ?? 0,
+          energy: recipe.energy_points ?? 0,
+          fiber: recipe.fiber_points ?? 0,
+          protein: recipe.protein_points ?? 0,
+        },
+        track: recipe.track ?? "Solid Food",
+        ironRich: !!recipe.iron_rich,
+        waterContentPercent: recipe.water_content_pct ?? 0,
+        conditions: profile.conditions ?? [],
+        goals: profile.goals ?? [],
+      });
+      return {
+        recipe: r,
+        // The displayed and sorted number are the SAME value — a list sorted by
+        // one number while showing another is impossible for a user to read.
+        score: match.average ?? 0,
+      };
+    })
     // A zero average means the recipe serves none of the user's selections;
     // "For you" is a recommendation surface, so it earns no place there.
     .filter((x) => x.score > 0)
