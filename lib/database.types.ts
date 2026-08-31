@@ -230,6 +230,10 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          hidden: boolean
+          hidden_at: string | null
+          hidden_by: string | null
+          hidden_reason: string | null
           id: string
           likes: number
           parent_id: string | null
@@ -239,6 +243,10 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
+          hidden?: boolean
+          hidden_at?: string | null
+          hidden_by?: string | null
+          hidden_reason?: string | null
           id?: string
           likes?: number
           parent_id?: string | null
@@ -248,6 +256,10 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          hidden?: boolean
+          hidden_at?: string | null
+          hidden_by?: string | null
+          hidden_reason?: string | null
           id?: string
           likes?: number
           parent_id?: string | null
@@ -313,36 +325,57 @@ export type Database = {
       }
       credits: {
         Row: {
+          anchor_day: number | null
           created_at: string
           extra_purchased: number
           extra_used: number
           free_granted: number
           free_used: number
+          last_allocation_at: string | null
           last_purchase_at: string | null
+          next_allocation_at: string | null
+          plan: string | null
+          purchased_frozen: boolean
+          purchased_units: number
+          subscription_units: number
           updated_at: string
           user_id: string
           week_anchor: string | null
           weekly_used: number
         }
         Insert: {
+          anchor_day?: number | null
           created_at?: string
           extra_purchased?: number
           extra_used?: number
           free_granted?: number
           free_used?: number
+          last_allocation_at?: string | null
           last_purchase_at?: string | null
+          next_allocation_at?: string | null
+          plan?: string | null
+          purchased_frozen?: boolean
+          purchased_units?: number
+          subscription_units?: number
           updated_at?: string
           user_id: string
           week_anchor?: string | null
           weekly_used?: number
         }
         Update: {
+          anchor_day?: number | null
           created_at?: string
           extra_purchased?: number
           extra_used?: number
           free_granted?: number
           free_used?: number
+          last_allocation_at?: string | null
           last_purchase_at?: string | null
+          next_allocation_at?: string | null
+          plan?: string | null
+          purchased_frozen?: boolean
+          purchased_units?: number
+          subscription_units?: number
           updated_at?: string
           user_id?: string
           week_anchor?: string | null
@@ -506,6 +539,38 @@ export type Database = {
         }
         Relationships: []
       }
+      home_promo: {
+        Row: {
+          body: string
+          id: boolean
+          recipe_id: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          body?: string
+          id?: boolean
+          recipe_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          body?: string
+          id?: boolean
+          recipe_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_promo_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ingredient_interactions: {
         Row: {
           aliases: string[]
@@ -542,6 +607,38 @@ export type Database = {
         }
         Relationships: []
       }
+      ingredient_tiers: {
+        Row: {
+          created_at: string
+          ingredient_id: string
+          model: string | null
+          outcome: string
+          tier: string | null
+        }
+        Insert: {
+          created_at?: string
+          ingredient_id: string
+          model?: string | null
+          outcome: string
+          tier?: string | null
+        }
+        Update: {
+          created_at?: string
+          ingredient_id?: string
+          model?: string | null
+          outcome?: string
+          tier?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingredient_tiers_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ingredients: {
         Row: {
           aliases: string[]
@@ -559,20 +656,24 @@ export type Database = {
           iron_rich: boolean
           is_added_sweetener: boolean
           is_fvl: boolean
+          is_probiotic: boolean
+          is_sweetener_nnutritive: boolean
           name: string
           needs_review: boolean
+          needs_usage_profile: boolean | null
           nova_group: number | null
+          potassium_mg: number | null
           protein_g: number | null
           sat_fat_g: number | null
           sodium_mg: number | null
           total_fat_g: number | null
           total_sugar_g: number | null
           updated_at: string
+          usage_profile: Json | null
+          usage_profile_at: string | null
           verified_at: string | null
           vitamin_c_dv: number | null
           water_pct: number | null
-          potassium_mg: number | null
-          is_probiotic: boolean
         }
         Insert: {
           aliases?: string[]
@@ -590,20 +691,24 @@ export type Database = {
           iron_rich?: boolean
           is_added_sweetener?: boolean
           is_fvl?: boolean
+          is_probiotic?: boolean
+          is_sweetener_nnutritive?: boolean
           name: string
           needs_review?: boolean
+          needs_usage_profile?: boolean | null
           nova_group?: number | null
+          potassium_mg?: number | null
           protein_g?: number | null
           sat_fat_g?: number | null
           sodium_mg?: number | null
           total_fat_g?: number | null
           total_sugar_g?: number | null
           updated_at?: string
+          usage_profile?: Json | null
+          usage_profile_at?: string | null
           verified_at?: string | null
           vitamin_c_dv?: number | null
           water_pct?: number | null
-          potassium_mg?: number | null
-          is_probiotic?: boolean
         }
         Update: {
           aliases?: string[]
@@ -621,20 +726,24 @@ export type Database = {
           iron_rich?: boolean
           is_added_sweetener?: boolean
           is_fvl?: boolean
+          is_probiotic?: boolean
+          is_sweetener_nnutritive?: boolean
           name?: string
           needs_review?: boolean
+          needs_usage_profile?: boolean | null
           nova_group?: number | null
+          potassium_mg?: number | null
           protein_g?: number | null
           sat_fat_g?: number | null
           sodium_mg?: number | null
           total_fat_g?: number | null
           total_sugar_g?: number | null
           updated_at?: string
+          usage_profile?: Json | null
+          usage_profile_at?: string | null
           verified_at?: string | null
           vitamin_c_dv?: number | null
           water_pct?: number | null
-          potassium_mg?: number | null
-          is_probiotic?: boolean
         }
         Relationships: []
       }
@@ -903,8 +1012,6 @@ export type Database = {
           base_final_score: number | null
           base_final_score_10: number | null
           created_at: string
-          match_breakdown: Json | null
-          match_score: number | null
           personalized_final_score: number | null
           profile_updated_at: string
           recipe_id: string
@@ -918,8 +1025,6 @@ export type Database = {
           base_final_score?: number | null
           base_final_score_10?: number | null
           created_at?: string
-          match_breakdown?: Json | null
-          match_score?: number | null
           personalized_final_score?: number | null
           profile_updated_at: string
           recipe_id: string
@@ -933,8 +1038,6 @@ export type Database = {
           base_final_score?: number | null
           base_final_score_10?: number | null
           created_at?: string
-          match_breakdown?: Json | null
-          match_score?: number | null
           personalized_final_score?: number | null
           profile_updated_at?: string
           recipe_id?: string
@@ -1024,8 +1127,10 @@ export type Database = {
           nutrition_score_10: number | null
           nutrition_scoring: Json | null
           nutrition_sodium_points: number | null
+          potassium_mg: number | null
           preparation: string | null
           preview_ingredients: string[]
+          probiotic: boolean
           protein_points: number | null
           recipe_section_title: string
           salt_points: number | null
@@ -1034,6 +1139,7 @@ export type Database = {
           servings: number | null
           shares: number
           short_description: string
+          sodium_mg: number | null
           source_url: string
           status: string
           sugar_points: number | null
@@ -1042,13 +1148,11 @@ export type Database = {
           track: string | null
           track_reason: string | null
           updated_at: string
+          vitamin_c_dv: number | null
           water_content_pct: number | null
           weighted_score: number
           why_it_works: string
-          vitamin_c_dv: number | null
-          potassium_mg: number | null
-          sodium_mg: number | null
-          probiotic: boolean
+          why_it_works_detail: Json | null
         }
         Insert: {
           bns_grade?: string | null
@@ -1088,8 +1192,10 @@ export type Database = {
           nutrition_score_10?: number | null
           nutrition_scoring?: Json | null
           nutrition_sodium_points?: number | null
+          potassium_mg?: number | null
           preparation?: string | null
           preview_ingredients?: string[]
+          probiotic?: boolean
           protein_points?: number | null
           recipe_section_title: string
           salt_points?: number | null
@@ -1098,6 +1204,7 @@ export type Database = {
           servings?: number | null
           shares?: number
           short_description: string
+          sodium_mg?: number | null
           source_url?: string
           status?: string
           sugar_points?: number | null
@@ -1106,13 +1213,11 @@ export type Database = {
           track?: string | null
           track_reason?: string | null
           updated_at?: string
+          vitamin_c_dv?: number | null
           water_content_pct?: number | null
           weighted_score?: number
           why_it_works: string
-          vitamin_c_dv?: number | null
-          potassium_mg?: number | null
-          sodium_mg?: number | null
-          probiotic?: boolean
+          why_it_works_detail?: Json | null
         }
         Update: {
           bns_grade?: string | null
@@ -1152,8 +1257,10 @@ export type Database = {
           nutrition_score_10?: number | null
           nutrition_scoring?: Json | null
           nutrition_sodium_points?: number | null
+          potassium_mg?: number | null
           preparation?: string | null
           preview_ingredients?: string[]
+          probiotic?: boolean
           protein_points?: number | null
           recipe_section_title?: string
           salt_points?: number | null
@@ -1162,6 +1269,7 @@ export type Database = {
           servings?: number | null
           shares?: number
           short_description?: string
+          sodium_mg?: number | null
           source_url?: string
           status?: string
           sugar_points?: number | null
@@ -1170,13 +1278,11 @@ export type Database = {
           track?: string | null
           track_reason?: string | null
           updated_at?: string
+          vitamin_c_dv?: number | null
           water_content_pct?: number | null
           weighted_score?: number
           why_it_works?: string
-          vitamin_c_dv?: number | null
-          potassium_mg?: number | null
-          sodium_mg?: number | null
-          probiotic?: boolean
+          why_it_works_detail?: Json | null
         }
         Relationships: []
       }
@@ -1338,6 +1444,42 @@ export type Database = {
         }
         Relationships: []
       }
+      token_reservations: {
+        Row: {
+          action: string
+          cost_units: number
+          created_at: string
+          from_purchased: number
+          from_subscription: number
+          id: string
+          resolved_at: string | null
+          state: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          cost_units: number
+          created_at?: string
+          from_purchased: number
+          from_subscription: number
+          id?: string
+          resolved_at?: string | null
+          state?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          cost_units?: number
+          created_at?: string
+          from_purchased?: number
+          from_subscription?: number
+          id?: string
+          resolved_at?: string | null
+          state?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       token_usage: {
         Row: {
           billed: boolean
@@ -1394,6 +1536,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      allocate_subscription_units: {
+        Args: {
+          p_anchor_day?: number
+          p_next_allocation?: string
+          p_plan: string
+          p_user: string
+        }
+        Returns: number
+      }
       category_drink_types: {
         Args: { p_slug: string }
         Returns: {
@@ -1408,12 +1559,24 @@ export type Database = {
         }[]
       }
       claim_free_tokens_redirect: { Args: never; Returns: boolean }
+      credit_purchased_units: {
+        Args: {
+          p_label?: string
+          p_session_id?: string
+          p_units: number
+          p_user: string
+        }
+        Returns: number
+      }
+      expire_lapsed_subscriptions: { Args: never; Returns: number }
       free_use_count: {
         Args: { p_surface: string; p_user: string }
         Returns: number
       }
-      get_token_state: { Args: { p_user: string }; Returns: Json }
+      has_active_subscription: { Args: never; Returns: boolean }
       increment_recipe_shares: { Args: { rid: string }; Returns: undefined }
+      lapse_expired_balances: { Args: never; Returns: number }
+      lapse_token_balance: { Args: { p_user: string }; Returns: undefined }
       match_embeddings: {
         Args: {
           match_context_id: string
@@ -1428,35 +1591,38 @@ export type Database = {
           source_url: string
         }[]
       }
-      purchase_tokens: {
-        Args: {
-          p_label?: string
-          p_reason: string
-          p_session_id?: string
-          p_units: number
-          p_user: string
-        }
-        Returns: Json
-      }
       record_free_use: {
         Args: { p_item?: string; p_surface: string; p_user: string }
         Returns: number
       }
       refresh_recipe_scores: { Args: never; Returns: undefined }
-      spend_tokens: {
-        Args: {
-          p_label?: string
-          p_raw_tokens?: number
-          p_reason: string
-          p_units: number
-          p_user: string
+      release_reservation: { Args: { p_id: string }; Returns: boolean }
+      release_stale_reservations: {
+        Args: { p_older_than?: string }
+        Returns: number
+      }
+      reserve_units: {
+        Args: { p_action: string; p_user: string }
+        Returns: {
+          action: string
+          cost_units: number
+          created_at: string
+          from_purchased: number
+          from_subscription: number
+          id: string
+          resolved_at: string | null
+          state: string
+          user_id: string
         }
-        Returns: Json
+        SetofOptions: {
+          from: "*"
+          to: "token_reservations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
-      token_state_json: {
-        Args: { r: Database["public"]["Tables"]["credits"]["Row"] }
-        Returns: Json
-      }
+      settle_reservation: { Args: { p_id: string }; Returns: boolean }
+      token_action_units: { Args: { p_action: string }; Returns: number }
       token_usage_by_model: {
         Args: { p_since: string }
         Returns: {
@@ -1474,7 +1640,9 @@ export type Database = {
         Returns: {
           calls: number
           images: number
+          input_tokens: number
           model: string
+          output_tokens: number
           provider: string
           surface: string
           total_tokens: number
