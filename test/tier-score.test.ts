@@ -18,6 +18,11 @@ import {
   GOAL_TABLE_BY_KEY,
 } from "@/lib/scoring/tier-tables";
 import { GOALS, CONDITIONS } from "@/lib/health-profile/options";
+import {
+  ROW_MATCHERS,
+  PENALTY_MATCHERS,
+  UNIMPLEMENTABLE_PENALTIES,
+} from "@/lib/scoring/tier-match";
 
 // ── The PRDs' own worked examples are the acceptance criteria ────────────────
 
@@ -387,5 +392,76 @@ describe("skin goals are distinct outcomes", () => {
     const combined = combineMatch(selections);
     expect(combined.breakdown).toHaveLength(4);
     expect(new Set(combined.breakdown.map((b) => b.label)).size).toBe(4);
+  });
+});
+
+// ── Every category row must be reachable ────────────────────────────────────
+//
+// The defect this guards against, in full: a table row with no ROW_MATCHERS
+// entry can never be satisfied by any ingredient, but §4 Step 2 still counts it
+// in MaxPossible. Nine of the fourteen categories were in that state — Sleep and
+// Focus could not exceed 50% however good a recipe was, Beauty 52%, and Detox,
+// Immunity and Heart Health 58% — because `ingredients` held no magnesium, zinc,
+// omega-3, B-vitamin or polyphenol data. Detox showed 7 qualifying recipes out
+// of 433 and the page read as empty.
+//
+// Nothing failed. Every formula test passed throughout, because the formula was
+// correct; it was being fed a denominator it could not reach.
+describe("Category PRD §6 — every row is scoreable", () => {
+  it.each(CATEGORY_TABLES.map((t) => [t.label, t] as const))(
+    "%s has a matcher for every row",
+    (_label, table) => {
+      const dead = table.entries
+        .filter((e) => !ROW_MATCHERS[e.ingredient])
+        .map((e) => `${e.ingredient} [${e.tier}]`);
+      expect(
+        dead,
+        `these rows inflate MaxPossible but can never be matched, capping the category`,
+      ).toEqual([]);
+    },
+  );
+
+  it.each(CATEGORY_TABLES.map((t) => [t.label, t] as const))(
+    "%s can reach 100%% of MaxPossible",
+    (_label, table) => {
+      // The assertion above restated as the consequence that actually matters:
+      // a category whose reachable ceiling is below 100% is scored against a
+      // denominator no recipe can reach.
+      const reachable = table.entries
+        .filter((e) => ROW_MATCHERS[e.ingredient])
+        .reduce((sum, e) => sum + TIER_POINTS[e.tier], 0);
+      expect(reachable).toBe(maxPossible(table));
+    },
+  );
+
+  it("has a matcher for every penalty except the documented three", () => {
+    // A penalty with no matcher never fires, so a recipe keeps points it should
+    // have lost — the same silence in the opposite direction.
+    //
+    // Three are knowingly unimplementable (see UNIMPLEMENTABLE_PENALTIES).
+    // Asserting against that list rather than against [] keeps the gap visible
+    // while still failing on a NEW one.
+    const known = new Set<string>(UNIMPLEMENTABLE_PENALTIES);
+    const dead: string[] = [];
+    for (const table of CATEGORY_TABLES) {
+      for (const p of table.penalties) {
+        if (!PENALTY_MATCHERS[p.ingredient] && !known.has(p.ingredient)) {
+          dead.push(`${table.label}: ${p.ingredient}`);
+        }
+      }
+    }
+    expect(dead).toEqual([]);
+  });
+
+  it("does not quietly grow the unimplementable list", () => {
+    // Diabetes declares Glycemic load and it does not fire, so that category is
+    // scored without a penalty its own PRD table lists. That is a real, known
+    // limitation — pinned here so it is a decision on the record rather than an
+    // omission, and so a fourth entry cannot be added without this failing.
+    expect(UNIMPLEMENTABLE_PENALTIES).toEqual([
+      "Glycemic load",
+      "Trans fat",
+      "High-FODMAP / fermentable carbs",
+    ]);
   });
 });
