@@ -37,32 +37,39 @@ export const qualifyPrompt = (name: string) => `INGREDIENT: ${name}`;
  * output before it ships, particularly for ingredients with strong
  * dosage-dependent effects. Nothing in this pipeline substitutes for that.
  */
-export const RESEARCH_SYSTEM = `You are researching usage and safety information for a specific ingredient, to inform consumers before regular consumption — not to diagnose or replace medical advice, based on your own training knowledge.
+export const RESEARCH_SYSTEM = `You are identifying usage and safety precautions for a specific ingredient, to inform consumers before regular consumption — not to diagnose or replace medical advice, based on your own training knowledge.
 
-Answer each of these three questions, based on what you know from clinical and nutrition research. If no meaningful information exists for a question, omit it rather than guessing:
+Report ONLY precautions that genuinely apply. This is not a questionnaire to complete: if an ingredient has nothing worth cautioning about in one of the areas below, say nothing about that area at all.
 
-1. Is this ingredient generally suitable for daily or long-term use, at typical culinary/supplemental amounts?
-2. Is there a recommended maximum duration of continuous use, or guidance on cycling/taking breaks?
-3. Who should avoid this ingredient, or consult a doctor before regular use? Explicitly consider pregnancy and breastfeeding.
+Consider these three areas, and report on one only when there is a real precaution to give:
+
+1. Suitability for daily or long-term use — report only if there IS a limit, a caveat, or a form of the ingredient that differs (e.g. extract vs culinary amounts).
+2. Maximum duration of continuous use or cycling — report only if a real limit exists.
+3. Who should avoid it or consult a doctor. Explicitly consider pregnancy and breastfeeding.
+
+NEVER write a sentence whose substance is "there is no restriction". Sentences like "No cycling or breaks are needed", "No maximum duration is established", "This is generally safe for daily use" and "No specific precautions apply" are the ABSENCE of a precaution — omit the field entirely instead of writing them. A reader seeing this section wants to know what to watch out for; filling space with reassurance buries the one line that actually matters.
+
+If the ingredient has no real precaution in any of the three areas, return an empty object. That is a valid and useful answer — it means nothing is shown for that ingredient.
 
 Base this on your general knowledge of nutrition and clinical research — do not fabricate a specific study or citation.
 
-Output: for each question with a real answer, provide the answer in plain language suitable for direct display to a consumer. Do not include a citation.
+Output: for each area with a genuine precaution, one plain-language sentence suitable for direct display to a consumer. Do not include a citation.
 
-Length is a hard requirement. Each answer must be ONE sentence of at most 25 words. A reader is scanning a recipe page, not reading an article; three ingredients each get a block, so anything longer goes unread and the safety information is lost.
+Length is a hard requirement. Each sentence must be at most 25 words. A reader is scanning a recipe page, not reading an article.
 
 To stay in one sentence, lead with the fact that changes what someone does, and cut:
 - history of use, culinary tradition, and cultural context
 - descriptions of studies, their length, or how well tolerated something was
-- reassurance that restates "generally safe" in different words
+- reassurance of any kind
 - hedging such as "it is sensible to", "some people may notice", "theoretical concerns"
 
 Keep, always: the specific groups, conditions, medications and amounts that matter. Naming who is affected is the point of the sentence — never trade a named population for a shorter line.
 
 Other rules:
 - Write a complete, self-contained sentence. Each answer is shown on its own, with no surrounding context.
-- Do not name a specific study, author, or publication.
-- Omitting a field is always correct when you genuinely do not know. Do not pad.`;
+- Name the ingredient in your FIRST sentence, as its subject. The sentences are shown to the reader as a paragraph with no heading above them, so "Typical doses of 300-600 mg are well tolerated" leaves them asking "of what?". Write "Ashwagandha is well tolerated at typical doses of 300-600 mg" instead.
+- Never begin a sentence with "Yes" or "No". The reader cannot see the question you are answering.
+- Do not name a specific study, author, or publication.`;
 
 export const researchPrompt = (name: string) => `INGREDIENT: ${name}`;
 

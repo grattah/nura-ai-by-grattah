@@ -17,7 +17,7 @@ import iconWIW from "@/public/WIW.svg";
 import { FaInfoCircle } from "react-icons/fa";
 import { LockKeyhole, LockKeyholeOpen, CircleAlert } from "lucide-react";
 import {
-  USAGE_FIELDS,
+  precautionProse,
   type IngredientPrecaution,
 } from "@/lib/precautions/types";
 
@@ -228,33 +228,28 @@ const AccordionSection = ({
                 No specific usage precautions for this recipe&apos;s ingredients.
               </p>
             ) : (
+              // Prose only — no ingredient heading. The three answers are
+              // written as self-contained sentences (§4.1), so they read as one
+              // paragraph, and the section gets the same treatment as "Why it
+              // works" above rather than looking like a form.
+              //
+              // Measured before removing the heading: 123 of 132 profiles (93%)
+              // open by naming their own ingredient — "Ground cinnamon is safe
+              // daily…" — so for almost all of them the heading was repeating
+              // the first three words of the sentence beneath it.
+              //
+              // The remaining ~7% open without naming themselves ("Typical
+              // doses of 300–600 mg daily appear well tolerated…"). One
+              // paragraph per ingredient keeps them separable, and the fix for
+              // those is in the copy, not the layout — the §4.1 prompt should
+              // require the opening sentence to name the ingredient.
               precautions.map((entry) => (
-                <div key={entry.ingredientId}>
-                  <p className="text-base font-semibold text-base-text capitalize">
-                    {entry.name}
-                  </p>
-                  <ul className="mt-1.5 space-y-1.5">
-                    {USAGE_FIELDS.filter(([key]) => entry.profile[key]).map(
-                      ([key, label]) => (
-                        <li
-                          key={key}
-                          className="flex gap-2 text-base text-[#57605E] leading-relaxed"
-                        >
-                          <span
-                            aria-hidden="true"
-                            className="mt-2 size-1.5 shrink-0 rounded-full bg-[#9CA5A3]"
-                          />
-                          <span>
-                            <span className="font-medium text-base-text">
-                              {label}:
-                            </span>{" "}
-                            {entry.profile[key]}
-                          </span>
-                        </li>
-                      ),
-                    )}
-                  </ul>
-                </div>
+                <p
+                  key={entry.ingredientId}
+                  className="text-base text-[#57605E] leading-relaxed"
+                >
+                  {precautionProse(entry.profile)}
+                </p>
               ))
             )}
             {/* No "Sources:" line — PRD-4 removed live search, so there is

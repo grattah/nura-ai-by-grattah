@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import {
+  precautionProse,
+  opensByNaming,
   isMeaningfulAmount,
   isUsableProfile,
   parseUsageProfile,
@@ -139,44 +141,49 @@ describe("PRD §5 — display", () => {
 
 // ── §4.1: the prompt is the only safety control left ────────────────────────
 describe("PRD-4 §4.1 — research prompt", () => {
-  it("asks exactly the three questions, and no longer asks for a dose", () => {
+  it("covers the three areas, and no longer asks for a dose", () => {
     expect(RESEARCH_SYSTEM).toMatch(/daily or long-term use/i);
-    expect(RESEARCH_SYSTEM).toMatch(/cycling\/taking breaks/i);
+    expect(RESEARCH_SYSTEM).toMatch(/duration of continuous use or cycling/i);
     expect(RESEARCH_SYSTEM).toMatch(/pregnancy and breastfeeding/i);
-    // PRD-4 dropped question 1. Without a source to read a figure from, asking
-    // for one invites a recalled number presented as guidance.
+    // PRD-4 dropped the dose question. Without a source to read a figure from,
+    // asking for one invites a recalled number presented as guidance.
     expect(RESEARCH_SYSTEM).not.toMatch(/maximum safe amount/i);
+  });
+
+  it("asks for precautions, not for three questions to be answered", () => {
+    // The tab shows these as prose with no headings, so an answer written to
+    // fill a heading is just noise. Measured before this rule existed: 111 of
+    // 390 sentences (28%) had the substance "there is no restriction" —
+    // "No cycling or breaks are needed", "No maximum duration is established".
+    expect(RESEARCH_SYSTEM).toMatch(/Report ONLY precautions that genuinely apply/);
+    expect(RESEARCH_SYSTEM).toMatch(/This is not a questionnaire to complete/);
+    expect(RESEARCH_SYSTEM).toMatch(
+      /NEVER write a sentence whose substance is "there is no restriction"/,
+    );
+    expect(RESEARCH_SYSTEM).toMatch(/return an empty object/i);
   });
 
   it("relies on training knowledge and forbids a fabricated citation", () => {
     expect(RESEARCH_SYSTEM).toMatch(/your own training knowledge/i);
     expect(RESEARCH_SYSTEM).toMatch(/do not fabricate a specific study or citation/i);
     expect(RESEARCH_SYSTEM).toMatch(/Do not include a citation/i);
-    expect(RESEARCH_SYSTEM).toMatch(/omit it rather than guessing/i);
   });
 
   it("no longer references web search or a source allow-list", () => {
-    // The searched pipeline is gone; a leftover instruction to "search" or
-    // "prioritize these sources" would ask for something the call cannot do.
     expect(RESEARCH_SYSTEM).not.toMatch(/\bsearch\b/i);
     expect(RESEARCH_SYSTEM).not.toMatch(/pubmed|cochrane|examine\.com|nih/i);
   });
 
-  it("caps each answer at one sentence", () => {
+  it("caps each sentence at 25 words", () => {
     // The first run averaged ~2,240 characters per ingredient — about 1,200
-    // words on a three-active recipe, which nobody reads, so the safety
-    // information was effectively lost. The constraint is the fix, and it
-    // belongs in the prompt rather than in a truncation step.
-    expect(RESEARCH_SYSTEM).toMatch(/ONE sentence of at most 25 words/);
+    // words on a three-active recipe, which nobody reads.
+    expect(RESEARCH_SYSTEM).toMatch(/at most 25 words/);
     expect(RESEARCH_SYSTEM).toMatch(/Length is a hard requirement/i);
   });
 
-  it("cuts narrative, not named populations", () => {
-    // Brevity must come out of the history-of-use padding, never out of the
-    // specifics — a shorter line that drops "in pregnancy" is worse than a
-    // long one.
+  it("cuts narrative and reassurance, not named populations", () => {
     expect(RESEARCH_SYSTEM).toMatch(/history of use/i);
-    expect(RESEARCH_SYSTEM).toMatch(/descriptions of studies/i);
+    expect(RESEARCH_SYSTEM).toMatch(/reassurance of any kind/i);
     expect(RESEARCH_SYSTEM).toMatch(
       /never trade a named population for a shorter line/i,
     );
@@ -194,7 +201,7 @@ describe('the "who should avoid" guard', () => {
     // and with it on the next, both stop_reason end_turn. The guard keys off
     // this constant, so a rename must not silently disable it.
     expect(CRITICAL_FIELD).toBe("whoShouldAvoid");
-    expect(USAGE_FIELDS.map(([k]) => k)).toContain(CRITICAL_FIELD);
+    expect(USAGE_FIELDS).toContain(CRITICAL_FIELD);
   });
 
   it("lets the re-ask come back empty instead of demanding a caution", () => {
@@ -208,7 +215,7 @@ describe('the "who should avoid" guard', () => {
 
 describe("field labels", () => {
   it("covers exactly the three PRD-4 §3 fields, in reading order", () => {
-    expect(USAGE_FIELDS.map(([k]) => k)).toEqual([
+    expect(USAGE_FIELDS).toEqual([
       "longTermUse",
       "durationCycling",
       "whoShouldAvoid",
@@ -238,5 +245,105 @@ describe("the reader must not use the caller's client", () => {
     // The page holds a cookie client. Taking one as a parameter is exactly how
     // the restored version reintroduced the bug.
     expect(src).not.toMatch(/supabase:\s*SupabaseClient/);
+  });
+});
+
+// ── Prose rendering ─────────────────────────────────────────────────────────
+describe("precautionProse", () => {
+  it("joins the three answers into one paragraph, in reading order", () => {
+    expect(
+      precautionProse({
+        whoShouldAvoid: "Avoid in pregnancy.",
+        longTermUse: "Safe daily.",
+        durationCycling: "No cycling needed.",
+      }),
+    ).toBe("Safe daily. No cycling needed. Avoid in pregnancy.");
+  });
+
+  it("omits a field that has no answer rather than leaving a gap", () => {
+    expect(
+      precautionProse({ longTermUse: "Safe daily.", whoShouldAvoid: "Avoid in pregnancy." }),
+    ).toBe("Safe daily. Avoid in pregnancy.");
+  });
+
+  it("adds a full stop when the model omitted one", () => {
+    // Without this the next sentence fuses onto the previous one and the block
+    // becomes an unreadable run-on — silently, per ingredient.
+    expect(
+      precautionProse({ longTermUse: "Safe daily", durationCycling: "No cycling needed" }),
+    ).toBe("Safe daily. No cycling needed.");
+  });
+
+  it("leaves other terminal punctuation alone", () => {
+    expect(precautionProse({ longTermUse: "Is it safe daily? Yes!" })).toBe(
+      "Is it safe daily? Yes!",
+    );
+  });
+
+  it("returns an empty string for an empty profile", () => {
+    // buildPrecautions already drops unusable profiles, so this never reaches
+    // the page — but returning "" rather than throwing keeps that guarantee
+    // from being load-bearing.
+    expect(precautionProse({})).toBe("");
+  });
+});
+
+// ── The prose has no heading, so it must identify itself ────────────────────
+describe("opensByNaming", () => {
+  it("accepts an opening that names its ingredient", () => {
+    expect(
+      opensByNaming("ground cinnamon", {
+        longTermUse: "Ground cinnamon is safe daily in culinary amounts.",
+      }),
+    ).toBe(true);
+  });
+
+  it("rejects an opening that leaves the reader asking 'of what?'", () => {
+    // The real case: with the heading removed this rendered as "Typical doses
+    // of 300-600 mg daily appear well tolerated" with nothing saying of what,
+    // sitting directly above another ingredient's paragraph.
+    expect(
+      opensByNaming("ashwagandha powder", {
+        longTermUse: "Typical doses of 300–600 mg daily appear well tolerated.",
+      }),
+    ).toBe(false);
+  });
+
+  it("ignores words that identify nothing", () => {
+    // "fresh" and "powder" appear in dozens of names; matching on them would
+    // call almost any sentence a hit and the check would pass vacuously.
+    expect(
+      opensByNaming("fresh ginger", { longTermUse: "Fresh produce is fine daily." }),
+    ).toBe(false);
+  });
+
+  it("matches on a prefix, so plurals and suffixes still count", () => {
+    expect(
+      opensByNaming("dried roselle calyces", {
+        longTermUse: "Roselle (hibiscus) tea is fine for most adults daily.",
+      }),
+    ).toBe(true);
+  });
+
+  it("reads the FIRST answer present, not necessarily longTermUse", () => {
+    expect(
+      opensByNaming("licorice root", {
+        whoShouldAvoid: "Licorice should be avoided in pregnancy.",
+      }),
+    ).toBe(true);
+  });
+
+  it("passes a profile with nothing to show, having nothing to mislabel", () => {
+    expect(opensByNaming("anything", {})).toBe(true);
+  });
+});
+
+describe("PRD-4 §4.1 — the prose has no heading", () => {
+  it("tells the model to name the ingredient and never open with Yes/No", () => {
+    // Both rules exist because the tab dropped the per-ingredient heading. An
+    // answer beginning "Yes, up to 3-4 cups daily…" is answering a question the
+    // reader cannot see.
+    expect(RESEARCH_SYSTEM).toMatch(/Name the ingredient in your FIRST sentence/);
+    expect(RESEARCH_SYSTEM).toMatch(/Never begin a sentence with "Yes" or "No"/);
   });
 });

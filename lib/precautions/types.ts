@@ -23,11 +23,19 @@ export interface UsageProfile {
   whoShouldAvoid?: string;
 }
 
+/**
+ * The order the three answers are read in, and nothing else.
+ *
+ * These used to carry display labels ("Long-term use", "Duration / cycling",
+ * "Who should avoid") because the tab rendered a labelled bullet per field. It
+ * renders prose now — see precautionProse — so the labels were dead data, and
+ * dead labels invite the next reader to believe they appear somewhere.
+ */
 export const USAGE_FIELDS = [
-  ["longTermUse", "Long-term use"],
-  ["durationCycling", "Duration / cycling"],
-  ["whoShouldAvoid", "Who should avoid"],
-] as const satisfies readonly (readonly [keyof UsageProfile, string])[];
+  "longTermUse",
+  "durationCycling",
+  "whoShouldAvoid",
+] as const satisfies readonly (keyof UsageProfile)[];
 
 /**
  * The field the generator must not silently drop.
@@ -78,7 +86,7 @@ export function isMeaningfulAmount(row: {
 export function isUsableProfile(profile: unknown): profile is UsageProfile {
   if (!profile || typeof profile !== "object") return false;
   const p = profile as Record<string, unknown>;
-  return USAGE_FIELDS.some(([key]) => {
+  return USAGE_FIELDS.some((key) => {
     const v = p[key];
     return typeof v === "string" && v.trim().length > 0;
   });
@@ -95,7 +103,7 @@ export function parseUsageProfile(raw: unknown): UsageProfile | null {
   if (!isUsableProfile(raw)) return null;
   const p = raw as Record<string, unknown>;
   const out: UsageProfile = {};
-  for (const [key] of USAGE_FIELDS) {
+  for (const key of USAGE_FIELDS) {
     const v = p[key];
     if (typeof v === "string" && v.trim()) out[key] = v.trim();
   }
@@ -147,4 +155,68 @@ export function buildPrecautions(
   }
 
   return out;
+}
+
+/**
+ * The three answers as one paragraph, in USAGE_FIELDS order.
+ *
+ * The tab previously showed a labelled bullet per field, which read as a form
+ * rather than as advice and made three short answers look like a checklist to
+ * skim past. Prose matches how "Why it works" is presented on the same page.
+ *
+ * Joining is safe because the §4.1 prompt requires each answer to be "a
+ * complete, self-contained sentence … shown to a consumer on its own, with no
+ * surrounding context" — they were written to stand alone, so they run together
+ * without a connective. A missing field simply leaves its sentence out.
+ *
+ * Terminal punctuation is added when absent: a model that ends an answer
+ * without a full stop would otherwise fuse two sentences into one unreadable
+ * run-on, and that is a silent, per-ingredient defect nobody would catch.
+ */
+export function precautionProse(profile: UsageProfile): string {
+  return USAGE_FIELDS.map((key) => profile[key]?.trim())
+    .filter((s): s is string => !!s)
+    .map((s) => (/[.!?]$/.test(s) ? s : `${s}.`))
+    .join(" ");
+}
+
+/**
+ * Words in an ingredient name that identify nothing on their own.
+ *
+ * "fresh ginger" and "ground ginger" are both identified by `ginger`; matching
+ * on `fresh` would call almost any sentence a hit.
+ */
+const NAME_STOPWORDS = new Set([
+  "fresh", "ground", "dried", "raw", "whole", "large", "small", "organic",
+  "powder", "powdered", "leaf", "leaves", "root", "roots", "seed", "seeds",
+  "juice", "inner", "food", "grade", "brewed", "freshly", "chopped", "sliced",
+  "concentrate", "extract", "unsweetened", "plain", "pure",
+]);
+
+/**
+ * Does the profile's opening sentence identify its own ingredient?
+ *
+ * The tab renders these as prose with NO heading, so an answer that opens
+ * "Typical doses of 300-600 mg daily appear well tolerated" leaves the reader
+ * asking what it is about — and a recipe can show several of these paragraphs
+ * in a row. 123 of 132 profiles already open by naming themselves; this finds
+ * the rest so they can be regenerated rather than hand-listed.
+ *
+ * Matches on a six-character prefix so "cinnamon" catches "Cinnamon" and
+ * "roselle" catches "Roselle calyces", without needing a stemmer.
+ */
+export function opensByNaming(
+  ingredientName: string,
+  profile: UsageProfile,
+): boolean {
+  const first = USAGE_FIELDS.map((k) => profile[k]?.trim()).find((v) => !!v);
+  if (!first) return true; // nothing to show, so nothing to mislabel
+
+  const words = (ingredientName.toLowerCase().match(/[a-z]{4,}/g) ?? []).filter(
+    (w) => !NAME_STOPWORDS.has(w),
+  );
+  if (words.length === 0) return true; // no distinctive word to look for
+
+  const opening = first.toLowerCase();
+  return words.some((w) => opening.includes(w.slice(0, 6)));
 }

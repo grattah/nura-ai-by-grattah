@@ -24,7 +24,8 @@
     "reconcile:subs": "esbuild scripts/reconcile-subscriptions.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.reconcile-subs.mjs && node --env-file=.env.local scripts/.reconcile-subs.mjs",
     "rewrite:recipe-copy": "esbuild scripts/rewrite-recipe-copy.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.rewrite-recipe-copy.mjs && node --env-file=.env.local scripts/.rewrite-recipe-copy.mjs",
     "classify:usage": "esbuild scripts/classify-ingredient-usage.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.classify-usage.mjs && node --env-file=.env.local scripts/.classify-usage.mjs",
-    "backfill:category-nutrients": "esbuild scripts/backfill-category-nutrients.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.backfill-category-nutrients.mjs && node --env-file=.env.local scripts/.backfill-category-nutrients.mjs"
+    "backfill:category-nutrients": "esbuild scripts/backfill-category-nutrients.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.backfill-category-nutrients.mjs && node --env-file=.env.local scripts/.backfill-category-nutrients.mjs",
+    "reset:profiles": "esbuild scripts/reset-profile-selections.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.reset-profiles.mjs && node --env-file=.env.local scripts/.reset-profiles.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.0",

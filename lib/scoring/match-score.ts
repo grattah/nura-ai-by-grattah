@@ -89,16 +89,22 @@ export function computeMatchScore(input: MatchScoreInput): MatchScoreResult {
   // the PRD's tie-break rule (condition beats goal; earlier selection beats later).
   const credits: MatchCredit[] = [];
 
-  const seenFormulas = new Set<string>();
+  // One credit per selection, exactly as §6 describes:
+  //
+  //   "÷ (number of disclosed conditions + number of selected goals)"
+  //
+  // There is no de-duplication here any more, and none is needed: the key maps
+  // in match-metrics.ts are now 1:1 with the PRD's formulas, so two selections
+  // can never resolve to the same one. That is asserted structurally in
+  // test/match-score-coverage.test.ts rather than defended at runtime — the
+  // previous dedupe existed only because alias keys (type-2-diabetes, beauty,
+  // clear-skin …) pointed several selections at one formula, and those are gone.
   const push = (
     key: string,
     kind: "condition" | "goal",
     prd: string,
     credit: number,
   ) => {
-    const formulaId = `${kind}:${prd}`;
-    if (seenFormulas.has(formulaId)) return;
-    seenFormulas.add(formulaId);
     credits.push({
       key,
       kind,
