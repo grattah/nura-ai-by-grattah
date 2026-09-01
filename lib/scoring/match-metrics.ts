@@ -146,6 +146,17 @@ const withBonus =
 const bioOnly = (weights: Record<string, number>) => (c: MatchContext) =>
   bioSubtotal(c.bio, weights) / 100;
 
+/**
+ * Exactly the thirteen goal formulas the Match Score PRD defines — eight with a
+ * bonus term (§5.1) and five bioactivity-only (§5.2).
+ *
+ * Eleven further formulas lived here for the 24-goal AUG 21 picker (Reduce
+ * bloating, Support UTI & yeast balance, Support libido and so on). They are
+ * gone: that picker was reverted, the PRD does not define them, and a formula
+ * the spec does not describe is a second, undocumented scoring system.
+ * GOAL_KEY_TO_PRD lost the keys that pointed at them in the same change, so
+ * nothing dangles — an unmapped key is skipped silently by computeMatchScore.
+ */
 export const GOAL_CREDITS: Record<string, (c: MatchContext) => number> = {
   // §5.1 — with a bonus term.
   "Have more energy": withBonus(
@@ -185,78 +196,6 @@ export const GOAL_CREDITS: Record<string, (c: MatchContext) => number> = {
   "Reduce stress": bioOnly({ StressResilience: 95, Mood: 65, SleepRelaxation: 55 }),
   "Improve my mood": bioOnly({ Mood: 95, StressResilience: 65, SleepRelaxation: 50 }),
 
-  // ── Goals added with the AUG 21 picker ────────────────────────────────────
-  //
-  // Several of these describe the same physiology as a condition that is no
-  // longer offered in the picker (CONDITIONS is now PCOS / Menopause /
-  // Osteoporosis only). Those formulas are reused verbatim rather than
-  // reinvented: the biology is identical, and a user can no longer select both
-  // the goal and the condition, so there is nothing to double-count.
-  //
-  // Goals whose outcome depends on keeping something LOW carry the same
-  // (1 − points/max) nutrient term the matching condition used — a recipe
-  // cannot credibly serve "Lower blood pressure" while being salt-heavy.
-
-  // Mirrors the retired Diabetes condition.
-  "Balance blood sugar": (c) =>
-    avg([
-      bioSubtotal(c.bio, { BloodSugar: 95, WeightMetabolic: 65 }) / 100,
-      1 - c.points.sugar / c.maxes.sugar,
-    ]),
-  // Mirrors the retired High blood pressure condition.
-  "Lower blood pressure": (c) =>
-    avg([
-      bioSubtotal(c.bio, { Heart: 95, Kidney: 60, CholLipid: 55, Inflammation: 50 }) / 100,
-      1 - c.points.salt / c.maxes.salt,
-    ]),
-  // Mirrors the retired High cholesterol condition.
-  "Reduce cholesterol": (c) =>
-    avg([
-      bioSubtotal(c.bio, { CholLipid: 95, Heart: 70, WeightMetabolic: 50, Inflammation: 50 }) / 100,
-      1 - c.points.satFat / c.maxes.satFat,
-    ]),
-  // Mirrors the retired Arthritis condition.
-  "Support muscle & joint comfort": bioOnly({
-    Inflammation: 95,
-    PainComfort: 80,
-    BoneJoint: 65,
-    Antioxidant: 50,
-  }),
-  // Mirrors the retired Anemia condition: the iron-rich flag is averaged in
-  // rather than used as a bare gate, so a non-iron recipe still scores > 0.
-  "Improve my iron levels": (c) =>
-    avg([bioSubtotal(c.bio, { BrainCognitive: 50 }) / 100, c.ironRich ? 1 : 0]),
-
-  // Puffiness is fluid retention: sodium works directly against it.
-  "Reduce puffiness": (c) =>
-    avg([
-      bioSubtotal(c.bio, { Kidney: 95, Inflammation: 55 }) / 100,
-      1 - c.points.salt / c.maxes.salt,
-    ]),
-
-  // Gut-driven goals reuse the gut-health bonus, which already rewards fibre
-  // and a probiotic ingredient — the two things that actually move them.
-  "Reduce bloating": withBonus(
-    { Gut: 95, Microbiome: 70, PainComfort: 55, Inflammation: 50 },
-    "gut-health",
-  ),
-  "Relieve constipation": withBonus(
-    { Gut: 95, Microbiome: 70, Kidney: 50 },
-    "gut-health",
-  ),
-
-  // Urinary/microbial balance leans on the same defence axes as immunity.
-  "Support UTI & yeast balance": withBonus(
-    { Kidney: 85, Microbiome: 80, Immune: 60, NaturalDefense: 55 },
-    "gut-health",
-  ),
-  "Relieve mucus & congestion": withBonus(
-    { Immune: 85, NaturalDefense: 80, Inflammation: 60, Temperature: 50 },
-    "immunity",
-  ),
-
-  // Libido tracks hormonal balance plus circulation.
-  "Support libido": bioOnly({ Hormonal: 90, Heart: 60, CellWellness: 50 }),
 };
 
 // ── App health-profile key → PRD formula name ───────────────────────────────
@@ -268,32 +207,40 @@ export const GOAL_CREDITS: Record<string, (c: MatchContext) => number> = {
 //
 // Rows marked "legacy" are keys the picker no longer offers but that older
 // profiles still hold in health_profiles — keep them so those users keep scoring.
+/**
+ * App key → PRD §4 condition name. Exactly one key per formula.
+ *
+ * The legacy aliases are GONE (type-1-diabetes, type-2-diabetes, prediabetes,
+ * perimenopause, ibs, ibd, gerd). They existed so profiles answered under older
+ * questionnaires kept scoring; the product is pre-launch and those profiles are
+ * being reset instead, so the map now mirrors the PRD exactly and nothing
+ * resolves that the PRD does not name.
+ *
+ * scripts/reset-profile-selections.ts strips the removed keys from
+ * health_profiles — a key left in a profile would simply be skipped, but that
+ * shows a user a Match Score quietly built from fewer selections than they
+ * think they picked.
+ *
+ * gout is DELIBERATELY absent (PRD §9: "Gout has no defined credit formula and
+ * should not be included in the credit average if disclosed, until a metric is
+ * defined for it"). It previously borrowed Arthritis, which scored users for a
+ * formula never designed for their condition.
+ */
 export const CONDITION_KEY_TO_PRD: Record<string, string> = {
   diabetes: "Diabetes",
-  "type-1-diabetes": "Diabetes", // legacy
-  "type-2-diabetes": "Diabetes", // legacy
-  prediabetes: "Diabetes", // legacy
   "heart-disease": "Heart disease",
   "high-blood-pressure": "High blood pressure",
   "high-cholesterol": "High cholesterol",
   pcos: "PCOS",
+  menopause: "Menopause",
+  "digestive-sensitivities": "Digestive Sensitivities",
   "kidney-disease": "Kidney disease",
   "liver-disease": "Liver disease",
-  menopause: "Menopause",
-  perimenopause: "Menopause", // legacy
-  "digestive-sensitivities": "Digestive Sensitivities",
-  ibs: "Digestive Sensitivities", // legacy
-  ibd: "Digestive Sensitivities", // legacy
-  gerd: "Digestive Sensitivities", // legacy
-  arthritis: "Arthritis",
-  // gout is DELIBERATELY absent (PRD §9: "Gout has no defined credit formula and
-  // should not be included in the credit average if disclosed, until a metric is
-  // defined for it"). It previously borrowed Arthritis, which scored users for a
-  // formula that was never designed for their condition. computeMatchScore skips
-  // unmapped keys, so a gout-only profile now correctly shows no Match Score.
   osteoporosis: "Osteoporosis",
+  arthritis: "Arthritis",
   anemia: "Anemia",
 };
+
 /**
  * Goal key → PRD formula name.
  *
@@ -302,44 +249,36 @@ export const CONDITION_KEY_TO_PRD: Record<string, string> = {
  * unmapped key silently, which is why test/match-score-coverage.test.ts
  * asserts total coverage rather than trusting this list by eye.
  */
+/**
+ * App key → PRD §5 goal name. Exactly one key per formula, all thirteen.
+ *
+ * The AUG 21 aliases are GONE (skin-brighten, clear-skin, hair-growth,
+ * hydrate-skin, beauty, muscle-recovery, fat-metabolism, testosterone). They
+ * pointed several distinct picker goals at one formula, which is why credits
+ * had to be de-duplicated; with one key per formula that problem no longer
+ * exists.
+ *
+ * `hydration` has no entry in the picker's GOALS list, but §5.1 defines "Drink
+ * more water", so the formula and its key are kept rather than dropping a goal
+ * the PRD specifies.
+ */
 export const GOAL_KEY_TO_PRD: Record<string, string> = {
-  // ── AUG 21 picker ─────────────────────────────────────────────────────────
-  "reduce-bloating": "Reduce bloating",
-  "skin-brighten": "Improve my skin & hair",
-  "blood-sugar": "Balance blood sugar",
-  "uti-yeast": "Support UTI & yeast balance",
-  "iron-levels": "Improve my iron levels",
-  "muscle-recovery": "Improve my fitness",
-  "fat-metabolism": "Lose weight",
-  libido: "Support libido",
+  // §5.1 — with a bonus term.
+  energy: "Have more energy",
+  fitness: "Improve my fitness",
+  "weight-loss": "Lose weight",
+  "gut-health": "Improve my gut health",
+  hydration: "Drink more water",
+  "skin-hair": "Improve my skin & hair",
+  immunity: "Boost my immunity",
+  detox: "Support my body's detox",
+  // §5.2 — bioactivity only.
+  hormones: "Balance my hormones",
+  focus: "Sharpen my focus",
+  sleep: "Sleep better",
   stress: "Reduce stress",
   mood: "Improve my mood",
-  immunity: "Boost my immunity",
-  focus: "Sharpen my focus",
-  "gut-health": "Improve my gut health",
-  constipation: "Relieve constipation",
-  "hair-growth": "Improve my skin & hair",
-  puffiness: "Reduce puffiness",
-  "joint-comfort": "Support muscle & joint comfort",
-  "blood-pressure": "Lower blood pressure",
-  cholesterol: "Reduce cholesterol",
-  "clear-skin": "Improve my skin & hair",
-  "hydrate-skin": "Drink more water",
-  testosterone: "Balance my hormones",
-  sleep: "Sleep better",
-  "mucus-congestion": "Relieve mucus & congestion",
-
-  // ── Legacy keys ───────────────────────────────────────────────────────────
-  // Held by profiles saved before AUG 21. Dropping them would silently zero
-  // those users' Match Score, so they keep resolving to their old formula.
-  energy: "Have more energy",
-  hormones: "Balance my hormones",
-  hydration: "Drink more water",
-  fitness: "Improve my fitness",
-  "skin-hair": "Improve my skin & hair",
-  beauty: "Improve my skin & hair",
-  detox: "Support my body's detox",
-  "weight-loss": "Lose weight",
 };
+
 
 
