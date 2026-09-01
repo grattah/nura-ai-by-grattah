@@ -1,4 +1,20 @@
 import "server-only";
+
+// ⚠️ DORMANT — superseded by Category Score PRD-1.
+//
+// This file implements PRD-3 / v7 ingredient-tier scoring. Category Score now
+// runs on the bioactivity method in lib/bioactivity-categories.ts, and Recipe
+// Match Score runs on lib/scoring/match-score.ts (PRD-2). Nothing under app/,
+// lib/, actions/ or components/ imports this module.
+//
+// Why it was retired: a tier table of 3-4 rows worth 100/20/10 can only emit
+// 6-20 distinct scores per category, so 98 Weight Loss recipes all displayed
+// exactly 46% and Detox showed 7 qualifying recipes out of 512. PRD-1's
+// relevance-weighted average is continuous; the same library now spreads across
+// 46-78 distinct scores per category and Detox qualifies 269.
+//
+// Kept, not deleted, so the approach can be revived. Its tests stay green.
+
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fetchAll } from "./fetch-all";
 import {

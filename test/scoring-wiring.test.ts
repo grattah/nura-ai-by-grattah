@@ -19,7 +19,8 @@ const read = (p: string) => readFileSync(p, "utf8");
 
 const RECIPE_PAGE = "app/(no-chrome)/recipes/[id]/page.tsx";
 const FOR_YOU = "actions/for-you.ts";
-const RECOMPUTE = "scripts/recompute-category-scores.ts";
+const RECOMPUTE_V7 = "scripts/recompute-category-scores.ts";
+const RECOMPUTE = "scripts/recompute-categories.ts";
 
 describe("Match Score is wired to the same engine on every live surface", () => {
   // REVERTED: the personal Match Score is the v2 bioactivity engine again,
@@ -75,22 +76,37 @@ describe("for-you ranks and displays the same number", () => {
   });
 });
 
-describe("stored category scores stay consistent with the display floor", () => {
+describe("Category Score is written by the PRD-1 bioactivity path", () => {
+  // Two scripts can write recipe_categories, and whichever ran last wins. That
+  // is how the library ended up on v7 scores: 98 Weight Loss recipes on exactly
+  // 46%, Detox qualifying 7 recipes out of 512, Hydration 466. PRD-1's
+  // relevance-weighted average is continuous and gives 46-78 distinct scores per
+  // category, so which writer is live is not a detail — it is the whole
+  // behaviour of every category page.
   const src = read(RECOMPUTE);
 
-  it("writes an integer, because the column is one", () => {
-    // recipe_categories.score is `integer`; writing 25.6 failed the whole
-    // recompute with "invalid input syntax for type integer".
-    expect(src).toContain("Math.round(");
+  it("scores through lib/bioactivity-categories (PRD-1)", () => {
+    expect(src).toContain("computeAllCategoryScores");
+    expect(src).toContain("@/lib/bioactivity-categories");
   });
 
-  it("qualifies on the value it stores, not the raw percent", () => {
-    // Qualifying on the unrounded value would let a recipe display "40%" while
-    // being filtered out of its own category page, or the reverse.
-    expect(src).toMatch(/qualified:\s*score >= DISPLAY_FLOOR_PERCENT/);
+  it("does not score through the dormant tier engine", () => {
+    expect(src).not.toMatch(/tier-tables|tier-score|tier-match/);
   });
 
-  it("scores against the v7 tables", () => {
-    expect(src).toContain("tier-tables");
+  it("shares the §4 bonus with the Match Score rather than reimplementing it", () => {
+    // Category PRD §8: "this is the SAME formula used by the Recipe Match Score
+    // for the equivalent goal. Implement this calculation once […] rather than
+    // maintaining two separate calculations that could drift apart."
+    const lib = read("lib/bioactivity-categories.ts");
+    expect(lib).toContain("@/lib/scoring/bonuses");
+    expect(lib).toContain("bonusFor(");
+  });
+
+  it("keeps the v7 recompute clearly marked dormant", () => {
+    // It still writes recipe_categories, so an accidental run silently reverts
+    // Category Score. The banner is the only thing standing between a tidy-up
+    // and a regression nobody would attribute to that command.
+    expect(read(RECOMPUTE_V7)).toContain("DORMANT");
   });
 });
