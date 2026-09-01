@@ -228,24 +228,28 @@ const AccordionSection = ({
                 No specific usage precautions for this recipe&apos;s ingredients.
               </p>
             ) : (
-              // Prose, not a labelled field list. The three answers are
+              // Prose only — no ingredient heading. The three answers are
               // written as self-contained sentences (§4.1), so they read as one
-              // paragraph — the same treatment "Why it works" gets above,
-              // rather than a form the eye skims.
+              // paragraph, and the section gets the same treatment as "Why it
+              // works" above rather than looking like a form.
               //
-              // The ingredient name stays. It is the subject of the sentence,
-              // not a section header: "Avoid during pregnancy" is useless
-              // without knowing what to avoid, and a recipe can carry several
-              // of these blocks at once.
+              // Measured before removing the heading: 123 of 132 profiles (93%)
+              // open by naming their own ingredient — "Ground cinnamon is safe
+              // daily…" — so for almost all of them the heading was repeating
+              // the first three words of the sentence beneath it.
+              //
+              // The remaining ~7% open without naming themselves ("Typical
+              // doses of 300–600 mg daily appear well tolerated…"). One
+              // paragraph per ingredient keeps them separable, and the fix for
+              // those is in the copy, not the layout — the §4.1 prompt should
+              // require the opening sentence to name the ingredient.
               precautions.map((entry) => (
-                <div key={entry.ingredientId}>
-                  <p className="text-base font-semibold text-base-text capitalize">
-                    {entry.name}
-                  </p>
-                  <p className="mt-1 text-base text-[#57605E] leading-relaxed">
-                    {precautionProse(entry.profile)}
-                  </p>
-                </div>
+                <p
+                  key={entry.ingredientId}
+                  className="text-base text-[#57605E] leading-relaxed"
+                >
+                  {precautionProse(entry.profile)}
+                </p>
               ))
             )}
             {/* No "Sources:" line — PRD-4 removed live search, so there is
