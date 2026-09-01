@@ -179,3 +179,44 @@ export function precautionProse(profile: UsageProfile): string {
     .map((s) => (/[.!?]$/.test(s) ? s : `${s}.`))
     .join(" ");
 }
+
+/**
+ * Words in an ingredient name that identify nothing on their own.
+ *
+ * "fresh ginger" and "ground ginger" are both identified by `ginger`; matching
+ * on `fresh` would call almost any sentence a hit.
+ */
+const NAME_STOPWORDS = new Set([
+  "fresh", "ground", "dried", "raw", "whole", "large", "small", "organic",
+  "powder", "powdered", "leaf", "leaves", "root", "roots", "seed", "seeds",
+  "juice", "inner", "food", "grade", "brewed", "freshly", "chopped", "sliced",
+  "concentrate", "extract", "unsweetened", "plain", "pure",
+]);
+
+/**
+ * Does the profile's opening sentence identify its own ingredient?
+ *
+ * The tab renders these as prose with NO heading, so an answer that opens
+ * "Typical doses of 300-600 mg daily appear well tolerated" leaves the reader
+ * asking what it is about — and a recipe can show several of these paragraphs
+ * in a row. 123 of 132 profiles already open by naming themselves; this finds
+ * the rest so they can be regenerated rather than hand-listed.
+ *
+ * Matches on a six-character prefix so "cinnamon" catches "Cinnamon" and
+ * "roselle" catches "Roselle calyces", without needing a stemmer.
+ */
+export function opensByNaming(
+  ingredientName: string,
+  profile: UsageProfile,
+): boolean {
+  const first = USAGE_FIELDS.map((k) => profile[k]?.trim()).find((v) => !!v);
+  if (!first) return true; // nothing to show, so nothing to mislabel
+
+  const words = (ingredientName.toLowerCase().match(/[a-z]{4,}/g) ?? []).filter(
+    (w) => !NAME_STOPWORDS.has(w),
+  );
+  if (words.length === 0) return true; // no distinctive word to look for
+
+  const opening = first.toLowerCase();
+  return words.some((w) => opening.includes(w.slice(0, 6)));
+}
