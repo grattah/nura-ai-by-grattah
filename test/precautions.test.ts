@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import {
+  precautionProse,
   isMeaningfulAmount,
   isUsableProfile,
   parseUsageProfile,
@@ -194,7 +195,7 @@ describe('the "who should avoid" guard', () => {
     // and with it on the next, both stop_reason end_turn. The guard keys off
     // this constant, so a rename must not silently disable it.
     expect(CRITICAL_FIELD).toBe("whoShouldAvoid");
-    expect(USAGE_FIELDS.map(([k]) => k)).toContain(CRITICAL_FIELD);
+    expect(USAGE_FIELDS).toContain(CRITICAL_FIELD);
   });
 
   it("lets the re-ask come back empty instead of demanding a caution", () => {
@@ -208,7 +209,7 @@ describe('the "who should avoid" guard', () => {
 
 describe("field labels", () => {
   it("covers exactly the three PRD-4 §3 fields, in reading order", () => {
-    expect(USAGE_FIELDS.map(([k]) => k)).toEqual([
+    expect(USAGE_FIELDS).toEqual([
       "longTermUse",
       "durationCycling",
       "whoShouldAvoid",
@@ -238,5 +239,45 @@ describe("the reader must not use the caller's client", () => {
     // The page holds a cookie client. Taking one as a parameter is exactly how
     // the restored version reintroduced the bug.
     expect(src).not.toMatch(/supabase:\s*SupabaseClient/);
+  });
+});
+
+// ── Prose rendering ─────────────────────────────────────────────────────────
+describe("precautionProse", () => {
+  it("joins the three answers into one paragraph, in reading order", () => {
+    expect(
+      precautionProse({
+        whoShouldAvoid: "Avoid in pregnancy.",
+        longTermUse: "Safe daily.",
+        durationCycling: "No cycling needed.",
+      }),
+    ).toBe("Safe daily. No cycling needed. Avoid in pregnancy.");
+  });
+
+  it("omits a field that has no answer rather than leaving a gap", () => {
+    expect(
+      precautionProse({ longTermUse: "Safe daily.", whoShouldAvoid: "Avoid in pregnancy." }),
+    ).toBe("Safe daily. Avoid in pregnancy.");
+  });
+
+  it("adds a full stop when the model omitted one", () => {
+    // Without this the next sentence fuses onto the previous one and the block
+    // becomes an unreadable run-on — silently, per ingredient.
+    expect(
+      precautionProse({ longTermUse: "Safe daily", durationCycling: "No cycling needed" }),
+    ).toBe("Safe daily. No cycling needed.");
+  });
+
+  it("leaves other terminal punctuation alone", () => {
+    expect(precautionProse({ longTermUse: "Is it safe daily? Yes!" })).toBe(
+      "Is it safe daily? Yes!",
+    );
+  });
+
+  it("returns an empty string for an empty profile", () => {
+    // buildPrecautions already drops unusable profiles, so this never reaches
+    // the page — but returning "" rather than throwing keeps that guarantee
+    // from being load-bearing.
+    expect(precautionProse({})).toBe("");
   });
 });

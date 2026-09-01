@@ -23,11 +23,19 @@ export interface UsageProfile {
   whoShouldAvoid?: string;
 }
 
+/**
+ * The order the three answers are read in, and nothing else.
+ *
+ * These used to carry display labels ("Long-term use", "Duration / cycling",
+ * "Who should avoid") because the tab rendered a labelled bullet per field. It
+ * renders prose now — see precautionProse — so the labels were dead data, and
+ * dead labels invite the next reader to believe they appear somewhere.
+ */
 export const USAGE_FIELDS = [
-  ["longTermUse", "Long-term use"],
-  ["durationCycling", "Duration / cycling"],
-  ["whoShouldAvoid", "Who should avoid"],
-] as const satisfies readonly (readonly [keyof UsageProfile, string])[];
+  "longTermUse",
+  "durationCycling",
+  "whoShouldAvoid",
+] as const satisfies readonly (keyof UsageProfile)[];
 
 /**
  * The field the generator must not silently drop.
@@ -78,7 +86,7 @@ export function isMeaningfulAmount(row: {
 export function isUsableProfile(profile: unknown): profile is UsageProfile {
   if (!profile || typeof profile !== "object") return false;
   const p = profile as Record<string, unknown>;
-  return USAGE_FIELDS.some(([key]) => {
+  return USAGE_FIELDS.some((key) => {
     const v = p[key];
     return typeof v === "string" && v.trim().length > 0;
   });
@@ -95,7 +103,7 @@ export function parseUsageProfile(raw: unknown): UsageProfile | null {
   if (!isUsableProfile(raw)) return null;
   const p = raw as Record<string, unknown>;
   const out: UsageProfile = {};
-  for (const [key] of USAGE_FIELDS) {
+  for (const key of USAGE_FIELDS) {
     const v = p[key];
     if (typeof v === "string" && v.trim()) out[key] = v.trim();
   }
@@ -147,4 +155,27 @@ export function buildPrecautions(
   }
 
   return out;
+}
+
+/**
+ * The three answers as one paragraph, in USAGE_FIELDS order.
+ *
+ * The tab previously showed a labelled bullet per field, which read as a form
+ * rather than as advice and made three short answers look like a checklist to
+ * skim past. Prose matches how "Why it works" is presented on the same page.
+ *
+ * Joining is safe because the §4.1 prompt requires each answer to be "a
+ * complete, self-contained sentence … shown to a consumer on its own, with no
+ * surrounding context" — they were written to stand alone, so they run together
+ * without a connective. A missing field simply leaves its sentence out.
+ *
+ * Terminal punctuation is added when absent: a model that ends an answer
+ * without a full stop would otherwise fuse two sentences into one unreadable
+ * run-on, and that is a silent, per-ingredient defect nobody would catch.
+ */
+export function precautionProse(profile: UsageProfile): string {
+  return USAGE_FIELDS.map((key) => profile[key]?.trim())
+    .filter((s): s is string => !!s)
+    .map((s) => (/[.!?]$/.test(s) ? s : `${s}.`))
+    .join(" ");
 }

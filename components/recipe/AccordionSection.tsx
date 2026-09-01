@@ -17,7 +17,7 @@ import iconWIW from "@/public/WIW.svg";
 import { FaInfoCircle } from "react-icons/fa";
 import { LockKeyhole, LockKeyholeOpen, CircleAlert } from "lucide-react";
 import {
-  USAGE_FIELDS,
+  precautionProse,
   type IngredientPrecaution,
 } from "@/lib/precautions/types";
 
@@ -228,32 +228,23 @@ const AccordionSection = ({
                 No specific usage precautions for this recipe&apos;s ingredients.
               </p>
             ) : (
+              // Prose, not a labelled field list. The three answers are
+              // written as self-contained sentences (§4.1), so they read as one
+              // paragraph — the same treatment "Why it works" gets above,
+              // rather than a form the eye skims.
+              //
+              // The ingredient name stays. It is the subject of the sentence,
+              // not a section header: "Avoid during pregnancy" is useless
+              // without knowing what to avoid, and a recipe can carry several
+              // of these blocks at once.
               precautions.map((entry) => (
                 <div key={entry.ingredientId}>
                   <p className="text-base font-semibold text-base-text capitalize">
                     {entry.name}
                   </p>
-                  <ul className="mt-1.5 space-y-1.5">
-                    {USAGE_FIELDS.filter(([key]) => entry.profile[key]).map(
-                      ([key, label]) => (
-                        <li
-                          key={key}
-                          className="flex gap-2 text-base text-[#57605E] leading-relaxed"
-                        >
-                          <span
-                            aria-hidden="true"
-                            className="mt-2 size-1.5 shrink-0 rounded-full bg-[#9CA5A3]"
-                          />
-                          <span>
-                            <span className="font-medium text-base-text">
-                              {label}:
-                            </span>{" "}
-                            {entry.profile[key]}
-                          </span>
-                        </li>
-                      ),
-                    )}
-                  </ul>
+                  <p className="mt-1 text-base text-[#57605E] leading-relaxed">
+                    {precautionProse(entry.profile)}
+                  </p>
                 </div>
               ))
             )}
