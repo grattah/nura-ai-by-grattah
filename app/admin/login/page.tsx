@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { isAllowedAdminEmail } from "@/lib/admin/allowlist";
@@ -16,6 +16,7 @@ export default function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [counter, setCounter] = useState(0);
 
   async function sendCode(e: React.FormEvent) {
     e.preventDefault();
@@ -44,10 +45,20 @@ export default function AdminLoginPage() {
       );
       return;
     }
-
+    setCounter(60);
     setStep("code");
-    setNotice(`We sent a 6-digit code to ${clean}.`);
+    setNotice(`We sent an 8-digit code to ${clean}.`);
   }
+
+  useEffect(() => {
+    if (counter <= 0) return;
+
+    const interval = setInterval(() => {
+      setCounter((prev) => Math.max(prev - 1, 0));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [counter]);
 
   async function verify(e: React.FormEvent) {
     e.preventDefault();
@@ -82,7 +93,7 @@ export default function AdminLoginPage() {
           <p className="text-sm text-muted-foreground">
             {step === "email"
               ? "Enter your email to receive a sign-in code."
-              : "Enter the 6-digit code from your email."}
+              : "Enter the 8-digit code from your email."}
           </p>
         </div>
 
@@ -104,11 +115,9 @@ export default function AdminLoginPage() {
             <Label htmlFor="code">Sign-in code</Label>
             <Input
               id="code"
-              // `inputMode` + `one-time-code` let phones surface the code from
-              // the notification rather than making the user switch apps.
               inputMode="numeric"
               autoComplete="one-time-code"
-              maxLength={6}
+              maxLength={8}
               required
               autoFocus
               value={code}
@@ -132,16 +141,36 @@ export default function AdminLoginPage() {
 
         {step === "code" && (
           <button
+            disabled={counter > 0 || loading}
             type="button"
-            onClick={() => {
-              setStep("email");
-              setCode("");
+            onClick={async () => {
               setError(null);
               setNotice(null);
+
+              const clean = email.trim().toLowerCase();
+
+              setLoading(true);
+
+              const supabase = createClient();
+              const { error: otpError } = await supabase.auth.signInWithOtp({
+                email: clean,
+                options: { shouldCreateUser: false },
+              });
+
+              setLoading(false);
+
+              if (otpError) {
+                setError("We couldn't resend the code. Please try again.");
+                return;
+              }
+
+              setCounter(60);
+              setNotice(`A new 8-digit code was sent to ${clean}.`);
+              setCode("");
             }}
-            className="w-full text-sm text-muted-foreground hover:text-foreground"
+            className="w-full text-sm text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Use a different email
+            {counter > 0 ? `Resend OTP in ${counter}s` : "Resend OTP"}
           </button>
         )}
       </form>
