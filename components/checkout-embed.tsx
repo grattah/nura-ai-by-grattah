@@ -7,9 +7,7 @@ import {
 import { loadStripe } from "@stripe/stripe-js";
 import { useCallback } from "react";
 
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
-);
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE!);
 
 interface CheckoutEmbedProps {
   clientSecret: string;
