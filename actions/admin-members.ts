@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/admin/auth";
+import { isAllowedAdminEmail } from "@/lib/admin/allowlist";
 import { ASSIGNABLE_ROLES, type AdminRole } from "@/lib/admin/roles";
 
 type Result = { success: true } | { error: string };
@@ -36,6 +37,20 @@ export async function inviteAdmin(
   if (!gate.ok) return { error: gate.error };
   if (!email?.trim()) return { error: "Email is required." };
   if (!isAssignable(role)) return { error: "Invalid role." };
+
+  // Admin access is one allowlisted address (lib/admin/allowlist.ts), so an
+  // invite to anyone else produces an account that can never sign in:
+  // getAdminIdentity rejects the address before it ever reads admin_members.
+  //
+  // Refusing here rather than letting it succeed. The alternative is a member
+  // row, a real invite email, and a person who follows it to a login that
+  // silently will not work — a support problem disguised as a working feature.
+  if (!isAllowedAdminEmail(email)) {
+    return {
+      error:
+        "Admin access is limited to a single address. Change ADMIN_EMAIL in lib/admin/allowlist.ts to grant it elsewhere.",
+    };
+  }
 
   const admin = createServiceRoleClient();
   const cleanEmail = email.trim().toLowerCase();
