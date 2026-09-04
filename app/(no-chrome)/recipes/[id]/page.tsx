@@ -385,21 +385,26 @@ export default async function RecipeDetailPage({
 
             {/* Accordion sections */}
             <div className="px-6 space-y-3">
-              <AccordionSection
-                recipe={recipe}
-                ingredients={ingredients}
-                howToMake={howToMake}
-                nutrition={nutrition}
-                popular={canViewFull}
-                precautions={precautions}
-              />
+              <div data-paywall-passthrough>
+                <AccordionSection
+                  recipe={recipe}
+                  ingredients={ingredients}
+                  howToMake={howToMake}
+                  nutrition={nutrition}
+                  popular={canViewFull}
+                  precautions={precautions}
+                />
+              </div>
 
               {/* Follow-up questions + RAG chat: only exempt from AuthGate's
                   blanket click-intercept when the page itself is already
                   ungated (subscribed or popular view) — AuthGate's selector
                   matches on attribute presence, not value, so the attribute
                   must be omitted entirely rather than set to false. */}
-              <div className="pt-2" {...(canViewFull ? { "data-paywall-passthrough": true } : {})}>
+              <div
+                className="pt-2"
+                {...(canViewFull ? { "data-paywall-passthrough": true } : {})}
+              >
                 <FollowUpSection
                   contextId={recipe.id}
                   contextType="recipe"

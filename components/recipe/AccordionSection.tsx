@@ -52,11 +52,11 @@ const AccordionSection = ({
 }: AccordionSectionProps) => {
   const { isSubscriber, isLoading } = useAccess();
 
-  const lockIcon = isLoading ? null : isSubscriber || popular ? (
-    <></>
-  ) : (
-    <LockKeyhole size={20} color="#9CA5A3" className="ml-auto" />
-  );
+  // const lockIcon = isLoading ? null : isSubscriber || popular ? (
+  //   <></>
+  // ) : (
+  //   <LockKeyhole size={20} color="#9CA5A3" className="ml-auto" />
+  // );
 
   return (
     <Accordion type="multiple" defaultValue={[]} className="space-y-3">
@@ -114,7 +114,7 @@ const AccordionSection = ({
               </span>
             </div>
 
-            {lockIcon}
+            {/* {lockIcon} */}
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-4 pb-4 pt-0">
@@ -147,7 +147,7 @@ const AccordionSection = ({
                 How to make it
               </span>
             </div>
-            {lockIcon}
+            {/* {lockIcon} */}
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-5 pb-5 pt-0">
@@ -180,7 +180,7 @@ const AccordionSection = ({
                 Why it works
               </span>
             </div>
-            {lockIcon}
+            {/* {lockIcon} */}
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-5 pb-5 pt-0">
@@ -278,7 +278,7 @@ const AccordionSection = ({
                 Inside Tip
               </span>
             </div>
-            {lockIcon}
+            {/* {lockIcon} */}
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-5 pb-5 pt-0">

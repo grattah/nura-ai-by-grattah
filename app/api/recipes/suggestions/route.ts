@@ -171,12 +171,12 @@ Name construction
 - Always use "&" rather than "and."
 - Name the specific ingredient. Never use generic category words like "green," "greens," "citrus," "berry," or "nuts" — use spinach, kale, orange, blueberry, almond.
 - Include only major ingredients. Leave out minor flavorings and garnishes unless they genuinely define the drink.
-- Never include sweeteners or liquid bases in a name: no maple, honey, sugar, water, milk-as-base, yogurt, or agave.
+- Never include sweeteners or liquid bases in a name: no maple, honey, sugar, milk-as-base, yogurt, or agave.
 - Do not use filler, marketing, or descriptive words of any kind — including Fresh, Homemade, Classic, Natural, Refresh, Hydrator, Revive, Booster, Energizer, Detox, Elixir, Immunity, Glow, Power, Vitality, Fuel, Splash, Vegan, Protein, Superfood, or Non-Dairy. Only ingredient names and the drink type belong in the name.
 - Do not name fruit varieties. Use "Apple," not "Fuji Apple" or "Green Apple."
 
 Drink type
-- Must be one of: Juice, Smoothie, Tea, Lassi, Cooler, Milk, Shot, Drinks, Shakes, Sorbet, Bowl.
+- Must be one of: Juice, Smoothie, Tea, Lassi, Cooler, Milk, Shot, Drinks, Shakes, Sorbet, Bowl, Water.
 - Choose the type that is conventionally correct for that combination. Ingredients that yield clean liquid (roots, stalks, leaves, melon, citrus, firm apple and pear) make a Juice. Ingredients whose body is the appeal (berries, banana, avocado, stone fruit, nut butters, cocoa) make a Smoothie. Yogurt-based drinks are Lassis.
 
 Duplicates
