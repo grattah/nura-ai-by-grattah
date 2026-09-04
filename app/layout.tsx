@@ -12,6 +12,7 @@ import { RouteAuthGuard } from "@/components/auth/route-auth-guard";
 import { ChatCacheCleaner } from "@/components/chat-cache-cleaner";
 import { PerfProfiler } from "@/components/dev/perf-profiler";
 import { LiquidGlassFilter } from "@/components/liquid-glass-filter";
+import ClarityAnalytics from "@/components/Clarity";
 
 const _redHatText = Red_Hat_Text({
   subsets: ["latin"],
@@ -113,6 +114,7 @@ export default async function RootLayout({
             container is what keeps Safari's native bottom bar from collapsing:
             the document never scrolls, only .app-content does. */}
         <div className="app-content">
+          <ClarityAnalytics />
           <ThemeProvider
             attribute="class"
             forcedTheme="light"
