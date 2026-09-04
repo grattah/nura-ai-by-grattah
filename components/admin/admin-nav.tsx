@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Menu } from "lucide-react";
+import posthog from "posthog-js";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import {
@@ -45,6 +46,7 @@ export function AdminNav({
     setOpen(false);
     const supabase = createClient();
     await supabase.auth.signOut();
+    posthog.reset();
     router.replace("/admin/login");
     router.refresh();
   }

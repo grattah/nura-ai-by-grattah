@@ -4,6 +4,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import posthog from "posthog-js";
+import {
+  ANALYTICS_EVENTS,
+  RESTRICTION_TYPES,
+  WORKFLOW_STATUS,
+  WORKFLOW_SURFACES,
+} from "@/lib/analytics/events";
 import {
   ChevronRight,
   ThumbsUp,
@@ -60,6 +67,43 @@ export function PersonalizedSearchClient({
     if (outOfTokens) void refreshCredits();
     openTokenWall();
   }, [outOfTokens, refreshCredits, openTokenWall]);
+
+  // Report this search's outcome once per fresh server render (a new query
+  // fully remounts this component with new props), mirroring the
+  // workflow_started fired when the search was kicked off.
+  useEffect(() => {
+    if (!query) return;
+    if (serverBlocked) {
+      posthog.capture(ANALYTICS_EVENTS.RESTRICTION_ENCOUNTERED, {
+        restriction_type: RESTRICTION_TYPES.SUBSCRIPTION_REQUIRED,
+        surface: WORKFLOW_SURFACES.PERSONALIZED_SEARCH,
+      });
+      posthog.capture(ANALYTICS_EVENTS.WORKFLOW_COMPLETED, {
+        surface: WORKFLOW_SURFACES.PERSONALIZED_SEARCH,
+        status: WORKFLOW_STATUS.BLOCKED,
+      });
+    } else if (outOfTokens) {
+      posthog.capture(ANALYTICS_EVENTS.RESTRICTION_ENCOUNTERED, {
+        restriction_type: RESTRICTION_TYPES.INSUFFICIENT_TOKENS,
+        surface: WORKFLOW_SURFACES.PERSONALIZED_SEARCH,
+      });
+      posthog.capture(ANALYTICS_EVENTS.WORKFLOW_COMPLETED, {
+        surface: WORKFLOW_SURFACES.PERSONALIZED_SEARCH,
+        status: WORKFLOW_STATUS.OUT_OF_TOKENS,
+      });
+    } else if (genError) {
+      posthog.capture(ANALYTICS_EVENTS.WORKFLOW_COMPLETED, {
+        surface: WORKFLOW_SURFACES.PERSONALIZED_SEARCH,
+        status: WORKFLOW_STATUS.ERROR,
+      });
+    } else if (result) {
+      posthog.capture(ANALYTICS_EVENTS.WORKFLOW_COMPLETED, {
+        surface: WORKFLOW_SURFACES.PERSONALIZED_SEARCH,
+        status: WORKFLOW_STATUS.OK,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Guests: RouteAuthGuard overlays the sign-in modal; show the (blurred)
   // result placeholder behind it rather than a blank screen.

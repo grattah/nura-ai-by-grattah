@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, CircleAlert } from "lucide-react";
+import posthog from "posthog-js";
 
 import { createClient } from "@/lib/supabase/client";
 import { scheduleAccountDeletion } from "@/actions/delete-account";
@@ -120,6 +121,7 @@ export function DeleteAccount() {
     } catch {
       // ignore — the server session is already gone
     }
+    posthog.reset();
 
     // Land on home, where the query param raises the "Scheduled for deletion"
     // modal over the now signed-out page.

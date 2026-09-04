@@ -16,6 +16,8 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { FaHeart } from "react-icons/fa";
+import posthog from "posthog-js";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { ensureWelcomeEmail } from "@/actions/welcome";
@@ -288,6 +290,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       const { exists, hasPassword } = await res.json();
 
       if (!exists) {
+        posthog.capture(ANALYTICS_EVENTS.SIGNUP_STARTED);
         const { error: otpError } = await supabase.auth.signInWithOtp({
           email,
           options: { shouldCreateUser: true },
@@ -314,6 +317,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       }
 
       // User exists but signed up via OAuth or checkout — send OTP
+      posthog.capture(ANALYTICS_EVENTS.LOGIN_STARTED);
       const { error: otpError } = await supabase.auth.signInWithOtp({
         email,
         options: { shouldCreateUser: false },
@@ -450,6 +454,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         return;
       }
 
+      posthog.capture(ANALYTICS_EVENTS.LOGIN_COMPLETED);
       await redirectAfterAuth(supabase);
     } catch {
       setError(
@@ -554,11 +559,13 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     setError(null);
 
     try {
+      posthog.capture(ANALYTICS_EVENTS.LOGIN_STARTED);
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       if (error) throw error;
+      posthog.capture(ANALYTICS_EVENTS.LOGIN_COMPLETED);
       await redirectAfterAuth(supabase);
     } catch (err: unknown) {
       setError(
@@ -596,6 +603,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
       // New account fully created — send the one-time welcome (idempotent).
       await ensureWelcomeEmail();
+      posthog.capture(ANALYTICS_EVENTS.SIGNUP_COMPLETED);
       await redirectAfterAuth(supabase);
     } catch (err: unknown) {
       setError(
@@ -721,6 +729,9 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
       // Existing user (any context), or a new user who came from signup:
       // spend the token -> this is what creates/enters the session.
+      posthog.capture(
+        exists ? ANALYTICS_EVENTS.LOGIN_STARTED : ANALYTICS_EVENTS.SIGNUP_STARTED
+      );
       const { error } = await supabase.auth.signInWithIdToken({
         provider: "google",
         token: response.credential,
@@ -730,6 +741,11 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
       if (!exists) await ensureWelcomeEmail(); // new Google user only
 
+      posthog.capture(
+        exists
+          ? ANALYTICS_EVENTS.LOGIN_COMPLETED
+          : ANALYTICS_EVENTS.SIGNUP_COMPLETED
+      );
       await redirectAfterAuth(supabase);
     } catch (err) {
       setError(

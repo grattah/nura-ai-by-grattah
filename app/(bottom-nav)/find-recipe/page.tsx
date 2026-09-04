@@ -14,6 +14,13 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
+import posthog from "posthog-js";
+import {
+  ANALYTICS_EVENTS,
+  RESTRICTION_TYPES,
+  WORKFLOW_STATUS,
+  WORKFLOW_SURFACES,
+} from "@/lib/analytics/events";
 import { createClient } from "@/lib/supabase/client";
 import { logSearch } from "@/actions/log-search";
 import { useCredits } from "@/components/providers/credits-provider";
@@ -233,6 +240,9 @@ const page = () => {
       setPendingRecipe(clean);
       setGenerateError(false);
       setGenerating(true);
+      posthog.capture(ANALYTICS_EVENTS.WORKFLOW_STARTED, {
+        surface: WORKFLOW_SURFACES.FIND_RECIPE_GENERATE,
+      });
       try {
         const res = await fetch("/api/recipes/generate", {
           method: "POST",
@@ -251,6 +261,14 @@ const page = () => {
           setGenerating(false);
           setPendingRecipe(null);
           setTokenModalOpen(true);
+          posthog.capture(ANALYTICS_EVENTS.RESTRICTION_ENCOUNTERED, {
+            restriction_type: RESTRICTION_TYPES.INSUFFICIENT_TOKENS,
+            surface: WORKFLOW_SURFACES.FIND_RECIPE_GENERATE,
+          });
+          posthog.capture(ANALYTICS_EVENTS.WORKFLOW_COMPLETED, {
+            surface: WORKFLOW_SURFACES.FIND_RECIPE_GENERATE,
+            status: WORKFLOW_STATUS.OUT_OF_TOKENS,
+          });
           return;
         }
         // Guest (401) or no active subscription (403): show the paywall/sign-up
@@ -260,6 +278,14 @@ const page = () => {
           setPendingRecipe(null);
           setShowSignInModal(true);
           setPaywallOpen(false);
+          posthog.capture(ANALYTICS_EVENTS.RESTRICTION_ENCOUNTERED, {
+            restriction_type: RESTRICTION_TYPES.AUTH_REQUIRED,
+            surface: WORKFLOW_SURFACES.FIND_RECIPE_GENERATE,
+          });
+          posthog.capture(ANALYTICS_EVENTS.WORKFLOW_COMPLETED, {
+            surface: WORKFLOW_SURFACES.FIND_RECIPE_GENERATE,
+            status: WORKFLOW_STATUS.BLOCKED,
+          });
           return;
         }
         if (res.status === 403) {
@@ -267,18 +293,35 @@ const page = () => {
           setPendingRecipe(null);
           setShowSignInModal(false);
           setPaywallOpen(true);
+          posthog.capture(ANALYTICS_EVENTS.RESTRICTION_ENCOUNTERED, {
+            restriction_type: RESTRICTION_TYPES.SUBSCRIPTION_REQUIRED,
+            surface: WORKFLOW_SURFACES.FIND_RECIPE_GENERATE,
+          });
+          posthog.capture(ANALYTICS_EVENTS.WORKFLOW_COMPLETED, {
+            surface: WORKFLOW_SURFACES.FIND_RECIPE_GENERATE,
+            status: WORKFLOW_STATUS.BLOCKED,
+          });
+          return;
         }
 
         if (!res.ok) throw new Error("generate failed");
         const data = await res.json();
         if (!data?.id) throw new Error("no id returned");
         refreshCredits();
+        posthog.capture(ANALYTICS_EVENTS.WORKFLOW_COMPLETED, {
+          surface: WORKFLOW_SURFACES.FIND_RECIPE_GENERATE,
+          status: WORKFLOW_STATUS.OK,
+        });
         router.replace(`/recipes/${data.id}`);
       } catch (err) {
         console.error("[find-recipe] generate", err);
         setGenerating(false);
         setPendingRecipe(null);
         setGenerateError(true);
+        posthog.capture(ANALYTICS_EVENTS.WORKFLOW_COMPLETED, {
+          surface: WORKFLOW_SURFACES.FIND_RECIPE_GENERATE,
+          status: WORKFLOW_STATUS.ERROR,
+        });
       }
     },
     [router, refreshCredits],
@@ -295,11 +338,18 @@ const page = () => {
   const handleGetSuggestions = async () => {
     setShowSuggestions(true);
     setAiSuggestionsError(null);
+    posthog.capture(ANALYTICS_EVENTS.WORKFLOW_STARTED, {
+      surface: WORKFLOW_SURFACES.FIND_RECIPE_SUGGESTIONS,
+    });
 
     const cacheKey = searchTerm.trim().toLowerCase();
     const cached = suggestionsCache.current.get(cacheKey);
     if (cached) {
       setAiSuggestions(cached);
+      posthog.capture(ANALYTICS_EVENTS.WORKFLOW_COMPLETED, {
+        surface: WORKFLOW_SURFACES.FIND_RECIPE_SUGGESTIONS,
+        status: WORKFLOW_STATUS.OK,
+      });
       return;
     }
 
@@ -320,6 +370,14 @@ const page = () => {
         setShowSuggestions(false);
         setShowSignInModal(true);
         setPaywallOpen(false);
+        posthog.capture(ANALYTICS_EVENTS.RESTRICTION_ENCOUNTERED, {
+          restriction_type: RESTRICTION_TYPES.AUTH_REQUIRED,
+          surface: WORKFLOW_SURFACES.FIND_RECIPE_SUGGESTIONS,
+        });
+        posthog.capture(ANALYTICS_EVENTS.WORKFLOW_COMPLETED, {
+          surface: WORKFLOW_SURFACES.FIND_RECIPE_SUGGESTIONS,
+          status: WORKFLOW_STATUS.BLOCKED,
+        });
         return;
       }
       if (res.status === 403) {
@@ -327,6 +385,14 @@ const page = () => {
         setShowSuggestions(false);
         setShowSignInModal(false);
         setPaywallOpen(true);
+        posthog.capture(ANALYTICS_EVENTS.RESTRICTION_ENCOUNTERED, {
+          restriction_type: RESTRICTION_TYPES.SUBSCRIPTION_REQUIRED,
+          surface: WORKFLOW_SURFACES.FIND_RECIPE_SUGGESTIONS,
+        });
+        posthog.capture(ANALYTICS_EVENTS.WORKFLOW_COMPLETED, {
+          surface: WORKFLOW_SURFACES.FIND_RECIPE_SUGGESTIONS,
+          status: WORKFLOW_STATUS.BLOCKED,
+        });
         return;
       }
 
@@ -343,9 +409,17 @@ const page = () => {
       suggestionsCache.current.set(cacheKey, suggestions);
       setAiSuggestions(suggestions);
       setShowModalScreenLoader(false);
+      posthog.capture(ANALYTICS_EVENTS.WORKFLOW_COMPLETED, {
+        surface: WORKFLOW_SURFACES.FIND_RECIPE_SUGGESTIONS,
+        status: WORKFLOW_STATUS.OK,
+      });
     } catch (error) {
       console.error("Failed to get suggestions:", error);
       setAiSuggestionsError("Couldn't load suggestions. Please try again.");
+      posthog.capture(ANALYTICS_EVENTS.WORKFLOW_COMPLETED, {
+        surface: WORKFLOW_SURFACES.FIND_RECIPE_SUGGESTIONS,
+        status: WORKFLOW_STATUS.ERROR,
+      });
     } finally {
       setAiSuggestionsLoading(false);
     }
