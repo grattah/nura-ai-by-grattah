@@ -29,13 +29,13 @@ export default async function ManageSubscriptionPage() {
   const accessUntil = sub.expiresAt
     ? format(new Date(sub.expiresAt), "MMM d, yyyy")
     : null;
-  const dated = isCancelled ? "—" : (accessUntil ?? "—");
+  const dated = isCancelled ? "—" : accessUntil ?? "—";
 
   // Derived from constants/index.ts so a price change lands everywhere at once.
   const planEntry = PLANS.find((p) => p.id === sub.plan);
   const planLabel = isFree
     ? "Free Plan"
-    : (PLAN_LABELS[sub.plan as Plan]?.name ?? "Premium Plan");
+    : PLAN_LABELS[sub.plan as Plan]?.name ?? "Premium Plan";
   const priceLabel =
     isFree || !planEntry ? `` : `${planEntry.price} ${planEntry.per}`;
 
@@ -55,8 +55,8 @@ export default async function ManageSubscriptionPage() {
   const statusLabel = isExpired
     ? "Expired"
     : isCancelled
-      ? "Cancelled"
-      : "Active";
+    ? "Cancelled"
+    : "Active";
 
   return (
     <FreeTrialExhaustedGate exhausted={!!trial?.exhausted}>
