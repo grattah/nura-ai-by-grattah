@@ -1,9 +1,12 @@
 "use client";
 
+import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { useAccess } from "@/hooks/use-access";
 import { SignInModal } from "@/components/auth/SignInModal";
 import { backOrHome } from "@/lib/navigation";
+import { ANALYTICS_EVENTS, RESTRICTION_TYPES } from "@/lib/analytics/events";
 
 // Public routes — everything else requires authentication. Exact matches and
 // prefix matches (trailing "/") are both supported.
@@ -41,6 +44,15 @@ export function RouteAuthGuard() {
   const pathname = usePathname();
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAccess();
+  const blocked = !isLoading && !isAuthenticated && !isPublic(pathname);
+
+  useEffect(() => {
+    if (!blocked) return;
+    posthog.capture(ANALYTICS_EVENTS.RESTRICTION_ENCOUNTERED, {
+      restriction_type: RESTRICTION_TYPES.AUTH_REQUIRED,
+      surface: pathname,
+    });
+  }, [blocked, pathname]);
 
   if (isLoading || isAuthenticated || isPublic(pathname)) return null;
   // Modal only (no opaque cover) — the page's own content shows behind, blurred

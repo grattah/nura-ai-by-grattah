@@ -1,8 +1,10 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import posthog from "posthog-js";
 import { createClient } from "@/lib/supabase/client";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 
 interface AccessState {
   hasAccess: boolean;
@@ -54,6 +56,11 @@ export function AccessProvider({
     hasEverSubscribed: serverHasEverSubscribed,
     isSubscriber: serverIsSubscriber,
   });
+
+  // Tracks which user we've already sent to PostHog so identify()/app_entered
+  // fire once per signed-in user, not on every onAuthStateChange re-fire
+  // (e.g. TOKEN_REFRESHED).
+  const identifiedUserIdRef = useRef<string | null>(null);
 
   // Server props are authoritative. Re-sync whenever they change — this is the
   // channel that delivers server-action sign-out/sign-in to every consumer.
@@ -127,6 +134,17 @@ export function AccessProvider({
         });
         return;
       }
+
+      // Attribute this browser's pre-auth (UTM-tagged) anonymous history to the
+      // signed-in person and mark journey entry into the authenticated app.
+      // Covers every login method uniformly since onAuthStateChange fires for
+      // password, OTP, and OAuth alike.
+      if (identifiedUserIdRef.current !== session.user.id) {
+        identifiedUserIdRef.current = session.user.id;
+        posthog.identify(session.user.id, { email: session.user.email });
+        posthog.capture(ANALYTICS_EVENTS.APP_ENTERED);
+      }
+
       setState({
         hasAccess,
         isAuthenticated: true,

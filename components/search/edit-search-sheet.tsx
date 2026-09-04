@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { Search, Clock, X, SendHorizontal } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { COMMON_CONCERNS } from "@/constants";
+import { ANALYTICS_EVENTS, WORKFLOW_SURFACES } from "@/lib/analytics/events";
 
 export const RECENT_SEARCHES_KEY = "nura_recent_searches";
 
@@ -56,6 +58,9 @@ export function EditSearchSheet({
     if (!query.trim()) return;
     saveRecentSearch(query.trim());
     onOpenChange(false);
+    posthog.capture(ANALYTICS_EVENTS.WORKFLOW_STARTED, {
+      surface: WORKFLOW_SURFACES.PERSONALIZED_SEARCH,
+    });
     router.push(`/personalized-search?q=${encodeURIComponent(query.trim())}`);
   };
 

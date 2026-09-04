@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import posthog from "posthog-js";
 import { useAccess } from "@/hooks/use-access";
 import { PaywallModal } from "./paywall-modal";
+import { ANALYTICS_EVENTS, RESTRICTION_TYPES } from "@/lib/analytics/events";
 
 interface InteractionGuardProps {
   children: React.ReactNode;
@@ -15,6 +17,13 @@ export function InteractionGuard({ children }: InteractionGuardProps) {
   // While loading, render normally (avoids layout shift)
   // Once confirmed denied, overlay kicks in
   const showOverlay = !isLoading && !hasAccess;
+
+  useEffect(() => {
+    if (!showOverlay) return;
+    posthog.capture(ANALYTICS_EVENTS.RESTRICTION_ENCOUNTERED, {
+      restriction_type: RESTRICTION_TYPES.SUBSCRIPTION_REQUIRED,
+    });
+  }, [showOverlay]);
 
   return (
     <>

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { PaywallModal } from "@/components/paywall/paywall-modal";
 import { backOrHome } from "@/lib/navigation";
+import { ANALYTICS_EVENTS, RESTRICTION_TYPES } from "@/lib/analytics/events";
 
 /**
  * A free user who has spent every free trial lands on the membership page with
@@ -23,6 +25,13 @@ export function FreeTrialExhaustedGate({
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(true);
+
+  useEffect(() => {
+    if (!exhausted) return;
+    posthog.capture(ANALYTICS_EVENTS.RESTRICTION_ENCOUNTERED, {
+      restriction_type: RESTRICTION_TYPES.FREE_TRIAL_EXHAUSTED,
+    });
+  }, [exhausted]);
 
   if (!exhausted) return <>{children}</>;
 

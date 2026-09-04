@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
+import posthog from "posthog-js";
+import { ANALYTICS_EVENTS, RESTRICTION_TYPES } from "@/lib/analytics/events";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://nurai.com";
 
@@ -33,6 +35,12 @@ export function MobileGate({ children }: MobileGateProps) {
 }
 
 function DesktopBlocker() {
+  useEffect(() => {
+    posthog.capture(ANALYTICS_EVENTS.RESTRICTION_ENCOUNTERED, {
+      restriction_type: RESTRICTION_TYPES.DESKTOP_NOT_SUPPORTED,
+    });
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-8 text-center">
       <div
