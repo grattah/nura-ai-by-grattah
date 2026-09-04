@@ -16,6 +16,10 @@ import iconHTMI from "@/public/HTMI.svg";
 import iconWIW from "@/public/WIW.svg";
 import { FaInfoCircle } from "react-icons/fa";
 import { LockKeyhole, LockKeyholeOpen, CircleAlert } from "lucide-react";
+import {
+  precautionProse,
+  type IngredientPrecaution,
+} from "@/lib/precautions/types";
 
 interface AccordionSectionProps {
   recipe: {
@@ -27,6 +31,8 @@ interface AccordionSectionProps {
   howToMake: { step: string; instruction: string }[];
   nutrition: NutritionFacts | null;
   popular: boolean;
+  /** PRD §5 — one block per qualifying ingredient; [] renders the empty state. */
+  precautions?: IngredientPrecaution[];
 }
 
 /** Split copy on blank lines; a single block stays a single paragraph. */
@@ -42,14 +48,15 @@ const AccordionSection = ({
   howToMake,
   nutrition,
   popular,
+  precautions = [],
 }: AccordionSectionProps) => {
   const { isSubscriber, isLoading } = useAccess();
 
-  const lockIcon = isLoading ? null : isSubscriber || popular ? (
-    <></>
-  ) : (
-    <LockKeyhole size={20} color="#9CA5A3" className="ml-auto" />
-  );
+  // const lockIcon = isLoading ? null : isSubscriber || popular ? (
+  //   <></>
+  // ) : (
+  //   <LockKeyhole size={20} color="#9CA5A3" className="ml-auto" />
+  // );
 
   return (
     <Accordion type="multiple" defaultValue={[]} className="space-y-3">
@@ -107,7 +114,7 @@ const AccordionSection = ({
               </span>
             </div>
 
-            {lockIcon}
+            {/* {lockIcon} */}
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-4 pb-4 pt-0">
@@ -140,7 +147,7 @@ const AccordionSection = ({
                 How to make it
               </span>
             </div>
-            {lockIcon}
+            {/* {lockIcon} */}
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-5 pb-5 pt-0">
@@ -173,7 +180,7 @@ const AccordionSection = ({
                 Why it works
               </span>
             </div>
-            {lockIcon}
+            {/* {lockIcon} */}
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-5 pb-5 pt-0">
@@ -197,7 +204,66 @@ const AccordionSection = ({
         </AccordionContent>
       </AccordionItem>
 
-      {/* 5 — Inside Tip */}
+      {/* 5 — Precautions (PRD-4 §5). Always rendered: an empty tab is
+          reassuring, a missing tab reads as "we didn't check". Informational
+          only — unlike an allergy exclusion it never blocks access, so no
+          paywall lock here. */}
+      <AccordionItem
+        value="precautions"
+        data-paywall-passthrough
+        className="border-0 rounded-xl overflow-hidden bg-white"
+      >
+        <AccordionTrigger className="px-5 py-4 hover:no-underline min-h-14">
+          <div className="flex items-center gap-2.5">
+            <CircleAlert size={20} className="text-[#57605E] shrink-0" />
+            <span className="text-base font-medium text-base-text">
+              Precautions
+            </span>
+          </div>
+        </AccordionTrigger>
+        <AccordionContent className="px-5 pb-5 pt-0">
+          <div className="bg-[#F4F4F2] p-4 rounded-lg space-y-4">
+            {precautions.length === 0 ? (
+              <p className="text-base text-[#57605E] leading-relaxed">
+                No specific usage precautions for this recipe&apos;s ingredients.
+              </p>
+            ) : (
+              // Prose only — no ingredient heading. The three answers are
+              // written as self-contained sentences (§4.1), so they read as one
+              // paragraph, and the section gets the same treatment as "Why it
+              // works" above rather than looking like a form.
+              //
+              // Measured before removing the heading: 123 of 132 profiles (93%)
+              // open by naming their own ingredient — "Ground cinnamon is safe
+              // daily…" — so for almost all of them the heading was repeating
+              // the first three words of the sentence beneath it.
+              //
+              // The remaining ~7% open without naming themselves ("Typical
+              // doses of 300–600 mg daily appear well tolerated…"). One
+              // paragraph per ingredient keeps them separable, and the fix for
+              // those is in the copy, not the layout — the §4.1 prompt should
+              // require the opening sentence to name the ingredient.
+              precautions.map((entry) => (
+                <p
+                  key={entry.ingredientId}
+                  className="text-base text-[#57605E] leading-relaxed"
+                >
+                  {precautionProse(entry.profile)}
+                </p>
+              ))
+            )}
+            {/* No "Sources:" line — PRD-4 removed live search, so there is
+                nothing verifiable to cite and an unverifiable one would only
+                lend borrowed authority. */}
+            <p className="text-xs text-[#9CA5A3] leading-relaxed pt-1">
+              General information only — not medical advice. Check with your
+              doctor if you take medication or have a health condition.
+            </p>
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+
+      {/* 6 — Inside Tip */}
       <AccordionItem
         value="tip"
         className="border-0 rounded-xl overflow-hidden bg-[#EEF4FB]"
@@ -212,7 +278,7 @@ const AccordionSection = ({
                 Inside Tip
               </span>
             </div>
-            {lockIcon}
+            {/* {lockIcon} */}
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-5 pb-5 pt-0">

@@ -91,13 +91,30 @@ describe("nutrient thresholds", () => {
   });
 });
 
-// ── Unmatched rows are safe ─────────────────────────────────────────────────
-describe("rows without a matcher", () => {
-  it("never match, so they only score via the pipeline", () => {
-    // Omega-3, Zinc, Magnesium etc. have no USDA column and no reliable name
-    // signal. Guessing at them would inflate a health score invisibly.
-    for (const row of ["Omega-3", "Zinc", "Magnesium", "Antioxidant polyphenols"]) {
-      expect(ROW_MATCHERS[row], `"${row}" should have no matcher`).toBeUndefined();
+// ── Every calibration row must be reachable ─────────────────────────────────
+describe("rows that used to have no matcher", () => {
+  it("all match now, because an unmatched row is not free", () => {
+    // REVERSED. This previously asserted these rows had NO matcher, on the
+    // reasoning that guessing would inflate a health score. The cost of the
+    // other direction turned out to be larger and completely silent: an
+    // unmatched row still counts toward MaxPossible (§4 Step 2), so it caps the
+    // whole category. Sleep and Focus could not exceed 50%, Beauty 52%, and
+    // Detox showed 7 qualifying recipes out of 433.
+    //
+    // Magnesium, Zinc, Omega-3 and Tryptophan are now backfilled USDA columns.
+    // Polyphenols and L-theanine are not USDA fields and use a deliberately
+    // narrow keyword list.
+    for (const row of [
+      "Omega-3",
+      "Zinc",
+      "Magnesium",
+      "Tryptophan",
+      "B vitamins",
+      "Antioxidant polyphenols",
+      "Polyphenols",
+      "L-theanine",
+    ]) {
+      expect(ROW_MATCHERS[row], `"${row}" needs a matcher`).toBeTypeOf("function");
     }
   });
 });

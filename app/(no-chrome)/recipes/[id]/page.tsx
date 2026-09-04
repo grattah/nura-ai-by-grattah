@@ -18,10 +18,11 @@ import SafetyAlerts, {
   type SafetyAlertItem,
 } from "@/components/recipe/SafetyAlerts";
 import NutritionScore from "@/components/recipe/NutritionScore";
-import { scoreMatch, type MatchScoreView } from "@/lib/scoring/tier-server";
+import { computeMatchScore } from "@/lib/scoring/match-score";
 import { hasActiveSubscription } from "@/lib/subscription";
 import Comment from "@/components/recipe/Comment";
 import AccordionSection from "@/components/recipe/AccordionSection";
+import { getRecipePrecautions } from "@/lib/precautions/server";
 import LikeButton from "@/components/recipe/LikeButton";
 import { logRecipeView } from "@/actions/activity";
 import { isLiked } from "@/actions/likes";
@@ -146,6 +147,7 @@ export default async function RecipeDetailPage({
     { data: latestComment },
 
     { count: totalCommentCount },
+    precautions,
   ] = await Promise.all([
     isBookmarked(recipe.id),
     isLiked(recipe.id),
@@ -172,6 +174,7 @@ export default async function RecipeDetailPage({
       .select("*", { count: "exact", head: true })
       .eq("recipe_id", recipe.id)
       .is("parent_id", null),
+    getRecipePrecautions(recipe.id),
   ]);
 
   const latestCommentWithLike = latestComment
@@ -208,7 +211,7 @@ export default async function RecipeDetailPage({
   let personalizedView = false;
   let isSubscribed = false;
   let hasProfile = false;
-  let matchResult: MatchScoreView | null = null;
+  let matchResult: ReturnType<typeof computeMatchScore> | null = null;
   let personalizedAlerts: SafetyAlertItem[] = [];
   let needsSafetyAlerts = false;
   if (user) {
@@ -237,10 +240,29 @@ export default async function RecipeDetailPage({
     personalizedView = isSub && !!profileUpdatedAt;
     if (personalizedView && recipe.final_score_10 != null) {
       // Fresh match, computed from the recipe's current scores + the profile.
-      // Ingredient-tier scoring (Category/Match PRD v7). Reads cached tiers +
-      // the calibration tables; no bioactivity subtotals, no nutrient bonuses.
-      matchResult = await scoreMatch({
-        recipeId: recipe.id,
+      //
+      // REVERTED to the bioactivity Match Score alongside the 12-goal picker.
+      // The ingredient-tier scorer (Category/Match PRD v7) is still what writes
+      // recipe_categories, so Category Score is untouched — only this personal
+      // number goes back to the earlier formula.
+      const bioBySlug: Record<string, number> = {};
+      for (const rt of recipe.recipe_tags ?? []) {
+        if (rt.tags?.slug && rt.score != null)
+          bioBySlug[rt.tags.slug] = rt.score;
+      }
+      matchResult = computeMatchScore({
+        bioBySlug,
+        points: {
+          sugar: recipe.sugar_points ?? 0,
+          salt: recipe.salt_points ?? 0,
+          satFat: recipe.sat_fat_points ?? 0,
+          energy: recipe.energy_points ?? 0,
+          fiber: recipe.fiber_points ?? 0,
+          protein: recipe.protein_points ?? 0,
+        },
+        track: recipe.track ?? "Solid Food",
+        ironRich: !!recipe.iron_rich,
+        waterContentPercent: recipe.water_content_pct ?? 0,
         conditions: profile?.conditions ?? [],
         goals: profile?.goals ?? [],
       });
@@ -363,20 +385,26 @@ export default async function RecipeDetailPage({
 
             {/* Accordion sections */}
             <div className="px-6 space-y-3">
-              <AccordionSection
-                recipe={recipe}
-                ingredients={ingredients}
-                howToMake={howToMake}
-                nutrition={nutrition}
-                popular={canViewFull}
-              />
+              <div data-paywall-passthrough>
+                <AccordionSection
+                  recipe={recipe}
+                  ingredients={ingredients}
+                  howToMake={howToMake}
+                  nutrition={nutrition}
+                  popular={canViewFull}
+                  precautions={precautions}
+                />
+              </div>
 
               {/* Follow-up questions + RAG chat: only exempt from AuthGate's
                   blanket click-intercept when the page itself is already
                   ungated (subscribed or popular view) — AuthGate's selector
                   matches on attribute presence, not value, so the attribute
                   must be omitted entirely rather than set to false. */}
-              <div className="pt-2" {...(canViewFull ? { "data-paywall-passthrough": true } : {})}>
+              <div
+                className="pt-2"
+                {...(canViewFull ? { "data-paywall-passthrough": true } : {})}
+              >
                 <FollowUpSection
                   contextId={recipe.id}
                   contextType="recipe"

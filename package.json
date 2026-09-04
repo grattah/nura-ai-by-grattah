@@ -7,7 +7,7 @@
     "build": "next build --webpack",
     "lint": "eslint .",
     "start": "next start",
-    "generate-types": "supabase gen types typescript --project-id [project-id] > lib/database.types.ts",
+    "generate-types": "supabase gen types typescript --project-id vmykfwzaxswiezkqakdu > lib/database.types.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "usda:build": "esbuild scripts/usda-build.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.usda-build.mjs && node --env-file=.env.local scripts/.usda-build.mjs",
@@ -22,7 +22,10 @@
     "test:integration": "vitest run test/integration",
     "preview:categories": "esbuild scripts/preview-category-scores.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.preview-categories.mjs && node --env-file=.env.local scripts/.preview-categories.mjs",
     "reconcile:subs": "esbuild scripts/reconcile-subscriptions.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.reconcile-subs.mjs && node --env-file=.env.local scripts/.reconcile-subs.mjs",
-    "rewrite:recipe-copy": "esbuild scripts/rewrite-recipe-copy.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.rewrite-recipe-copy.mjs && node --env-file=.env.local scripts/.rewrite-recipe-copy.mjs"
+    "rewrite:recipe-copy": "esbuild scripts/rewrite-recipe-copy.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.rewrite-recipe-copy.mjs && node --env-file=.env.local scripts/.rewrite-recipe-copy.mjs",
+    "classify:usage": "esbuild scripts/classify-ingredient-usage.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.classify-usage.mjs && node --env-file=.env.local scripts/.classify-usage.mjs",
+    "backfill:category-nutrients": "esbuild scripts/backfill-category-nutrients.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.backfill-category-nutrients.mjs && node --env-file=.env.local scripts/.backfill-category-nutrients.mjs",
+    "reset:profiles": "esbuild scripts/reset-profile-selections.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/.reset-profiles.mjs && node --env-file=.env.local scripts/.reset-profiles.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.0",
@@ -58,6 +61,7 @@
     "@radix-ui/react-toggle": "1.1.10",
     "@radix-ui/react-toggle-group": "1.1.11",
     "@radix-ui/react-tooltip": "1.2.8",
+    "@sentry/nextjs": "^10.71.0",
     "@serwist/next": "^9.5.7",
     "@stripe/react-stripe-js": "^6.1.0",
     "@stripe/stripe-js": "^9.0.1",

@@ -78,27 +78,54 @@ d("a recipe scores the same alone as in a batch", () => {
     }
   });
 
-  it("reads every tier for a whole-library batch, not the first page", async () => {
+  it("scores a whole-library batch identically to small batches", async () => {
+    // This replaces an assertion that "more than 80% of the library scores
+    // above zero", which was a PROXY for un-truncated reads. It stopped meaning
+    // anything twice over: ingredient_tiers is no longer read at all, and the
+    // proxy only ever held because a fall-through in scoreFromRaw gave every
+    // unmatched ingredient free points — water alone put a floor under every
+    // recipe. With that gone the honest figure is 69%, and lowering the
+    // threshold would just be re-fitting the test to the bug it stopped
+    // catching.
+    //
+    // What still needs guarding is that batching does not LOSE rows, so this
+    // compares the two directly. It fails on both known failure modes: a
+    // truncated page, and the ~16KB URL limit that made the whole-library call
+    // throw `TypeError: fetch failed` once the library passed ~360 recipes —
+    // which broke the for-you page for every user.
     const client = sb();
     const { data: recipeRows } = await client
       .from("recipes")
       .select("id")
       .eq("status", "approved");
     const ids = ((recipeRows ?? []) as { id: string }[]).map((r) => r.id);
+    expect(
+      ids.length,
+      "needs a library big enough to exceed one page and one URL",
+    ).toBeGreaterThan(200);
 
-    const bulk = await scoreMatchForRecipes({
+    const whole = await scoreMatchForRecipes({
       recipeIds: ids,
       conditions: [],
       goals: GOALS,
     });
+    expect(whole.size, "the whole-library call must not throw or drop recipes")
+      .toBe(ids.length);
 
-    // Truncation shows up as a mass of zeros: ingredients whose tiers were cut
-    // contribute nothing. Before the fix this was 148; after, 184.
-    const scored = [...bulk.values()].filter((v) => v.averagePercent > 0).length;
-    expect(
-      scored / ids.length,
-      "most of the library should score for a three-goal profile",
-    ).toBeGreaterThan(0.8);
+    const batched = new Map<string, number>();
+    for (let i = 0; i < ids.length; i += 40) {
+      const part = await scoreMatchForRecipes({
+        recipeIds: ids.slice(i, i + 40),
+        conditions: [],
+        goals: GOALS,
+      });
+      for (const [id, v] of part) batched.set(id, v.averagePercent);
+    }
+
+    const drift = ids.filter(
+      (id) => Math.abs((whole.get(id)?.averagePercent ?? 0) - (batched.get(id) ?? 0)) > 1e-9,
+    );
+    expect(drift, "these recipes scored differently in a big batch").toEqual([]);
   });
 });
 

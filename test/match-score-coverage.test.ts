@@ -33,10 +33,10 @@ describe("every live health-profile option maps to a Match Score formula", () =>
     },
   );
 
-  // Total coverage again: every goal the picker offers must resolve to a real
-  // formula. The AUG 21 picker briefly outran the formulas and needed an
-  // exemption list; now that all 24 score, an unmapped key is a bug, not a
-  // known gap — so this is back to an unconditional assertion.
+  // Every goal the picker offers must resolve to a real formula. The AUG 21
+  // 24-goal picker outran the formulas — 11 goals were display-only and scored
+  // nothing. The reverted 12 all resolve, so an unmapped key is a bug rather
+  // than a known gap and this stays unconditional.
   it.each(GOALS.map((g) => [g.key, g.label] as const))("goal %s (%s)", (key) => {
     const prd = GOAL_KEY_TO_PRD[key];
     expect(prd, `goal "${key}" is not in GOAL_KEY_TO_PRD`).toBeDefined();
@@ -68,44 +68,64 @@ describe("map integrity", () => {
   });
 });
 
-// ── Conditions retired from the AUG 21 picker ───────────────────────────────
+// ── The maps mirror the PRD exactly ─────────────────────────────────────────
 //
-// The picker dropped from 13 conditions to 3. Users who answered the earlier
-// questionnaire still hold the retired keys in health_profiles, and their Match
-// Score must keep working — computeMatchScore skips an unmapped key silently,
-// so deleting one of these mappings during a future tidy-up would quietly zero
-// those users' scores with nothing failing.
-describe("retired condition keys still score for existing profiles", () => {
-  const RETIRED = [
-    "diabetes",
-    "type-1-diabetes",
-    "type-2-diabetes",
-    "prediabetes",
-    "heart-disease",
-    "high-blood-pressure",
-    "high-cholesterol",
-    "digestive-sensitivities",
-    "ibs",
-    "ibd",
-    "gerd",
-    "kidney-disease",
-    "liver-disease",
-    "arthritis",
-    "anemia",
-    "perimenopause",
+// This replaces a block asserting that retired keys (type-1-diabetes, ibs,
+// gerd, perimenopause …) STILL resolved, so pre-consolidation profiles kept
+// scoring. The product is pre-launch and those profiles are being reset
+// instead — scripts/reset-profile-selections.ts strips anything the PRD does
+// not name — so the maps now contain one key per formula and nothing else.
+describe("key maps mirror the PRD", () => {
+  const PRD_CONDITIONS = [
+    "Diabetes", "Heart disease", "High blood pressure", "High cholesterol",
+    "PCOS", "Menopause", "Digestive Sensitivities", "Kidney disease",
+    "Liver disease", "Osteoporosis", "Arthritis", "Anemia",
+  ];
+  const PRD_GOALS = [
+    "Have more energy", "Improve my fitness", "Lose weight",
+    "Improve my gut health", "Drink more water", "Improve my skin & hair",
+    "Boost my immunity", "Support my body's detox", "Balance my hormones",
+    "Sharpen my focus", "Sleep better", "Reduce stress", "Improve my mood",
   ];
 
-  it.each(RETIRED)("%s still resolves to a formula", (key) => {
-    const prd = CONDITION_KEY_TO_PRD[key];
-    expect(prd, `retired key "${key}" lost its mapping`).toBeDefined();
-    expect(CONDITION_CREDITS[prd]).toBeTypeOf("function");
+  it("defines every PRD formula and no others", () => {
+    expect(Object.keys(CONDITION_CREDITS).sort()).toEqual([...PRD_CONDITIONS].sort());
+    expect(Object.keys(GOAL_CREDITS).sort()).toEqual([...PRD_GOALS].sort());
   });
 
-  it("offers exactly the three conditions the design shows", () => {
-    expect(CONDITIONS.map((c) => c.key)).toEqual([
-      "pcos",
-      "menopause",
-      "osteoporosis",
-    ]);
+  it("maps exactly one key to each formula", () => {
+    // The invariant that makes de-duplication unnecessary. While several keys
+    // aliased one formula, two selections could resolve to the same credit and
+    // computeMatchScore had to collapse them — which meant §6's denominator was
+    // not the number of selections. 1:1 removes the problem by construction, so
+    // a second key pointing at a formula must fail HERE rather than quietly
+    // changing how averages are computed.
+    for (const [label, map] of [
+      ["condition", CONDITION_KEY_TO_PRD],
+      ["goal", GOAL_KEY_TO_PRD],
+    ] as const) {
+      const byFormula = new Map<string, string[]>();
+      for (const [key, prd] of Object.entries(map)) {
+        byFormula.set(prd, [...(byFormula.get(prd) ?? []), key]);
+      }
+      const shared = [...byFormula].filter(([, keys]) => keys.length > 1);
+      expect(
+        shared.map(([prd, keys]) => `${prd} ← ${keys.join(", ")}`),
+        `${label} formulas reached by more than one key`,
+      ).toEqual([]);
+    }
+  });
+
+  it("has no key for a formula the PRD does not define", () => {
+    for (const [key, prd] of Object.entries(CONDITION_KEY_TO_PRD)) {
+      expect(PRD_CONDITIONS, `condition key "${key}"`).toContain(prd);
+    }
+    for (const [key, prd] of Object.entries(GOAL_KEY_TO_PRD)) {
+      expect(PRD_GOALS, `goal key "${key}"`).toContain(prd);
+    }
+  });
+
+  it("still excludes gout (§9)", () => {
+    expect(CONDITION_KEY_TO_PRD["gout"]).toBeUndefined();
   });
 });

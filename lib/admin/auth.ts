@@ -1,6 +1,7 @@
 import "server-only";
 import { getCachedUser, createServiceRoleClient } from "@/lib/supabase/server";
 import { atLeast, type AdminRole } from "@/lib/admin/roles";
+import { isAllowedAdminEmail } from "@/lib/admin/allowlist";
 
 export interface AdminIdentity {
   userId: string;
@@ -8,16 +9,12 @@ export interface AdminIdentity {
   role: AdminRole;
 }
 
-/**
- * The current admin's identity, or null if the visitor isn't signed in or isn't
- * a member. Looked up with the service-role client (admin_members has no client
- * RLS access). Safe to call from layouts, pages, and server actions.
- */
 export async function getAdminIdentity(): Promise<AdminIdentity | null> {
   const {
     data: { user },
   } = await getCachedUser();
   if (!user) return null;
+  if (!isAllowedAdminEmail(user.email)) return null;
 
   const admin = createServiceRoleClient();
   // admin_members isn't in the generated types yet (migration 20260616120000),
@@ -53,15 +50,4 @@ export async function requireAdmin(
     return { ok: false, error: "You don't have permission to do that." };
   }
   return { ok: true, identity };
-}
-
-/** Whether an owner already exists (used to lock the one-time owner sign-up). */
-export async function ownerExists(): Promise<boolean> {
-  const admin = createServiceRoleClient();
-  const { data } = await admin
-    .from("admin_members" as never)
-    .select("user_id")
-    .eq("role", "owner")
-    .maybeSingle();
-  return !!data;
 }

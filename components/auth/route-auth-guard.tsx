@@ -24,6 +24,7 @@ const PUBLIC_PREFIXES = [
   "/auth/", // login / sign-up / error / callback …
   "/admin", // admin has its own separate auth gate
   "/landing",
+  "/health-profile", // wizard is guest-accessible end-to-end; Save gates itself
 ];
 
 function isPublic(pathname: string): boolean {

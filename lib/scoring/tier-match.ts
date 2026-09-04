@@ -1,3 +1,18 @@
+// ⚠️ DORMANT — superseded by Category Score PRD-1.
+//
+// This file implements PRD-3 / v7 ingredient-tier scoring. Category Score now
+// runs on the bioactivity method in lib/bioactivity-categories.ts, and Recipe
+// Match Score runs on lib/scoring/match-score.ts (PRD-2). Nothing under app/,
+// lib/, actions/ or components/ imports this module.
+//
+// Why it was retired: a tier table of 3-4 rows worth 100/20/10 can only emit
+// 6-20 distinct scores per category, so 98 Weight Loss recipes all displayed
+// exactly 46% and Detox showed 7 qualifying recipes out of 512. PRD-1's
+// relevance-weighted average is continuous; the same library now spreads across
+// 46-78 distinct scores per category and Detox qualifies 269.
+//
+// Kept, not deleted, so the approach can be revived. Its tests stay green.
+
 // Resolve a real recipe ingredient to a calibration-table row.
 //
 // WHY THIS EXISTS
@@ -38,6 +53,12 @@ export interface IngredientFacts {
   total_sugar_g?: number | null;
   calorie_density?: number | null;
   is_added_sweetener?: boolean | null;
+  /** Category PRD-3 §6 additions — null until backfilled. */
+  magnesium_dv?: number | null;
+  zinc_dv?: number | null;
+  omega3_g?: number | null;
+  tryptophan_g?: number | null;
+  b_vitamin_dv?: number | null;
 }
 
 // ── Nutrient thresholds ─────────────────────────────────────────────────────
@@ -62,6 +83,24 @@ export const NUTRIENT_THRESHOLDS = {
   ironMg: 1.8,
   /** % — a genuinely hydrating ingredient, not merely a moist one. */
   waterPct: 80,
+
+  // ── Category PRD-3 §6 rows that previously had no data ──────────────────
+  /** %DV per 100g — the FDA "good source" bar, as for calcium. */
+  magnesiumDV: 10,
+  zincDV: 10,
+  /**
+   * %DV per 100g. The FDA "excellent source" bar, applied to the HIGHEST of the
+   * six B vitamins — so this reads as "an excellent source of at least one B
+   * vitamin", which is what the Energy row means by "B vitamins".
+   */
+  bVitaminDV: 20,
+  /**
+   * g per 100g, ALA + EPA + DHA. Flaxseed is ~22, chia ~17, walnut ~9; leafy
+   * greens carry ~0.1 and are not what the row describes.
+   */
+  omega3G: 0.5,
+  /** g per 100g. Oats ~0.23, pumpkin seed ~0.58; a banana's ~0.01 is a trace. */
+  tryptophanG: 0.05,
 } as const;
 
 type Predicate = (f: IngredientFacts) => boolean;
@@ -94,9 +133,14 @@ const either =
 /**
  * Table row label → "does this ingredient satisfy the row?".
  *
- * A row with no entry here is never matched, and every ingredient falls through
- * to its classified tier. That is the safe default: an unmatched row costs
- * nothing, while a wrong match silently inflates a health score.
+ * A row with no entry here can NEVER be matched — and that is expensive, not
+ * free. MaxPossible (§4 Step 2) sums every row in the table whether or not it
+ * is reachable, so an unmatched row permanently caps the category: Sleep and
+ * Focus could not exceed 50%, and Detox showed 7 qualifying recipes out of 433.
+ *
+ * test/tier-score.test.ts asserts every category row has an entry here, so this
+ * cannot silently regress. Adding a row to tier-tables.ts means adding a
+ * matcher here in the same change.
  */
 export const ROW_MATCHERS: Record<string, Predicate> = {
   // ── Nutrients we hold USDA data for ───────────────────────────────────────
@@ -123,7 +167,55 @@ export const ROW_MATCHERS: Record<string, Predicate> = {
   Probiotics: (f) => f.is_probiotic === true,
   "Probiotics / fermented ingredients": (f) => f.is_probiotic === true,
 
+  // ── Category PRD-3 §6 rows, newly backfilled (see the migration) ──────────
+  Magnesium: (f) => has(f.magnesium_dv, NUTRIENT_THRESHOLDS.magnesiumDV),
+  Zinc: (f) => has(f.zinc_dv, NUTRIENT_THRESHOLDS.zincDV),
+  "B vitamins": (f) => has(f.b_vitamin_dv, NUTRIENT_THRESHOLDS.bVitaminDV),
+  // Omega-3 and tryptophan follow the `Iron` precedent above — nutrient data
+  // when USDA reported it, a narrow named fallback when it did not.
+  //
+  // Measured over a 60-ingredient sample: magnesium 60/60, zinc 58/60 and the B
+  // vitamins 60/60, but omega-3 only 41/60 and tryptophan 28/60. USDA panels are
+  // uneven — chia's own Foundation record carries 26 nutrients including
+  // magnesium and zinc but NO fatty acids, so the nutrient path alone misses the
+  // single most important omega-3 ingredient in a smoothie library.
+  //
+  // The fallback lists are the canonical sources only. They exist to stop a
+  // gap in USDA's panel reading as an absence of the nutrient, not to widen
+  // what counts as a source.
+  "Omega-3": either(
+    (f) => has(f.omega3_g, NUTRIENT_THRESHOLDS.omega3G),
+    named("flax", "flaxseed", "linseed", "chia", "walnut", "hemp",
+          "salmon", "mackerel", "sardine", "algae", "algal"),
+  ),
+  Tryptophan: either(
+    (f) => has(f.tryptophan_g, NUTRIENT_THRESHOLDS.tryptophanG),
+    named("oat", "pumpkin seed", "sesame", "cashew", "tofu", "turkey", "egg"),
+  ),
+
   // ── Named ingredients ─────────────────────────────────────────────────────
+  // ── Rows USDA has no field for ────────────────────────────────────────────
+  //
+  // Polyphenols are thousands of distinct compounds with no single USDA entry,
+  // and L-theanine is not in the database at all. Both rows are Primary or
+  // Secondary in categories that were badly capped without them (Beauty and
+  // Detox at 52-58%, Gut Health at 91%, Focus at 50%), so a keyword list is the
+  // honest option — the alternative was leaving the row permanently dead.
+  //
+  // The list is deliberately confined to foods whose polyphenol content is the
+  // reason they are eaten. Over-matching here inflates a health score, which is
+  // worse than under-matching: it is the one direction a reader cannot detect.
+  "Antioxidant polyphenols": named(
+    "berry", "blueberry", "blackberry", "raspberry", "strawberry", "cranberry",
+    "acai", "elderberry", "pomegranate", "grape", "cherry", "plum",
+    "cacao", "cocoa", "green tea", "matcha", "hibiscus", "roselle",
+    "beet", "beetroot", "turmeric", "olive",
+  ),
+  // Gut Health's row is the same class of compound under a shorter name; one
+  // definition, aliased, so the two can never drift apart.
+  Polyphenols: (f) => ROW_MATCHERS["Antioxidant polyphenols"](f),
+  "L-theanine": named("green tea", "matcha", "black tea", "white tea", "tea leaf"),
+
   "Turmeric / curcumin": named("turmeric", "curcumin"),
   Cinnamon: named("cinnamon"),
   "Ginger, cinnamon": named("ginger", "cinnamon"),
@@ -277,9 +369,34 @@ export const PENALTY_MATCHERS: Record<string, Predicate> = {
   "Calcium / dairy (if combined)": named("milk", "yogurt", "yoghurt", "kefir", "cheese"),
   "Flaxseed / lignans": named("flax", "flaxseed", "linseed"),
 
-  // No matcher, so never fires — no data supports them:
-  //   Glycemic load, Trans fat, High-FODMAP / fermentable carbs
+  // ── Deliberately unmatched: Glycemic load, Trans fat, High-FODMAP ─────────
+  //
+  // These three PRD penalties have no honest implementation against the data we
+  // hold, and a wrong one is worse than none.
+  //
+  // Glycemic load is the instructive case. The obvious proxy is net carbs
+  // (carbs − fiber), and it is measurably wrong here: matchPenalties sees
+  // per-100g facts with NO quantity, and ground cinnamon carries 70.1 g net
+  // carbs per 100g while being used a gram at a time. A net-carb threshold
+  // would penalise cinnamon for glycemic load inside Diabetes — the category
+  // where cinnamon is the Primary row. The table would fight itself.
+  //
+  // Implementing these needs per-recipe quantities (glycemic load is a dose,
+  // not a concentration) or a FODMAP/trans-fat data source we do not have.
+  // test/tier-score.test.ts pins this list so the gap stays visible and any
+  // OTHER unmatched penalty still fails.
 };
+
+/**
+ * Penalties the PRDs declare that no matcher can honestly implement yet.
+ * Exported so the coverage test asserts against a known list rather than
+ * silently tolerating every gap. See the note above for why each is here.
+ */
+export const UNIMPLEMENTABLE_PENALTIES = [
+  "Glycemic load",
+  "Trans fat",
+  "High-FODMAP / fermentable carbs",
+] as const;
 
 /** Penalty row labels this recipe triggers, deduplicated. */
 export function matchPenalties(

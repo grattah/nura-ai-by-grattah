@@ -214,16 +214,30 @@ describe("Recipe Match Score — structural cases", () => {
     ).toBeCloseTo(63.4, 1);
   });
 
-  it("still scores legacy keys held by older profiles", () => {
-    // Pre-consolidation rows in health_profiles must keep working.
+  it("ignores a key the PRD does not define", () => {
+    // REVERSED. `ibs` used to alias Digestive Sensitivities so pre-consolidation
+    // profiles kept scoring. The maps now mirror the PRD exactly, and profiles
+    // holding a retired key are being reset rather than translated
+    // (scripts/reset-profile-selections.ts), so an unknown key contributes
+    // nothing — and, with nothing else selected, there is no score to show (§9).
     const r = computeMatchScore({
       bioBySlug: bySlug({ Gut: 80, Microbiome: 60, Inflammation: 40 }),
       points: { sugar: 0, salt: 0, satFat: 0, energy: 0, protein: 0, fiber: 0 },
       track: "Beverage", ironRich: false, waterContentPercent: 0,
       conditions: ["ibs"], goals: [],
     });
-    expect(r.creditCount).toBe(1);
-    expect(r.average).toBeCloseTo(63.4, 1);
+    expect(r.creditCount).toBe(0);
+    expect(r.highest).toBeNull();
+
+    // The canonical key still scores, and to the same number the alias did.
+    const canonical = computeMatchScore({
+      bioBySlug: bySlug({ Gut: 80, Microbiome: 60, Inflammation: 40 }),
+      points: { sugar: 0, salt: 0, satFat: 0, energy: 0, protein: 0, fiber: 0 },
+      track: "Beverage", ironRich: false, waterContentPercent: 0,
+      conditions: ["digestive-sensitivities"], goals: [],
+    });
+    expect(canonical.creditCount).toBe(1);
+    expect(canonical.average).toBeCloseTo(63.4, 1);
   });
 
   it("Anemia blends BrainCognitive with the iron-rich flag (no longer binary)", () => {
@@ -287,26 +301,36 @@ describe("Recipe Match Score — display spec (§7)", () => {
   });
 
   it("labels come from the picker, not the PRD formula name", () => {
-    // `muscle-recovery` is labelled "Muscle recovery support" in the AUG 21
-    // picker but scores through the PRD's "Improve my fitness" — the user must
-    // see the wording they actually selected.
+    // `detox` is labelled "Body detox" in the picker but scores through the
+    // PRD's "Support my body's detox" — the user must see the wording they
+    // actually selected. Back in the picker after the revert, so it exercises
+    // the divergence again rather than the fallback.
     const r = computeMatchScore({
       ...flat,
       conditions: [],
-      goals: ["muscle-recovery"],
+      goals: ["detox"],
     });
-    expect(r.highest?.prd).toBe("Improve my fitness");
-    expect(r.highest?.label).toBe("Muscle recovery support");
+    expect(r.highest?.prd).toBe("Support my body's detox");
+    expect(r.highest?.label).toBe("Body detox");
 
-    // Legacy keys aren't in the picker, so they fall back to the PRD name.
-    const legacy = computeMatchScore({ ...flat, conditions: ["ibs"], goals: [] });
-    expect(legacy.highest?.label).toBe("Digestive Sensitivities");
+    // A key that IS in the picker shows the picker's wording; one that resolves
+    // but is not offered falls back to the PRD name.
+    const listed = computeMatchScore({
+      ...flat,
+      conditions: ["digestive-sensitivities"],
+      goals: [],
+    });
+    expect(listed.highest?.label).toBe("Digestive Sensitivities");
 
-    // `detox` kept its formula but lost its picker entry in the AUG 21 design,
-    // so it now takes that same fallback rather than showing "Body detox".
-    const dropped = computeMatchScore({ ...flat, conditions: [], goals: ["detox"] });
-    expect(dropped.highest?.prd).toBe("Support my body's detox");
-    expect(dropped.highest?.label).toBe("Support my body's detox");
+    // `hydration` resolves ("Drink more water", §5.1) but is not in the picker,
+    // so it takes the PRD-name fallback rather than showing a raw slug.
+    const unlisted = computeMatchScore({
+      ...flat,
+      conditions: [],
+      goals: ["hydration"],
+    });
+    expect(unlisted.highest?.prd).toBe("Drink more water");
+    expect(unlisted.highest?.label).toBe("Drink more water");
   });
 });
 
@@ -314,7 +338,7 @@ describe("Recipe Match Score — display spec (§7)", () => {
 // Several keys alias to one PRD formula. A prod profile holding
 // {gout, gerd, type-2-diabetes, prediabetes, heart-disease, type-1-diabetes}
 // rendered "Diabetes 53%" three times AND divided the average by 6 instead of 4.
-describe("Recipe Match Score — one credit per formula", () => {
+describe("Recipe Match Score — §6 denominator", () => {
   const flat = {
     bioBySlug: bySlug({
       BloodSugar: 60, WeightMetabolic: 40, Heart: 70, CholLipid: 60,
@@ -327,45 +351,39 @@ describe("Recipe Match Score — one credit per formula", () => {
     goals: [] as string[],
   };
 
-  it("collapses the three diabetes aliases into a single credit", () => {
+  // These previously asserted that alias keys COLLAPSED into one credit —
+  // type-1-diabetes, type-2-diabetes and prediabetes all resolved to Diabetes,
+  // so counting them separately weighted one condition three times because a key
+  // had been renamed. The aliases are gone: the maps are 1:1 with the PRD, so
+  // §6's rule can be taken literally and every selection is one credit.
+  it("gives one credit per selection", () => {
     const r = computeMatchScore({
       ...flat,
-      conditions: [
-        "gout", "gerd", "type-2-diabetes", "prediabetes",
-        "heart-disease", "type-1-diabetes",
-      ],
+      conditions: ["diabetes", "heart-disease"],
     });
-    // gout is unmapped (§9); the 3 diabetes keys collapse to 1.
-    expect(r.creditCount).toBe(3);
-    const labels = r.breakdown.map((b) => b.label);
-    expect(labels.filter((l) => l === "Diabetes")).toHaveLength(1);
-    expect(new Set(labels).size).toBe(labels.length); // no repeats at all
+    expect(r.creditCount).toBe(2);
+    expect(new Set(r.breakdown.map((b) => b.label)).size).toBe(2);
   });
 
-  it("keeps the earliest selection when aliases collide (§7.1)", () => {
-    const r = computeMatchScore({ ...flat, conditions: ["prediabetes", "diabetes"] });
-    expect(r.creditCount).toBe(1);
-    expect(r.breakdown[0].key).toBe("prediabetes");
-  });
-
-  it("no longer skews the average by counting one condition three times", () => {
-    const three = computeMatchScore({
-      ...flat,
-      conditions: ["heart-disease", "type-1-diabetes", "type-2-diabetes", "prediabetes"],
-    });
-    const once = computeMatchScore({
-      ...flat,
-      conditions: ["heart-disease", "diabetes"],
-    });
-    expect(three.average).toBeCloseTo(once.average!, 6);
-  });
-
-  it("a condition and a goal sharing a name stay separate credits", () => {
-    // "menopause" the condition and any goal are different formulas — the dedupe
-    // key is scoped by kind so it can never merge across them.
+  it("skips a key the PRD does not define, without counting it", () => {
+    // §9 for gout, and now the retired aliases too — an unmapped key must not
+    // silently enter the denominator and drag the average toward zero.
     const r = computeMatchScore({
       ...flat,
-      conditions: ["menopause", "perimenopause"],
+      conditions: ["gout", "type-2-diabetes", "diabetes", "heart-disease"],
+    });
+    expect(r.creditCount).toBe(2);
+    const only = computeMatchScore({
+      ...flat,
+      conditions: ["diabetes", "heart-disease"],
+    });
+    expect(r.average).toBeCloseTo(only.average!, 10);
+  });
+
+  it("keeps a condition and a goal separate even with similar names", () => {
+    const r = computeMatchScore({
+      ...flat,
+      conditions: ["menopause"],
       goals: ["sleep"],
     });
     expect(r.creditCount).toBe(2);
