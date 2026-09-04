@@ -219,8 +219,7 @@ const NutritionScore = ({
                   See your match score
                 </p>
                 <p className="text-xs text-subtle w-8/12">
-                  Set your wellness goals to see how well this recipe matches
-                  your needs
+                  Discover the highest-scoring recipes for your health goals
                 </p>
               </div>
               <Link

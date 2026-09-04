@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import LogoutIcon from "@/components/vectors/logout";
 import { createClient } from "@/lib/supabase/client";
 
@@ -17,6 +18,7 @@ export function LogoutButton() {
     } catch {
       // ignore — proceed to navigate regardless
     }
+    posthog.reset();
     router.replace("/");
     router.refresh();
   };

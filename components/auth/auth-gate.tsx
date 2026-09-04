@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import posthog from "posthog-js";
 import { useAccess } from "@/hooks/use-access";
 import { SignInModal } from "@/components/auth/SignInModal";
 import { RecipePaywallGate } from "@/components/recipe/RecipePaywallGate";
 import { PaywallModal } from "../paywall/paywall-modal";
+import { ANALYTICS_EVENTS, RESTRICTION_TYPES } from "@/lib/analytics/events";
 
 /**
  * Component-level auth gate for public pages (e.g. the recipe detail page). For
@@ -34,8 +36,14 @@ export function AuthGate({ children, popular }: { children: React.ReactNode, pop
       e.preventDefault();
       if (gateGuests) {
         setSignInOpen(true);
+        posthog.capture(ANALYTICS_EVENTS.RESTRICTION_ENCOUNTERED, {
+          restriction_type: RESTRICTION_TYPES.AUTH_REQUIRED,
+        });
       } else {
         setSubscribeOpen(true);
+        posthog.capture(ANALYTICS_EVENTS.RESTRICTION_ENCOUNTERED, {
+          restriction_type: RESTRICTION_TYPES.SUBSCRIPTION_REQUIRED,
+        });
       }
     };
 

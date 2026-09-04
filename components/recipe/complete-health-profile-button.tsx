@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { useAccess } from "@/hooks/use-access";
 import { PaywallModal } from "@/components/paywall/paywall-modal";
+import { ANALYTICS_EVENTS, RESTRICTION_TYPES } from "@/lib/analytics/events";
 
 export function CompleteHealthProfileButton() {
   const router = useRouter();
@@ -15,6 +17,10 @@ export function CompleteHealthProfileButton() {
 
     if (!isSubscriber) {
       setPaywallOpen(true);
+      posthog.capture(ANALYTICS_EVENTS.RESTRICTION_ENCOUNTERED, {
+        restriction_type: RESTRICTION_TYPES.SUBSCRIPTION_REQUIRED,
+        feature: "health_profile",
+      });
       return;
     }
 

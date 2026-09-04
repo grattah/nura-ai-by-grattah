@@ -3,10 +3,12 @@
 import { useState, useCallback, useTransition } from "react";
 import { Search, Mic, SendHorizontal, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 
 import { saveRecentSearch } from "@/components/search/edit-search-sheet";
 import { logSearch } from "@/actions/log-search";
 import { COMMON_CONCERNS } from "@/constants";
+import { ANALYTICS_EVENTS, WORKFLOW_SURFACES } from "@/lib/analytics/events";
 import { SearchLoading } from "@/components/search/search-loading";
 
 interface CommonConcerns {
@@ -27,6 +29,9 @@ export function SearchSection() {
 
     saveRecentSearch(trimmed);
     void logSearch(trimmed);
+    posthog.capture(ANALYTICS_EVENTS.WORKFLOW_STARTED, {
+      surface: WORKFLOW_SURFACES.PERSONALIZED_SEARCH,
+    });
     startTransition(() => {
       router.push(`/personalized-search?q=${encodeURIComponent(trimmed)}`);
     });
