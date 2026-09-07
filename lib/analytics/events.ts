@@ -14,6 +14,7 @@ export const WORKFLOW_SURFACES = {
   FIND_RECIPE_GENERATE: "find_recipe_generate",
   FIND_RECIPE_SUGGESTIONS: "find_recipe_suggestions",
   PERSONALIZED_SEARCH: "personalized_search",
+  FOLLOWUP_CHAT: "followup_chat",
 } as const;
 
 /** `status` property on workflow_completed */
