@@ -41,7 +41,7 @@ export default async function AdminCommentsPage({
     );
   }
 
-  const role = identity!.role; // the layout guarantees a member
+  const role = identity!.role;
   const { comments, total } = result;
   const lastPage = Math.max(0, Math.ceil(total / COMMENTS_PAGE_SIZE) - 1);
 
@@ -85,8 +85,6 @@ export default async function AdminCommentsPage({
           ))}
         </div>
 
-        {/* GET form: the search term lives in the URL, so a moderator can share
-            or reload a filtered view and land on the same rows. */}
         <form action="/admin/comments" className="flex gap-2">
           {filter !== "all" && (
             <input type="hidden" name="filter" value={filter} />

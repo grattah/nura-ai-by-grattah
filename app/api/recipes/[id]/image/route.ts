@@ -9,11 +9,7 @@ import { RECIPE_IMAGE_GENERATION_ENABLED } from "@/lib/recipe-visibility";
 
 export const maxDuration = 60;
 
-/**
- * Generates (or returns) a recipe's hero image. Triggered by the detail page on
- * first view. Doing it as a normal awaited request — rather than background
- * `after()` work — makes it reliable on serverless and surfaces errors.
- */
+/** Generates (or returns) a recipe's hero image. */
 export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -28,7 +24,6 @@ export async function POST(
   }
 
   const admin = createServiceRoleClient();
-  // `created_by` isn't in the generated types yet, so the row is cast.
   const { data: recipeRaw } = await admin
     .from("recipes")
     .select("id, title, image_url, created_by")
@@ -45,22 +40,16 @@ export async function POST(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  // Idempotent: if an image already exists, just return it.
   if (recipe.image_url) {
     return NextResponse.json({ imageUrl: recipe.image_url });
   }
 
-  // Only the recipe's creator or an admin may trigger generation.
   const isOwner = recipe.created_by === user.id;
   const isAdmin = isOwner ? false : !!(await getAdminIdentity());
   if (!isOwner && !isAdmin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Generation is suspended. Bail HERE rather than only in the client: this is
-  // what guarantees no Gemini spend. Delete this block
-  // to reinstate (see RECIPE_IMAGE_GENERATION_ENABLED). Images are added by an
-  // admin through the recipe form in the meantime.
   if (!RECIPE_IMAGE_GENERATION_ENABLED) {
     return NextResponse.json({ imageUrl: null, suspended: true });
   }
@@ -74,9 +63,6 @@ export async function POST(
     const image = result.files.find((f) => f.mediaType?.startsWith("image/"));
     if (!image) throw new Error("model returned no image");
 
-    // The model returns a large full-resolution PNG (often 1–3 MB). Downscale
-    // and recompress to WebP before storing so the hero/cards load fast and the
-    // Next.js image optimizer doesn't time out fetching a multi-MB source.
     const optimized = await sharp(Buffer.from(image.uint8Array))
       .resize({
         width: 1280,
@@ -102,10 +88,6 @@ export async function POST(
 
     await admin.from("recipes").update({ image_url: publicUrl }).eq("id", id);
 
-    // Account for the Gemini image cost: a fixed unit charge to the recipe's
-    // creator (image models bill per-image, so no token divisor). Admin-triggered
-    // generations for the catalogue are not charged. Not gated — this is the
-    // deferred completion of an already-initiated generate.
     if (isOwner) {
       const usage = result.usage as
         | { totalTokens?: number; inputTokens?: number; outputTokens?: number }
@@ -113,9 +95,6 @@ export async function POST(
       const rawTokens =
         usage?.totalTokens ??
         (usage?.inputTokens ?? 0) + (usage?.outputTokens ?? 0);
-      // Unbilled under the new spec (§2 lists three chargeable actions, and the
-      // hero image is follow-on work from a generation that already paid its
-      // flat 3 units). Still recorded so the real spend stays visible.
       void recordUsage({
         surface: "recipe-image",
         userId: user.id,

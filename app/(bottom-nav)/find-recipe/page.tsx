@@ -31,8 +31,6 @@ interface RecipeSuggestion {
   title: string;
 }
 
-// Search results / "you may like" only ever render id + title, so the queries
-// select just those columns (no full-row, no full-catalog pull).
 interface RecipeHit {
   id: string;
   title: string;
@@ -55,7 +53,6 @@ const page = () => {
   const [pendingRecipe, setPendingRecipe] = React.useState<string | null>(null);
   const [generating, setGenerating] = React.useState(false);
   const [generateError, setGenerateError] = React.useState(false);
-  // Gated-response modals: paywall (guest / no subscription), token top-up (out of tokens).
   const [paywallOpen, setPaywallOpen] = React.useState(false);
   const [tokenModalOpen, setTokenModalOpen] = React.useState(false);
   const [showSignInModal, setShowSignInModal] = React.useState(false);
@@ -79,10 +76,6 @@ const page = () => {
 
   const router = useRouter();
 
-  // Debounced server-side search: query only the matching approved recipes
-  // (id + title) instead of pulling the whole catalogue and filtering on every
-  // keystroke. Each whitespace-split word must appear in the title (AND), which
-  // preserves the previous client-side semantics.
   React.useEffect(() => {
     const term = searchTerm.trim();
     if (!term) {
@@ -98,7 +91,7 @@ const page = () => {
       const STOPWORDS = new Set(["and", "&", "with", "the", "a"]);
       const words = term
         .toLowerCase()
-        .split(/[\s&]+/) // split on whitespace AND & so "cocoa&mint" also splits
+        .split(/[\s&]+/)
         .filter(Boolean)
         .filter((w) => !STOPWORDS.has(w));
       let q = supabase
@@ -140,16 +133,14 @@ const page = () => {
         "of",
       ]);
 
-      // Break each clicked title into words, so we match RELATED recipes that
-      // share any word, rather than the exact title (which only matches itself).
       const words = Array.from(
         new Set(
           recents.flatMap((term) =>
             term
               .toLowerCase()
-              .split(/[\s&,()]+/) // whitespace, &, commas, parens all become breaks
+              .split(/[\s&,()]+/)
               .filter(Boolean)
-              .filter((w) => w.length > 2) // drop stray fragments like "a", "&"
+              .filter((w) => w.length > 2)
               .filter((w) => !STOPWORDS.has(w)),
           ),
         ),
@@ -188,9 +179,6 @@ const page = () => {
     fetchSuggestions();
   }, [recents]);
 
-  // A term only "counts" as a search once it has results and has stopped
-  // changing for a second — so prefixes ("carr", "carrot") never commit. Both
-  // the local recents list and the Activities feed hang off that same settle.
   // React.useEffect(() => {
   //   if (!searchTerm.trim() || results.length === 0) return;
   //   const timer = setTimeout(() => {
@@ -243,18 +231,14 @@ const page = () => {
             allowedDomains: WELLNESS_SOURCES,
           }),
         });
-        // Out of tokens (subscriber): show the "Need more token?" modal on blur.
         if (res.status === 402) {
           const body = await res.json().catch(() => ({}));
-          // The 402 no longer carries a wallet — re-read it instead.
           void refreshCredits();
           setGenerating(false);
           setPendingRecipe(null);
           setTokenModalOpen(true);
           return;
         }
-        // Guest (401) or no active subscription (403): show the paywall/sign-up
-        // modal rather than the generic red error.
         if (res.status === 401) {
           setGenerating(false);
           setPendingRecipe(null);
@@ -313,8 +297,6 @@ const page = () => {
         body: JSON.stringify({ query: searchTerm }),
       });
 
-      // Guest (401) or no active subscription (403): show the paywall/sign-up
-      // modal rather than the generic error, same as handleGenerate.
       if (res.status === 401) {
         setShowModalScreenLoader(false);
         setShowSuggestions(false);
@@ -334,8 +316,6 @@ const page = () => {
 
       const data = await res.json();
       const suggestions: RecipeSuggestion[] = data.suggestions ?? [];
-      // Bound the in-memory cache for long sessions: evict the oldest entry
-      // once it grows past ~50 keys (Map preserves insertion order).
       if (suggestionsCache.current.size >= 50) {
         const oldest = suggestionsCache.current.keys().next().value;
         if (oldest !== undefined) suggestionsCache.current.delete(oldest);
@@ -351,7 +331,6 @@ const page = () => {
     }
   };
 
-  // Show the full-screen loading state while a recipe is being generated.
   if (generating && pendingRecipe) {
     return (
       <RecipeLoadingScreen
@@ -664,11 +643,8 @@ const page = () => {
         />
       )}
 
-      {/* Out of free generations → Get Nuko+. The modal opens in place (no
-          navigation), so closing just dismisses it and stays on this page. */}
       <PaywallModal open={paywallOpen} onOpenChange={setPaywallOpen} />
 
-      {/* Subscriber out of tokens → "Need more token?" modal on a blurred page. */}
       {tokenModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
           <button

@@ -1,20 +1,5 @@
 import "server-only";
 
-// ⚠️ DORMANT — superseded by Category Score PRD-1.
-//
-// This file implements PRD-3 / v7 ingredient-tier scoring. Category Score now
-// runs on the bioactivity method in lib/bioactivity-categories.ts, and Recipe
-// Match Score runs on lib/scoring/match-score.ts (PRD-2). Nothing under app/,
-// lib/, actions/ or components/ imports this module.
-//
-// Why it was retired: a tier table of 3-4 rows worth 100/20/10 can only emit
-// 6-20 distinct scores per category, so 98 Weight Loss recipes all displayed
-// exactly 46% and Detox showed 7 qualifying recipes out of 512. PRD-1's
-// relevance-weighted average is continuous; the same library now spreads across
-// 46-78 distinct scores per category and Detox qualifies 269.
-//
-// Kept, not deleted, so the approach can be revived. Its tests stay green.
-
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fetchAll } from "./fetch-all";
 import {
@@ -32,7 +17,6 @@ import {
   GOAL_TABLE_BY_KEY,
 } from "./tier-tables";
 import { penaltiesByOutcome } from "./tier-classify";
-// The scorer itself is pure and lives in tier-score so the recompute script can
 // import the SAME function rather than keeping a second copy (Category PRD §8).
 import { scoreFromRaw } from "./tier-score";
 export { scoreFromRaw };
@@ -42,45 +26,14 @@ import {
   type IngredientFacts,
 } from "./tier-match";
 
-// Scoring reads only cached tiers — never an LLM call at request time (§7).
-//
-// DECISION: hybrid. Table rows win where an ingredient satisfies one; the
-// classification pipeline covers everything else.
-//
-// This is what §6 and §7 describe together — §6 calls the tables "starting
-// calibration examples", and §7 fires the pipeline for an ingredient "with no
-// tier yet on record". Neither source alone works:
-//
-//   • pipeline-only  — MaxPossible is built from the tables' Primary rows, but
-//     §7.1's strict Primary bar almost never awards Primary to a whole food.
-//     Numerator and denominator end up on different scales, and five category
-//     pages render empty (Detox's best recipe in the library scored 13%).
-//   • table-only     — the tables are explicitly not exhaustive, so every
-//     ingredient they do not name would score zero.
-//
-// Each row counts AT MOST ONCE per recipe, matching MaxPossible, which counts
-// each row exactly once (§4 Step 2). Letting every ingredient claim the same
-// row independently made a five-ingredient juice score 500 against a Hydration
-// MaxPossible of 220.
-
 export interface PresentIngredient {
   id: string;
   name: string;
 }
 
-/**
- * A recipe's qualifying ingredients (PRD §3): listed with their own quantity,
- * not a garnish, optional topping, or trace mention. `grams > 0` is the same
- * rule the USDA roll-up applies, so a row that contributes nothing to any other
- * score contributes nothing here either.
- */
+/** A recipe's qualifying ingredients (listed with their own quantity). */
 export async function getPresentIngredients(recipeId: string): Promise<FactRow[]> {
-  // Service role, not the caller's cookie client. `ingredients` and
-  // `recipe_ingredients` have RLS enabled with NO policies, so the
-  // authenticated role reads zero rows from both — which silently scored every
-  // recipe against an empty ingredient list and returned 0% for everything.
-  // This is derived server-side data, not something the user queries, so the
-  // fix belongs here rather than in a policy that widens access for everyone.
+  // Service role: ingredients and recipe_ingredients have RLS with no policies.
   const supabase = createServiceRoleClient();
   const { data, error } = await supabase
     .from("recipe_ingredients")
@@ -110,18 +63,11 @@ export async function getPresentIngredients(recipeId: string): Promise<FactRow[]
   return out;
 }
 
-/** outcome label → total tier points contributed by this recipe. */
 export type RawByOutcome = Map<string, number>;
 
-/** Ingredient facts the row matchers need, alongside the id. */
 type FactRow = IngredientFacts & { id: string };
 
-/**
- * Sum cached tier points per outcome for a set of ingredients.
- *
- * One query for the whole recipe rather than one per outcome — 40 outcomes ×
- * every ingredient would otherwise be 40 round-trips per page render.
- */
+/** Cached tiers per ingredient, paged past the 1,000-row cap. */
 export async function getTiersByIngredient(
   ingredientIds: string[],
 ): Promise<Map<string, Map<string, Tier>>> {
@@ -130,14 +76,7 @@ export async function getTiersByIngredient(
 
   const supabase = createServiceRoleClient();
 
-  // PAGED. There are 40 outcomes per ingredient, so a whole-library read is
-  // thousands of rows — far past PostgREST's 1,000-row default, which returns
-  // a prefix with NO error. Unpaged, most ingredients came back with no tiers
-  // at all and scored near zero: the SAME recipe returned 71.2% scored alone
-  // (10 ingredients, one page) and 58.0% inside a 199-recipe batch.
-  //
-  // Ordered, because a paged read without a stable sort has no guarantee that
-  // one page continues where the last stopped.
+  // Paged: PostgREST silently truncates responses at 1,000 rows.
   let data: unknown[];
   try {
     data = await fetchAll<unknown>((from, to) =>
@@ -171,44 +110,15 @@ export async function getTiersByIngredient(
   return byIngredient;
 }
 
-/**
- * Score one calibration table from a pre-summed subtotal.
- *
- * MaxPossible comes from the CALIBRATION TABLE, not from whatever the pipeline
- * has tiered — §4 Step 2 says "every Primary + Secondary + Tertiary ingredient
- * in that category's table". That keeps the denominator fixed, which is what
- * makes a score comparable between recipes and stable over time; deriving it
- * from the tier cache instead would make every recipe's score fall as the
- * library grew, with no change to the recipe.
- *
- * The consequence is that RawSubtotal CAN exceed MaxPossible once the pipeline
- * has tiered more ingredients than the table lists, so it is capped. Without
- * the cap a recipe would display above 100%.
- */
-
 export interface RecipeScoringInput {
   recipeId: string;
-  /**
-   * §4 Step 4, multiplier tables only (Clear my skin). 1.0 down to ~0.5.
-   * Penalties themselves are derived from the recipe's own ingredients.
-   */
   penaltyFactor?: number;
 }
 
-/** Category Score for every one of the 14 categories (PRD §4/§5). */
 export async function scoreCategories(
   input: RecipeScoringInput,
 ): Promise<Map<string, TierScore>> {
   const ingredients = await getPresentIngredients(input.recipeId);
-  // NOTE: ingredient_tiers is deliberately NOT read here any more.
-  //
-  // PRD §7 says ingredients absent from a calibration table should still be
-  // tiered by the classification pipeline and counted. Implementing that as a
-  // numerator-only addition is what produced the 100% scores (see scoreFromRaw),
-  // because MaxPossible stayed the table's handful of rows. Re-enabling §7 means
-  // growing the DENOMINATOR with it — MaxPossible for an outcome becomes the sum
-  // over every ingredient classified for that outcome — not restoring the old
-  // fall-through. `getTiersByIngredient` is kept for that work.
 
   const out = new Map<string, TierScore>();
   for (const [key, table] of CATEGORY_TABLE_BY_KEY) {
@@ -225,10 +135,6 @@ export async function scoreCategories(
   return out;
 }
 
-/**
- * One flattened credit, shaped exactly like the v2 MatchCredit so the existing
- * NutritionScore UI renders it without changes.
- */
 export interface MatchCreditView {
   key: string;
   kind: "condition" | "goal";
@@ -254,7 +160,6 @@ const toView = (s: MatchSelection): MatchCreditView => ({
   percent: s.score.percent,
 });
 
-/** Recipe Match Score for one user's selections (PRD §4/§8). */
 export async function scoreMatch(
   input: RecipeScoringInput & { conditions: string[]; goals: string[] },
 ): Promise<MatchScoreView> {
@@ -269,8 +174,6 @@ export async function scoreMatch(
     table: CalibrationTable | undefined,
   ) => {
     if (!table) return;
-    // Several picker keys can share one table (the three skin goals). Counting
-    // it once stops that outcome being weighted three times in the average.
     if (seen.has(table.label)) return;
     seen.add(table.label);
     selections.push({
@@ -301,28 +204,14 @@ export async function scoreMatch(
 export { penaltiesByOutcome };
 
 
-// ── Bulk scoring for list pages ─────────────────────────────────────────────
-
 export interface RecipeMatchSummary {
   recipeId: string;
-  /** PRD §8 — the average across every selection, as a percentage. */
   averagePercent: number;
-  /** PRD §8 — the single highest credit, kept for the detail page. */
   highest: MatchCreditView | null;
   breakdown: MatchCreditView[];
 }
 
-/**
- * Match Score for MANY recipes at once.
- *
- * scoreMatch() issues two queries per recipe, which is fine for a detail page
- * and ruinous for a list of 243. This reads every ingredient and every tier in
- * two paged passes, then scores in memory.
- *
- * Paged deliberately: recipe_ingredients is already past PostgREST's 1,000-row
- * default, and an unpaged read returns a prefix with no error — which would
- * silently score later recipes against no ingredients at all.
- */
+/** Match scores for many recipes in two queries. */
 export async function scoreMatchForRecipes(input: {
   recipeIds: string[];
   conditions: string[];
@@ -337,9 +226,6 @@ export async function scoreMatchForRecipes(input: {
     ...input.goals.map((k) => ["goal", k, GOAL_TABLE_BY_KEY.get(k)] as const),
   ].filter((t) => !!t[2]);
 
-  // Nothing the user selected maps to a table — every recipe scores nothing,
-  // and saying so explicitly beats returning an empty map the caller has to
-  // interpret.
   if (tables.length === 0) {
     for (const id of input.recipeIds) {
       out.set(id, { recipeId: id, averagePercent: 0, highest: null, breakdown: [] });
@@ -349,15 +235,7 @@ export async function scoreMatchForRecipes(input: {
 
   const supabase = createServiceRoleClient();
 
-  // CHUNKED. `.in("recipe_id", ids)` puts every id in the query STRING, and
-  // PostgREST/undici reject the request once it grows past ~16KB of header —
-  // as `TypeError: fetch failed`, with no status and no cause, so it reads like
-  // a network blip rather than a request that was too big.
-  //
-  // 389 approved recipes produced a ~14.8KB URL and threw; the for-you page
-  // passes the WHOLE approved library, so it broke for every user the moment
-  // the library crossed roughly 360 recipes. 150 keeps the URL near 6KB, which
-  // leaves room for the library to grow several times over.
+  // Chunked: a long .in() list exceeds the ~16KB URL limit and fails as 'fetch failed'.
   const CHUNK = 150;
   const idChunks: string[][] = [];
   for (let i = 0; i < input.recipeIds.length; i += CHUNK) {
@@ -385,11 +263,7 @@ export async function scoreMatchForRecipes(input: {
       )
         .in("recipe_id", chunk)
         .gt("grams", 0)
-        // A STABLE sort is mandatory when paging. Without an ORDER BY, Postgres
-        // gives no guarantee that page 2 continues where page 1 stopped — rows
-        // get repeated and others dropped. That silently truncated some recipes'
-        // ingredient lists and scored them low: the same recipe returned 71.2%
-        // when scored alone (one page) and 58.0% in a 199-recipe batch (two).
+        // A stable ORDER BY is required when paging, or rows repeat or vanish.
         .order("recipe_id", { ascending: true })
         .order("id", { ascending: true })
         .range(from, to) as never,
@@ -400,7 +274,6 @@ export async function scoreMatchForRecipes(input: {
   const byRecipe = new Map<string, FactRow[]>();
   const allIngredientIds = new Set<string>();
   for (const row of riRows) {
-    // PRD §3 — listed with its own quantity, not a garnish or trace mention.
     if (row.quantity == null || row.quantity <= 0 || !row.ingredients?.id) continue;
     byRecipe.set(row.recipe_id, [...(byRecipe.get(row.recipe_id) ?? []), row.ingredients]);
     allIngredientIds.add(row.ingredients.id);

@@ -42,12 +42,8 @@ const NutritionScore = ({
   const [paywallOpen, setPaywallOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const showAverage = average != null && breakdown.length > 1;
-  // No profile → same as before, prompting them to build one. Profile but no
-  // active subscription → still locked, but the blocker is the paywall now.
-  // Profile + subscribed → the real scores.
   const unlocked = hasProfile && isSubscribed;
 
-  // Close on outside click and on Escape.
   useEffect(() => {
     if (!open) return;
 
@@ -152,7 +148,6 @@ const NutritionScore = ({
           </button>
         </div>
         <div className="w-px bg-grey-c100 my-1.5" />
-        {/* Nutri score — the whole tile opens the breakdown drawer. */}
         <NutritionScoreDrawer points={points}>
           <button
             type="button"

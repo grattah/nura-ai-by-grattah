@@ -16,8 +16,6 @@ import {
 } from "@/actions/admin-recipes";
 import { DRINK_TYPES } from "@/lib/drink-types";
 
-// Keep in sync with the 5MB cap enforced in uploadRecipeImage (admin-recipes.ts)
-// and the server-action bodySizeLimit in next.config.ts.
 const MAX_IMAGE_MB = 5;
 const MAX_IMAGE_BYTES = MAX_IMAGE_MB * 1024 * 1024;
 
@@ -71,9 +69,6 @@ export function RecipeForm({
   async function onImage(file: File) {
     setError(null);
 
-    // Validate up front so the admin gets a specific reason instead of a generic
-    // failure. Large files would otherwise be rejected by the server action's
-    // body-size limit and surface only as an opaque thrown error.
     if (!file.type.startsWith("image/")) {
       setError(
         `"${file.name}" isn't an image (${file.type || "unknown type"}). Please choose a JPG, PNG, or WebP file.`,
@@ -159,7 +154,6 @@ export function RecipeForm({
         />
       </Field>
 
-      {/* Image */}
       <Field label="Image">
         <div className="flex items-center gap-4">
           {form.image_url && (
@@ -183,7 +177,6 @@ export function RecipeForm({
         </div>
       </Field>
 
-      {/* Ingredients */}
       <RepeatableObjects
         label="Ingredients"
         rows={form.ingredients}
@@ -195,7 +188,6 @@ export function RecipeForm({
         empty={{ emoji: "", label: "" }}
       />
 
-      {/* How to make */}
       <RepeatableObjects
         label="How to make"
         rows={form.how_to_make}
@@ -250,7 +242,6 @@ export function RecipeForm({
         />
       </Field>
 
-      {/* Tags */}
       <Field label="Tags">
         <div className="flex flex-wrap gap-2">
           {tags.map((t) => {
@@ -280,7 +271,6 @@ export function RecipeForm({
         </div>
       </Field>
 
-      {/* Drink type (sub-sub-category for the category filter pills) */}
       <Field label="Drink type">
         <div className="flex flex-wrap gap-2">
           {DRINK_TYPES.map((d) => {

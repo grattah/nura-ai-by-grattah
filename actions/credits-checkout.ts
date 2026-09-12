@@ -7,10 +7,6 @@ import { getBundle } from "@/lib/credits";
 import { APP_CURRENCY } from "@/constants";
 import { hasActiveSubscription } from "@/lib/subscription";
 
-// One-time extra-token purchase. Unlike the subscription flow this uses
-// mode:"payment" with inline price_data (USD) so no Stripe dashboard prices are
-// needed — the bundle catalogue lives in lib/credits.ts. The webhook reads
-// metadata.{type,credits} and tops up the user's "extra" token bucket.
 export async function createTokenCheckout(
   bundleId: string,
 ): Promise<{ clientSecret: string } | { error: string }> {

@@ -1,8 +1,5 @@
 import { vi, beforeAll, afterAll } from "vitest";
 
-// Handlers log diagnostic lines (e.g. "[webhook] …") that are expected in the
-// adversarial cases — silence them so test output stays readable. Assertion
-// failures are reported by Vitest independently of console.
 beforeAll(() => {
   vi.spyOn(console, "log").mockImplementation(() => {});
   vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -10,8 +7,6 @@ beforeAll(() => {
 });
 afterAll(() => vi.restoreAllMocks());
 
-// Dummy env so modules that read process.env at import time (Stripe client,
-// Supabase clients) don't throw. Tests mock the actual network clients.
 process.env.STRIPE_SECRET_KEY ??= "sk_test_dummy";
 process.env.STRIPE_WEBHOOK_SECRET ??= "whsec_dummy";
 process.env.STRIPE_PRICE_ID ??= "price_dummy";

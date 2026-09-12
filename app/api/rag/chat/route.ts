@@ -1,8 +1,3 @@
-//   1. retrieve() — embed query → search vector DB scoped to contextId
-//   2a. Chunks found  → stream answer grounded in retrieved context
-//   2b. No chunks     → stream answer with web_search tool (allowed domains only)
-//
-
 import {
   convertToModelMessages,
   stepCountIs,
@@ -28,7 +23,6 @@ import {
 
 const SURFACE = FREE_SURFACES.followupChat;
 
-// Extract total token usage from an AI SDK usage object (v5 shape).
 function usageTokens(u: {
   totalTokens?: number;
   inputTokens?: number;
@@ -46,8 +40,6 @@ function jsonError(message: string, status: number, extra?: object) {
 
 export const maxDuration = 30;
 
-// Caps on client-controlled values that get injected into the prompt / search
-// (audit M1) — bound cost and prompt-injection surface.
 const MAX_MESSAGES = 20;
 const MAX_DOMAINS = 10;
 const MAX_TITLE_LEN = 200;
@@ -60,7 +52,6 @@ interface ChatRequestBody {
   title: string;
   allowedDomains: string[];
   description: string;
-  // Fuller on-page context (ingredients, method, why it works, inside tip).
   context?: string;
 }
 
@@ -131,7 +122,6 @@ TONE AND STYLE:
 }
 
 export async function POST(req: NextRequest) {
-  // Curb LLM cost-abuse (audit M1): 20 messages / minute / IP.
   const { success } = await rateLimit(
     `rag-chat:${getClientIp(req.headers)}`,
     20,
@@ -144,17 +134,12 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Follow-up questions are a metered LLM action: require auth + an active
-  // subscription before doing any work (the credit charge happens once we know
-  // the latest message is a real user question, below).
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return jsonError("Unauthorized", 401);
 
-  // Access model: subscribers use the token system; new (never-subscribed) users
-  // get FREE_USES_PER_SURFACE free chat replies; lapsed subscribers are blocked.
   const [activeSub, everSubscribed] = await Promise.all([
     hasActiveSubscription(supabase, user.id),
     hasEverSubscribed(supabase, user.id),
@@ -163,8 +148,6 @@ export async function POST(req: NextRequest) {
     return jsonError("Subscription required", 403, { hasEverSubscribed: true });
   }
 
-  // Declared outside the try so the catch below can refund a reservation taken
-  // before the stream failed.
   let reservation: Awaited<ReturnType<typeof reserve>> = null;
 
   try {
@@ -178,7 +161,6 @@ export async function POST(req: NextRequest) {
       context,
     }: ChatRequestBody = await req.json();
 
-    // Clamp client-controlled inputs before they reach the model / web search.
     const safeMessages = Array.isArray(messages)
       ? messages.slice(-MAX_MESSAGES)
       : [];
@@ -186,8 +168,6 @@ export async function POST(req: NextRequest) {
     const safeDomains = (Array.isArray(allowedDomains) ? allowedDomains : [])
       .filter((d): d is string => typeof d === "string")
       .slice(0, MAX_DOMAINS);
-    // Prefer the fuller on-page recipe context for grounding; fall back to the
-    // short description.
     const safeContext = String(context || description || "").slice(
       0,
       MAX_CONTEXT_LEN,
@@ -199,19 +179,14 @@ export async function POST(req: NextRequest) {
     const typeLabel = contextType === "recipe" ? "recipe" : "health guide";
     const domainList = safeDomains.map((d) => `site:${d}`).join(" OR ");
 
-    // Meter/consume only a genuine user-asked question (last message from the
-    // user). Gate before streaming; record the use in onFinish.
     const shouldMeter = lastMessage?.role === "user" && !!userQuestion.trim();
     if (shouldMeter) {
       if (activeSub) {
-        // Spec §5/§6 — reserve the 1 unit before streaming. Held for the whole
-        // stream and settled in onFinish, so an aborted stream refunds.
         reservation = await reserve(user.id, "followup");
         if (!reservation) {
           return jsonError("insufficient_tokens", 402, {});
         }
       } else {
-        // New user free trial — gate on this surface's remaining free uses.
         const used = await freeUseCount(user.id, SURFACE);
         if (used >= FREE_USES_PER_SURFACE) {
           return jsonError("Subscription required", 403, {
@@ -230,8 +205,6 @@ export async function POST(req: NextRequest) {
             outputTokens?: number;
           };
         }) => {
-          // Fire-and-forget; the stream has already completed for the client.
-          // Subscribers meter real tokens; new users consume one free chat use.
           if (reservation) {
             void settle(reservation);
             void recordUsage({
@@ -254,7 +227,6 @@ export async function POST(req: NextRequest) {
       0.5,
     );
 
-    // ── Path A: answer grounded in vector DB context ───────────────────────────
     if (hasGoodResults) {
       const result = streamText({
         model: anthropic("claude-haiku-4-5"),
@@ -272,7 +244,6 @@ export async function POST(req: NextRequest) {
       return result.toUIMessageStreamResponse();
     }
 
-    // PATH B: Web search fallback
     const result = streamText({
       model: anthropic("claude-haiku-4-5"),
       maxOutputTokens: MAX_OUTPUT_TOKENS.followup,
@@ -306,8 +277,6 @@ if the preferred domains return no useful results.`,
               ),
           }),
 
-          // Cache the tool definition with Anthropic — saves tokens on every
-          // step of the agentic loop after the first call
           providerOptions: {
             anthropic: {
               cacheControl: { type: "ephemeral" },
@@ -349,7 +318,6 @@ if the preferred domains return no useful results.`,
     return result.toUIMessageStreamResponse();
   } catch (err) {
     console.error("[chat route error]", err);
-    // The stream never reached onFinish, so nothing settled — refund.
     if (reservation) await release(reservation);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,

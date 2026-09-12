@@ -7,14 +7,6 @@ import { useRouter } from "next/navigation";
 import { DELETION_GRACE_DAYS } from "@/lib/account-deletion";
 import { lockAppScroll } from "@/lib/scroll-lock";
 
-/**
- * Confirmation shown over the (now signed-out) home page after a deletion is
- * scheduled. Raised by `?deletion=scheduled`, which
- * components/profile/delete-account.tsx navigates to.
- *
- * Deliberately not dismissable by backdrop click — it carries the only statement
- * of how to recover the account, so it takes an explicit acknowledgement.
- */
 export function DeletionScheduledModal({ show }: { show: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(show);
@@ -28,7 +20,6 @@ export function DeletionScheduledModal({ show }: { show: boolean }) {
 
   const dismiss = () => {
     setOpen(false);
-    // Drop the param so a refresh or back-navigation doesn't re-raise it.
     router.replace("/");
   };
 

@@ -36,7 +36,6 @@ export function AdminNav({
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
-  // Close the mobile drawer whenever the route changes.
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
@@ -49,7 +48,6 @@ export function AdminNav({
     router.refresh();
   }
 
-  // Shared nav body — used by both the desktop sidebar and the mobile drawer.
   const NavBody = () => (
     <>
       <div className="px-2 py-3">
@@ -96,12 +94,10 @@ export function AdminNav({
 
   return (
     <>
-      {/* Desktop sidebar (≥ md) */}
       <aside className="hidden md:flex md:fixed md:inset-y-0 md:left-0 z-30 w-60 border-r border-border bg-card overflow-y-auto flex-col p-4">
         <NavBody />
       </aside>
 
-      {/* Mobile top bar (< md) */}
       <header className="md:hidden sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-card px-4 h-14">
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger

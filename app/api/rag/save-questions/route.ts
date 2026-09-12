@@ -9,7 +9,6 @@ const BodySchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  // 1. Require an authenticated user.
   const supabase = await createClient();
   const {
     data: { user },
@@ -18,7 +17,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // 2. Validate the payload.
   let parsed: z.infer<typeof BodySchema>;
   try {
     parsed = BodySchema.parse(await req.json());
@@ -29,8 +27,6 @@ export async function POST(req: NextRequest) {
   const { contextId, contextType, questions } = parsed;
   const table = contextType === "recipe" ? "recipes" : "guides";
 
-  // 3. Fill-once: only write when no questions are cached yet. This closes the
-  //    arbitrary-overwrite (IDOR) hole while preserving the caching behaviour.
   const admin = createServiceRoleClient();
 
   const { data: existing, error: readError } = await admin
@@ -49,7 +45,6 @@ export async function POST(req: NextRequest) {
 
   const current = existing.follow_up_questions;
   if (Array.isArray(current) && current.length > 0) {
-    // Already cached — treat as success, do not overwrite.
     return NextResponse.json({ ok: true, skipped: true });
   }
 

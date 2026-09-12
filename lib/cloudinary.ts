@@ -1,8 +1,3 @@
-/**
- * Injects Cloudinary transformation params into an existing upload URL.
- * Works by inserting params after `/upload/` in the URL.
- */
-
 export function getCloudinaryUrl(
   url: string,
   {
@@ -11,10 +6,10 @@ export function getCloudinaryUrl(
     quality = "auto",
     format = "auto",
     crop = "fill",
-    gravity = "auto", // smart-crop around the subject
-    blur, // blur amount e.g. 800 for placeholder
-    grayscale, // convert to grayscale
-    brightness, // -100 to 100
+    gravity = "auto",
+    blur,
+    grayscale,
+    brightness,
   }: {
     width: number;
     height?: number;
@@ -47,11 +42,7 @@ export function getCloudinaryUrl(
   return url.replace("/upload/", `/upload/${transforms}/`);
 }
 
-/**
- * Fetches a 10×10 blurred version of the image from Cloudinary and returns
- * it as a base64 data URL suitable for Next.js `blurDataURL`.
- * Safe to call in Server Components — Next.js dedupes identical fetch calls.
- */
+/** Returns a base64 blur placeholder from Cloudinary. */
 export async function getBlurDataURL(url: string): Promise<string | undefined> {
   if (!url) return undefined;
 
@@ -63,7 +54,7 @@ export async function getBlurDataURL(url: string): Promise<string | undefined> {
       format: "webp",
     }).replace("/upload/", "/upload/e_blur:800/");
 
-    const res = await fetch(tinyUrl, { next: { revalidate: 86400 } }); // cache 24h
+    const res = await fetch(tinyUrl, { next: { revalidate: 86400 } });
     if (!res.ok) return undefined;
 
     const buffer = await res.arrayBuffer();

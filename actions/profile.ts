@@ -7,8 +7,6 @@ import { getStripeCustomerId } from "@/lib/billing";
 import { headers } from "next/headers";
 import { isPasswordValid } from "@/lib/password-policy";
 
-// ─── Update display name ───────────────────────────────────────────────────
-
 export async function updateDisplayName(
   fullName: string,
 ): Promise<{ success: true } | { error: string }> {
@@ -27,8 +25,6 @@ export async function updateDisplayName(
   revalidatePath("/profile");
   return { success: true };
 }
-
-// ─── Set or update password ────────────────────────────────────────────────
 
 export async function updatePassword(
   newPassword: string,
@@ -59,8 +55,6 @@ export async function updatePassword(
 
   return { success: true };
 }
-
-// ─── Stripe customer portal ────────────────────────────────────────────────
 
 export async function getStripePortalUrl(): Promise<
   { url: string } | { error: string }

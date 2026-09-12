@@ -1,5 +1,4 @@
-// Branded HTML email builders. Pure functions (no server-only) so they can be
-// unit-tested. Each returns { subject, html } with inline, email-safe styles.
+// Pure HTML email builders (no server-only) so they can be unit-tested.
 import { APP_URL, EMAIL_LOGO_URL, SUPPORT_EMAIL, BRAND } from "./config";
 import { APP_CURRENCY, APP_LOCALE } from "@/constants";
 
@@ -13,7 +12,6 @@ function esc(s: string): string {
 
 interface LayoutOpts {
   heading: string;
-  /** Pre-escaped/trusted HTML for the body paragraphs. */
   body: string;
   cta?: { label: string; url: string };
   preview?: string;
@@ -60,7 +58,6 @@ export interface EmailContent {
   html: string;
 }
 
-/** Format Stripe minor units (e.g. 799 -> "$7.99") in the charge's own currency. */
 export function formatMoney(minor: number, currency = APP_CURRENCY): string {
   return new Intl.NumberFormat(APP_LOCALE, {
     style: "currency",
@@ -68,8 +65,6 @@ export function formatMoney(minor: number, currency = APP_CURRENCY): string {
     currencyDisplay: "narrowSymbol",
   }).format(minor / 100);
 }
-
-// ─── Auth (Supabase Send Email hook) ─────────────────────────────────────────
 
 export function otpEmail({ code }: { code: string }): EmailContent {
   return {
@@ -121,8 +116,6 @@ export function genericAuthEmail({ url }: { url: string }): EmailContent {
   };
 }
 
-// ─── Transactional ───────────────────────────────────────────────────────────
-
 export function welcomeEmail({ name }: { name?: string | null }): EmailContent {
   const hi = name?.trim() ? `Hi ${esc(name.trim().split(/\s+/)[0])}, ` : "";
   return {
@@ -164,8 +157,7 @@ export function subscriptionConfirmationEmail({
   };
 }
 
-// Sent instead of subscriptionConfirmationEmail when the user already had a
-// (now lapsed/cancelled) subscription row — i.e. they're subscribing again.
+/** Sent instead of the confirmation email to returning subscribers. */
 export function resubscriptionEmail({
   planLabel,
   renewsAt,
@@ -195,16 +187,12 @@ export function paymentFailedEmail({
 }: {
   planLabel: string;
   reason?: string | null;
-  /** First charge of a new subscription — they never had access to lose. */
   isFirstPayment?: boolean;
 }): EmailContent {
   const why = reason
     ? `<p style="margin:12px 0 0;font-size:13px;color:${BRAND.faint};">Reason: ${esc(reason)}</p>`
     : "";
 
-  // A first-payment failure and a failed renewal need different copy: one never
-  // started, the other is losing something. The renewal case previously said
-  // nothing about what lapses, which is what QA flagged.
   if (isFirstPayment) {
     return {
       subject: "We couldn't start your Nuko+ subscription",

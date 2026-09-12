@@ -12,8 +12,6 @@ import { MAX_OUTPUT_TOKENS, PERSONALIZED_SEARCH_SURFACE } from "@/lib/credits";
 
 const SURFACE = PERSONALIZED_SEARCH_SURFACE;
 
-// Flat schema (no nested objects / arrays-of-objects) so smaller models like
-// Haiku can fill it reliably via the AI SDK's structured-output mode.
 export const PersonalizedSearchSchema = z.object({
   summary: z
     .string()
@@ -49,15 +47,11 @@ export type PersonalizedSearchResult = z.infer<typeof PersonalizedSearchSchema>;
 
 export type PersonalizedSearchOutcome =
   | { status: "ok"; result: PersonalizedSearchResult }
-  | { status: "blocked" } // out of free uses, or a lapsed subscriber
-  | { status: "out_of_tokens" } // subscriber who cannot afford it
+  | { status: "blocked" }
+  | { status: "out_of_tokens" }
   | { status: "error" };
 
-/**
- * Run a personalized search on the fly (no caching): gate access, generate via
- * Claude, and meter/record the use. Used by both the server page render and the
- * API route. Callers must pass an authenticated user's id.
- */
+/** Gates access, generates via Claude, and meters the use. */
 export async function runPersonalizedSearch(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -66,8 +60,6 @@ export async function runPersonalizedSearch(
   const query = rawQuery.trim();
   if (!query) return { status: "error" };
 
-  // Access model: subscribers use the token system; brand-new (never-subscribed)
-  // users get a few free uses of this surface; lapsed subscribers are blocked.
   const [activeSub, everSubscribed] = await Promise.all([
     hasActiveSubscription(supabase, userId),
     hasEverSubscribed(supabase, userId),
@@ -76,7 +68,6 @@ export async function runPersonalizedSearch(
   if (!activeSub && everSubscribed) return { status: "blocked" };
 
   if (!activeSub) {
-    // New user in free trial — count this distinct query (deduped).
     const allowed = await tryConsumeFreeView(
       userId,
       SURFACE,
@@ -86,8 +77,6 @@ export async function runPersonalizedSearch(
   }
 
   if (activeSub) {
-    // Unbilled surface, but still gated: a subscriber with nothing spendable
-    // should not get free LLM work here either.
     const b = await getBalances(userId);
     const spendable =
       b.subscriptionUnits + (b.purchasedFrozen ? 0 : b.purchasedUnits);
@@ -99,8 +88,6 @@ export async function runPersonalizedSearch(
       model: anthropic("claude-haiku-4-5"),
       maxOutputTokens: MAX_OUTPUT_TOKENS.search,
       schema: PersonalizedSearchSchema,
-      // One-shot repair: Haiku can leak tool-call XML or drop fields; coerce the
-      // output into valid JSON before the SDK re-validates.
       experimental_repairText: async ({ text, error }) => {
         try {
           const { text: repaired } = await generateText({
@@ -142,14 +129,10 @@ Rules:
 Provide personalized wellness guidance for this concern.`,
     });
 
-    // Subscribers meter real token usage; new users already consumed their free
-    // use above (deduped by query).
     if (activeSub) {
       const tokens =
         usage?.totalTokens ??
         (usage?.inputTokens ?? 0) + (usage?.outputTokens ?? 0);
-      // Unbilled: personalized search is not one of the spec's three chargeable
-      // actions, and the surface is currently disabled.
       void recordUsage({
         surface: "personalized-search",
         userId,

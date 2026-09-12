@@ -13,12 +13,9 @@ import {
 } from "@/lib/scoring/bonuses";
 import { maxesForTrack } from "@/lib/scoring/match-metrics";
 
-// One implementation serves both the Match Score's goals (§5.1) and the Category
-// Score's categories (Category §4) — Category PRD §8 requires exactly that.
-
 const base: BonusContext = {
   points: { sugar: 0, salt: 0, satFat: 0, energy: 0, fiber: 0, protein: 0 },
-  maxes: maxesForTrack("Beverage"), // fiber 5, protein 7, energy 10
+  maxes: maxesForTrack("Beverage"),
   ironRich: false,
   probiotic: false,
   vitaminCDV: 0,
@@ -53,8 +50,8 @@ describe("shape", () => {
 describe("triggers", () => {
   it("energy: protein ≥ 0.6 OR ironRich", () => {
     expect(bonusFor("energy", base)).toBe(0);
-    expect(bonusFor("energy", ctx({ points: pts({ protein: 4.2 }) }))).toBe(BONUS_VALUE); // 4.2/7 = 0.6
-    expect(bonusFor("energy", ctx({ points: pts({ protein: 4 }) }))).toBe(0); // 0.571
+    expect(bonusFor("energy", ctx({ points: pts({ protein: 4.2 }) }))).toBe(BONUS_VALUE);
+    expect(bonusFor("energy", ctx({ points: pts({ protein: 4 }) }))).toBe(0);
     expect(bonusFor("energy", ctx({ ironRich: true }))).toBe(BONUS_VALUE);
   });
 
@@ -66,7 +63,6 @@ describe("triggers", () => {
   });
 
   it("weight-loss: low calories OR fiber OR protein", () => {
-    // energyPoints is a PENALTY, so (1 − energy/max) ≥ 0.6 means ≤ 4 points.
     expect(bonusFor("weight-loss", ctx({ points: pts({ energy: 4 }) }))).toBe(BONUS_VALUE);
     expect(bonusFor("weight-loss", ctx({ points: pts({ energy: 10 }) }))).toBe(0);
     expect(bonusFor("weight-loss", ctx({ points: pts({ energy: 10, fiber: 3 }) }))).toBe(BONUS_VALUE);
@@ -83,10 +79,9 @@ describe("triggers", () => {
     expect(bonusFor("hydration", ctx({ waterContentPercent: 0.7 }))).toBe(BONUS_VALUE);
     expect(bonusFor("hydration", ctx({ waterContentPercent: 0.69 }))).toBe(0);
 
-    const sodium = (DV_SODIUM_MG * MEANINGFUL_SODIUM_DV) / 100; // 115 mg
-    const potassium = (DV_POTASSIUM_MG * MEANINGFUL_POTASSIUM_DV) / 100; // 470 mg
+    const sodium = (DV_SODIUM_MG * MEANINGFUL_SODIUM_DV) / 100;
+    const potassium = (DV_POTASSIUM_MG * MEANINGFUL_POTASSIUM_DV) / 100;
     expect(bonusFor("hydration", ctx({ sodiumMg: sodium, potassiumMg: potassium }))).toBe(BONUS_VALUE);
-    // The AND matters: sodium without potassium isn't hydrating.
     expect(bonusFor("hydration", ctx({ sodiumMg: sodium * 10, potassiumMg: 0 }))).toBe(0);
     expect(bonusFor("hydration", ctx({ sodiumMg: 0, potassiumMg: potassium * 10 }))).toBe(0);
   });
@@ -105,8 +100,6 @@ describe("triggers", () => {
 });
 
 describe("does not stack", () => {
-  // Note two triggers are mutually exclusive by design: weight-loss wants LOW
-  // energyPoints, fitness wants HIGH — so "everything passes" needs two fixtures.
   const lowCalorie = ctx({
     points: pts({ protein: 7, fiber: 5, energy: 0 }),
     ironRich: true,

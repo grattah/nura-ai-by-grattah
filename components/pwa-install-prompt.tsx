@@ -30,7 +30,6 @@ function getIOSBrowser(): IOSBrowser {
   if (/CriOS\//i.test(ua)) return "crios";
   if (/FxiOS\//i.test(ua)) return "fxios";
   if (/EdgiOS\//i.test(ua)) return "edgios";
-  // Real Safari: has Safari/ but none of the third-party tokens above.
   if (/Safari\//i.test(ua)) return "safari";
   return "other";
 }
@@ -83,8 +82,6 @@ function clearDismissFlags() {
   } catch {}
 }
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
-
 type PromptMode = "ios-safari" | "ios-chrome" | "android" | null;
 
 interface BeforeInstallPromptEvent extends Event {
@@ -99,8 +96,6 @@ declare global {
 }
 
 const SHEET_MS = 300;
-
-// ─── Component ─────────────────────────────────────────────────────────────────
 
 export function PWAInstallPrompt() {
   const { hasAccess, isLoading, isSubscriber } = useAccess();
@@ -122,7 +117,6 @@ export function PWAInstallPrompt() {
         setMode("android");
       }
     };
-    // Backup direct listener in case the event fires after mount.
     const onDirect = (e: Event) => {
       e.preventDefault();
       window.__nukoBip = e as BeforeInstallPromptEvent;
@@ -319,7 +313,6 @@ export function PWAInstallPrompt() {
               ) : null}
             </div>
 
-            {/* Mode-specific instructions / CTA */}
             {mode === "ios-safari" && (
               <div className="mt-4 overflow-y-auto hide-scrollbar">
                 <div className="flex flex-col gap-4.25">

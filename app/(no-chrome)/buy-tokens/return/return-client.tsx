@@ -4,9 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-// The "extra" token balance is topped up asynchronously by the Stripe webhook,
-// so we poll /api/credits a few times to let it land, then show the success
-// modal. `credits` is the Stripe-verified amount passed from the server.
+/** Polls /api/credits until the webhook-credited balance appears. */
 export function BuyTokensReturnClient({
   credits,
 }: {
@@ -26,7 +24,6 @@ export function BuyTokensReturnClient({
       try {
         await fetch("/api/credits", { cache: "no-store" });
       } catch {
-        /* ignore — we resolve regardless after a few tries */
       }
       if (attempts >= 4) {
         setDone(true);

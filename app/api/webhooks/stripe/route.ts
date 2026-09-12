@@ -72,9 +72,7 @@ function fmtDate(iso: string | null | undefined): string | null {
   return iso ? format(new Date(iso), "MMM d, yyyy") : null;
 }
 
-// Subscription confirmation, sent from the deduped webhook so it fires once.
-// Reads plan/period-end from the row activateSubscriptionFromSession just wrote.
-// `isResubscribe` picks the "welcome back" copy over the first-time one.
+/** Sent from the deduped webhook so it fires once. */
 async function sendSubscriptionConfirmation(
   userId: string,
   email: string,
@@ -103,7 +101,6 @@ async function sendSubscriptionConfirmation(
   await sendEmail({ to: email, subject, html });
 }
 
-// One-time token-bundle purchase receipt.
 async function sendTokenPurchaseReceipt(
   session: Stripe.Checkout.Session,
   email: string,
@@ -122,9 +119,7 @@ async function sendTokenPurchaseReceipt(
   await sendEmail({ to: email, subject, html });
 }
 
-// Resolve the account behind a Stripe customer id (invoice events don't carry
-// client_reference_id) — reads the newest subscription row's user_id, then the
-// auth user for their email.
+/** Resolves the user behind a Stripe customer id (invoices lack client_reference_id). */
 async function getUserForCustomer(
   customerId: string,
 ): Promise<{ userId: string; email: string; plan?: string } | null> {
@@ -144,10 +139,7 @@ async function getUserForCustomer(
   return { userId: row.user_id, email, plan: row.plan };
 }
 
-// Best-effort decline reason from the invoice's PaymentIntent, e.g. "Your card
-// was declined." Invoices don't carry payment_intent directly (API 2025+), so
-// this looks it up via the invoice's InvoicePayment. Falls back to null so the
-// email still sends without one.
+/** Best-effort decline reason from the invoice's PaymentIntent. */
 async function paymentFailureReason(
   invoice: Stripe.Invoice,
 ): Promise<string | null> {
@@ -170,17 +162,14 @@ async function paymentFailureReason(
 }
 
 export async function POST(req: Request) {
-  // ── 1. Read raw body FIRST (required for signature verification) ──────────
   const rawBody = await req.text();
 
-  // ── 2. Signature header ───────────────────────────────────────────────────
   const sig = (await headers()).get("stripe-signature");
   if (!sig) {
     console.error("[webhook] Missing stripe-signature header");
     return new NextResponse("Missing stripe-signature header", { status: 400 });
   }
 
-  // ── 3. Verify signature ───────────────────────────────────────────────────
   let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(
@@ -205,19 +194,16 @@ export async function POST(req: Request) {
     });
 
   if (dedupError) {
-    // Unique-violation => already processed. Ack with 200 so Stripe stops retrying.
     if (dedupError.code === "23505") {
       console.log(`[webhook] Duplicate event ignored: ${event.id}`);
       return NextResponse.json({ received: true, duplicate: true });
     }
-    // Any other write error: 500 so Stripe retries.
     console.error(`[webhook] Dedup insert failed: ${dedupError.message}`);
     return new NextResponse("Dedup error", { status: 500 });
   }
 
   console.log(`[webhook] ✅ Verified event: ${event.type} (${event.id})`);
 
-  // ── 5. Handle events ──────────────────────────────────────────────────────
   try {
     switch (event.type) {
       case "checkout.session.completed": {
@@ -250,7 +236,7 @@ export async function POST(req: Request) {
         console.log(`[webhook] Unhandled event type: ${event.type}`);
     }
   } catch (err) {
-    // Return 500 so Stripe retries. Also remove the dedup row so the retry is
+    // Return 500 so Stripe retries, and drop the dedup row so the retry is processed.
 
     await events.from("stripe_webhook_events").delete().eq("id", event.id);
     const message = err instanceof Error ? err.message : "Handler error";
@@ -261,13 +247,7 @@ export async function POST(req: Request) {
   return NextResponse.json({ received: true });
 }
 
-// ── Handlers ─────────────────────────────────────────────────────────────────
-
-/**
- * True when this Stripe customer has subscribed before today's checkout.
- * Errs toward "first-time" — sending a first-timer's welcome to a returning
- * customer is a far smaller wrong than the reverse, which is what QA reported.
- */
+/** True when this Stripe customer has subscribed before (asks Stripe, not our table). */
 async function hasPriorSubscription(
   customer: string | Stripe.Customer | Stripe.DeletedCustomer | null,
 ): Promise<boolean> {
@@ -287,16 +267,13 @@ async function hasPriorSubscription(
 }
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-  const userId = session.client_reference_id; // Supabase user_id
+  const userId = session.client_reference_id;
   const email = session.customer_details?.email;
 
   if (!userId) {
     throw new Error("No client_reference_id on checkout session");
   }
 
-  // One-time token-bundle purchase (mode:"payment"). Credit the user's "extra"
-  // bucket via the shared helper (idempotent per Stripe session — safe alongside
-  // the synchronous /buy-tokens/return credit).
   if (session.metadata?.type === "credits") {
     await creditTokenPurchaseFromSession(session);
     console.log(`[webhook] Credited token purchase for ${userId}`);
@@ -310,21 +287,9 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return;
   }
 
-  // Resubscribe detection asks STRIPE, not our own table.
-  //
-  // This used to check "does a subscriptions row exist for this user?" — but
-  // /return calls activateSubscriptionFromSession() synchronously on redirect,
-  // so by the time this webhook ran the row it was looking for had just been
-  // written by the very same checkout. Every first-time subscriber who reached
-  // /return before the webhook got the "welcome back" copy. The row can't
-  // distinguish the two cases at all: the upsert is keyed on user_id, so a
-  // genuine resubscribe overwrites the same single row.
-  //
-  // Stripe keeps every subscription object it has ever created for a customer
-  // (cancelled ones persist), so >1 means they have subscribed before.
+  // Ask Stripe, not our table: /return has already written this checkout's row.
   const isResubscribe = await hasPriorSubscription(session.customer);
 
-  // Persist the active subscription (shared with the /return synchronous path).
   await activateSubscriptionFromSession(session);
 
   if (email) {
@@ -350,9 +315,6 @@ async function handleSubscriptionDeleted(sub: Stripe.Subscription) {
 async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
   const supabase = createServiceRoleClient();
 
-  // Map Stripe status → our status. Keep expiry in sync with the real period end.
-  // Every Stripe status we can act on. Terminal states used to fall through to
-  // "no change", which is how rows kept saying "active" after they had ended.
   let status: "active" | "suspended" | "cancelled" | "expired" | null = null;
   if (sub.status === "past_due" || sub.status === "unpaid" || sub.status === "paused")
     status = "suspended";
@@ -385,8 +347,6 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
     }
   }
 
-  // Persist the period end and the cancel-at-period-end flag (and status when it
-  // mapped to one). We always write so the flag stays in sync.
   const incomingCancel = !!sub.cancel_at_period_end;
   const update: Record<string, unknown> = {
     expires_at: periodEndToIso(sub),
@@ -405,9 +365,7 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
   );
 }
 
-// Renewal receipt — fires for every invoice payment, but the very first one
-// (billing_reason "subscription_create") is already covered by the checkout
-// confirmation/resubscription email, so only future charges send here.
+/** Sends renewal receipts; skips the first invoice, which checkout already covers. */
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
   if (invoice.billing_reason === "subscription_create") return;
 
@@ -415,12 +373,6 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
   if (!customerId) return;
 
-  // Push the period forward FIRST. This used to only send an email, leaving the
-  // row's expires_at on the previous period and relying entirely on
-  // customer.subscription.updated also arriving — so a renewal that delivered
-  // only this event left the subscription looking expired.
-  // Stripe's 2025+ API moved the subscription off the invoice root and under
-  // `parent.subscription_details` — `invoice.subscription` no longer exists.
   const subRef = invoice.parent?.subscription_details?.subscription;
   const subId = typeof subRef === "string" ? subRef : subRef?.id;
   if (subId) {
@@ -442,10 +394,6 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     }
   }
 
-  // Spec §3 — allocation is gated on payment. This is the ONLY place a renewal
-  // grant happens: a scheduled job would grant tokens to subscribers whose
-  // renewal actually failed. Safe to repeat, because the RPC replaces the
-  // balance rather than adding to it.
   {
     const renewed = await getUserForCustomer(customerId);
     if (renewed?.userId && renewed.plan) {
@@ -485,11 +433,6 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
   if (!customerId) return;
 
-  // getUserForCustomer() resolves via a subscriptions row, which does NOT exist
-  // when the very FIRST payment of a new subscription fails — there was no
-  // successful checkout to write one. That path used to return here silently, so
-  // a failed initial subscription notified nobody. Fall back to the email Stripe
-  // already put on the invoice.
   const user = await getUserForCustomer(customerId);
   const email = user?.email ?? invoice.customer_email ?? null;
   if (!email) {
@@ -498,7 +441,6 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   }
 
   const reason = await paymentFailureReason(invoice);
-  // A first-payment failure means they never had access to lose.
   const isFirstPayment = !user || invoice.billing_reason === "subscription_create";
 
   try {

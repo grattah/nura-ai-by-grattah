@@ -1,9 +1,5 @@
 import type { InvoiceView } from "@/lib/billing";
 
-// Presentational only — no interactivity, so it renders on the server.
-// `downloadUrl` is Stripe's hosted PDF. It's cross-origin, so the anchor opens a
-// new tab rather than using the `download` attribute (browsers ignore that
-// cross-origin).
 function Invoice({ amount, status, date, downloadUrl }: Omit<InvoiceView, "id">) {
   return (
     <div className="flex items-center justify-between gap-3 bg-[#E8E6DC] rounded-2xl pt-3 pr-3 pb-2 pl-4">

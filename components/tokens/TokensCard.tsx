@@ -15,18 +15,9 @@ const TokensCard = ({
   variant = "weekly",
   state,
 }: {
-  /** "weekly" = the subscription grant, "extra" = purchased tokens. */
   variant?: string;
   state: WalletSnapshot;
 }) => {
-  // Purchased tokens have no "granted" total to measure against — they are
-  // topped up in arbitrary amounts and never expire, so any percentage would be
-  // measured against a denominator that does not exist.
-  //
-  // The bar therefore reads as "you have some" / "you have none", and the label
-  // beside it states the COUNT. It previously said "{purchasedPct}% used", which
-  // rendered a freshly-bought balance as "100% used" — the exact inverse of the
-  // truth, because a full bar here means tokens remaining, not tokens spent.
   const hasPurchased = state.purchasedTokens > 0;
   const purchasedPct = hasPurchased ? 100 : 0;
   const purchasedLabel = state.purchasedFrozen

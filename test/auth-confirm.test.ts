@@ -7,7 +7,6 @@ const h = vi.hoisted(() => ({
   headers: new Map<string, string>(),
 }));
 
-// redirect() throws in Next; model that so control flow is asserted honestly.
 class RedirectError extends Error {
   constructor(public url: string) {
     super(`NEXT_REDIRECT:${url}`);
@@ -34,7 +33,6 @@ vi.mock("@/actions/delete-account", () => ({
 
 import { confirmOtp } from "@/actions/confirm-otp";
 
-/** Runs the action and returns the URL it redirected to. */
 async function run(fields: Record<string, string>): Promise<string> {
   const fd = new FormData();
   for (const [k, v] of Object.entries(fields)) fd.set(k, v);
@@ -53,12 +51,6 @@ beforeEach(() => {
   h.headers = new Map([["origin", "https://nuko.health"]]);
 });
 
-// ── The regression itself ────────────────────────────────────────────────────
-//
-// /auth/confirm used to be a GET route handler that called verifyOtp. Mail
-// security scanners fetch every link before the recipient opens the message,
-// which burned the one-time token and left the real click on /auth/error.
-// The token must only be consumable by a form submit.
 describe("auth confirm — token is not consumable by GET", () => {
   const dir = "app/(no-chrome)/auth/confirm";
 
@@ -70,7 +62,6 @@ describe("auth confirm — token is not consumable by GET", () => {
   it("renders an interstitial that verifies nothing", () => {
     const page = readFileSync(`${dir}/page.tsx`, "utf8");
     expect(page).not.toContain("verifyOtp");
-    // The token is handed back to the user as a form, not spent.
     expect(page).toContain("confirmOtp");
     expect(page).toContain('name="token_hash"');
   });
@@ -81,8 +72,6 @@ describe("confirmOtp", () => {
     const url = await run({ token_hash: "th", type: "recovery", next: "/account" });
 
     expect(h.verifyOtp).toHaveBeenCalledWith({ type: "recovery", token_hash: "th" });
-    // Recovery ignores `next`: Supabase silently rewrites it to the Site URL
-    // when the requested redirect isn't allow-listed.
     expect(url).toBe("/auth/update-password");
   });
 

@@ -6,11 +6,6 @@ import {
   type HealthProfileDraft,
 } from "@/lib/health-profile/types";
 
-// The single predicate both the client (routing + Save enablement) and the
-// server action (authoritative guard) use. Regression cover for the bug where a
-// profile saved WITHOUT sensitive data could later have sensitive data added,
-// but the consent checkbox was unreachable.
-
 const basic = {
   ageRange: "35-44",
   biologicalSex: "female",
@@ -28,7 +23,6 @@ describe("needsConsent", () => {
   });
 
   it("is true once sensitive data is added without consent", () => {
-    // The exact bug: a saved, unconsented profile gains a condition.
     expect(needsConsent(draft({ conditions: ["type-2-diabetes"] }))).toBe(true);
     expect(needsConsent(draft({ allergies: ["peanuts"] }))).toBe(true);
     expect(
@@ -71,7 +65,6 @@ describe("needsConsent", () => {
   });
 
   it("ignores stale consent flags when no sensitive data remains", () => {
-    // Consent is sticky in the DB, but an all-clear profile never blocks a save.
     expect(
       needsConsent(draft({ consent: true, consentVersion: "2020-01-01" })),
     ).toBe(false);

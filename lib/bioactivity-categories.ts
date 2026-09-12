@@ -1,20 +1,5 @@
-// Recipe category population from bioactivity scores (PRD: Nuko — Category
-// Score). A static 23×14 relevance matrix maps each bioactivity to each
-// category; a recipe's BioSubtotal is the relevance-weighted average of its
-// bioactivity scores over the bioactivities relevant (≥50) to that category.
-//
-// 8 of the 14 categories then add a nutrient/ingredient bonus (§4):
-//   CategoryScore = min(100, BioSubtotal + bonus × 100)
-// That bonus is NOT reimplemented here — §8 requires the same calculation the
-// Recipe Match Score uses for the equivalent goal, so both read
-// lib/scoring/bonuses.ts. The other 6 are BioSubtotal alone (§5).
-//
-// A recipe is shown under a category iff CategoryScore ≥ 40 (§6.1) — there is no
-// exception to that floor. Keep in sync with scripts/score-supports.mjs.
-
 import { bonusFor, type BonusContext } from "@/lib/scoring/bonuses";
 
-// Category slugs, in the column order of the RELEVANCE matrix below.
 export const CATEGORY_SLUGS = [
   "energy",
   "hormones",
@@ -34,24 +19,18 @@ export const CATEGORY_SLUGS = [
 
 export type CategorySlug = (typeof CATEGORY_SLUGS)[number];
 
-// A bioactivity contributes to a category when its relevance is ≥ this (§3).
 export const RELEVANCE_THRESHOLD = 50;
-// §6.1 display floor: below this a recipe does not appear under the category.
 export const QUALIFY_THRESHOLD = 40;
-// §6.2 tier boundary: ≥ this is "Strong support", 40–59 is "Moderate support".
 export const STRONG_THRESHOLD = 60;
 
 export type SupportTier = "strong" | "moderate" | "none";
 
-/** §6.2. Note the label must never use the word "Match" — see §6.3. */
 export function supportTier(score: number): SupportTier {
   if (score >= STRONG_THRESHOLD) return "strong";
   if (score >= QUALIFY_THRESHOLD) return "moderate";
   return "none";
 }
 
-// Relevance % of each bioactivity (row) to each category (column, CATEGORY_SLUGS
-// order). Reasoned starting point per the PRD appendix — tunable over time.
 export const RELEVANCE: Record<string, number[]> = {
   "antioxidant-cellular-protection": [50, 20, 15, 35, 40, 70, 10, 55, 20, 50, 15, 25, 15, 40],
   "inflammation-support": [20, 20, 10, 40, 25, 30, 15, 25, 45, 55, 35, 45, 15, 50],
@@ -80,16 +59,12 @@ export const RELEVANCE: Record<string, number[]> = {
 
 export interface CategoryResult {
   category: CategorySlug;
-  score: number; // 0–100, rounded
+  score: number;
   qualified: boolean;
   tier: SupportTier;
 }
 
-/**
- * §3 BioSubtotal: relevance-weighted average of the recipe's bioactivity scores
- * over the bioactivities relevant (≥ RELEVANCE_THRESHOLD) to `category`. Returns
- * 0 when no bioactivity is relevant.
- */
+/** Relevance-weighted bioactivity average for a category (§3). */
 export function categoryBioSubtotal(
   scoresBySlug: Record<string, number>,
   category: CategorySlug,
@@ -108,11 +83,7 @@ export function categoryBioSubtotal(
   return weight > 0 ? weighted / weight : 0;
 }
 
-/**
- * §4: CategoryScore = min(100, BioSubtotal + bonus × 100). Without a
- * `bonusContext` — or for the 6 categories §5 gives no bonus — this is
- * BioSubtotal alone, since `bonusFor` returns 0 for a non-bonus key.
- */
+/** min(100, BioSubtotal + bonus × 100) (§4). */
 export function calculateCategoryScore(
   scoresBySlug: Record<string, number>,
   category: CategorySlug,
@@ -123,11 +94,7 @@ export function calculateCategoryScore(
   return Math.min(100, subtotal + bonusFor(category, bonusCtx) * 100);
 }
 
-/**
- * All 14 categories with the recipe's CategoryScore, its §6.2 tier, and whether
- * it clears the §6.1 display floor. Sub-floor scores are retained (not zeroed)
- * so the distribution stays visible for the tuning §8 anticipates.
- */
+/** Scores all 14 categories with their tier and qualification. */
 export function computeAllCategoryScores(
   scoresBySlug: Record<string, number>,
   bonusCtx?: BonusContext,
@@ -145,7 +112,6 @@ export function computeAllCategoryScores(
   });
 }
 
-/** Only the categories a recipe qualifies for (subset of computeAllCategoryScores). */
 export function computeRecipeCategories(
   scoresBySlug: Record<string, number>,
   bonusCtx?: BonusContext,

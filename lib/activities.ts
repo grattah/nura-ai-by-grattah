@@ -1,4 +1,3 @@
-// lib/activities.ts
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const ACTIVITIES_PAGE_SIZE = 5;
@@ -7,7 +6,6 @@ export interface ActivityItem {
   id: string;
   action: string;
   created_at: string;
-  /** Free-text target for activities with no recipe (e.g. a search term). */
   label: string | null;
   recipe: {
     id: string;
@@ -40,16 +38,11 @@ function mapRow(item: ActivityRow): ActivityItem {
   };
 }
 
-/** The actor's display name. No name set → "You". */
 export function actorLabel(fullName?: string | null): string {
   const name = fullName?.trim();
   return name ? name : "You";
 }
 
-/**
- * Row copy for an activity. Unknown verbs fall through to "{action} {target}" so
- * a future activity type never renders blank.
- */
 export function activityPhrase(action: string, target: string): string {
   switch (action) {
     case "searched":
@@ -65,14 +58,11 @@ export function activityPhrase(action: string, target: string): string {
   }
 }
 
-/** What the activity refers to: a recipe title, or the free-text label. */
 export function activityTarget(item: ActivityItem): string {
   return item.recipe?.title ?? item.label ?? "";
 }
 
-// `created_at` then `id` is a total order. Without the `id` tiebreaker,
-// activities sharing a timestamp have an undefined position, and range
-// pagination slices by position, so pages could overlap or skip rows.
+/** Paginates by created_at then id so pages never overlap. */
 export async function fetchActivitiesPage(
   supabase: SupabaseClient,
   pageNum: number,
@@ -82,10 +72,6 @@ export async function fetchActivitiesPage(
   const start = pageNum * ACTIVITIES_PAGE_SIZE;
   const end = start + ACTIVITIES_PAGE_SIZE - 1;
 
-  // Own rows only. The profiles join is gone: in a self-only feed the actor is
-  // constant, so the name is resolved once by the page. It also carried
-  // `.not("profiles.username","is",null)` with an inner join, which silently
-  // dropped every row belonging to a user who hadn't set a name.
   let query = supabase
     .from("activities")
     .select(

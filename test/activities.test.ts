@@ -6,9 +6,6 @@ import {
   type ActivityItem,
 } from "@/lib/activities";
 
-// Activities is a personal feed: every row belongs to the signed-in user, so the
-// actor is rendered once from their name — or "You" when they haven't set one.
-
 describe("actorLabel", () => {
   it("uses the name when there is one", () => {
     expect(actorLabel("Sunny Thompson")).toBe("Sunny Thompson");

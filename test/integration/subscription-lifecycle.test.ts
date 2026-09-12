@@ -1,23 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { withRollback, makeUser, hasTestDb, type Tx } from "../helpers/db";
 
-// QA: "Subscription expiry shows no expired status on the DB — it still stores
-//      as active even after expiry", and
-//     "Check that user's database status is correct after expiry, cancellation
-//      or renewal."
-//
-// Both are the same question asked three ways, so they are one suite. These run
-// the real sweep function against real rows: the bug was that nothing ever
-// moved a lapsed row off 'active', and a mocked client cannot show that because
-// the mock returns whatever status the test author typed.
-
 const d = hasTestDb ? describe : describe.skip;
 
-/**
- * `offset` is an interval like '-1 day' or '20 days', applied to now() IN SQL.
- * A parameter is a value, never an expression — passing "now() - interval
- * '1 day'" as $4 sends that text to the timestamp parser, which rejects it.
- */
 const addSub = (
   tx: Tx,
   userId: string,
@@ -79,10 +64,6 @@ d("subscription status after expiry", () => {
   });
 });
 
-// has_active_subscription() takes NO arguments — it resolves auth.uid() itself,
-// because its purpose is to be callable from an RLS policy. It therefore has to
-// be invoked AS the user; calling it as the connection owner returns false for
-// everyone, which would make these tests pass for the wrong reason.
 const entitled = async (tx: Tx, userId: string) =>
   (
     await tx.asUser<{ ok: boolean }>(
@@ -95,8 +76,6 @@ d("entitlement survives cancellation until the period ends", () => {
   it("keeps a cancelled-but-unexpired user entitled", async () => {
     await withRollback(async (tx) => {
       const user = await makeUser(tx);
-      // Cancelling in Stripe writes 'cancelled' immediately, but the user has
-      // paid through expires_at and must keep access until then.
       await addSub(tx, user, "cancelled", "20 days");
 
       expect(
@@ -147,8 +126,6 @@ d("token balances follow the subscription (spec §7)", () => {
       );
 
       expect(row.subscription_units, "subscription tokens die at period end").toBe(0);
-      // §7 is explicit: frozen is a FLAG, never a deletion. Destroying paid
-      // value invites chargebacks.
       expect(row.purchased_units, "purchased tokens must be retained").toBe(130);
       expect(row.purchased_frozen).toBe(true);
     });

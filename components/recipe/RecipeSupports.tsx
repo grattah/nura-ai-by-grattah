@@ -25,7 +25,6 @@ import {
 } from "@/components/vectors/bioactivities";
 import { type SupportScore } from "@/lib/wellness-score";
 
-// Draft icon mapping per bioactivity — swapped for the real design later.
 const ICONS: Record<string, LucideIcon> = {
   "antioxidant-cellular-protection": Cytoprotective,
   "inflammation-support": Inflammation,
@@ -52,7 +51,6 @@ const ICONS: Record<string, LucideIcon> = {
   "cellular-wellness-support": CellWellness,
 };
 
-// Compact display labels (the full bioactivity names are too long for the row).
 const SHORT_LABELS: Record<string, string> = {
   "antioxidant-cellular-protection": "Antioxidants",
   "inflammation-support": "Inflammation",
@@ -80,7 +78,6 @@ const SHORT_LABELS: Record<string, string> = {
 };
 
 interface RecipeSupportsProps {
-  /** Top bioactivities for this recipe (from recipe_tags), strongest first. */
   supports: SupportScore[];
   isSubscriber?: boolean;
   hasHealthProfile?: boolean;

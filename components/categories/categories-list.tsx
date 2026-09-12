@@ -11,8 +11,6 @@ interface Categories {
 }
 
 const CategoriesList = ({ categories }: { categories: Categories[] }) => {
-  // /categories is public; tiles just navigate. /categories/[slug] is protected
-  // and gates guests via RouteAuthGuard.
   return (
     <div className="px-6 space-y-3">
       {categories.map((tag) => (

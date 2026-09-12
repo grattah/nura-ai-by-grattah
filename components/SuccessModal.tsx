@@ -15,11 +15,8 @@ const SuccessModal = ({
       className="fixed inset-0 z-50 flex items-center justify-center px-6"
       onClick={onClose}
     >
-      {/* Backdrop: dims and blurs everything behind the modal */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
 
-      {/* Card: sits above the backdrop. stopPropagation so clicking the
-          card doesn't trigger the overlay's onClose. */}
       <div
         className="relative bg-white py-8 px-6 rounded-2xl flex flex-col gap-5 w-full max-w-sm"
         onClick={(e) => e.stopPropagation()}

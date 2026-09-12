@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import { toInvoiceView } from "@/lib/billing";
 import type Stripe from "stripe";
 
-// toInvoiceView is pure — no Stripe network calls needed.
 const invoice = (over: Partial<Stripe.Invoice> = {}) =>
   ({
     id: "in_123",
@@ -10,7 +9,7 @@ const invoice = (over: Partial<Stripe.Invoice> = {}) =>
     amount_due: 7900,
     currency: "gbp",
     status: "paid",
-    created: 1779580800, // 2026-05-24T00:00:00Z
+    created: 1779580800,
     invoice_pdf: "https://stripe.test/in_123.pdf",
     hosted_invoice_url: "https://stripe.test/in_123",
     ...over,
@@ -18,9 +17,6 @@ const invoice = (over: Partial<Stripe.Invoice> = {}) =>
 
 describe("toInvoiceView", () => {
   it("converts minor units and formats in the invoice's own currency", () => {
-    // A subscription cannot change currency, so invoices raised before the
-    // switch to USD stay in GBP and must keep rendering "£". The symbol must
-    // come from the invoice, not a constant.
     expect(toInvoiceView(invoice()).amount).toBe("£79.00");
     expect(
       toInvoiceView(invoice({ currency: "usd", amount_paid: 2000 })).amount,
@@ -58,9 +54,6 @@ describe("toInvoiceView", () => {
 });
 
 
-// Currency moved to USD. Amounts still render in each invoice's OWN currency —
-// a subscription's currency is fixed at creation and cannot be migrated — so
-// the change is about what NEW charges use and what an absent currency means.
 describe("USD switchover", () => {
   it("renders a USD invoice with a dollar sign", () => {
     const usd = { ...invoice(), currency: "usd" } as Parameters<typeof toInvoiceView>[0];

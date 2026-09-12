@@ -1,11 +1,7 @@
-// Estimated model pricing for the token-usage dashboard (USD per 1M tokens,
-// plus per-image for image models). Estimates only — update when prices change.
-// Kept in one place so the dashboard's cost figures are easy to recalibrate.
-
 export interface ModelPrice {
-  input: number; // $ per 1M input tokens
-  output: number; // $ per 1M output tokens
-  perImage?: number; // $ per generated image
+  input: number;
+  output: number;
+  perImage?: number;
 }
 
 export const MODEL_PRICING: Record<string, ModelPrice> = {
@@ -16,7 +12,6 @@ export const MODEL_PRICING: Record<string, ModelPrice> = {
   "gemini-embedding-2": { input: 0.15, output: 0 },
 };
 
-// Fallback when a model isn't in the map (e.g. backfilled "unknown" rows).
 const DEFAULT_PRICE: ModelPrice = { input: 1.0, output: 5.0 };
 
 export function priceFor(model: string): ModelPrice {
@@ -31,7 +26,6 @@ export interface UsageRow {
   images?: number;
 }
 
-/** Estimated USD cost of a usage row (or an aggregate with the same fields). */
 export function estimateCostUsd(row: UsageRow): number {
   const p = priceFor(row.model);
   const input = row.input_tokens ?? 0;
@@ -41,7 +35,6 @@ export function estimateCostUsd(row: UsageRow): number {
 
   let tokenCost: number;
   if (input === 0 && output === 0 && total > 0) {
-    // Only a combined total is known (e.g. backfilled rows) — blend the rates.
     tokenCost = (total / 1_000_000) * ((p.input + p.output) / 2);
   } else {
     tokenCost = (input / 1_000_000) * p.input + (output / 1_000_000) * p.output;

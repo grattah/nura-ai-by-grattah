@@ -33,9 +33,6 @@ interface SurfaceRow {
   provider: string;
   model: string;
   calls: number;
-  // The split matters: without it estimateCostUsd blends the input and output
-  // rates, which overstates every surface (worst on input-heavy work at
-  // Sonnet's 5x output premium) and let one surface exceed the page total.
   input_tokens: number;
   output_tokens: number;
   total_tokens: number;
@@ -78,24 +75,20 @@ interface RecentRow {
   total_tokens: number;
   images: number;
   billed: boolean;
-  /** Credits actually deducted. Null on unbilled calls — see `billed`. */
   units: number | null;
-  /** Null for offline/cron work that isn't attributable to an account. */
   user_id: string | null;
 }
 
 const fmt = (n: number) => n.toLocaleString();
 const fmtUsd = (n: number) =>
   n >= 1 ? `$${n.toFixed(2)}` : `$${n.toFixed(3)}`;
-// A single call costs a fraction of a cent, so the per-event column needs finer
-// precision than the aggregate KPIs — 3dp would render most rows as "$0.006".
+/** Per-event costs are fractions of a cent, so this uses 3 decimal places. */
 const fmtUsdPrecise = (n: number) => {
   if (n === 0) return "$0";
   if (n < 0.0001) return "<$0.0001";
   return `$${n.toFixed(4)}`;
 };
 
-// Preserve the range + both tables' page indices across pagination links.
 function tokensHref(range: string, usersPage: number, eventsPage: number) {
   const sp = new URLSearchParams({ range });
   if (usersPage > 1) sp.set("up", String(usersPage));
@@ -151,7 +144,6 @@ export default async function TokensPage({
   const activeRange = String(days);
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
-  // 1-based page indices for the two tables (independent, range preserved).
   const usersPage = Math.max(1, Number(up) || 1);
   const eventsPage = Math.max(1, Number(ep) || 1);
   const usersOffset = (usersPage - 1) * PAGE_SIZE;
@@ -172,8 +164,6 @@ export default async function TokensPage({
     admin.rpc("token_usage_by_surface" as never, p),
     admin.rpc("token_usage_by_model" as never, p),
     admin.rpc("token_usage_daily" as never, p),
-    // Fetch through the current page plus one extra row so we can tell whether
-    // a "Next" page exists without a separate count query.
     admin.rpc(
       "token_usage_top_users" as never,
       {
@@ -205,7 +195,6 @@ export default async function TokensPage({
   const surfaceRows = (surfaceData as SurfaceRow[] | null) ?? [];
   const modelRows = (modelData as ModelRow[] | null) ?? [];
   const dailyRows = (dailyData as DailyRow[] | null) ?? [];
-  // Paginate: the queries fetched one extra row past the page to detect "Next".
   const topUsersAll = (topUserData as TopUserRow[] | null) ?? [];
   const usersHasNext = topUsersAll.length > usersPage * PAGE_SIZE;
   const topUsers = topUsersAll.slice(usersOffset, usersOffset + PAGE_SIZE);
@@ -214,7 +203,6 @@ export default async function TokensPage({
   const eventsHasNext = recentAll.length > PAGE_SIZE;
   const recent = recentAll.slice(0, PAGE_SIZE);
 
-  // ── Cost estimation ───────────────────────────────────────────────────────
   const byModel: ModelPoint[] = modelRows.map((r) => ({
     model: r.model,
     tokens: Number(r.total_tokens),
@@ -224,8 +212,6 @@ export default async function TokensPage({
   const blendedRate =
     summary.totalTokens > 0 ? totalCost / summary.totalTokens : 0;
 
-  // Surface rows are grouped by (surface, provider, model) — fold to surface,
-  // summing real per-model cost, then keep the biggest spenders.
   const surfaceMap = new Map<string, SurfacePoint>();
   for (const r of surfaceRows) {
     const cur = surfaceMap.get(r.surface) ?? {
@@ -247,9 +233,6 @@ export default async function TokensPage({
     cost: Number(r.total_tokens) * blendedRate,
   }));
 
-  // Resolve emails for BOTH tables in one deduped pass (service role). The two
-  // lists overlap heavily, and getUserById is one round-trip each — resolving
-  // them separately would repeat most of the same lookups.
   const userEmails = new Map<string, string>();
   const idsToResolve = new Set<string>([
     ...topUsers.map((u) => u.user_id),
@@ -262,7 +245,6 @@ export default async function TokensPage({
     }),
   );
 
-  /** Email if we resolved one, else a short id, else "—" for system work. */
   const userLabel = (id: string | null) =>
     id ? (userEmails.get(id) ?? `${id.slice(0, 8)}…`) : "—";
 
@@ -336,7 +318,6 @@ export default async function TokensPage({
       )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {/* Top users */}
         <div className="bg-card border border-border rounded-3xl p-4 sm:p-5">
           <h2 className="text-sm font-medium text-muted-foreground mb-3">
             Top users by tokens
@@ -381,7 +362,6 @@ export default async function TokensPage({
           />
         </div>
 
-        {/* Recent events */}
         <div className="bg-card border border-border rounded-3xl p-4 sm:p-5">
           <h2 className="text-sm font-medium text-muted-foreground mb-3">
             Recent events

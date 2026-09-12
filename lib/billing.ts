@@ -6,30 +6,14 @@ import { stripe } from "@/lib/stripe";
 import type Stripe from "stripe";
 import { APP_CURRENCY, APP_LOCALE } from "@/constants";
 
-// Invoices are read from Stripe on demand rather than mirrored into Postgres:
-// Stripe stays the source of truth (so refunds, proration and credits can't drift
-// from a stale local copy) and the PDF links are per-invoice URLs we shouldn't be
-// persisting anyway.
-
-/** Display-ready invoice row for the Billing screen. */
 export interface InvoiceView {
   id: string;
-  /** Formatted in the invoice's OWN currency, e.g. "$79.00". */
   amount: string;
-  /** Capitalised Stripe status, e.g. "Paid" / "Open". */
   status: string;
   date: string;
-  /** Stripe-hosted PDF (or hosted page). Null when Stripe exposes neither. */
   downloadUrl: string | null;
 }
 
-/**
- * The user's Stripe customer id, or null.
- *
- * Deliberately does NOT filter on `status = 'active'`: a lapsed or cancelled user
- * still needs access to their past invoices. Rows without a customer id are
- * skipped so an older/partial subscription row can't mask a usable one.
- */
 export async function getStripeCustomerId(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -44,21 +28,10 @@ export async function getStripeCustomerId(
   return data?.[0]?.stripe_customer_id ?? null;
 }
 
-/**
- * Map a Stripe invoice to the view model. Pure — unit-tested without network.
- *
- * Amounts are formatted from the invoice's own `currency` rather than a hardcoded
- * symbol, so a legacy GBP invoice still renders with a "£" after the switch to USD.
- */
 export function toInvoiceView(invoice: Stripe.Invoice): InvoiceView {
-  // Stripe amounts are in minor units (7900 → 79.00). Use amount_paid when there
-  // is one; an unpaid/open invoice has amount_paid = 0, and `??` wouldn't fall
-  // through on a zero, so test explicitly.
   const paid = invoice.amount_paid ?? 0;
   const minor = paid > 0 ? paid : (invoice.amount_due ?? 0);
   const currency = (invoice.currency ?? APP_CURRENCY).toUpperCase();
-  // narrowSymbol keeps foreign currencies readable — plain en-US formatting
-  // renders GBP as "£20.00" but other currencies with a country prefix.
   const amount = new Intl.NumberFormat(APP_LOCALE, {
     style: "currency",
     currency,
@@ -79,13 +52,6 @@ export function toInvoiceView(invoice: Stripe.Invoice): InvoiceView {
   };
 }
 
-/**
- * The user's invoices, newest first.
- *
- * `failed` distinguishes "Stripe call errored" from "genuinely has no invoices" —
- * without it a transient Stripe outage would tell a paying user they'd never been
- * billed.
- */
 export async function getUserInvoices(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -97,7 +63,6 @@ export async function getUserInvoices(
   try {
     const res = await stripe.invoices.list({ customer: customerId, limit });
     const invoices = res.data
-      // Drafts aren't payments and have no usable PDF.
       .filter((inv) => inv.status && inv.status !== "draft")
       .map(toInvoiceView);
     return { invoices, failed: false };

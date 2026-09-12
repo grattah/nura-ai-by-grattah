@@ -14,7 +14,7 @@ import {
 } from "recharts";
 
 export interface DailyPoint {
-  day: string; // ISO date (YYYY-MM-DD)
+  day: string;
   tokens: number;
   cost: number;
 }
@@ -31,7 +31,6 @@ export interface ModelPoint {
   cost: number;
 }
 
-// A small categorical palette (mint-forward, colour-blind-friendly enough).
 const BAR_COLORS = [
   "#34d399",
   "#60a5fa",

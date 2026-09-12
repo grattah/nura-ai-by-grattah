@@ -22,14 +22,9 @@ type Bundle = {
   label: string;
   tokens: number;
   price: number;
-  badge?: string; // optional — present only on featured bundles
+  badge?: string;
 };
 
-// Derived from the shared catalogue, never re-typed here. This list used to be
-// a hardcoded copy, and when the packs changed it silently kept the old ids —
-// so every purchase failed with "Unknown token bundle" while still showing the
-// retired prices. The ids MUST come from the same place the server validates
-// against (actions/credits-checkout.ts → getBundle).
 const PACK_LABELS: Record<string, string> = {
   "pack-10": "STARTER",
   "pack-45": "POPULAR",
@@ -41,7 +36,6 @@ const BUNDLES: readonly Bundle[] = TOKEN_PACKS.map((p) => ({
   id: p.id,
   label: PACK_LABELS[p.id] ?? p.id.toUpperCase(),
   tokens: p.tokens,
-  // The catalogue stores minor units (cents); this component renders majors.
   price: p.amount / 100,
   badge: p.id === "pack-45" ? "MOST BOUGHT" : undefined,
 }));
@@ -56,18 +50,12 @@ const money = (n: number) =>
 
 export default function BuyTokens() {
   const [step, setStep] = useState<Step>("select");
-  // Default to the badged pack, matching the mockup's pre-selected radio.
-  // Falls back to the first pack rather than asserting non-null: a renamed id
-  // would otherwise crash the page at render instead of just losing the
-  // default selection.
   const [selected, setSelected] = useState<Bundle>(
     BUNDLES.find((b) => b.badge) ?? BUNDLES[0],
   );
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Create the Stripe session when the user reaches the card step. The server
-  // resolves the real price from the bundle id (never trusts the client price).
   useEffect(() => {
     if (step !== "card" || clientSecret) return;
     setError(null);
@@ -79,7 +67,6 @@ export default function BuyTokens() {
       .catch(() => setError("Failed to start payment. Please try again."));
   }, [step, clientSecret, selected.id]);
 
-  // Re-selecting a bundle invalidates any prepared session.
   const handleSelect = (b: Bundle) => {
     setSelected(b);
     setClientSecret(null);
@@ -100,7 +87,6 @@ export default function BuyTokens() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header — back arrow is step-aware */}
       <div
         className={`px-6 py-4.75 ${
           step === "select"
@@ -192,8 +178,6 @@ function SelectStep({
                 active ? "border-[#227B6F]" : ""
               }`}
             >
-              {/* Badge: lower z-index, tucked behind the card body. Sits above the
-      top edge so only its protruding part shows. */}
               {bundle.badge && (
                 <span className="absolute -top-5 left-0 z-0 bg-[#227B6F] text-white text-xs font-semibold px-3 pt-1 pb-4 rounded-t-[8px]">
                   {bundle.badge}

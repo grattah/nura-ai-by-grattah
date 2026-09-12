@@ -9,7 +9,6 @@ import coin from "@/public/broken-coin.png";
 import { formatResetCountdown, formatResetLong } from "@/lib/tokens-format";
 
 const NoTokens = ({ resetAt = null }: { resetAt?: string | null }) => {
-  // Tick once a second so the countdown stays live.
   const [, setTick] = React.useState(0);
   React.useEffect(() => {
     if (!resetAt) return;

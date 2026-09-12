@@ -19,14 +19,11 @@ interface FollowUpSectionProps {
   contextType: "recipe" | "guide";
   title: string;
   description: string;
-  /** Fuller on-page context (ingredients, method, why it works, inside tip). */
   context?: string;
   allowedDomains?: string[];
   savedQuestions?: string[] | null;
 }
 
-// Module-level default so the prop reference is stable across renders (keeps the
-// memoized chat transport from being recreated when the parent omits it).
 const DEFAULT_ALLOWED_DOMAINS = [
   "healthline.com",
   "webmd.com",
@@ -64,10 +61,8 @@ export function FollowUpSection({
     ) => {
       const res = await fetch(reqInput, init);
       if (res.status === 401) {
-        // Guest (normally caught upstream by AuthGate) → sign-in modal.
         setSignInOpen(true);
       } else if (res.status === 403) {
-        // Out of free chat replies → Get Nuko+.
         setPaywallOpen(true);
       } else if (res.status === 402) {
         res
@@ -79,7 +74,6 @@ export function FollowUpSection({
           .catch(() => {});
         openTokenWall();
       } else if (res.ok) {
-        // Meter lands server-side when the stream finishes; refresh shortly after.
         setTimeout(() => refreshCredits(), 1500);
       }
       return res;
@@ -116,14 +110,12 @@ export function FollowUpSection({
 
   const isLoading = status === "submitted" || status === "streaming";
 
-  // Restore any persisted conversation for this recipe on mount / id change.
   useEffect(() => {
     const cached = loadChat(contextId);
     if (cached) setMessages(cached);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contextId]);
 
-  // Persist completed turns so the chat survives navigation (cleared on logout).
   useEffect(() => {
     if (status === "ready") saveChat(contextId, messages);
   }, [status, messages, contextId]);
@@ -154,12 +146,10 @@ export function FollowUpSection({
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ contextId, contextType, questions: aiQs }),
           }).catch(() => {
-            /* non-critical, fail silently */
           });
         }
       })
       .catch(() => {
-        /* keep static fallback silently */
       })
       .finally(() => {
         if (!cancelled) setQuestionsLoading(false);
@@ -208,8 +198,6 @@ export function FollowUpSection({
 
       {signInOpen && <SignInModal onClose={() => setSignInOpen(false)} />}
 
-      {/* Opens in place on this recipe page (no navigation) — closing just
-          dismisses it and stays put. */}
       <PaywallModal open={paywallOpen} onOpenChange={setPaywallOpen} />
     </div>
   );
@@ -276,9 +264,8 @@ function ChatThread({ messages, isLoading }: ChatThreadProps) {
     const count = messages.length;
     const prev = prevCountRef.current;
     prevCountRef.current = count;
-    if (prev === null) return; // initial/restored set → don't scroll
+    if (prev === null) return;
     if (count > prev || isLoading) {
-      // new message, or actively streaming
       endRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, isLoading]);
@@ -347,7 +334,6 @@ function ChatThread({ messages, isLoading }: ChatThreadProps) {
                       {(hasActiveTool || betweenToolAndText) && (
                         <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          {/* Searching trusted sources… */}
                         </div>
                       )}
 
@@ -381,7 +367,6 @@ function ChatThread({ messages, isLoading }: ChatThreadProps) {
     </div>
   );
 }
-// ─── ChatInput ─────────────────────────────────────────────────────────────────
 
 interface ChatInputProps {
   input: string;
@@ -427,8 +412,6 @@ function ChatInput({ input, isLoading, onChange, onSend }: ChatInputProps) {
     </Card>
   );
 }
-
-// ─── Shared primitives ─────────────────────────────────────────────────────────
 
 function NuraAvatar() {
   return (

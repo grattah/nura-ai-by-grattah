@@ -25,5 +25,4 @@ export function formatContext(chunks: RetrievedChunk[]): string {
     .join("\n\n---\n\n");
 }
 
-// Re-exported for use in the vectorise script
 export const embedBatch = embedder.embedBatch.bind(embedder);

@@ -47,7 +47,6 @@ describe("check-email — RPC primary path (audit H2)", () => {
 
 describe("check-email — pagination fallback (audit H2)", () => {
   it("finds a user beyond the first page when the RPC is unavailable", async () => {
-    // RPC not deployed yet → error → fall back to paginated listUsers.
     h.admin!.client.rpc.mockResolvedValue({ data: null, error: { code: "PGRST202" } });
 
     const firstPage = Array.from({ length: 1000 }, () => ({ email: "other@x.com" }));

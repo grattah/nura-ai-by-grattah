@@ -1,9 +1,6 @@
 import { redirect } from "next/navigation";
 
-// The dietary-pattern step is disabled for now (see lib/health-profile/types.ts —
-// `dietaryPattern`, the "dietary" section/step, and DIETARY_PATTERNS usage are
-// commented out). This route redirects out so the URL never renders a broken
-// step. To reinstate: restore the type bits, then swap the body below back in.
+/** Disabled step; redirects out until the dietary section is restored. */
 export default function DietaryPatternStep() {
   redirect("/health-profile");
 }

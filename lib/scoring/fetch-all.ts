@@ -1,15 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-/**
- * Read every row of a query, page by page.
- *
- * PostgREST caps a response at 1,000 rows by default and returns them WITHOUT
- * error — so a query over a larger table silently returns a prefix. That is how
- * the tier classification covered 301 of 368 ingredients and the category
- * preview covered 184 of 243 recipes, both reporting success.
- *
- * Anything scanning a whole table must go through this.
- */
+/** Reads every row page by page; PostgREST silently caps responses at 1,000 rows. */
 export async function fetchAll<T>(
   build: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
   pageSize = 1000,
@@ -24,7 +15,6 @@ export async function fetchAll<T>(
   }
 }
 
-/** Convenience for the common `select(...).range(...)` shape. */
 export function pagedSelect<T>(
   supabase: SupabaseClient<never>,
   table: string,

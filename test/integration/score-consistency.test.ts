@@ -3,25 +3,6 @@ import { hasTestDb } from "../helpers/db";
 import { createClient } from "@supabase/supabase-js";
 import { scoreMatch, scoreMatchForRecipes } from "@/lib/scoring/tier-server";
 
-// Match Score PRD §8, consistency rule:
-//
-//   "every screen showing a personal match percentage must use this same
-//    calculation — a recipe must never show two different personalized
-//    percentages on two different screens."
-//
-// That rule was broken in production. The recipe page (scoreMatch, one recipe)
-// showed 71%, while for-you (scoreMatchForRecipes, 199 recipes) showed 58% for
-// the SAME recipe and the SAME profile.
-//
-// The cause was a silent read truncation, not a scoring difference:
-// getTiersByIngredient was unpaged, and PostgREST caps a response at 1,000 rows
-// and returns the prefix WITHOUT an error. Scoring one recipe reads ~10
-// ingredients × 40 outcomes = 400 rows and fits; scoring the library reads
-// thousands, so most ingredients came back with no tiers and scored near zero.
-//
-// Every existing test scored ONE recipe at a time, so none of them could see
-// it. These deliberately run both paths over a realistic batch and compare.
-
 const d = hasTestDb ? describe : describe.skip;
 
 const sb = () =>
@@ -53,9 +34,6 @@ d("a recipe scores the same alone as in a batch", () => {
       goals: GOALS,
     });
 
-    // Spot-check across the range rather than all 199 — each single score is
-    // two round-trips, and a truncation bug shows up on any recipe whose
-    // ingredients fell past the cut.
     const sample = [recipes[0], recipes[Math.floor(recipes.length / 2)], recipes.at(-1)!];
 
     for (const recipe of sample) {
@@ -79,20 +57,6 @@ d("a recipe scores the same alone as in a batch", () => {
   });
 
   it("scores a whole-library batch identically to small batches", async () => {
-    // This replaces an assertion that "more than 80% of the library scores
-    // above zero", which was a PROXY for un-truncated reads. It stopped meaning
-    // anything twice over: ingredient_tiers is no longer read at all, and the
-    // proxy only ever held because a fall-through in scoreFromRaw gave every
-    // unmatched ingredient free points — water alone put a floor under every
-    // recipe. With that gone the honest figure is 69%, and lowering the
-    // threshold would just be re-fitting the test to the bug it stopped
-    // catching.
-    //
-    // What still needs guarding is that batching does not LOSE rows, so this
-    // compares the two directly. It fails on both known failure modes: a
-    // truncated page, and the ~16KB URL limit that made the whole-library call
-    // throw `TypeError: fetch failed` once the library passed ~360 recipes —
-    // which broke the for-you page for every user.
     const client = sb();
     const { data: recipeRows } = await client
       .from("recipes")
@@ -129,15 +93,6 @@ d("a recipe scores the same alone as in a batch", () => {
   });
 });
 
-// ── Every scoring table must reach a real category page ─────────────────────
-//
-// The recompute resolved a v7 table key to a category row by slug and skipped
-// silently when it could not. `heart-health` (the PRD's name) never matched the
-// `heart` slug the database has always used, so Heart Health sat on its v2
-// scores through a full recompute while the other 13 categories were rewritten.
-//
-// The only visible symptom was arithmetic in the script's own output —
-// "243 recipes × 14 categories = 3159 rows", where 3159 is 243 × 13.
 d("category tables resolve to real categories", () => {
   it("has a category row for every v7 scoring table", async () => {
     const { CATEGORY_TABLES, categorySlugFor } = await import(
@@ -146,8 +101,6 @@ d("category tables resolve to real categories", () => {
     const { data } = await sb().from("categories").select("slug");
     const slugs = new Set(((data ?? []) as { slug: string }[]).map((c) => c.slug));
 
-    // The same mapping the recompute uses — imported, not copied, so the test
-    // cannot pass against a mapping the script does not actually apply.
     const unresolved = CATEGORY_TABLES.map((t) => t.key).filter(
       (key) => !slugs.has(categorySlugFor(key)),
     );
@@ -167,8 +120,6 @@ d("category tables resolve to real categories", () => {
       .from("recipe_categories")
       .select("recipe_id", { count: "exact", head: true });
 
-    // A category missing entirely shows up as a shortfall of one whole recipe's
-    // worth of rows per category.
     expect(rowCount ?? 0).toBe((recipeCount ?? 0) * CATEGORY_TABLES.length);
   });
 });

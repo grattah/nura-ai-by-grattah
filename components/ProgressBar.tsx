@@ -1,8 +1,8 @@
 interface ProgressBarProps {
-  value: number; // 0–100
-  color?: string; // fill color, e.g. "#227B6F"
-  trackColor?: string; // background track color
-  height?: number; // bar thickness in px
+  value: number;
+  color?: string;
+  trackColor?: string;
+  height?: number;
   className?: string;
 }
 
@@ -13,7 +13,6 @@ export function ProgressBar({
   height = 8,
   className,
 }: ProgressBarProps) {
-  // Guard the input so a bad value can't overflow or invert the bar.
   const clamped = Math.min(100, Math.max(0, value));
 
   return (

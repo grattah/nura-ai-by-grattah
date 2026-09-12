@@ -1,10 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { nutritionBreakdown } from "@/lib/scoring/nutrition-breakdown";
 
-// Rows feed the Nutri score drawer. Order and labels are fixed by the design, and
-// every row is always present — a recipe that earned nothing for fiber says "+0"
-// rather than dropping the line.
-
 const ZERO = {
   fiber: 0,
   protein: 0,
@@ -78,8 +74,6 @@ describe("nutritionBreakdown", () => {
   });
 
   it("never emits a negative magnitude", () => {
-    // Both sides are stored as positive magnitudes; a negative would render as
-    // "--3" once the section applies its sign.
     const { lost } = nutritionBreakdown({ ...ZERO, sugar: -4 });
     expect(lost.find((r) => r.key === "sugar")?.points).toBe(0);
   });

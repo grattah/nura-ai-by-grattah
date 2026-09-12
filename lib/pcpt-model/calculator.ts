@@ -1,31 +1,4 @@
-/**
- * PCPTRC 2.0 Calculator
- *
- * Uses multinomial logistic regression with three outcome categories:
- *   0 = no cancer (reference)
- *   1 = low-grade cancer  (Gleason < 7)
- *   2 = high-grade cancer (Gleason ≥ 7)
- *
- * Coefficients sourced from the published PCPTRC 2.0 paper:
- *   Thompson IM et al. J Urol 2012;188(4):1185–90
- *   Table 2: Nominal Logistic Regression Model Coefficients
- *
- * PSA is log₂-transformed as per the published model specification.
- *
- * ⚠️  Validate all coefficients against the official R source code before
- *     any clinical deployment:
- *     https://riskcalc.org/PCPTRC/
- */
-
 import { PCPTInput, PCPTResult } from "./types";
-
-// ---------------------------------------------------------------------------
-// Published logistic regression coefficients — PCPTRC 2.0
-// Source: Thompson IM et al. J Urol 2012;188(4):1185–90, Table 2
-//
-// Two linear predictors: one for low-grade (L) and one for high-grade (H).
-// The third category (no cancer) is the reference, linear predictor = 0.
-// ---------------------------------------------------------------------------
 
 interface CoefficientSet {
   readonly intercept: number;
@@ -38,31 +11,25 @@ interface CoefficientSet {
 }
 
 const COEFF = {
-  // Low-grade cancer (Gleason < 7) vs no cancer
   L: {
     intercept: -6.4737,
-    log2psa: 0.649, // OR ≈ 1.57 per doubling of PSA
-    dreAbnormal: 0.3648, // OR ≈ 1.44
-    africanAmerican: 0.7648, // OR ≈ 2.15
-    familyHistory: 0.3697, // OR ≈ 1.45
-    priorNegBiopsy: -0.7479, // OR ≈ 0.47
-    age: 0.0289, // OR ≈ 1.03 per year
+    log2psa: 0.649,
+    dreAbnormal: 0.3648,
+    africanAmerican: 0.7648,
+    familyHistory: 0.3697,
+    priorNegBiopsy: -0.7479,
+    age: 0.0289,
   },
-  // High-grade cancer (Gleason ≥ 7) vs no cancer
   H: {
     intercept: -8.1284,
-    log2psa: 1.0145, // OR ≈ 2.02 per doubling of PSA
-    dreAbnormal: 0.7374, // OR ≈ 2.09
-    africanAmerican: 0.6736, // OR ≈ 1.96
-    familyHistory: 0.2483, // OR ≈ 1.28
-    priorNegBiopsy: -0.4432, // OR ≈ 0.64
-    age: 0.0389, // OR ≈ 1.04 per year
+    log2psa: 1.0145,
+    dreAbnormal: 0.7374,
+    africanAmerican: 0.6736,
+    familyHistory: 0.2483,
+    priorNegBiopsy: -0.4432,
+    age: 0.0389,
   },
 } as const;
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
 function linearPredictor(coeffs: CoefficientSet, input: PCPTInput): number {
   const log2psa = Math.log2(Math.max(input.psa, 0.01));
@@ -80,7 +47,6 @@ function linearPredictor(coeffs: CoefficientSet, input: PCPTInput): number {
 }
 
 function softmax(xL: number, xH: number): [number, number, number] {
-  // exp of each linear predictor; reference (no cancer) has lp = 0
   const eRef = 1;
   const eL = Math.exp(xL);
   const eH = Math.exp(xH);
@@ -88,16 +54,7 @@ function softmax(xL: number, xH: number): [number, number, number] {
   return [eRef / sum, eL / sum, eH / sum];
 }
 
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
-
-/**
- * Compute PCPTRC 2.0 prostate cancer risk.
- * Returns the probability of each biopsy outcome.
- *
- * @throws if PSA or age is outside the validated range.
- */
+/** Computes PCPTRC 2.0 prostate cancer risk. */
 export function computePCPTRisk(input: PCPTInput): PCPTResult {
   if (input.psa < 0.1 || input.psa > 50) {
     throw new RangeError("PSA must be between 0.1 and 50 ng/mL.");
@@ -118,7 +75,6 @@ export function computePCPTRisk(input: PCPTInput): PCPTResult {
   else if (anyCancerRisk >= 0.15) riskCategory = "moderate";
   else riskCategory = "low";
 
-  // NCI / AUA: biopsy discussion generally recommended above ~20–25% risk
   const biopsyDiscussionRecommended = anyCancerRisk >= 0.2 || pHigh >= 0.05;
 
   return {

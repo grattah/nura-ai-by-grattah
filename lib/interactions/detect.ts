@@ -20,7 +20,6 @@ export interface InteractionIngredient {
   note: string;
 }
 
-// Small in-process cache of the curated dictionary (rarely changes).
 let seedCache: { rows: SeedRow[]; at: number } | null = null;
 const SEED_TTL = 60 * 60 * 1000;
 
@@ -46,11 +45,6 @@ const SUPPLEMENT_HINTS = [
   "standardized",
 ];
 
-/**
- * Detect curated interaction ingredients in a recipe's free-text ingredient list.
- * `supplement_only` rows trigger only when the label reads as a named supplement/
- * concentrate (not a culinary amount).
- */
 export async function detectInteractionIngredients(
   admin: Admin,
   ingredients: unknown,
@@ -73,7 +67,7 @@ export async function detectInteractionIngredients(
       row.supplement_only &&
       !SUPPLEMENT_HINTS.some((h) => matchedLabel.includes(h))
     ) {
-      continue; // culinary amount — don't flag
+      continue;
     }
     if (seen.has(row.ingredient_key)) continue;
     seen.add(row.ingredient_key);

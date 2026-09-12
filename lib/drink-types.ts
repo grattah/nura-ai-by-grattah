@@ -1,10 +1,3 @@
-// Normalized drink-type sub-sub-categories shared across the wellness areas.
-// Order here is the display order used for the filter pills and for the
-// one-per-type de-duplication on the Trending / Popular feeds.
-//
-// Slugs stay PLURAL — they're persisted in `recipes.drink_type` and returned by
-// the category_drink_types RPC, so renaming them would need a data migration.
-// Display names are singular, which is what the pills and card badges show.
 export const DRINK_TYPES = [
   { slug: "juices", name: "Juice" },
   { slug: "smoothies", name: "Smoothie" },
@@ -22,11 +15,6 @@ export const DRINK_TYPES = [
 
 export type DrinkTypeSlug = (typeof DRINK_TYPES)[number]["slug"];
 
-/**
- * Badge colours per drink type. Mirrors the shape of CATEGORY_CONFIG's
- * bgColorBadge/textColorBadge so the card badge markup only changes where it
- * reads its colours from.
- */
 export interface DrinkTypeBadge {
   bgColor: string;
   textColor: string;
@@ -56,14 +44,6 @@ export function getDrinkTypeBadge(slug?: string | null): DrinkTypeBadge {
   return (slug && DRINK_TYPE_BADGES[slug]) || DEFAULT_DRINK_TYPE_BADGE;
 }
 
-// Title keywords → drink type, in PRIORITY order (first match wins). The order
-// is load-bearing:
-//   • `shake` precedes `milk`, so "Banana Milkshake" is a shake;
-//   • `smoothie` precedes `milk`, so "Almond Milk Smoothie" is a smoothie;
-//   • `milk` and `water` sit near the bottom because they show up incidentally
-//     in titles that are really something else.
-// Keep in sync with the SQL backfill in
-// supabase/migrations/20260620120000_recipe_drink_type.sql and its successors.
 const CLASSIFY_RULES: ReadonlyArray<readonly [string, DrinkTypeSlug]> = [
   ["juice", "juices"],
   ["smoothie", "smoothies"],
@@ -72,9 +52,6 @@ const CLASSIFY_RULES: ReadonlyArray<readonly [string, DrinkTypeSlug]> = [
   ["sorbet", "sorbets"],
   ["cooler", "coolers"],
   ["shot", "shots"],
-  // Spoonable items. After smoothie/shake so "Apple Banana Oats Smoothie"
-  // stays a smoothie; deliberately no bare "oat" rule, which would swallow
-  // "Homemade Vanilla Oat Milk".
   ["bowl", "bowls"],
   ["yogurt", "bowls"],
   ["yoghurt", "bowls"],
@@ -86,7 +63,6 @@ const CLASSIFY_RULES: ReadonlyArray<readonly [string, DrinkTypeSlug]> = [
   ["water", "water"],
 ];
 
-/** Classify a recipe into a drink type from its title. */
 export function classifyDrinkType(title: string): DrinkTypeSlug {
   const t = title.toLowerCase();
   for (const [keyword, slug] of CLASSIFY_RULES) {
@@ -99,12 +75,6 @@ export function drinkTypeName(slug: string): string {
   return DRINK_TYPES.find((d) => d.slug === slug)?.name ?? "Drink";
 }
 
-/**
- * Keep only the first recipe of each drink type, preserving input order. The
- * Trending / Popular feeds badge recipes by drink type, so de-duplicating by
- * the same key is what stops the grid showing six "SMOOTHIE" cards (smoothies
- * dominate the catalogue). Shared so both feeds can't drift apart.
- */
 export function oneRecipePerDrinkType<T extends { drink_type?: string | null }>(
   recipes: T[],
 ): T[] {

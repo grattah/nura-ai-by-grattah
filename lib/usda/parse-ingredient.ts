@@ -1,15 +1,9 @@
-// Deterministic ingredient-label parser: "1 cup brewed green tea" →
-// { quantity: 1, unit: "cup", name: "brewed green tea" }. No LLM. Handles
-// integers, decimals, ASCII fractions ("1/2"), unicode fractions ("½"), mixed
-// numbers ("1 ½", "1 1/2"), simple ranges ("1-2" → midpoint), and a canonical
-// unit vocabulary. When no leading number is present, quantity defaults to 1.
-
 export interface ParsedIngredient {
   quantity: number | null;
-  unit: string | null; // canonical unit token, or null for count-based
-  name: string; // remaining food name (lowercased, trimmed)
+  unit: string | null;
+  name: string;
   raw: string;
-  gramsHint?: number; // explicit grams from a parenthetical, e.g. "(approx. 25g)"
+  gramsHint?: number;
 }
 
 const UNICODE_FRACTIONS: Record<string, number> = {
@@ -18,8 +12,6 @@ const UNICODE_FRACTIONS: Record<string, number> = {
   "⅙": 1 / 6, "⅚": 5 / 6, "⅛": 0.125, "⅜": 0.375, "⅝": 0.625, "⅞": 0.875,
 };
 
-// Unit synonym → canonical unit. Count-based sizes (small/medium/large) are NOT
-// units — they stay with the name so units.ts can do a per-item gram lookup.
 const UNIT_SYNONYMS: Record<string, string> = {
   cup: "cup", cups: "cup", c: "cup",
   inch: "inch", inches: "inch",
@@ -45,23 +37,19 @@ const UNIT_SYNONYMS: Record<string, string> = {
 };
 
 function parseNumberToken(token: string): number | null {
-  // Unicode fraction (possibly attached: "1½")
   const uniMatch = token.match(/^(\d*)([½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])$/);
   if (uniMatch) {
     const whole = uniMatch[1] ? parseInt(uniMatch[1], 10) : 0;
     return whole + UNICODE_FRACTIONS[uniMatch[2]];
   }
   if (UNICODE_FRACTIONS[token] !== undefined) return UNICODE_FRACTIONS[token];
-  // ASCII fraction "1/2"
   const frac = token.match(/^(\d+)\/(\d+)$/);
   if (frac) {
     const d = parseInt(frac[2], 10);
     return d ? parseInt(frac[1], 10) / d : null;
   }
-  // Range "1-2" → midpoint
   const range = token.match(/^(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)$/);
   if (range) return (parseFloat(range[1]) + parseFloat(range[2])) / 2;
-  // Plain integer / decimal
   if (/^\d+(?:\.\d+)?$/.test(token)) return parseFloat(token);
   return null;
 }
@@ -69,12 +57,9 @@ function parseNumberToken(token: string): number | null {
 export function parseIngredient(label: string): ParsedIngredient {
   const raw = label;
   const lower = label.toLowerCase();
-  // Explicit grams inside a parenthetical, e.g. "(approx. 25g)", "(100g)".
   const hint = lower.match(/\([^)]*?(\d+(?:\.\d+)?)\s*g\b[^)]*?\)/);
   const gramsHint = hint ? parseFloat(hint[1]) : undefined;
 
-  // Normalize: drop parentheticals; strip a "juice of" prefix; split "1-inch"
-  // into "1 inch"; drop trailing descriptors after a comma; collapse whitespace.
   const text = lower
     .replace(/\([^)]*\)/g, " ")
     .replace(/^\s*juice of\s+/, " ")
@@ -87,7 +72,6 @@ export function parseIngredient(label: string): ParsedIngredient {
   let quantity: number | null = null;
   let i = 0;
 
-  // Consume leading numeric tokens (supports "1 1/2", "1 ½").
   while (i < tokens.length) {
     const n = parseNumberToken(tokens[i]);
     if (n === null) break;
@@ -95,14 +79,12 @@ export function parseIngredient(label: string): ParsedIngredient {
     i++;
   }
 
-  // Optional unit token.
   let unit: string | null = null;
   if (i < tokens.length) {
     const cand = tokens[i].replace(/\.$/, "");
     if (UNIT_SYNONYMS[cand]) {
       unit = UNIT_SYNONYMS[cand];
       i++;
-      // Handle "fl oz" written as two tokens.
       if (unit === "oz" && tokens[i - 2] === "fl") unit = "fl_oz";
     } else if (cand === "fl" && UNIT_SYNONYMS[tokens[i + 1]?.replace(/\.$/, "")] === "oz") {
       unit = "fl_oz";

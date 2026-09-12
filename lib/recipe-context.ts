@@ -1,8 +1,3 @@
-// Builds a compact, plain-text summary of a recipe from the fields shown on the
-// recipe page. Used to give the follow-up-question generator and the RAG chat
-// real on-page context (ingredients, method, why it works, inside tip) instead
-// of just the title + short description.
-
 interface RecipeContextInput {
   short_description?: string | null;
   ingredients?: unknown;

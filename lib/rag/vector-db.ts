@@ -30,8 +30,6 @@ export interface VectorDB {
   query(params: QueryParams): Promise<RetrievedChunk[]>;
 }
 
-// ─── Pinecone implementation ──────────────────────────────────────────────────
-
 // export function createPineconeDB(): VectorDB {
 //   const { Pinecone } = require("@pinecone-database/pinecone");
 //   const client = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
@@ -107,6 +105,5 @@ export function createSupabaseVectorDB(): VectorDB {
   };
 }
 
-// ─── Active instance — change one line to switch DB ──────────────────────────
 // export const vectorDB: VectorDB = createPineconeDB();
 export const vectorDB: VectorDB = createSupabaseVectorDB();

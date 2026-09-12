@@ -63,8 +63,6 @@ const page = async ({
     redirect("/");
   }
 
-  // Forwarded from wherever sent this visitor to /landing (e.g. the sign-in
-  // modal's "Sign up" button), so signing in from here can return them there.
   const loginHref = withNextParam("/auth/login", (await searchParams).next);
 
   return (

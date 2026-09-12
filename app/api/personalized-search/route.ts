@@ -2,13 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { runPersonalizedSearch } from "@/lib/personalized-search-server";
 
-// Type re-export for existing importers.
 export type { PersonalizedSearchResult } from "@/lib/personalized-search-server";
 
 export const maxDuration = 30;
 
-// Kept for compatibility; the personalized-search page now generates server-side
-// (no caching, on the fly) via the same shared helper.
+/** Legacy endpoint; the page now generates server-side. */
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const {

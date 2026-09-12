@@ -14,11 +14,8 @@ export default async function page() {
 
   if (!user) return null;
 
-  // Same resolver as /manage-subscription — no redirect, so a lapsed user can
-  // still reach their invoices (getUserInvoices already serves them).
   const sub = await getSubscriptionView(supabase, user.id);
 
-  // Read live from Stripe — nothing stores invoices locally.
   const { invoices, failed } = await getUserInvoices(supabase, user.id);
 
   const nextBilling = sub.expiresAt
@@ -26,7 +23,6 @@ export default async function page() {
     : "—";
   return (
     <div className="min-h-dvh bg-background pb-10 flex flex-col">
-      {/* Header */}
       <div className="flex items-center px-6 pt-5 pb-10 relative">
         <BackButton className="size-10 absolute left-4 rounded-full bg-[#E8E6DC] flex items-center justify-center hover:opacity-75 transition-opacity" />
 
@@ -35,7 +31,6 @@ export default async function page() {
         </div>
       </div>
       <div className="px-6 space-y-4 flex flex-col flex-1">
-        {/* Invoices */}
         <div className="space-y-3">
           <p className="text-sm text-subtle font-medium">Invoices</p>
           <div className="flex flex-col gap-y-4">
@@ -58,9 +53,6 @@ export default async function page() {
           </div>
         </div>
         <div className="pt-4 text-center mt-auto">
-          {/* Cancel / resume — only for a live subscription. Its server actions
-              look up an ACTIVE row, so rendering this for an expired or free
-              user would always fail with "No active subscription to cancel". */}
           {sub.state === "active" && (
             <CancelSubscriptionButton
               cancelAtPeriodEnd={sub.cancelAtPeriodEnd}

@@ -37,9 +37,6 @@ export function HomePromoForm({
   const dirty =
     body !== initialBody || recipeId !== initialRecipeId;
 
-  // Debounced search. Without the delay every keystroke is a server round-trip,
-  // and out-of-order responses can overwrite newer results with older ones —
-  // the `cancelled` flag drops any response whose query is no longer current.
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
@@ -87,7 +84,6 @@ export function HomePromoForm({
 
   return (
     <div className="max-w-2xl space-y-8">
-      {/* ── Card text ───────────────────────────────────────────────────── */}
       <div className="space-y-2">
         <label htmlFor="promo-body" className="block text-sm font-medium">
           Card text
@@ -108,7 +104,6 @@ export function HomePromoForm({
         </p>
       </div>
 
-      {/* ── Recipe picker ───────────────────────────────────────────────── */}
       <div className="space-y-2">
         <span className="block text-sm font-medium">Linked recipe</span>
 
@@ -187,7 +182,6 @@ export function HomePromoForm({
         )}
       </div>
 
-      {/* ── Save ────────────────────────────────────────────────────────── */}
       {canEdit && (
         <div className="flex items-center gap-4">
           <button

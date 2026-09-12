@@ -25,15 +25,8 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Plan chooser only — payment renders on the checkout page for the selected
-  // plan (passed via ?plan=).
   const [selectedPlan, setSelectedPlan] = useState<Plan>("annual");
 
-  // "Your free trial has ended" only applies to a brand-new user who has spent
-  // every free use across all gated surfaces — not guests, not subscribers, and
-  // not lapsed subscribers (who never had a free trial to exhaust). Fetched
-  // rather than derived from `userId` so this works from any caller regardless
-  // of whether it computed trial state itself.
   const [trialExhausted, setTrialExhausted] = useState(false);
   useEffect(() => {
     let active = true;
@@ -45,7 +38,6 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
         }
       })
       .catch(() => {
-        // Network hiccup — keep the pill hidden rather than show it wrongly.
       });
     return () => {
       active = false;

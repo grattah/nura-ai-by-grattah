@@ -41,14 +41,11 @@ describe("isPastGracePeriod", () => {
   });
 
   it("is true from the deadline onward", () => {
-    // Boundary matters: this is what authorises destroying the account.
     expect(isPastGracePeriod(SCHEDULED, at(30))).toBe(true);
     expect(isPastGracePeriod(SCHEDULED, at(31))).toBe(true);
   });
 });
 
-// The cron's safety net — GoTrue maintains last_sign_in_at, so this holds even if
-// a sign-in path forgets to call cancelScheduledDeletion().
 describe("signedInSinceScheduling", () => {
   it("detects a sign-in after the request", () => {
     expect(signedInSinceScheduling(SCHEDULED, at(3).toISOString())).toBe(true);
@@ -59,7 +56,6 @@ describe("signedInSinceScheduling", () => {
   });
 
   it("treats the scheduling instant itself as not a return", () => {
-    // The session that requested deletion signed in at or before that moment.
     expect(signedInSinceScheduling(SCHEDULED, SCHEDULED)).toBe(false);
   });
 
@@ -70,8 +66,6 @@ describe("signedInSinceScheduling", () => {
   });
 
   it("still recovers an account that returned after the deadline", () => {
-    // Ordering matters in the cron: the return check runs BEFORE the deadline
-    // check, so a late sign-in beats a lapsed grace period.
     const late = at(40).toISOString();
     expect(isPastGracePeriod(SCHEDULED, at(40))).toBe(true);
     expect(signedInSinceScheduling(SCHEDULED, late)).toBe(true);

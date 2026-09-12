@@ -6,12 +6,7 @@ import { SignInModal } from "@/components/auth/SignInModal";
 import { RecipePaywallGate } from "@/components/recipe/RecipePaywallGate";
 import { PaywallModal } from "../paywall/paywall-modal";
 
-/**
- * Component-level auth gate for public pages (e.g. the recipe detail page). For
- * a guest, any click inside — except `data-paywall-passthrough` elements like
- * the back button — opens the sign-in modal; cancelling just closes it and the
- * user stays on the public page. Authenticated users pass through untouched.
- */
+/** Component-level auth gate for public pages. */
 export function AuthGate({ children, popular }: { children: React.ReactNode, popular: boolean }) {
   const { isAuthenticated, isLoading, isSubscriber } = useAccess();
   const [signInOpen, setSignInOpen] = useState(false);

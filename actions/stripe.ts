@@ -9,9 +9,6 @@ import {
 } from "@/lib/subscription";
 import type { Plan } from "@/constants";
 
-// Each plan maps to its own Stripe price. Falling back to the annual price when
-// a plan's env var is unset would silently charge the wrong amount, so an
-// unconfigured plan is refused instead.
 const PRICE_ID_BY_PLAN: Record<Plan, string | undefined> = {
   annual: process.env.STRIPE_PRICE_ID,
   monthly: process.env.STRIPE_PRICE_ID_MONTHLY,

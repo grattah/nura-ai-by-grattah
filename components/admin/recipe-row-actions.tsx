@@ -31,7 +31,6 @@ export function RecipeRowActions({
   canEdit: boolean;
   canApprove: boolean;
   canDelete: boolean;
-  // When provided, update the local cache instead of a full server refresh.
   onDeleted?: (id: string) => void;
   onStatusChanged?: (id: string, status: "pending" | "approved") => void;
 }) {

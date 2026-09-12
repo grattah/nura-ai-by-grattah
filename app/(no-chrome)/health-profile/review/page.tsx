@@ -25,9 +25,6 @@ const REVIEW = "/health-profile/review";
 export default function ReviewStep() {
   const { draft, update, mode, enterEdit, saveProfile, saving } =
     useHealthProfile();
-  // True only when an edit to an existing profile introduced sensitive data (or
-  // consent is for an outdated version) and finishEdit redirected here — the
-  // user needs to know why they landed on Review mid-edit.
   const consentRequired = mode === "edit" && needsConsent(draft);
 
   const sensitive = hasSensitiveData(draft);
@@ -55,11 +52,6 @@ export default function ReviewStep() {
       values: summarizeMedications(draft),
       step: "medications",
     },
-    // {
-    //   title: "Dietary Pattern",
-    //   values: summarizeDietary(draft),
-    //   step: "dietary",
-    // },
   ];
 
   return (
@@ -97,16 +89,11 @@ export default function ReviewStep() {
 
         {sensitive && (
           <label className="mt-6 flex items-start gap-3 rounded-2xl bg-[#E6ECEA] p-4 cursor-pointer">
-            {/* The real input is visually hidden, so mirror its focus state onto
-                the custom box — otherwise keyboard users get no focus cue. */}
             <input
               type="checkbox"
               className="sr-only peer"
               checked={draft.consent}
               onChange={(e) =>
-                // Ticking means "I accept the CURRENT version", so stamp it here
-                // too — keeps needsConsent() uniform for fresh ticks and for
-                // consent hydrated from the DB.
                 update({
                   consent: e.target.checked,
                   consentVersion: e.target.checked

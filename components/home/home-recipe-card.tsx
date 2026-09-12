@@ -13,10 +13,6 @@ interface HomeRecipeCardProps {
   imageUrl?: string;
   color?: CardColor;
   href?: string;
-  /**
-   * Pass `priority` for cards that are visible on first paint (e.g. the first
-   * 2–3 cards in the scroll). Omit it for the rest — they'll lazy-load.
-   */
   priority?: boolean;
 }
 

@@ -24,14 +24,10 @@ import {
   UNIMPLEMENTABLE_PENALTIES,
 } from "@/lib/scoring/tier-match";
 
-// ── The PRDs' own worked examples are the acceptance criteria ────────────────
-
 describe("Category PRD §8 — Heart Health worked example", () => {
-  // Beetroot Ginger Juice: contains beetroot (nitrates), ginger, lemon.
   const table = CATEGORY_TABLE_BY_KEY.get("heart-health")!;
 
   it("sums MaxPossible from every listed row", () => {
-    // Beetroot 100 + Omega-3 100 + Potassium 20 + Garlic 20
     expect(maxPossible(table)).toBe(240);
   });
 
@@ -46,7 +42,6 @@ describe("Category PRD §8 — Heart Health worked example", () => {
 });
 
 describe("Match PRD §9 — Menopause + Sleep better worked example", () => {
-  // Recipe contains flaxseed and magnesium-rich cacao.
   const menopause = CONDITION_TABLE_BY_KEY.get("menopause")!;
   const sleep = GOAL_TABLE_BY_KEY.get("sleep")!;
 
@@ -54,13 +49,13 @@ describe("Match PRD §9 — Menopause + Sleep better worked example", () => {
   const sleepScore = scoreTable({ table: sleep, present: ["Magnesium"] });
 
   it("credits Menopause at 76.9%", () => {
-    expect(maxPossible(menopause)).toBe(130); // 100 + 20 + 10
+    expect(maxPossible(menopause)).toBe(130);
     expect(menoScore.score1to10).toBeCloseTo(7.92, 2);
     expect(menoScore.credit).toBeCloseTo(0.769, 3);
   });
 
   it("credits Sleep better at 41.7%", () => {
-    expect(maxPossible(sleep)).toBe(240); // 100 + 100 + 20 + 20
+    expect(maxPossible(sleep)).toBe(240);
     expect(sleepScore.score1to10).toBeCloseTo(4.75, 2);
     expect(sleepScore.credit).toBeCloseTo(0.417, 3);
   });
@@ -72,12 +67,9 @@ describe("Match PRD §9 — Menopause + Sleep better worked example", () => {
     ];
     const combined = combineMatch(sel);
 
-    // §8: 76.9% is the primary number, labelled "Menopause".
     expect(combined.highest?.label).toBe("Menopause");
     expect(combined.highest!.score.percent).toBeCloseTo(76.9, 1);
-    // §9: 59.3% appears only as a secondary "Average across all" line.
     expect(combined.averagePercent).toBeCloseTo(59.3, 1);
-    // Breakdown sorted highest first.
     expect(combined.breakdown.map((b) => b.label)).toEqual([
       "Menopause",
       "Sleep better",
@@ -85,15 +77,9 @@ describe("Match PRD §9 — Menopause + Sleep better worked example", () => {
   });
 });
 
-// ── §2 / §4 mechanics ───────────────────────────────────────────────────────
-
 describe("tier points", () => {
   it("keeps the gap wide enough that weak rows cannot outweigh a strong one", () => {
     expect(TIER_POINTS.primary).toBe(100);
-    // The PRD's stated intent (§2), checked where it actually has to hold: in
-    // no real table does every non-primary row combined reach one primary.
-    // (The claim is not true in the abstract — six secondaries would exceed
-    // 100 — so assert it against the tables rather than the constants.)
     for (const table of [...CATEGORY_TABLES, ...CONDITION_TABLES, ...GOAL_TABLES]) {
       const weak = table.entries
         .filter((e) => e.tier !== "primary")
@@ -105,7 +91,6 @@ describe("tier points", () => {
   });
 
   it("scores a recipe with none of the relevant ingredients at zero", () => {
-    // PRD §1 calls this correct, expected behaviour — not a bug.
     const table = CATEGORY_TABLE_BY_KEY.get("heart-health")!;
     const r = scoreTable({ table, present: ["Kale", "Apple"] });
     expect(r.rawSubtotal).toBe(0);
@@ -157,7 +142,7 @@ describe("PRD §4 Step 4 — penalties", () => {
   it("floors at 1, so a credit can never go negative", () => {
     const r = scoreTable({
       table,
-      present: ["Potassium"], // 20/240 → barely above the floor
+      present: ["Potassium"],
       penaltiesPresent: ["Sodium", "Saturated fat"],
     });
     expect(r.finalScore).toBe(1);
@@ -169,7 +154,7 @@ describe("PRD §4 Step 4 — penalties", () => {
     const r = scoreTable({
       table,
       present: ["Beetroot nitrates"],
-      penaltiesPresent: ["Caffeine"], // a Sleep/Hydration penalty, not Heart Health
+      penaltiesPresent: ["Caffeine"],
     });
     expect(r.penaltiesApplied).toEqual([]);
     expect(r.percent).toBeCloseTo(41.7, 1);
@@ -199,8 +184,6 @@ describe("PRD §4 Step 4 — penalties", () => {
   });
 });
 
-// ── §5 display rules ────────────────────────────────────────────────────────
-
 describe("Category PRD §5 — display rules", () => {
   it.each([
     [100, "Strong support"],
@@ -218,8 +201,6 @@ describe("Category PRD §5 — display rules", () => {
   });
 });
 
-// ── Table integrity ─────────────────────────────────────────────────────────
-
 describe("calibration tables", () => {
   it("covers the 14 categories, 3 conditions and 24 goals", () => {
     expect(CATEGORY_TABLES).toHaveLength(14);
@@ -228,15 +209,6 @@ describe("calibration tables", () => {
   });
 
   it("gives every category a table", () => {
-    // Categories are the only surface still scored by these tables. The
-    // personal Match Score reverted to the v2 bioactivity engine alongside the
-    // 12-goal picker, so GOALS/CONDITIONS keys no longer resolve here — the
-    // equivalent guarantee for them ("every live picker option resolves to a
-    // real formula") moved to test/match-score-coverage.test.ts, which asserts
-    // it against GOAL_KEY_TO_PRD / GOAL_CREDITS.
-    //
-    // GOAL_TABLES and CONDITION_TABLES are kept rather than deleted: they are
-    // the transcribed PRD and the only record of that calibration.
     for (const table of CATEGORY_TABLES) {
       expect(
         CATEGORY_TABLE_BY_KEY.get(table.key),
@@ -302,27 +274,12 @@ describe("combineMatch", () => {
   });
 
   it("averages across every selection, including zero-credit ones", () => {
-    // A recipe irrelevant to one selection must drag the average down — that is
-    // exactly why §8 makes highest, not average, the primary display.
     const r = combineMatch([mk(0.8, "condition", "c"), mk(0, "goal", "g")]);
     expect(r.averagePercent).toBeCloseTo(40, 6);
     expect(r.highest!.score.percent).toBeCloseTo(80, 6);
   });
 });
 
-// ── MaxPossible stability (the §4 Step 2 / §7 tension) ──────────────────────
-//
-// §4 Step 2 fixes MaxPossible to the calibration TABLE, while §7 has the
-// pipeline tier far more ingredients than the table lists. Those pull in
-// opposite directions, and the choice matters:
-//
-//   • Table-fixed (what we do)  — denominator stable, so a recipe's score never
-//     moves unless the recipe does. RawSubtotal can exceed it, so it is capped.
-//   • Cache-derived            — denominator grows with the library, so EVERY
-//     recipe's score silently falls as unrelated ingredients get classified.
-//
-// The worked examples only reproduce under the table-fixed reading, which is
-// what settles it.
 describe("MaxPossible comes from the table, not the tier cache", () => {
   it("keeps the Heart Health denominator at the table's 240", () => {
     const table = CATEGORY_TABLE_BY_KEY.get("heart-health")!;
@@ -330,29 +287,16 @@ describe("MaxPossible comes from the table, not the tier cache", () => {
   });
 
   it("caps a score at 100% when tiered ingredients outrun the table", () => {
-    // Reachable in production: the table lists 4 rows, but the pipeline may
-    // tier a dozen real ingredients as Primary for the same outcome.
     const table = CATEGORY_TABLE_BY_KEY.get("heart-health")!;
     const everything = scoreTable({
       table,
       present: table.entries.map((e) => e.ingredient),
     });
     expect(everything.percent).toBeCloseTo(100, 6);
-    // Nothing may exceed 100 — a percentage above it is nonsense on screen.
     expect(everything.percent).toBeLessThanOrEqual(100);
   });
 });
 
-// ── The four skin goals must stay four separate outcomes ────────────────────
-//
-// Under v2 these three all aliased to one formula ("Improve my skin & hair"),
-// and computeMatchScore de-duplicates by formula — so selecting more than one
-// silently dropped the rest, and a user who picked "Clear my skin" saw it
-// vanish from the breakdown entirely.
-//
-// v7 gives each its own table with genuinely different ingredients, which is
-// what fixes it. Guarding that here because collapsing them again would
-// reintroduce a bug that is invisible unless you check a specific profile.
 describe("skin goals are distinct outcomes", () => {
   const keys = ["clear-skin", "hydrate-skin", "skin-brighten", "hair-growth"];
 
@@ -368,8 +312,6 @@ describe("skin goals are distinct outcomes", () => {
   });
 
   it("does not give them identical ingredient sets", () => {
-    // Identical sets would score identically and read as duplicates on screen,
-    // even though the labels differ.
     const sets = keys.map((k) =>
       GOAL_TABLE_BY_KEY.get(k)!
         .entries.map((e) => e.ingredient)
@@ -395,18 +337,6 @@ describe("skin goals are distinct outcomes", () => {
   });
 });
 
-// ── Every category row must be reachable ────────────────────────────────────
-//
-// The defect this guards against, in full: a table row with no ROW_MATCHERS
-// entry can never be satisfied by any ingredient, but §4 Step 2 still counts it
-// in MaxPossible. Nine of the fourteen categories were in that state — Sleep and
-// Focus could not exceed 50% however good a recipe was, Beauty 52%, and Detox,
-// Immunity and Heart Health 58% — because `ingredients` held no magnesium, zinc,
-// omega-3, B-vitamin or polyphenol data. Detox showed 7 qualifying recipes out
-// of 433 and the page read as empty.
-//
-// Nothing failed. Every formula test passed throughout, because the formula was
-// correct; it was being fed a denominator it could not reach.
 describe("Category PRD §6 — every row is scoreable", () => {
   it.each(CATEGORY_TABLES.map((t) => [t.label, t] as const))(
     "%s has a matcher for every row",
@@ -424,9 +354,6 @@ describe("Category PRD §6 — every row is scoreable", () => {
   it.each(CATEGORY_TABLES.map((t) => [t.label, t] as const))(
     "%s can reach 100%% of MaxPossible",
     (_label, table) => {
-      // The assertion above restated as the consequence that actually matters:
-      // a category whose reachable ceiling is below 100% is scored against a
-      // denominator no recipe can reach.
       const reachable = table.entries
         .filter((e) => ROW_MATCHERS[e.ingredient])
         .reduce((sum, e) => sum + TIER_POINTS[e.tier], 0);
@@ -435,12 +362,6 @@ describe("Category PRD §6 — every row is scoreable", () => {
   );
 
   it("has a matcher for every penalty except the documented three", () => {
-    // A penalty with no matcher never fires, so a recipe keeps points it should
-    // have lost — the same silence in the opposite direction.
-    //
-    // Three are knowingly unimplementable (see UNIMPLEMENTABLE_PENALTIES).
-    // Asserting against that list rather than against [] keeps the gap visible
-    // while still failing on a NEW one.
     const known = new Set<string>(UNIMPLEMENTABLE_PENALTIES);
     const dead: string[] = [];
     for (const table of CATEGORY_TABLES) {
@@ -454,10 +375,6 @@ describe("Category PRD §6 — every row is scoreable", () => {
   });
 
   it("does not quietly grow the unimplementable list", () => {
-    // Diabetes declares Glycemic load and it does not fire, so that category is
-    // scored without a penalty its own PRD table lists. That is a real, known
-    // limitation — pinned here so it is a decision on the record rather than an
-    // omission, and so a fourth entry cannot be added without this failing.
     expect(UNIMPLEMENTABLE_PENALTIES).toEqual([
       "Glycemic load",
       "Trans fat",

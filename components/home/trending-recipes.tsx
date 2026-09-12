@@ -10,11 +10,10 @@ interface TrendingRecipesProps {
 }
 
 export function TrendingRecipes({ recipes, cardColors }: TrendingRecipesProps) {
-  // useMemo means the shuffle runs once per mount, not on every render
   const shuffled = useMemo(
     () => [...recipes].sort(() => Math.random() - 0.5),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [], // empty deps — shuffle once when component mounts
+    [],
   );
 
   return (

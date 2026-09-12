@@ -10,14 +10,12 @@ export interface QuestionsRequestBody {
   contextType: "recipe" | "guide";
   title: string;
   description: string;
-  // Fuller on-page context (ingredients, method, why it works, inside tip).
   context?: string;
 }
 
 const MAX_CONTEXT_LEN = 4000;
 
 export async function POST(req: NextRequest) {
-  // Curb LLM cost-abuse (audit M1): 20 generations / minute / IP.
   const { success } = await rateLimit(
     `rag-questions:${getClientIp(req.headers)}`,
     20,
@@ -27,9 +25,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Too many requests." }, { status: 429 });
   }
 
-  // Require auth — this is an LLM call; don't let unauthenticated callers burn
-  // Anthropic spend (audit H2). FollowUpSection falls back to static questions
-  // for guests.
+  // Auth required so guests can't burn LLM spend.
   const supabase = await createClient();
   const {
     data: { user },
@@ -45,7 +41,6 @@ export async function POST(req: NextRequest) {
     const typeLabel =
       contextType === "recipe" ? "wellness recipe" : "health guide";
 
-    // Prefer the richer on-page context; fall back to the short description.
     const details = (context ?? description ?? "").slice(0, MAX_CONTEXT_LEN);
 
     const { text, usage } = await generateText({
@@ -78,7 +73,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ questions });
   } catch (err) {
     console.error("[rag/questions]", err);
-    // Return empty array — FollowUpSection falls back to staticQuestions silently
     return NextResponse.json({ questions: [] }, { status: 500 });
   }
 }

@@ -1,13 +1,8 @@
-// Health Profile option lists + the draft shape. Single source of truth so the
-// UI (Pass 1) and the personalization/safety logic (Pass 2) agree on keys.
-// Keys are stored in `health_profiles`; labels are display-only.
-
 export interface Option {
   key: string;
   label: string;
 }
 
-// ── 2.1 Basic profile (required) ────────────────────────────────────────────
 export const AGE_RANGES: Option[] = [
   { key: "18-24", label: "18–24" },
   { key: "25-34", label: "25–34" },
@@ -29,7 +24,6 @@ export const PREGNANCY_STATUS: Option[] = [
   { key: "prefer-not-to-say", label: "Prefer not to say" },
 ];
 
-// ── 2.2 Health goals — the app's 14 categories (keys = CATEGORY_CONFIG slugs) ─
 import {
   Activity,
   ArrowDown,
@@ -75,15 +69,6 @@ import {
 export interface GoalOption extends Option {
   icon: LucideIcon;
 }
-/**
- * The 12 health goals.
- *
- * REVERTED from the 24-goal AUG 21 set, together with the Match Score itself.
- * These keys are what computeMatchScore resolves through GOAL_KEY_TO_PRD into
- * a GOAL_CREDITS formula, so the picker and the scoring vocabulary match again
- * — under the 24-goal list, 11 of the goals were display-only and silently
- * contributed nothing to a user's score.
- */
 export const GOALS: GoalOption[] = [
   { key: "weight-loss", label: "Lose weight", icon: ScaleIcon },
   { key: "energy", label: "Have more energy", icon: LightningIcon },
@@ -102,15 +87,6 @@ export const GOALS: GoalOption[] = [
   { key: "detox", label: "Body detox", icon: Leaf },
 ];
 
-// ── 2.3 Existing conditions — full PRD 20-item list (+ free-text "Other") ─────
-/**
- * The 12 selectable conditions.
- *
- * REVERTED from the 3-condition AUG 21 set. Nothing is lost by this direction:
- * PCOS, Menopause and Osteoporosis were all present in this list already, so
- * every saved profile keeps the conditions it holds and nine options simply
- * become selectable again.
- */
 export const CONDITIONS: Option[] = [
   // { key: "type-1-diabetes", label: "Type 1 Diabetes" },
   // { key: "type-2-diabetes", label: "Type 2 Diabetes" },
@@ -134,7 +110,6 @@ export const CONDITIONS: Option[] = [
   { key: "anemia", label: "Anemia" },
 ];
 
-// ── 2.4 Allergies & intolerances — common allergens (+ free-text "Other") ─────
 export const ALLERGENS: Option[] = [
   { key: "tree-nuts", label: "Tree nuts" },
   { key: "peanuts", label: "Peanuts" },
@@ -158,7 +133,6 @@ export interface DietaryOption extends Option {
   iconColor: string;
 }
 
-// ── 2.6 Dietary pattern — single-select ─────────────────────────────────────
 export const DIETARY_PATTERNS: DietaryOption[] = [
   {
     key: "vegan",
@@ -211,7 +185,6 @@ export const DIETARY_PATTERNS: DietaryOption[] = [
   },
 ];
 
-// Bump when the consent copy / scope of stored sensitive data changes.
 export const CONSENT_VERSION = "2026-07-20";
 
 export function labelFor(options: Option[], key: string): string {

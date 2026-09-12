@@ -81,8 +81,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Access model: subscribers use the token system; new (never-subscribed) users
-  // get FREE_USES_PER_SURFACE free recipe generations; lapsed subscribers blocked.
   const [activeSub, everSubscribed] = await Promise.all([
     hasActiveSubscription(supabase, user.id),
     hasEverSubscribed(supabase, user.id),
@@ -111,9 +109,6 @@ export async function POST(req: NextRequest) {
   const norm = cleanName.toLowerCase();
 
   if (!activeSub) {
-    // New user in free trial — count this distinct recipe (deduped by name) up
-    // front, so an "existing recipe" dedup hit below still consumes a use. The
-    // 3rd distinct recipe is blocked; re-requesting a counted one is free.
     const allowed = await tryConsumeFreeView(user.id, SURFACE, norm);
     if (!allowed) {
       return NextResponse.json(
@@ -123,7 +118,6 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Trusted sources to ground generation (passed from the page; clamped here).
   const domains = (
     Array.isArray(allowedDomains) ? allowedDomains : WELLNESS_SOURCES
   )
@@ -131,12 +125,7 @@ export async function POST(req: NextRequest) {
     .slice(0, MAX_DOMAINS);
   const domainList = (domains.length ? domains : WELLNESS_SOURCES).join(", ");
 
-  // Two independent dedup lookups: a prior generation of this exact prompt, and
-  // an existing recipe whose name matches. Run them together.
-  // Dedup checks. NOTE: never build a PostgREST `.or()` filter string from user
-  // input — `,`/`(`/`)` are filter syntax (injection, audit S2). Parameterized
-  // .ilike() calls escape the value safely, so run the two columns as separate
-  // queries instead.
+  // Never build a PostgREST .or() filter from user input (filter injection); query each column separately.
   const [{ data: priorGen }, { data: titleMatch }, { data: descMatch }] =
     await Promise.all([
       supabase
@@ -168,7 +157,6 @@ export async function POST(req: NextRequest) {
 
   const admin = createServiceRoleClient();
 
-  // Last display_order, to append uniquely.
   const { data: lastOrder } = await admin
     .from("recipes")
     .select("display_order")
@@ -177,14 +165,6 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
   const nextDisplayOrder = (lastOrder?.display_order ?? 0) + 1;
 
-  // Gate now that we're actually generating (reused/matched recipes above are
-  // free). Subscribers can pass the access gate yet still be out of tokens here;
-  // new users are bounded by their free-use count instead. The real Claude usage
-  // is metered after success; the hero image is metered separately.
-  // Spec §5/§6: reserve the 3 units BEFORE doing the work. Reserving rather
-  // than charging afterwards is what stops concurrent requests all passing the
-  // same affordability check; the reservation is released on any failure so the
-  // user is never charged for work that did not happen.
   let reservation = null as Awaited<ReturnType<typeof reserve>>;
   if (activeSub) {
     reservation = await reserve(user.id, "generate");
@@ -196,7 +176,6 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 2. Generate the recipe content.
   let recipe: z.infer<typeof RecipeSchema>;
   let recipeUsage:
     | { totalTokens?: number; inputTokens?: number; outputTokens?: number }
@@ -204,7 +183,6 @@ export async function POST(req: NextRequest) {
   try {
     const result = await generateObject({
       model: anthropic("claude-haiku-4-5"),
-      // model: anthropic("claude-sonnet-4-6"),
       maxOutputTokens: MAX_OUTPUT_TOKENS.generate,
       schema: RecipeSchema,
       system: `You are a culinary wellness expert for the Nuko app. Create one specific,
@@ -238,10 +216,6 @@ do not fabricate false precision.`,
     );
   }
 
-  // Subscribers meter real token usage; new users already consumed their free
-  // use above (deduped by recipe name, before the dedup lookups).
-
-  // 3. Insert the recipe (pending, owned by the requesting user).
   const insertPayload = {
     title: recipe.title,
     short_description: recipe.short_description,
@@ -281,8 +255,6 @@ do not fabricate false precision.`,
         .limit(1)
         .maybeSingle();
       if (dupe) {
-        // A duplicate means the recipe already exists — nothing new was
-        // produced, so the reservation is refunded rather than settled.
         if (reservation) await release(reservation);
         return NextResponse.json({ id: dupe.id, existed: true });
       }
@@ -297,15 +269,8 @@ do not fabricate false precision.`,
     recipeId = inserted.id;
   }
 
-  // Bioactivity scores + category membership are populated later by the batch
-  // script (scripts/score-supports.mjs); generation no longer assigns tags.
-
-  // Settled here, not earlier: everything above can still fail and refund, and
-  // the user has only actually received a recipe once the row is saved.
   if (reservation) {
     await settle(reservation);
-    // Billing is now a flat 3 units, but the real Claude spend still needs
-    // recording for cost observability.
     void recordUsage({
       provider: "anthropic",
       model: "claude-haiku-4-5",
@@ -319,7 +284,5 @@ do not fabricate false precision.`,
     });
   }
 
-  // The hero image is generated lazily on first view of the detail page
-  // (POST /api/recipes/[id]/image) — reliable on serverless, unlike `after()`.
   return NextResponse.json({ id: recipeId, existed: false });
 }

@@ -4,15 +4,6 @@ import { MAX_GOALS } from "@/lib/health-profile/toggle";
 
 const d = hasTestDb ? describe : describe.skip;
 
-// ── QA: "user_id is Null for all records in token_usage" ────────────────────
-//
-// 58 of 119 runtime rows have no user_id, the newest dated 2026-08-25 — so it
-// is ongoing, not historic. A runtime row is a user's spend; if it cannot be
-// attributed, nobody's credit usage can be audited.
-//
-// The constraint is NOT VALID, so it governs new rows without re-checking the
-// 58 historic ones. These tests pin both halves of that rule.
-
 d("token_usage attribution", () => {
   it("rejects a runtime row with no user", async () => {
     await withRollback(async (tx) => {
@@ -61,17 +52,6 @@ d("token_usage attribution", () => {
   );
 });
 
-// ── QA (clarified): "Test the flow state" for Choose my goals ───────────────
-
-/**
- * clock_timestamp(), not now().
- *
- * now() is the TRANSACTION start time and is constant for the whole
- * transaction — so inside this harness two saves would carry an identical
- * updated_at, which is an artifact of testing in one transaction and not how
- * the app behaves (each save is its own transaction). clock_timestamp() reads
- * the actual wall clock and reproduces the real behaviour.
- */
 const saveProfile = (tx: Tx, userId: string, goals: string[], conditions: string[] = []) =>
   tx.asUser(
     userId,
@@ -111,8 +91,6 @@ d("health profile flow", () => {
       await saveProfile(tx, user, ["immunity", "stress"]);
       await saveProfile(tx, user, ["libido"]);
 
-      // An append would grow the array past the cap and dilute the Match Score
-      // average with selections the user had already removed.
       expect((await readProfile(tx, user)).goals).toEqual(["libido"]);
     });
   });
@@ -121,11 +99,6 @@ d("health profile flow", () => {
     await withRollback(async (tx) => {
       const user = await makeUser(tx);
 
-      // A BEFORE UPDATE trigger (set_health_profiles_updated_at) overwrites
-      // updated_at with now(), so the value the app supplies is ignored on
-      // update. Deliberately send a wrong one and prove the trigger wins —
-      // that timestamp gates personalizedView and invalidates the safety-alert
-      // cache, so a client-supplied value would be a way to spoof freshness.
       await saveProfile(tx, user, ["immunity"]);
       await tx.asUser(
         user,
@@ -148,8 +121,6 @@ d("health profile flow", () => {
     await withRollback(async (tx) => {
       const user = await makeUser(tx);
       await saveProfile(tx, user, ["immunity"]);
-      // personalizedView = isSub && !!profileUpdatedAt — a null here silently
-      // drops the user back to the non-personalized recipe page.
       expect((await readProfile(tx, user)).updated_at).toBeTruthy();
     });
   });
@@ -173,9 +144,6 @@ d("health profile flow", () => {
   it("stores at most the capped number of goals", async () => {
     await withRollback(async (tx) => {
       const user = await makeUser(tx);
-      // saveHealthProfile slices to MAX_GOALS before writing; this asserts the
-      // shape the app is expected to persist, since the column itself is an
-      // unbounded text[] and would happily take ten.
       const capped = ["immunity", "stress", "libido", "focus", "mood"].slice(
         0,
         MAX_GOALS,

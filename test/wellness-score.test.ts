@@ -25,16 +25,15 @@ describe("scoreSupports (single 0–100 bioactivityScore per slug)", () => {
       object: {
         supports: [
           { slug: "weight-loss", bioactivityScore: 65 },
-          { slug: "energy", bioactivityScore: 99 }, // not assigned
+          { slug: "energy", bioactivityScore: 99 },
           { slug: "detox", bioactivityScore: 84 },
-          { slug: "detox", bioactivityScore: 10 }, // dupe → ignored
+          { slug: "detox", bioactivityScore: 10 },
         ],
       },
     });
 
     const out = await scoreSupports({ title: "Acai", ingredients: [] }, assigned);
 
-    // Top N by score, strongest first.
     expect(out.map((s) => s.slug)).toEqual(["detox", "weight-loss"]);
     expect(out.find((s) => s.slug === "detox")).toEqual({
       slug: "detox",

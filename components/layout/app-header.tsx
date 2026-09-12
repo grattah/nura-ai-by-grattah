@@ -18,7 +18,6 @@ export function AppHeader({ user }: AppHeaderProps) {
   return (
     <header className="z-40 px-6 py-2">
       <div className="flex items-center justify-between h-10">
-        {/* Logo */}
         <Link
           href="/"
           className="flex items-center gap-1 py-1 px-3 rounded-full liquid-glass"
@@ -29,10 +28,8 @@ export function AppHeader({ user }: AppHeaderProps) {
           </span>
         </Link>
 
-        {/* Right side */}
         {user ? (
           <div className="flex items-center gap-2">
-            {/* Avatar — navigates to /account */}
             <Link
               href="/account"
               className="size-10 rounded-full flex items-center justify-center text-sm font-bold text-[#D4C48A] hover:opacity-80 transition-opacity"

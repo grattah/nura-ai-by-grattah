@@ -2,7 +2,6 @@ import type { UIMessage } from "ai";
 
 const PREFIX = "nura-chat:";
 
-// Maximum chat lifetime: 5 minutes since the last saved turn.
 const MAX_AGE_MS = 5 * 60 * 1000;
 
 interface StoredChat {
@@ -22,7 +21,6 @@ export function loadChat(contextId: string): UIMessage[] | null {
     if (!raw) return null;
 
     const parsed = JSON.parse(raw) as StoredChat | unknown;
-    // Reject legacy (bare array) or malformed entries.
     if (
       !parsed ||
       typeof parsed !== "object" ||
@@ -34,7 +32,6 @@ export function loadChat(contextId: string): UIMessage[] | null {
     }
 
     const { savedAt, messages } = parsed as StoredChat;
-    // Lazy expiry: drop anything past the 5-minute window.
     if (Date.now() - savedAt > MAX_AGE_MS) {
       window.localStorage.removeItem(k);
       return null;
@@ -48,14 +45,11 @@ export function loadChat(contextId: string): UIMessage[] | null {
 
 export function saveChat(contextId: string, messages: UIMessage[]): void {
   if (typeof window === "undefined") return;
-  // Never overwrite a stored conversation with an empty one — clearing is the
-  // job of expiry/logout, not an empty render.
   if (!messages.length) return;
   try {
     const payload: StoredChat = { savedAt: Date.now(), messages };
     window.localStorage.setItem(key(contextId), JSON.stringify(payload));
   } catch {
-    // Quota / serialization errors are non-critical.
   }
 }
 
@@ -69,6 +63,5 @@ export function clearAllChats(): void {
     }
     toRemove.forEach((k) => window.localStorage.removeItem(k));
   } catch {
-    // ignore
   }
 }

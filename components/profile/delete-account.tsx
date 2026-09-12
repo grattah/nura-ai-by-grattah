@@ -113,16 +113,11 @@ export function DeleteAccount() {
       return;
     }
 
-    // The action cleared the server session; clear the browser's copy too, the
-    // same way LogoutButton does, so no stale token lingers in localStorage.
     try {
       await createClient().auth.signOut();
     } catch {
-      // ignore — the server session is already gone
     }
 
-    // Land on home, where the query param raises the "Scheduled for deletion"
-    // modal over the now signed-out page.
     router.replace("/?deletion=scheduled");
     router.refresh();
   };

@@ -40,7 +40,6 @@ function SearchCategoryContent() {
 
   const config = getCategoryConfig(categorySlug);
 
-  // Resolve category display name
   useEffect(() => {
     if (!categorySlug) return;
     supabase
@@ -54,7 +53,6 @@ function SearchCategoryContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categorySlug]);
 
-  // Auto-focus input on mount
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
@@ -100,7 +98,7 @@ function SearchCategoryContent() {
       ).map((r) => ({
         id: r.id,
         title: r.title,
-        image_url: r.image_url ?? "", // Provide a default value for null
+        image_url: r.image_url ?? "",
         display_order: r.display_order,
         score: r.recipe_categories?.[0]?.score,
       }));
@@ -120,7 +118,6 @@ function SearchCategoryContent() {
 
   return (
     <div className="bg-background min-h-dvh pb-24">
-      {/* Header — search bar IS the header */}
       <div className="flex items-center gap-8.75 px-6 pt-5 pb-4">
         <button
           onClick={() => router.back()}
@@ -152,12 +149,10 @@ function SearchCategoryContent() {
       </div>
 
       <div className="px-6 space-y-4">
-        {/* Category banner (if context present) */}
         {categorySlug && (
           <CategoryBanner name={categoryName || categorySlug} config={config} />
         )}
 
-        {/* Results */}
         {searched && (
           <>
             <div className="relative">
@@ -210,7 +205,6 @@ function SearchCategoryContent() {
         )}
       </div>
 
-      {/* Find a recipe CTA — always visible */}
       <div className="px-6 mt-6">
         <Link
           href="/find-recipe"

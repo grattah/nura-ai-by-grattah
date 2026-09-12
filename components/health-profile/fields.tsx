@@ -7,7 +7,7 @@ import {
   DietaryOption,
 } from "@/lib/health-profile/options";
 
-// ── Segmented single-select (age range, sex, pregnancy) ─────────────────────
+/** Segmented single-select. */
 export function OptionGroup({
   label,
   hint,
@@ -59,7 +59,7 @@ export function OptionGroup({
   );
 }
 
-// ── Multi-select checkbox list (conditions, allergies) ──────────────────────
+/** Multi-select checkbox list. */
 export function Checklist({
   options,
   selected,
@@ -101,7 +101,7 @@ export function Checklist({
   );
 }
 
-// ── Single-select radio list (dietary pattern) ──────────────────────────────
+/** Single-select radio list. */
 export function RadioList({
   options,
   value,
@@ -147,7 +147,6 @@ export function RadioList({
   );
 }
 
-// ── Free-text "Other" input ─────────────────────────────────────────────────
 export function OtherInput({
   value,
   onChange,
@@ -173,7 +172,7 @@ export function OtherInput({
   );
 }
 
-// ── 14-goal icon grid (multi-select) ────────────────────────────────────────
+/** Multi-select goal icon grid. */
 export function GoalGrid({
   goals,
   selected,
@@ -221,7 +220,7 @@ export function GoalGrid({
   );
 }
 
-// ── Medication editor: free-text add + removable chips ──────────────────────
+/** Medication editor: free-text add plus removable chips. */
 export function MedicationChips({
   medications,
   onRemove,

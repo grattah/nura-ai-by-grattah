@@ -51,5 +51,3 @@ export function summarizeMedications(d: HealthProfileDraft): string {
     : "None";
 }
 
-// summarizeDietary removed with the dietary-pattern step (see types.ts). Restore
-// alongside HealthProfileDraft.dietaryPattern if the step is reinstated.

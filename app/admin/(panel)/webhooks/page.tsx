@@ -59,7 +59,6 @@ export default async function WebhooksPage() {
         </p>
       )}
 
-      {/* ── Events ──────────────────────────────────────────────────────── */}
       <div className="overflow-x-auto rounded-xl border border-[#E2E4E4]">
         <table className="w-full text-sm">
           <thead className="bg-[#F7F7F5] text-left">
@@ -101,7 +100,6 @@ export default async function WebhooksPage() {
         </table>
       </div>
 
-      {/* ── Endpoints ───────────────────────────────────────────────────── */}
       <h2 className="mb-3 mt-8 text-base font-semibold">Endpoints</h2>
       {health.endpoints.length === 0 ? (
         <p className="text-sm text-subtle">No endpoints found for this key.</p>

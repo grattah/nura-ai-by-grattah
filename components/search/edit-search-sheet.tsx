@@ -17,7 +17,6 @@ export function saveRecentSearch(query: string) {
     const updated = [query, ...existing.filter((q) => q !== query)].slice(0, 3);
     localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
   } catch {
-    // localStorage unavailable — fail silently
   }
 }
 
@@ -72,7 +71,6 @@ export function EditSearchSheet({
       >
         <SheetTitle className="sr-only">Edit search</SheetTitle>
 
-        {/* Header */}
         <div className="flex items-center justify-between px-4 pt-6 pb-4">
           <h2 className="text-xl font-semibold text-foreground">Edit search</h2>
           <button
@@ -85,7 +83,6 @@ export function EditSearchSheet({
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 pb-8 space-y-5">
-          {/* Search input */}
           <div className="flex items-center gap-3 bg-card rounded-xl px-3 h-12 border border-mint-green">
             <Search
               className="w-4 h-4 text-muted-foreground shrink-0"
@@ -111,7 +108,6 @@ export function EditSearchSheet({
             )}
           </div>
 
-          {/* Common concerns */}
           <div>
             <p className="text-xs font-medium text-subtle uppercase tracking-wider mb-3">
               Common Concerns
@@ -129,7 +125,6 @@ export function EditSearchSheet({
             </div>
           </div>
 
-          {/* Recently searched */}
           {recentSearches.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-1">

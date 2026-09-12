@@ -1,13 +1,7 @@
-// Ties the USDA roll-up to the deterministic Base Nutrition Score. Produces both
-// the `nutrition_scoring` input blob (persisted so re-scoring needs no re-join)
-// and the BNS output columns. Pure — no LLM, no DB.
-
 import type { RecipeRollup } from "@/lib/usda/rollup";
 import type { Track, Preparation } from "./track";
 import { scoreBaseNutrition, type BnsInput, type BnsResult } from "./base-nutrition";
 
-// The per-100 inputs the scorer needs, minus classification (which comes from
-// the recipe name / prep text). Stored in recipes.nutrition_scoring.
 export type ScoringInput = Omit<BnsInput, "track" | "preparation">;
 
 export function rollupToScoringInput(r: RecipeRollup): ScoringInput {
@@ -25,7 +19,6 @@ export function rollupToScoringInput(r: RecipeRollup): ScoringInput {
   };
 }
 
-/** Map a BnsResult to the recipes BNS-v2 columns (DB write shape). */
 export function bnsColumns(res: BnsResult) {
   return {
     bns_grade: res.grade,
@@ -43,7 +36,6 @@ export function bnsColumns(res: BnsResult) {
   };
 }
 
-/** Full deterministic score from a scoring input + classification. */
 export function scoreFromInput(
   input: ScoringInput,
   track: Track,

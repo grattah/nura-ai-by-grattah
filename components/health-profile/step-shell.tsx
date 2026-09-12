@@ -5,12 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { type Step } from "@/lib/health-profile/types";
 import { useHealthProfile } from "./health-profile-provider";
 
-/**
- * Common frame for every questionnaire step: header (back + title + sub-label)
- * and a sticky footer whose buttons depend on the flow mode:
- *   • onboarding → Skip (optional steps) + Continue
- *   • edit       → single Save changes
- */
+/** Shared frame for each questionnaire step: header and footer actions. */
 export function StepShell({
   step,
   title,
@@ -31,11 +26,7 @@ export function StepShell({
 
   return (
     <div className="min-h-dvh bg-background flex flex-col">
-      {/* Header */}
       <div className="flex items-center px-6 pt-5 pb-4 relative shrink-0">
-        {/* In edit mode, back means "discard this change" — going back without
-            clearing it left the edit in the draft, where the next save
-            elsewhere in the flow would commit it silently. */}
         {isEdit ? (
           <button
             type="button"
@@ -58,10 +49,8 @@ export function StepShell({
         </div>
       </div>
 
-      {/* Content */}
       <div className="flex-1 px-6 pb-6 overflow-y-auto">{children}</div>
 
-      {/* Footer */}
       <div className="shrink-0 px-6 pt-3 pb-8 bg-background flex gap-3">
         {isEdit ? (
           <button

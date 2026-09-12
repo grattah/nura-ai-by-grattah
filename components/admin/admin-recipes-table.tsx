@@ -46,7 +46,6 @@ export function AdminRecipesTable({
 
   const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE));
 
-  // Fetch the next batch (10) if `items` doesn't yet reach `target` rows.
   async function ensureLoaded(target: number) {
     if (loadingRef.current || !hasMore) return;
     if (items.length >= target) return;
@@ -55,12 +54,10 @@ export function AdminRecipesTable({
     const res = await fetchAdminRecipes({ offset, limit: PAGE_SIZE, status });
     loadingRef.current = false;
     if ("error" in res) return;
-    // Only append if still aligned (guards against races).
     setItems((prev) => (prev.length === offset ? [...prev, ...res.rows] : prev));
     setHasMore(res.hasMore);
   }
 
-  // Whenever the page changes, prefetch the *next* page in the background.
   useEffect(() => {
     ensureLoaded((page + 1) * PAGE_SIZE);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -78,7 +75,6 @@ export function AdminRecipesTable({
 
   function handleStatusChanged(id: string, next: "pending" | "approved") {
     setItems((prev) => {
-      // Under a status filter, a row that no longer matches leaves the list.
       if (status !== "all" && next !== status) {
         return prev.filter((r) => r.id !== id);
       }
@@ -87,7 +83,6 @@ export function AdminRecipesTable({
     if (status !== "all" && next !== status) setCount((c) => Math.max(0, c - 1));
   }
 
-  // Stepping back off an emptied last page (e.g. after deletes).
   useEffect(() => {
     if (page > 1 && displayed.length === 0) setPage((p) => p - 1);
   }, [displayed.length, page]);

@@ -26,7 +26,6 @@ export function CategoryCard({
         className="flex items-center justify-between rounded-2xl pl-3.5 min-h-20 overflow-hidden"
         style={{ backgroundColor: config.bgColor }}
       >
-        {/* Left: icon & text */}
         <div className="flex-1 min-w-0 pr-3 flex items-center gap-3 my-8">
           <Image
             src={config.iconUrl}
@@ -45,7 +44,6 @@ export function CategoryCard({
           </div>
         </div>
 
-        {/* Right: image + chevron */}
         <div className="shrink-0 overflow-hidden relative">
           <Image
             src={config.imageUrl}

@@ -16,8 +16,6 @@ const TABS: { key: StatusFilter; label: string }[] = [
   { key: "approved", label: "Approved" },
 ];
 
-// Fetch the first two pages up front so page 2 is instant; the client table
-// fetches further pages on demand and caches them.
 const INITIAL_FETCH = 20;
 
 export default async function AdminRecipesPage({
@@ -30,7 +28,7 @@ export default async function AdminRecipesPage({
     status === "pending" || status === "approved" ? status : "all";
 
   const identity = await getAdminIdentity();
-  const role = identity!.role; // layout guarantees a member
+  const role = identity!.role;
 
   const admin = createServiceRoleClient();
 

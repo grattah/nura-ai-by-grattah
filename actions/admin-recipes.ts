@@ -42,10 +42,6 @@ export interface RecipeListItem {
   created_at: string;
 }
 
-/**
- * Paginated recipe batch for the admin table. Any member may read. `hasMore` is
- * true when a full `limit` came back (so another page likely exists).
- */
 export async function fetchAdminRecipes({
   offset,
   limit,
@@ -73,11 +69,7 @@ export async function fetchAdminRecipes({
   return { rows, hasMore: rows.length === limit };
 }
 
-/**
- * Uploads a recipe image via the service-role client (the `recipe-images`
- * bucket has no client write policy, so browser uploads are denied by RLS).
- * Role-gated to editors+ and returns the public URL.
- */
+/** Uploads via the service role; the recipe-images bucket has no client write policy. */
 export async function uploadRecipeImage(
   formData: FormData,
 ): Promise<{ url: string } | { error: string }> {
@@ -127,10 +119,7 @@ async function nextDisplayOrder(
   return ((data?.display_order as number | undefined) ?? 0) + 1;
 }
 
-// No-op: recipe_tags now holds computed bioactivity scores (populated by
-// scripts/score-supports.mjs), not manually-assigned category tags. Admin
-// category editing is a follow-up; leaving this in place avoids clobbering the
-// scored rows on every admin save.
+/** No-op: recipe_tags now holds computed bioactivity scores, not manual tags. */
 async function syncTags(
   _admin: ReturnType<typeof createServiceRoleClient>,
   _recipeId: string,
@@ -139,8 +128,7 @@ async function syncTags(
   return;
 }
 
-// Best-effort vectorization: never block an approval/edit on an embedding hiccup
-// (the recipe is still saved; re-saving or the bulk script can retry).
+/** Vectorizes best-effort so an embedding failure never blocks a save. */
 async function safeVectorize(recipe: RecipeForIngest) {
   try {
     await vectorizeRecipe(recipe);
@@ -237,7 +225,6 @@ export async function updateRecipe(
     preview_ingredients: input.preview_ingredients,
     follow_up_questions: input.follow_up_questions,
   };
-  // Only admins/owner may change publish status.
   if (canApprove(gate.identity.role)) payload.status = input.status;
 
   const { data: updated, error } = await admin
@@ -249,8 +236,6 @@ export async function updateRecipe(
   if (error) return { error: error.message };
 
   await syncTags(admin, id, input.tagIds);
-  // Re-vectorize when the recipe is (now) approved — covers an admin
-  // approving-on-edit and an editor editing an already-approved recipe.
   if ((updated as { status?: string } | null)?.status === "approved") {
     await safeVectorize(ingestShape(id, input));
   }
@@ -294,7 +279,6 @@ export async function deleteRecipe(id: string): Promise<Result> {
 
   const admin = createServiceRoleClient();
 
-  // Remove the stored image (path derived from the public URL) if it's ours.
   const { data: row } = await admin
     .from("recipes")
     .select("image_url")

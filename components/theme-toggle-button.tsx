@@ -17,7 +17,6 @@ const ThemeToggleButton = () => {
     setMounted(true);
   }, []);
 
-  // Prevent SSR flicker and hydration mismatch
   if (!mounted) {
     return <Button className="rounded-full" size="icon" />;
   }

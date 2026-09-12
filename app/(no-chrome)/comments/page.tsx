@@ -64,8 +64,6 @@ const page = async ({ searchParams }: PageProps) => {
       : Promise.resolve(false),
   ]);
 
-  // Uses the shared rule so a user who cancelled mid-period keeps the access
-  // they paid for — the inline active-only check here used to paywall them.
   const isSubscribed = subResult === true;
 
   if (!recipe) return;

@@ -6,7 +6,6 @@ interface StepperProps {
 }
 
 const Stepper: React.FC<StepperProps> = ({ currentStep, totalSteps = 3 }) => {
-  // Create an array representing each step [1, 2, 3, ...]
   const steps = Array.from({ length: totalSteps }, (_, i) => i + 1);
 
   return (
@@ -36,14 +35,12 @@ const Stepper: React.FC<StepperProps> = ({ currentStep, totalSteps = 3 }) => {
                   </svg>
                 </div>
               ) : (
-                // Incomplete State (Light gray ring, white background, gray dot)
                 <div className="size-6 rounded-full border-2 border-[#E5E7EB] bg-white grid place-items-center">
                   <div className="size-1.5 rounded-full bg-grey-c400"></div>
                 </div>
               )}
             </div>
 
-            {/* Connecting Line */}
             {!isLast && (
               <div
                 className={`flex-1 h-0.5 ${

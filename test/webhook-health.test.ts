@@ -2,19 +2,9 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { REQUIRED_EVENTS } from "@/lib/stripe/webhook-health";
 
-// Renewal and payment-failure emails never sent, because
-// `invoice.payment_succeeded` and `invoice.payment_failed` were not among the
-// Stripe endpoint's enabled events. The handlers existed and were correct;
-// Stripe was never asked to deliver to them.
-//
-// The monitoring that surfaces that is only as good as its list of what SHOULD
-// arrive. If someone adds a `case` to the webhook without adding it here, the
-// new handler is unmonitored and can fail exactly as silently — so the list is
-// derived from the route file rather than trusted.
 describe("REQUIRED_EVENTS matches the webhook's actual handlers", () => {
   const route = readFileSync("app/api/webhooks/stripe/route.ts", "utf8");
 
-  // Every `case "…":` in the event switch.
   const handled = [...route.matchAll(/case\s+"([a-z_]+\.[a-z_.]+)":/g)].map(
     (m) => m[1],
   );

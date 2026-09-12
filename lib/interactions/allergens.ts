@@ -1,8 +1,5 @@
 import { ALLERGENS, labelFor } from "@/lib/health-profile/options";
 
-// Deterministic allergen matching (replaces the LLM allergy job). Keyed on the
-// 7 ALLERGENS option keys; celiac is treated as a gluten allergy.
-
 const ALLERGEN_ALIASES: Record<string, string[]> = {
   "tree-nuts": [
     "almond",
@@ -63,9 +60,6 @@ const ALLERGEN_ALIASES: Record<string, string[]> = {
   eggs: ["egg"],
 };
 
-// Dairy terms that also appear in plant products ("almond milk", "peanut
-// butter", "coconut cream", "vegan cheese") — skip these when a plant/vegan
-// qualifier is present in the same label.
 const DAIRY_AMBIGUOUS = new Set([
   "milk",
   "cream",
@@ -112,7 +106,6 @@ function labels(ingredients: unknown): string[] {
 const hasPlantQualifier = (label: string) =>
   PLANT_QUALIFIERS.some((q) => label.includes(q));
 
-/** Allergy/celiac alerts for a recipe given the user's disclosed allergens. */
 export function detectAllergens(
   ingredients: unknown,
   allergenKeys: string[],
@@ -152,7 +145,6 @@ export function detectAllergens(
     }
   }
 
-  // Celiac → gluten (unless the user already disclosed a gluten allergy above).
   if (celiac && !allergenKeys.includes("gluten")) {
     const matched = findMatch(ALLERGEN_ALIASES.gluten, false);
     if (matched) {
@@ -165,7 +157,6 @@ export function detectAllergens(
     }
   }
 
-  // Free-text "other" allergens.
   for (const raw of allergiesOther.split(/[,\n]/)) {
     const token = raw.trim().toLowerCase();
     if (token.length < 2) continue;

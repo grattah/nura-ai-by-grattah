@@ -29,8 +29,6 @@ type RecipeWithTags = {
   drink_type: string | null;
 };
 
-// Fetched fresh per request — no cross-request cache, so new/re-scored recipes
-// surface immediately.
 async function getPopularRecipes() {
   const supabase = createServiceRoleClient();
   return supabase
@@ -47,8 +45,6 @@ async function getPopularRecipes() {
 export default async function HomePage({
   searchParams,
 }: {
-  // `?deletion=scheduled` is set by the profile page's delete flow, which signs
-  // the user out and lands them here.
   searchParams: Promise<{ deletion?: string }>;
 }) {
   const deletionScheduled = (await searchParams).deletion === "scheduled";
@@ -79,11 +75,7 @@ export default async function HomePage({
     redirect("/landing");
   }
 
-  // Non-mutating read: whether to offer the one-time welcome modal. The flag is
-  // flipped by the modal on the client (real mount), never during this render —
-  // so prefetch/background renders can't consume it.
   let showFreeTokens = false;
-  // Editable from /admin/home-promo; null when unset or unreadable.
   const promo = await getHomePromo();
 
   let hasHealthProfile = false;
@@ -111,7 +103,6 @@ export default async function HomePage({
   return (
     <div className="bg-background pb-12">
       <main className="px-mp pt-2 space-y-8">
-        {/* Hero */}
         <section className="relative m-0">
           {/* <h1 className="text-title font-semibold text-grey-c950 leading-snug z-10 relative">
             What’s bugging you today?
@@ -134,8 +125,6 @@ export default async function HomePage({
             <p className="text-base text-[#312817] alan-sans z-10 relative max-w-69.5">
               {promo.body}
             </p>
-            {/* No linked recipe → text only. The card still reads fine, and a
-                button pointing nowhere would be worse than no button. */}
             {promo.recipeId && (
               <Link
                 href={`/recipes/${promo.recipeId}`}
@@ -169,7 +158,6 @@ export default async function HomePage({
           </div>
         )}
 
-        {/* Popular Recipes */}
         <section className={`relative z-10 mt-6`}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-title leading-none font-semibold text-grey-c950">
@@ -237,10 +225,8 @@ export default async function HomePage({
           </div>
         )}
 
-        {/* Categories */}
         <CategorySection categories={categories} />
 
-        {/* Upgrade / Pending banner */}
         <UpgradeBanner />
 
         <FeatureRequest />

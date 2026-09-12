@@ -1,10 +1,6 @@
 import "server-only";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
-// Best-effort usage logging for the admin token dashboard. Every model/API spend
-// in the running app (billed or not, runtime or cron) records one row here.
-// NEVER throws — a logging failure must not break the originating request.
-
 export type UsageProvider = "anthropic" | "google";
 export type UsageSource = "runtime" | "cron" | "script";
 
@@ -12,18 +8,17 @@ export interface RecordUsageInput {
   provider: UsageProvider;
   model: string;
   surface: string;
-  source?: UsageSource; // default "runtime"
+  source?: UsageSource;
   userId?: string | null;
   inputTokens?: number;
   outputTokens?: number;
   totalTokens?: number;
   images?: number;
-  units?: number | null; // billable units, when this spend was metered
+  units?: number | null;
   billed?: boolean;
   meta?: Record<string, unknown> | null;
 }
 
-/** Vercel AI SDK usage object → {input, output, total}. */
 export function usageTokens(usage?: {
   totalTokens?: number;
   inputTokens?: number;

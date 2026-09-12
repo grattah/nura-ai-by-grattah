@@ -22,8 +22,6 @@ export function MobileGate({ children }: MobileGateProps) {
     return () => mq.removeEventListener("change", handler);
   }, []);
 
-  // The admin portal is a desktop back-office — never gate it behind the
-  // mobile-only consumer experience.
   if (pathname?.startsWith("/admin")) return <>{children}</>;
 
   if (isMobile === null) return null;
@@ -50,7 +48,6 @@ function DesktopBlocker() {
         home screen for instant access.
       </p>
 
-      {/* QR code — always white bg so the code is scannable in dark mode */}
       <div className="bg-white rounded-3xl p-5 mb-6 shadow-sm">
         <QRCodeSVG
           value={APP_URL}
@@ -62,7 +59,6 @@ function DesktopBlocker() {
         />
       </div>
 
-      {/* URL pill */}
       <div className="flex items-center justify-center gap-2 bg-card rounded-full px-5 py-3">
         <span className="text-sm font-mono text-muted-foreground select-all">
           {APP_URL.replace(/^https?:\/\//, "")}

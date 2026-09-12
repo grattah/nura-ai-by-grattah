@@ -4,9 +4,7 @@ import { useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { clearAllChats } from "@/lib/chat-cache";
 
-// Clears every cached follow-up conversation when the user signs out, so the
-// next person on the device doesn't see the previous user's chats. Mounted once
-// at the app root.
+/** Clears cached follow-up chats on sign-out. */
 export function ChatCacheCleaner() {
   useEffect(() => {
     const supabase = createClient();

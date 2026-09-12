@@ -11,10 +11,6 @@ export function RecipeCard({
 }: {
   recipe: Pick<Recipe, "id" | "title" | "image_url">;
   priority?: boolean;
-  /**
-   * CategoryScore for the category being viewed (recipe_categories.score).
-   * A GENERAL score — rendered as "% support", never "% match" (PRD §6.3).
-   */
   score?: number | null;
 }) {
   const imageUrl = recipe.image_url

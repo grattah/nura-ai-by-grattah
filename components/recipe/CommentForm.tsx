@@ -53,7 +53,7 @@ const CommentForm = ({
   }, [replyingTo]);
 
   React.useEffect(() => {
-    if (!replyingTo) return; // only listen while in reply mode
+    if (!replyingTo) return;
 
     const handlePointerDown = (e: PointerEvent) => {
       const target = e.target as HTMLElement;
@@ -111,7 +111,6 @@ const CommentForm = ({
     );
   }
 
-  // Default compact variant (what you had before)
   return (
     <form ref={formRef} action={submitAction}>
       <div className="relative">

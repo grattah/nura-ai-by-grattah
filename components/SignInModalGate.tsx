@@ -1,4 +1,3 @@
-// components/auth/SignInModalGate.tsx
 "use client";
 
 import { useState } from "react";

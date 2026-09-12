@@ -4,12 +4,6 @@ import { tryConsumeFreeView } from "@/lib/free-trial-server";
 import { hasActiveSubscription, hasEverSubscribed } from "@/lib/subscription";
 import { PERSONALIZED_SEARCH_SURFACE, type FreeSurface } from "@/lib/credits";
 
-// Distinct-item free-trial gate for personalized-search cache hits (so a cached
-// result still counts toward the per-surface cap without hitting the metered
-// route). Records the query for new users and reports whether allowed:
-//   subscriber → always allowed (no record)
-//   new user   → allowed while under the per-surface cap (idempotent per item)
-//   lapsed sub → denied (they get the upgrade overlay)
 const GATED_SURFACES: string[] = [PERSONALIZED_SEARCH_SURFACE];
 
 export async function POST(req: NextRequest) {
@@ -46,7 +40,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ allowed: true, hasEverSubscribed: true });
   }
   if (everSubscribed) {
-    // Lapsed subscriber — no free trial.
     return NextResponse.json({ allowed: false, hasEverSubscribed: true });
   }
 

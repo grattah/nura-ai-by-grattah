@@ -21,9 +21,6 @@ export default async function AccountPage() {
 
   let hasPassword = false;
   let subscription: { status: string; plan: string | null } | null = null;
-  // Entitlement goes through the shared helper, never an inline status check —
-  // `status` alone is 'cancelled' for a user who cancelled mid-period but has
-  // paid through expires_at, and it ignores expiry entirely for a stale row.
   let isEntitled = false;
 
   if (user) {
@@ -56,7 +53,6 @@ export default async function AccountPage() {
 
   return (
     <div className="min-h-dvh bg-background pb-10">
-      {/* Header */}
       <div className="flex items-center px-6 pt-5 pb-4 gap-3 mb-3.5">
         <BackButton
           backPage="/"
@@ -69,10 +65,8 @@ export default async function AccountPage() {
       </div>
 
       <div className="px-6 space-y-4">
-        {/* User card */}
         <div className="bg-card rounded-2xl p-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            {/* Avatar */}
             <div
               className="size-11 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
               style={{ backgroundColor: "#5C6B3A" }}
@@ -96,7 +90,6 @@ export default async function AccountPage() {
                 </span>
               )}
             </div>
-            {/* Text */}
             <div className="min-w-0">
               <p className="text-base font-medium text-base-text">
                 {isGuest ? "Guest" : isIncomplete ? "Signed in" : displayName}
@@ -111,7 +104,6 @@ export default async function AccountPage() {
             </div>
           </div>
 
-          {/* Action */}
           {isGuest && (
             <Link
               href="/auth/login"
@@ -138,7 +130,6 @@ export default async function AccountPage() {
           )}
         </div>
 
-        {/* Settings section */}
         <div className="space-y-2 mt-10">
           <p className="text-base font-semibold text-base-text px-1">
             Settings

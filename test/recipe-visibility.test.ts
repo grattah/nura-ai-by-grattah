@@ -4,11 +4,6 @@ import {
   RECIPE_IMAGE_GENERATION_ENABLED,
 } from "@/lib/recipe-visibility";
 
-// Generated recipes land `status: "pending"` with no image. They must not wear the
-// chrome of a reviewed catalogue recipe — on first view or any revisit. The hero
-// keys off the IMAGE (so recipes generated before the suspension keep theirs);
-// share/save and bioactivity key off APPROVAL.
-
 describe("recipeChrome", () => {
   it("gives an approved recipe with an image everything", () => {
     expect(recipeChrome({ status: "approved", imageUrl: "https://x/i.webp" })).toEqual({
@@ -29,7 +24,6 @@ describe("recipeChrome", () => {
   });
 
   it("keeps the image on a pending recipe that already has one", () => {
-    // The 12 rows generated before the suspension aren't retroactively blanked.
     const c = recipeChrome({ status: "pending", imageUrl: "https://x/old.webp" });
     expect(c.showHeroImage).toBe(true);
     expect(c.showShareAndSave).toBe(false);
@@ -56,9 +50,6 @@ describe("recipeChrome", () => {
   });
 });
 
-// The "This recipe supports" list is the fallback for anyone the personalized
-// match can't serve, so it yields to a real match percentage — and, since
-// bioactivities are public recipe information, it ignores authentication.
 describe("recipeChrome — bioactivity supports fallback", () => {
   const approved = { status: "approved", imageUrl: "https://x/i.webp" };
 
@@ -87,8 +78,6 @@ describe("recipeChrome — bioactivity supports fallback", () => {
   });
 
   it("leaves the insights-card gate keyed on approval alone", () => {
-    // showBioactivity still drives the Recipe insights fallback branch, which
-    // renders alongside the supports list — a match score must not hide it.
     const c = recipeChrome({ ...approved, hasMatchScore: true });
     expect(c.showBioactivity).toBe(true);
     expect(c.showBioactivitySupports).toBe(false);

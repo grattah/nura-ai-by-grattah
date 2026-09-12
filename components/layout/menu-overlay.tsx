@@ -81,16 +81,13 @@ export function MenuPanel({
   const [show, setShow] = useState(false);
   const closeTimer = useRef<number | null>(null);
 
-  // Drive the transform off the `open` prop.
   useEffect(() => {
     if (open) {
-      // Enter: paint at -translate-y-full first, then flip to 0.
       const id = requestAnimationFrame(() =>
         requestAnimationFrame(() => setShow(true))
       );
       return () => cancelAnimationFrame(id);
     } else {
-      // Exit: slide up, then unmount via onClosed after the transition.
       setShow(false);
       closeTimer.current = window.setTimeout(onClosed, PANEL_MS);
       return () => {
@@ -99,10 +96,9 @@ export function MenuPanel({
     }
   }, [open, onClosed]);
 
-  // Escape asks the parent to close (flip `open`); the effect above animates.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onRequestClose(); // see note below on Escape
+      if (e.key === "Escape") onRequestClose();
     };
     document.addEventListener("keydown", onKey);
     const unlock = lockAppScroll();
@@ -115,7 +111,6 @@ export function MenuPanel({
   const links = user ? AUTHED_LINKS : GUEST_LINKS;
 
   return (
-    // top-14 ≈ header height (adjust if your header is taller/shorter)
     <div
       className={cn(
         "fixed inset-x-0 top-14 bottom-0 z-40 bg-[#EBE8DA] flex flex-col",
