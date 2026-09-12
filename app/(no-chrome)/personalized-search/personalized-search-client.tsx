@@ -64,9 +64,6 @@ export function PersonalizedSearchClient({
     openTokenWall();
   }, [outOfTokens, refreshCredits, openTokenWall]);
 
-  // Report this search's outcome once per fresh server render (a new query
-  // fully remounts this component with new props), mirroring the
-  // workflow_started fired when the search was kicked off.
   useEffect(() => {
     if (!query) return;
     if (serverBlocked) {
@@ -101,8 +98,6 @@ export function PersonalizedSearchClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Guests: RouteAuthGuard overlays the sign-in modal; show the (blurred)
-  // result placeholder behind it rather than a blank screen.
   if (!accessLoading && !isAuthenticated) return <PersonalizedSearchSkeleton />;
 
   if (serverBlocked) {
@@ -144,6 +139,7 @@ export function PersonalizedSearchClient({
   return (
     <>
       <div className="bg-background pb-8">
+        {/* Sub-header */}
         <div className="px-6 pt-5 pb-4 flex items-center gap-3 relative">
           <button
             onClick={() => router.back()}
@@ -163,6 +159,7 @@ export function PersonalizedSearchClient({
         </div>
 
         <div className="px-6 space-y-10">
+          {/* Query row */}
           <div className="space-y-4">
             <div className="bg-white rounded-2xl p-4 border border-[#E3E1D880] flex items-center justify-between gap-3">
               <div className="flex items-center gap-x-3 min-w-0 flex-1">
@@ -184,6 +181,7 @@ export function PersonalizedSearchClient({
               </button>
             </div>
 
+            {/* AI summary */}
             <div className="bg-white rounded-2xl border-[#E3E1D880] p-4 flex gap-3 items-start">
               <div className="size-11 bg-mint-green rounded-full flex items-center justify-center shrink-0">
                 <Image
@@ -199,6 +197,7 @@ export function PersonalizedSearchClient({
               </p>
             </div>
 
+            {/* what to try */}
             <div className="bg-success-c100 rounded-2xl border border-[#C4CAC8] p-4 flex flex-col gap-y-2">
               <div className="flex-1 flex items-center justify-between gap-3">
                 <p className="text-base font-medium text-base-text">
@@ -214,6 +213,7 @@ export function PersonalizedSearchClient({
             </div>
           </div>
 
+          {/* Why this works */}
           {result.whyItWorks.length > 0 && (
             <section className="space-y-6">
               <div className="space-y-3">
@@ -237,6 +237,7 @@ export function PersonalizedSearchClient({
             </section>
           )}
 
+          {/* Drinks to try */}
           {result.drinksToTry.length > 0 && (
             <section>
               <h2 className="text-xl font-medium text-base-text mb-3">
@@ -271,6 +272,7 @@ export function PersonalizedSearchClient({
             </section>
           )}
 
+          {/* Try these too */}
           {result.tryTheseToo.length > 0 && (
             <section>
               <h2 className="text-xl font-medium text-base-text mb-3">
@@ -297,6 +299,7 @@ export function PersonalizedSearchClient({
             </section>
           )}
 
+          {/* Important note */}
           <div className="bg-success-c100 rounded-2xl border border-[#C4CAC8] p-4 space-y-2.5">
             <p className="text-base font-medium text-base-text">
               Important note
@@ -316,6 +319,7 @@ export function PersonalizedSearchClient({
             </div>
           </div>
 
+          {/* Feedback */}
           <div className="bg-white rounded-2xl border border-[#E3E1D880] p-4 space-y-3">
             <div>
               <p className="text-base font-medium text-base-text">
@@ -351,6 +355,7 @@ export function PersonalizedSearchClient({
             </div>
           </div>
 
+          {/* Almost-out warning (subscribers near their weekly limit) */}
           <PersonalizedTokenModal />
         </div>
       </div>

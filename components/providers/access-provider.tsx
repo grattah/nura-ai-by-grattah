@@ -89,6 +89,7 @@ export function AccessProvider({
         const res = await fetch("/api/credits", { cache: "no-store" });
         if (res.ok) {
           const body = await res.json();
+
           if (typeof body.authenticated === "boolean")
             authenticated = body.authenticated;
           hasAccess = authenticated && !!body.hasAccess;
