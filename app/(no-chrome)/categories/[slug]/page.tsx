@@ -446,7 +446,7 @@ export default function CategoryDetailPage() {
           Find a recipe <ArrowRight className="size-5 text-mint-green" />
         </Link>
       </div>
-      {showPaywall && <RecipePaywallGate />}
+      {showPaywall && <RecipePaywallGate surface="categories" />}
     </div>
   );
 }

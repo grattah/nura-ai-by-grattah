@@ -11,14 +11,24 @@ import {
 import { Check, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import posthog from "posthog-js";
 import FilledLock from "../vectors/filled-lock";
 import { Plan, PLANS } from "@/constants";
 import Time from "../vectors/time";
+import { ANALYTICS_EVENTS, RESTRICTION_TYPES } from "@/lib/analytics/events";
 
-export function RecipePaywallGate() {
+export function RecipePaywallGate({ surface }: { surface?: string }) {
   const router = useRouter();
 
   const [open, setOpen] = useState(true);
+
+  useEffect(() => {
+    posthog.capture(ANALYTICS_EVENTS.RESTRICTION_ENCOUNTERED, {
+      restriction_type: RESTRICTION_TYPES.RECIPE_CONTENT_PAYWALL,
+      surface,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [selectedPlan, setSelectedPlan] = useState<Plan>("annual");
   const [trialExhausted, setTrialExhausted] = useState(false);

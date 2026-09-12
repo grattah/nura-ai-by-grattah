@@ -1,8 +1,10 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import posthog from "posthog-js";
 import { createClient } from "@/lib/supabase/client";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 
 interface AccessState {
   hasAccess: boolean;
@@ -44,6 +46,8 @@ export function AccessProvider({
     hasEverSubscribed: serverHasEverSubscribed,
     isSubscriber: serverIsSubscriber,
   });
+
+  const identifiedUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     setState({
@@ -93,8 +97,7 @@ export function AccessProvider({
           if (typeof body.isSubscriber === "boolean")
             subscriber = body.isSubscriber;
         }
-      } catch {
-      }
+      } catch {}
 
       if (!active) return;
       if (!authenticated) {
@@ -107,6 +110,13 @@ export function AccessProvider({
         });
         return;
       }
+
+      if (identifiedUserIdRef.current !== session.user.id) {
+        identifiedUserIdRef.current = session.user.id;
+        posthog.identify(session.user.id, { email: session.user.email });
+        posthog.capture(ANALYTICS_EVENTS.APP_ENTERED);
+      }
+
       setState({
         hasAccess,
         isAuthenticated: true,

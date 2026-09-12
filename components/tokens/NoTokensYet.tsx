@@ -1,10 +1,18 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import posthog from "posthog-js";
 import { PaywallModal } from "../paywall/paywall-modal";
 import { CoinAnimation } from "./CoinAnimation";
+import { ANALYTICS_EVENTS, RESTRICTION_TYPES } from "@/lib/analytics/events";
 
 export default function NoTokensYet() {
   const [paywallOpen, setPaywallOpen] = useState(false);
+
+  useEffect(() => {
+    posthog.capture(ANALYTICS_EVENTS.RESTRICTION_ENCOUNTERED, {
+      restriction_type: RESTRICTION_TYPES.NO_TOKENS,
+    });
+  }, []);
 
   return (
     <div className="flex flex-col gap-y-5.5 items-center justify-center mt-14 mx-9">

@@ -127,7 +127,7 @@ const page = async ({ searchParams }: PageProps) => {
           isAuthenticated={!!user}
         />
       </main>
-      {!isSubscribed && <RecipePaywallGate />}
+      {!isSubscribed && <RecipePaywallGate surface="comments" />}
       
     </div>
   );

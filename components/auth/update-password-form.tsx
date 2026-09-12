@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import posthog from "posthog-js";
 
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -44,6 +45,7 @@ export function UpdatePasswordForm({
       await sendPasswordChangedEmail();
 
       await supabase.auth.signOut();
+      posthog.reset();
       router.push(
         `/log-back-in?email=${encodeURIComponent(user?.email ?? "")}`,
       );

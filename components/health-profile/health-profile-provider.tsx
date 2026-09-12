@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -24,6 +25,12 @@ import {
   deleteHealthProfileSection,
   deleteHealthProfile,
 } from "@/actions/health-profile";
+import {
+  saveGuestDraft,
+  consumeGuestDraft,
+} from "@/lib/health-profile/guest-draft";
+import { useAccess } from "@/hooks/use-access";
+import { SignInModal } from "@/components/auth/SignInModal";
 
 type Mode = "onboarding" | "edit";
 
@@ -71,10 +78,12 @@ export function HealthProfileProvider({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const { isAuthenticated, isLoading } = useAccess();
   const [draft, setDraft] = useState<HealthProfileDraft>(
     initialProfile ?? EMPTY_DRAFT,
   );
   const [exists, setExists] = useState(initialProfile !== null);
+  const [showAuthGate, setShowAuthGate] = useState(false);
   const savedRef = useRef<HealthProfileDraft>(initialProfile ?? EMPTY_DRAFT);
   const [mode, setMode] = useState<Mode>("onboarding");
   const [returnTo, setReturnTo] = useState(`${BASE}/review`);
@@ -89,7 +98,10 @@ export function HealthProfileProvider({
         | Partial<HealthProfileDraft>
         | ((d: HealthProfileDraft) => Partial<HealthProfileDraft>),
     ) => {
-      setDraft((d) => ({ ...d, ...(typeof patch === "function" ? patch(d) : patch) }));
+      setDraft((d) => ({
+        ...d,
+        ...(typeof patch === "function" ? patch(d) : patch),
+      }));
     },
     [],
   );
@@ -147,6 +159,11 @@ export function HealthProfileProvider({
   }, [draft, exists, returnTo, router]);
 
   const saveProfile = useCallback(() => {
+    if (!isLoading && !isAuthenticated) {
+      saveGuestDraft(draft);
+      setShowAuthGate(true);
+      return;
+    }
     if (needsConsent(draft)) {
       router.push(`${BASE}/review`);
       return;
@@ -165,7 +182,13 @@ export function HealthProfileProvider({
       router.refresh();
       router.push(BASE);
     });
-  }, [draft, exists, router]);
+  }, [draft, exists, router, isAuthenticated, isLoading]);
+
+  useEffect(() => {
+    if (isLoading || !isAuthenticated || initialProfile !== null) return;
+    const pending = consumeGuestDraft();
+    if (pending) setDraft(pending);
+  }, [isLoading, isAuthenticated, initialProfile]);
 
   const removeSection = useCallback(
     (section: ProfileSection) => {
@@ -236,6 +259,7 @@ export function HealthProfileProvider({
   return (
     <HealthProfileContext.Provider value={value}>
       {children}
+      {showAuthGate && <SignInModal onClose={() => setShowAuthGate(false)} />}
     </HealthProfileContext.Provider>
   );
 }

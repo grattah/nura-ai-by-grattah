@@ -2,8 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronRight, SendHorizontal, Loader2, Bot } from "lucide-react";
+import posthog from "posthog-js";
 import { PaywallModal } from "@/components/paywall/paywall-modal";
 import { SignInModal } from "@/components/auth/SignInModal";
+import {
+  ANALYTICS_EVENTS,
+  RESTRICTION_TYPES,
+  WORKFLOW_STATUS,
+  WORKFLOW_SURFACES,
+} from "@/lib/analytics/events";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { Card, CardContent } from "@/components/ui/card";
@@ -59,11 +66,41 @@ export function FollowUpSection({
       reqInput: Parameters<typeof fetch>[0],
       init?: Parameters<typeof fetch>[1]
     ) => {
-      const res = await fetch(reqInput, init);
+      posthog.capture(ANALYTICS_EVENTS.WORKFLOW_STARTED, {
+        surface: WORKFLOW_SURFACES.FOLLOWUP_CHAT,
+      });
+
+      let res: Response;
+      try {
+        res = await fetch(reqInput, init);
+      } catch (err) {
+        posthog.capture(ANALYTICS_EVENTS.WORKFLOW_COMPLETED, {
+          surface: WORKFLOW_SURFACES.FOLLOWUP_CHAT,
+          status: WORKFLOW_STATUS.ERROR,
+        });
+        throw err;
+      }
+
       if (res.status === 401) {
         setSignInOpen(true);
+        posthog.capture(ANALYTICS_EVENTS.RESTRICTION_ENCOUNTERED, {
+          restriction_type: RESTRICTION_TYPES.AUTH_REQUIRED,
+          surface: WORKFLOW_SURFACES.FOLLOWUP_CHAT,
+        });
+        posthog.capture(ANALYTICS_EVENTS.WORKFLOW_COMPLETED, {
+          surface: WORKFLOW_SURFACES.FOLLOWUP_CHAT,
+          status: WORKFLOW_STATUS.BLOCKED,
+        });
       } else if (res.status === 403) {
         setPaywallOpen(true);
+        posthog.capture(ANALYTICS_EVENTS.RESTRICTION_ENCOUNTERED, {
+          restriction_type: RESTRICTION_TYPES.SUBSCRIPTION_REQUIRED,
+          surface: WORKFLOW_SURFACES.FOLLOWUP_CHAT,
+        });
+        posthog.capture(ANALYTICS_EVENTS.WORKFLOW_COMPLETED, {
+          surface: WORKFLOW_SURFACES.FOLLOWUP_CHAT,
+          status: WORKFLOW_STATUS.BLOCKED,
+        });
       } else if (res.status === 402) {
         res
           .clone()
@@ -73,8 +110,25 @@ export function FollowUpSection({
           })
           .catch(() => {});
         openTokenWall();
+        posthog.capture(ANALYTICS_EVENTS.RESTRICTION_ENCOUNTERED, {
+          restriction_type: RESTRICTION_TYPES.INSUFFICIENT_TOKENS,
+          surface: WORKFLOW_SURFACES.FOLLOWUP_CHAT,
+        });
+        posthog.capture(ANALYTICS_EVENTS.WORKFLOW_COMPLETED, {
+          surface: WORKFLOW_SURFACES.FOLLOWUP_CHAT,
+          status: WORKFLOW_STATUS.OUT_OF_TOKENS,
+        });
       } else if (res.ok) {
         setTimeout(() => refreshCredits(), 1500);
+        posthog.capture(ANALYTICS_EVENTS.WORKFLOW_COMPLETED, {
+          surface: WORKFLOW_SURFACES.FOLLOWUP_CHAT,
+          status: WORKFLOW_STATUS.OK,
+        });
+      } else {
+        posthog.capture(ANALYTICS_EVENTS.WORKFLOW_COMPLETED, {
+          surface: WORKFLOW_SURFACES.FOLLOWUP_CHAT,
+          status: WORKFLOW_STATUS.ERROR,
+        });
       }
       return res;
     },

@@ -59,13 +59,13 @@ const RECIPE_SELECT = "*, recipe_tags(score, tags(name, slug))";
 
 function topBioactivities(
   recipeTags: RecipeRecord["recipe_tags"],
-  count = 5
+  count = 5,
 ): SupportScore[] {
   return (recipeTags ?? [])
     .flatMap((rt) =>
       rt.tags && rt.score != null
         ? [{ slug: rt.tags.slug, support: rt.tags.name, score: rt.score }]
-        : []
+        : [],
     )
     .sort((a, b) => b.score - a.score)
     .slice(0, count);
@@ -158,7 +158,7 @@ export default async function RecipeDetailPage({
     likes,
     profiles (id, username, avatar_url),
     comment_likes!comment_id (user_id)
-  `
+  `,
       )
       .eq("recipe_id", recipe.id)
       .is("parent_id", null)
@@ -178,7 +178,7 @@ export default async function RecipeDetailPage({
         ...latestComment,
         hasLiked:
           latestComment.comment_likes?.some(
-            (like: { user_id: string }) => like.user_id === user?.id
+            (like: { user_id: string }) => like.user_id === user?.id,
           ) ?? false,
       }
     : null;
@@ -362,16 +362,21 @@ export default async function RecipeDetailPage({
             </div>
 
             <div className="px-6 space-y-3">
-              <AccordionSection
-                recipe={recipe}
-                ingredients={ingredients}
-                howToMake={howToMake}
-                nutrition={nutrition}
-                popular={canViewFull}
-                precautions={precautions}
-              />
+              <div data-paywall-passthrough>
+                <AccordionSection
+                  recipe={recipe}
+                  ingredients={ingredients}
+                  howToMake={howToMake}
+                  nutrition={nutrition}
+                  popular={canViewFull}
+                  precautions={precautions}
+                />
+              </div>
 
-              <div className="pt-2" {...(canViewFull ? { "data-paywall-passthrough": true } : {})}>
+              <div
+                className="pt-2"
+                {...(canViewFull ? { "data-paywall-passthrough": true } : {})}
+              >
                 <FollowUpSection
                   contextId={recipe.id}
                   contextType="recipe"

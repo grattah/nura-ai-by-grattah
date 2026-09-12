@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { loginHrefWithNext } from "@/lib/navigation";
 import {
   ArrowLeft,
@@ -117,6 +118,7 @@ export default function ProfilePage() {
     }
 
     await supabase.auth.signOut();
+    posthog.reset();
     router.push(`/log-back-in?email=${encodeURIComponent(user?.email ?? "")}`);
   };
 

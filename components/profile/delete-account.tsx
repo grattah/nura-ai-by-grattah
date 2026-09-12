@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, CircleAlert } from "lucide-react";
+import posthog from "posthog-js";
 
 import { createClient } from "@/lib/supabase/client";
 import { scheduleAccountDeletion } from "@/actions/delete-account";
@@ -117,6 +118,7 @@ export function DeleteAccount() {
       await createClient().auth.signOut();
     } catch {
     }
+    posthog.reset();
 
     router.replace("/?deletion=scheduled");
     router.refresh();

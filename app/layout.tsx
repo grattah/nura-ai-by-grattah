@@ -12,6 +12,7 @@ import { RouteAuthGuard } from "@/components/auth/route-auth-guard";
 import { ChatCacheCleaner } from "@/components/chat-cache-cleaner";
 import { PerfProfiler } from "@/components/dev/perf-profiler";
 import { LiquidGlassFilter } from "@/components/liquid-glass-filter";
+import ClarityAnalytics from "@/components/Clarity";
 
 const _redHatText = Red_Hat_Text({
   subsets: ["latin"],
@@ -106,6 +107,7 @@ export default async function RootLayout({
       </head>
       <body className="bg-[#F3F1E8] font-sans antialiased">
         <div className="app-content">
+          <ClarityAnalytics />
           <ThemeProvider
             attribute="class"
             forcedTheme="light"
