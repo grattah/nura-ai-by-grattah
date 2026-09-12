@@ -1,4 +1,3 @@
-// components/community/CommunityFeed.tsx — the user's own activity feed.
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -23,7 +22,6 @@ function isAbortError(e: unknown): boolean {
   return e instanceof DOMException && e.name === "AbortError";
 }
 
-/** "5m" → "5m ago", but "now" → "Just now". */
 function timeLabel(createdAt: string): string {
   const t = formatRelativeTime(createdAt);
   return t === "now" ? "Just now" : `${t} ago`;
@@ -34,12 +32,9 @@ export function CommunityFeed({
   actorName,
 }: {
   initialActivities: ActivityItem[];
-  /** The user's name, or "You" when they haven't set one. */
   actorName: string;
 }) {
   const supabase = useMemo(() => createClient(), []);
-  // Resolved from the session on first paginate, then reused. Guests never get
-  // here: their initial page is empty, so hasMoreRef starts false.
   const userIdRef = useRef<string | null>(null);
 
   const [activities, setActivities] = useState(initialActivities);
@@ -49,7 +44,7 @@ export function CommunityFeed({
     initialActivities.length < ACTIVITIES_PAGE_SIZE,
   );
 
-  const pageRef = useRef(0); // page 0 came from the server
+  const pageRef = useRef(0);
   const hasMoreRef = useRef(initialActivities.length === ACTIVITIES_PAGE_SIZE);
   const fetchingRef = useRef(false);
   const loadMoreErrorRef = useRef(false);
@@ -183,8 +178,6 @@ export function CommunityFeed({
           </div>
         );
 
-        // Searches (and rows whose recipe was deleted) have nowhere to go —
-        // linking them produced /recipes/undefined.
         return item.recipe?.id ? (
           <Link key={item.id} href={`/recipes/${item.recipe.id}`} className="block">
             {row}
@@ -194,7 +187,6 @@ export function CommunityFeed({
         );
       })}
 
-      {/* A personal feed starts empty, unlike the old community-wide one. */}
       {activities.length === 0 && (
         <p className="text-sm text-[#57605E] py-6">
           Nothing here yet. Recipes you search, view, like or save will show up

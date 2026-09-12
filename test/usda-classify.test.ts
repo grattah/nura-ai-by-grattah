@@ -1,10 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { heuristicClassify } from "@/lib/usda/resolve";
 
-// Pins the heuristic tier of the hybrid NOVA/FVL/sweetener classifier — the
-// free path that avoids an LLM call for unambiguous ingredients. Ambiguous
-// inputs must return null (→ LLM fallback), never a wrong guess.
-
 describe("heuristicClassify", () => {
   it("whole foods → NOVA 1, FVL where applicable", () => {
     const banana = heuristicClassify("banana", "Fruits and Fruit Juices");
@@ -12,7 +8,7 @@ describe("heuristicClassify", () => {
 
     const spinach = heuristicClassify("fresh spinach", "Vegetables");
     expect(spinach).toMatchObject({ nova_group: 1, is_fvl: true });
-    expect(spinach?.iron_rich).toBe(true); // spinach is on the iron list
+    expect(spinach?.iron_rich).toBe(true);
   });
 
   it("added sweeteners → NOVA 2, excluded from FVL", () => {

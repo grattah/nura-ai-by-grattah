@@ -4,7 +4,6 @@ import {
   whyItWorksIssues,
 } from "@/lib/recipe-copy";
 
-// QA ⑩ — the intro must stay experiential; mechanism belongs in "Why it works".
 describe("mentionsBodySystem", () => {
   it.each([
     "supports cardiovascular health and blood sugar balance",
@@ -37,9 +36,6 @@ describe("mentionsBodySystem", () => {
   });
 });
 
-// QA ⑪ — 3-5 functions per ingredient.
-
-// Rows written before the column existed must keep rendering their prose.
 describe("whyItWorksIssues — prose format (QA ⑪)", () => {
   const good = `The milk provides tryptophan, an amino acid essential for serotonin synthesis, which then converts to melatonin, a hormone crucial for regulating sleep cycles.
 
@@ -56,7 +52,6 @@ Ginger, rich in gingerols and shogaols, modulates serotonin receptors in the gut
   });
 
   it("rejects per-ingredient headings", () => {
-    // The exact shape being moved away from: ingredient name on its own line.
     const headed = "Ginger:\nAids digestion and eases nausea.\n\nMilk:\nProvides tryptophan.";
     expect(whyItWorksIssues(headed)).toContain("headings");
   });
@@ -80,7 +75,6 @@ Ginger, rich in gingerols and shogaols, modulates serotonin receptors in the gut
 });
 
 
-// Token bundles are charged in USD via inline price_data.
 describe("token bundle pricing", () => {
   it("formats bundle prices in dollars", async () => {
     const { formatPrice, BUNDLES } = await import("@/lib/credits");

@@ -1,4 +1,3 @@
-// lib/bookmarks.ts
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const BOOKMARKS_PAGE_SIZE = 5;
@@ -28,8 +27,7 @@ function mapRow(b: any): BookmarkedRecipe {
   };
 }
 
-// `created_at` then `id` is a total order, so range pagination can't
-// hand back overlapping pages when two bookmarks share a timestamp.
+/** Paginates by created_at then id so pages never overlap. */
 export async function fetchBookmarksPage(
   supabase: SupabaseClient,
   userId: string,

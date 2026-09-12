@@ -1,4 +1,3 @@
-// actions/like.ts
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
@@ -19,7 +18,6 @@ export async function toggleLike(
     return { liked: false, error: "not_authenticated" };
   }
 
-  // Check if the like already exists
   const { data: existing, error: selectError } = await supabase
     .from("recipe_likes")
     .select("id")
@@ -32,7 +30,6 @@ export async function toggleLike(
   }
 
   if (existing) {
-    // Unlike
     const { error: deleteError } = await supabase
       .from("recipe_likes")
       .delete()
@@ -46,15 +43,12 @@ export async function toggleLike(
     revalidatePath("/recipes/popular");
     return { liked: false };
   } else {
-    // Like
     const { error: insertError } = await supabase
       .from("recipe_likes")
       .insert({ user_id: user.id, recipe_id: recipeId });
 
     if (insertError) {
-      // Could be a unique violation if user double-clicked rapidly
       if (insertError.code === "23505") {
-        // Already liked, treat as success
         return { liked: true };
       }
       return { liked: false, error: "insert_failed" };

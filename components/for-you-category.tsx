@@ -51,10 +51,6 @@ export const ForYouCategory = () => {
     run();
   }, [isSubscriber]);
 
-  // No profile at all → locked, prompting them to build one. Profile but no
-  // active subscription → still locked, but the copy/icon differ since the
-  // blocker is now the paywall, not missing data. Profile + subscribed →
-  // the real recipes.
   const unlocked = hasProfile && isSubscriber;
 
   if (!ready) {

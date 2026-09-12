@@ -8,7 +8,6 @@ import { getDrinkTypeBadge, drinkTypeName } from "@/lib/drink-types";
 interface RecipeCardNewProps {
   id: string;
   title: string;
-  /** Drink-type slug (recipes.drink_type) — drives the badge. */
   drinkType?: string;
   imageUrl?: string;
   href?: string;
@@ -31,7 +30,6 @@ export function RecipeCardNew({
   return (
     <Link href={href} className="block group">
       <div className="space-y-3">
-        {/* Image + overlays */}
         <div className="relative w-full aspect-183/167 rounded-2xl overflow-hidden bg-grey-c500">
           {transformedUrl && (
             <Image
@@ -46,7 +44,6 @@ export function RecipeCardNew({
           )}
         </div>
 
-        {/* Meta */}
         <div className="px-0.5">
           {drinkType && (
             <div

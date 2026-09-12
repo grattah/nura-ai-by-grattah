@@ -28,12 +28,10 @@ export function QuickTipCard({
       >
         <CardContent className="p-0">
           <div className="flex items-center gap-3 px-4 py-3.5">
-            {/* Action Icon */}
             <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-white/30 backdrop-blur-sm">
               <ShieldCheck className="w-5 h-5 text-black/75" />
             </div>
 
-            {/* Text */}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold leading-tight text-black/75">
                 {title}

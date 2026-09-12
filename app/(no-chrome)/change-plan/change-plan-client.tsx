@@ -7,8 +7,6 @@ import { ArrowLeft, Check } from "lucide-react";
 import Link from "next/link";
 import FilledLock from "@/components/vectors/filled-lock";
 
-// Plans come from constants/index.ts — this file used to carry its own copy.
-
 const FEATURES = [
   {
     title: "Recipes matched to your health goals",
@@ -31,7 +29,6 @@ export function ChangePlanClient() {
 
   return (
     <div className="min-h-dvh pb-10">
-      {/* Header */}
       <div className="px-6 pb-4.75 bg-background mb-4.75">
         <div className="flex items-center pt-5 pb-10 relative">
           <button
@@ -57,7 +54,6 @@ export function ChangePlanClient() {
       </div>
 
       <div className="px-6 space-y-8">
-        {/* Plan options */}
         <div className="space-y-2 mt-12 mb-10">
           {PLANS.map((plan) => {
             const isSelected = selected === plan.id;
@@ -116,7 +112,6 @@ export function ChangePlanClient() {
           })}
         </div>
 
-        {/* Features */}
         <div className="bg-[#ECECE1] rounded-2xl py-4 px-3 space-y-4">
           {FEATURES.map((f) => (
             <div key={f.title} className="flex items-center gap-3">
@@ -137,7 +132,6 @@ export function ChangePlanClient() {
           ))}
         </div>
 
-        {/* Continue */}
         <div className="space-y-2.25 pt-2">
           <Link
             href={`/review-order?plan=${selected}`}

@@ -15,9 +15,8 @@ export default async function TokensPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return null; // guest → RouteAuthGuard sign-in overlay
+  if (!user) return null;
 
-  // Access + token state are independent — fetch them together.
   const [hasAccess, balances, { data: row }] = await Promise.all([
     hasActiveSubscription(supabase, user.id),
     getBalances(user.id),
@@ -39,9 +38,6 @@ export default async function TokensPage() {
     lastPurchaseAt: row?.last_purchase_at ?? null,
   });
 
-  // A lapsed subscriber still sees their purchased balance. Spec §7 freezes it
-  // rather than deleting it precisely because it is money already paid —
-  // hiding it would look identical to having destroyed it.
   const state = hasAccess || wallet.purchasedTokens > 0 ? wallet : null;
 
   return (

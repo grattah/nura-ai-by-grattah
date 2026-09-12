@@ -4,10 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { sendEmail } from "@/lib/email/send";
 import { passwordChangedEmail } from "@/lib/email/templates";
 
-/**
- * Best-effort confirmation email sent right after a successful password
- * reset, while the recovery session is still active.
- */
+/** Best-effort confirmation email after a password reset. */
 export async function sendPasswordChangedEmail(): Promise<void> {
   const supabase = await createClient();
   const {

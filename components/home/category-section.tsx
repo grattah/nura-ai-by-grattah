@@ -11,8 +11,6 @@ interface CategorySectionProps {
 }
 
 export function CategorySection({ categories }: CategorySectionProps) {
-  // Home is public — tiles just navigate; /categories/[slug] is protected and
-  // gates guests via RouteAuthGuard.
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">

@@ -39,7 +39,6 @@ export function computeRelativeRisk(input: GailModelInput): number {
     rr *= table[biopsyCount];
     if (biopsyCount > 0) rr *= RR_WHITE_HISPANIC.atypical[atypicalHyperplasia];
 
-    // Matrix Interaction
     const matrix = RR_WHITE_HISPANIC.birth_relatives[firstBirthAge];
     rr *= matrix[affectedRelatives];
   } else if (race === "black") {

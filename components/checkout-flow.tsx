@@ -22,7 +22,6 @@ export function CheckoutFlow({ plan }: CheckoutFlowProps) {
   const planInfo = PLAN_LABELS[plan];
   const per = PLANS.find((p) => p.id === plan)?.per ?? "/ year";
 
-  // Create the embedded Stripe session for the selected plan.
   useEffect(() => {
     let cancelled = false;
     fetchClientSecretForPlan(plan)
@@ -63,7 +62,6 @@ export function CheckoutFlow({ plan }: CheckoutFlowProps) {
       </div>
 
       <div className="px-6 space-y-4">
-        {/* Plan summary */}
         <div
           className="flex items-center justify-between px-4 py-3 rounded-2xl border"
           style={{
@@ -87,7 +85,6 @@ export function CheckoutFlow({ plan }: CheckoutFlowProps) {
           </div>
         </div>
 
-        {/* Stripe checkout */}
         {error ? (
           <p className="text-sm text-red-500 text-center">{error}</p>
         ) : !clientSecret ? (

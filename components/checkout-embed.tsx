@@ -13,11 +13,6 @@ interface CheckoutEmbedProps {
   clientSecret: string;
 }
 
-/**
- * Drop-in Stripe Embedded Checkout that receives an already-created
- * client_secret. Use this anywhere you've created the session server-side
- * before rendering (e.g. identity-first guest checkout, authenticated checkout).
- */
 export function CheckoutEmbed({ clientSecret }: CheckoutEmbedProps) {
   const fetchClientSecret = useCallback(
     () => Promise.resolve(clientSecret),

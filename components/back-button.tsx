@@ -19,9 +19,6 @@ function BackButton({ className, backPage }: BackButtonProps) {
       return;
     }
 
-    // Falls back to home when there's no real in-app history to return to
-    // (e.g. arriving via a shared link, or after the auth redirect — that
-    // round trip uses router.replace so it never lingers as a "back" target).
     backOrHome(router);
   };
 

@@ -52,7 +52,6 @@ function LogBackInContent() {
 
   return (
     <div className="min-h-dvh bg-background pb-10">
-      {/* Header */}
       <div className="flex items-center px-6 pt-5 pb-8 relative">
         <button
           onClick={() => router.back()}

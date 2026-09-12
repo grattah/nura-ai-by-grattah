@@ -17,7 +17,6 @@ async function findUserIdByEmail(
   admin: ReturnType<typeof createServiceRoleClient>,
   email: string,
 ): Promise<string | null> {
-  // No direct getByEmail; scan pages (admin user base is small).
   for (let page = 1; page <= 10; page++) {
     const { data } = await admin.auth.admin.listUsers({ page, perPage: 200 });
     const match = data?.users.find(
@@ -38,13 +37,6 @@ export async function inviteAdmin(
   if (!email?.trim()) return { error: "Email is required." };
   if (!isAssignable(role)) return { error: "Invalid role." };
 
-  // Admin access is one allowlisted address (lib/admin/allowlist.ts), so an
-  // invite to anyone else produces an account that can never sign in:
-  // getAdminIdentity rejects the address before it ever reads admin_members.
-  //
-  // Refusing here rather than letting it succeed. The alternative is a member
-  // row, a real invite email, and a person who follows it to a login that
-  // silently will not work — a support problem disguised as a working feature.
   if (!isAllowedAdminEmail(email)) {
     return {
       error:
@@ -59,7 +51,6 @@ export async function inviteAdmin(
     process.env.NEXT_PUBLIC_APP_URL ?? (await headers()).get("origin") ?? "";
   const redirectTo = `${base}/admin/accept`;
 
-  // Try to invite a brand-new user; fall back to an existing account.
   let userId: string | null = null;
   const { data, error } = await admin.auth.admin.inviteUserByEmail(cleanEmail, {
     redirectTo,
@@ -98,7 +89,6 @@ export async function changeRole(
   if (!isAssignable(role)) return { error: "Invalid role." };
 
   const admin = createServiceRoleClient();
-  // Never modify the owner.
   const { data: target } = await admin
     .from("admin_members" as never)
     .select("role")

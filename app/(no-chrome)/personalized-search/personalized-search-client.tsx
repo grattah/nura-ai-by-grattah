@@ -38,8 +38,6 @@ interface PersonalizedSearchClientProps {
   genError?: boolean;
 }
 
-// The search is generated on the server (fresh every time, no caching) and
-// passed in as `result`. This component just renders the outcome.
 export function PersonalizedSearchClient({
   query,
   serverBlocked,
@@ -56,21 +54,16 @@ export function PersonalizedSearchClient({
     null,
   );
 
-  // Empty query (direct hit) → home.
   useEffect(() => {
     if (isAuthenticated && !query) router.replace("/");
   }, [isAuthenticated, query, router]);
 
-  // Subscriber out of tokens → surface the top-up wall.
   useEffect(() => {
     if (!outOfTokens) return;
     if (outOfTokens) void refreshCredits();
     openTokenWall();
   }, [outOfTokens, refreshCredits, openTokenWall]);
 
-  // Report this search's outcome once per fresh server render (a new query
-  // fully remounts this component with new props), mirroring the
-  // workflow_started fired when the search was kicked off.
   useEffect(() => {
     if (!query) return;
     if (serverBlocked) {
@@ -105,8 +98,6 @@ export function PersonalizedSearchClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Guests: RouteAuthGuard overlays the sign-in modal; show the (blurred)
-  // result placeholder behind it rather than a blank screen.
   if (!accessLoading && !isAuthenticated) return <PersonalizedSearchSkeleton />;
 
   if (serverBlocked) {

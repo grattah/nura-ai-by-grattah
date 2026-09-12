@@ -1,17 +1,3 @@
-// Recipe Match Score (PRD: Recipe Match Score). Deterministic, no LLM.
-//
-// Produces one credit (0..1) per disclosed condition and selected goal, then the
-// three values the PRD's display spec (§7) needs:
-//   • highest   — the single best credit + the label of what produced it (§7.1,
-//                 the PRIMARY display: averaging penalises users for selecting
-//                 more goals, so the headline must be the best match, not the mean)
-//   • breakdown — every credit, sorted best-first (§7.2)
-//   • average   — the mean (§7.3); MAY be shown, but never as the headline
-//
-// All callers (recipe detail page + the batch endpoint behind listings/search)
-// go through this one function, which is what satisfies §7.4's requirement that
-// a recipe never shows one percentage on a listing and a different one on detail.
-
 import { bioFromSlugScores } from "./bioactivity-map";
 import { CONDITIONS, GOALS, labelFor } from "@/lib/health-profile/options";
 import {
@@ -25,43 +11,35 @@ import {
 } from "./match-metrics";
 
 export interface MatchScoreInput {
-  bioBySlug: Record<string, number>; // recipe_tags: slug → score (0..100)
-  points: NutrientPoints; // recipe's stored BNS point fields
-  track: string; // "Beverage" | "Solid Food" (sets maxSugar)
+  bioBySlug: Record<string, number>;
+  points: NutrientPoints;
+  track: string;
   ironRich: boolean;
-  waterContentPercent: number; // 0..1
-  // PRD v2 bonus inputs (§2.3), per serving. Default to 0/false so a recipe not
-  // yet re-scored simply misses its bonuses rather than throwing.
+  waterContentPercent: number;
   probiotic?: boolean;
   vitaminCDV?: number;
   sodiumMg?: number;
   potassiumMg?: number;
-  conditions: string[]; // app health-profile condition keys
-  goals: string[]; // app health-profile goal keys
+  conditions: string[];
+  goals: string[];
 }
 
 export interface MatchCredit {
-  key: string; // app health-profile key, e.g. "diabetes"
+  key: string;
   kind: "condition" | "goal";
-  prd: string; // PRD formula name, e.g. "Diabetes"
-  label: string; // display label the user actually picked, e.g. "Body detox"
-  credit: number; // 0..1
-  percent: number; // credit × 100 (unrounded — round at the display edge)
+  prd: string;
+  label: string;
+  credit: number;
+  percent: number;
 }
 
 export interface MatchScoreResult {
-  /** §7.1 primary display: best credit + its source. Null when nothing matched. */
   highest: MatchCredit | null;
-  /** §7.2 every credit, sorted best-first. */
   breakdown: MatchCredit[];
-  /** §7.3 mean of all credits as a percentage. Never the headline. */
   average: number | null;
   creditCount: number;
 }
 
-// Display label for a selection. Prefer what the picker shows (options.ts) over
-// the PRD formula name — they differ for `detox` ("Body detox" vs "Support my
-// body's detox"). Legacy keys no longer in the picker fall back to the PRD name.
 function labelForSelection(
   key: string,
   kind: "condition" | "goal",
@@ -85,20 +63,8 @@ export function computeMatchScore(input: MatchScoreInput): MatchScoreResult {
     potassiumMg: input.potassiumMg ?? 0,
   };
 
-  // Built conditions-first, each in the user's selection order — this ordering IS
-  // the PRD's tie-break rule (condition beats goal; earlier selection beats later).
   const credits: MatchCredit[] = [];
 
-  // One credit per selection, exactly as §6 describes:
-  //
-  //   "÷ (number of disclosed conditions + number of selected goals)"
-  //
-  // There is no de-duplication here any more, and none is needed: the key maps
-  // in match-metrics.ts are now 1:1 with the PRD's formulas, so two selections
-  // can never resolve to the same one. That is asserted structurally in
-  // test/match-score-coverage.test.ts rather than defended at runtime — the
-  // previous dedupe existed only because alias keys (type-2-diabetes, beauty,
-  // clear-skin …) pointed several selections at one formula, and those are gone.
   const push = (
     key: string,
     kind: "condition" | "goal",
@@ -130,9 +96,6 @@ export function computeMatchScore(input: MatchScoreInput): MatchScoreResult {
     return { highest: null, breakdown: [], average: null, creditCount: 0 };
   }
 
-  // Array.prototype.sort is stable, so equal credits keep the insertion order
-  // above — meaning breakdown[0] already satisfies §7.1's tie-breaking and no
-  // separate max pass is needed.
   const breakdown = [...credits].sort((a, b) => b.credit - a.credit);
   const average =
     (credits.reduce((a, b) => a + b.credit, 0) / credits.length) * 100;

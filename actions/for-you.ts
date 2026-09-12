@@ -1,25 +1,9 @@
-// actions/for-you.ts
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
 import { computeMatchScore } from "@/lib/scoring/match-score";
 
-/**
- * The "For you" list: recipes ranked for one user's own profile.
- *
- * Shows the AVERAGE match across every selection, not the highest. The recipe
- * page shows the highest (PRD §8 — "Highest Match (primary display) — never the
- * average"), because there the user is looking at one recipe and wants to know
- * the best reason to drink it. A ranked list is the opposite question: which
- * recipe serves the most of what I asked for. Ranking on the highest credit
- * would put a recipe that nails one goal and ignores the other two above one
- * that serves all three.
- *
- * REVERTED to the bioactivity Match Score alongside the 12-goal picker. The
- * formula changed; the choice of number did not — average, not highest, for the
- * reason above. computeMatchScore is pure and synchronous, so the whole library
- * is scored from a single query with no per-recipe round trip.
- */
+/** Recipes ranked by the user's average match score. */
 export async function getTopMatches(limit: number) {
   const supabase = await createClient();
   const {
@@ -33,7 +17,6 @@ export async function getTopMatches(limit: number) {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  // No goals AND no conditions → nothing to match against.
   if (!profile || (!profile.goals?.length && !profile.conditions?.length)) {
     return { recipes: [] };
   }
@@ -78,13 +61,9 @@ export async function getTopMatches(limit: number) {
       });
       return {
         recipe: r,
-        // The displayed and sorted number are the SAME value — a list sorted by
-        // one number while showing another is impossible for a user to read.
         score: match.average ?? 0,
       };
     })
-    // A zero average means the recipe serves none of the user's selections;
-    // "For you" is a recommendation surface, so it earns no place there.
     .filter((x) => x.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);

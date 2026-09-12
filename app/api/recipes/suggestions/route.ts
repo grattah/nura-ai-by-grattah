@@ -31,9 +31,6 @@ const SuggestionsSchema = z.object({
 
 type Suggestions = z.infer<typeof SuggestionsSchema>;
 
-// Cache results per search query so repeated/popular searches don't burn
-// tokens on a fresh Claude call every time. Lives for the lifetime of the
-// server instance.
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const suggestionsCache = new Map<
   string,
@@ -51,7 +48,6 @@ function getCachedSuggestions(key: string): Suggestions | null {
 }
 
 export async function POST(req: NextRequest) {
-  // Curb LLM cost-abuse (audit M1): 20 generations / minute / IP.
   const { success } = await rateLimit(
     `recipe-suggestions:${getClientIp(req.headers)}`,
     20,
@@ -61,14 +57,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Too many requests." }, { status: 429 });
   }
 
-  // Global daily budget (audit S1): the per-IP limit is bypassable by rotating
-  // IPs, so cap the endpoint's total LLM spend as a circuit breaker. 500 fresh
-  // generations/day is far above organic guest traffic; cached hits don't count
-  // (checked before the budget below).
-
-  // Access model: same as the other gated LLM surfaces — subscribers use the
-  // token system; new (never-subscribed) users get FREE_USES_PER_SURFACE free
-  // suggestion calls; lapsed subscribers are blocked; guests must sign in.
   const supabase = await createClient();
   const {
     data: { user },
@@ -107,8 +95,6 @@ export async function POST(req: NextRequest) {
   const normalizedQuery = query.trim().toLowerCase();
 
   if (!activeSub) {
-    // New user in free trial — count this distinct query up front (deduped by
-    // normalized query), so a cache hit below still consumes a use.
     const allowed = await tryConsumeFreeView(user.id, SURFACE, normalizedQuery);
     if (!allowed) {
       return NextResponse.json(
@@ -123,7 +109,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(cached);
   }
 
-  // Global daily budget — only fresh (uncached) LLM generations count.
   const budget = await rateLimit("recipe-suggestions:global", 500, 86_400_000);
   if (!budget.success) {
     return NextResponse.json(
@@ -135,9 +120,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Spec §2 — a suggestion costs 1 unit. Reserved only at this point: the
-  // cache hit above returns without doing any work, and charging for it would
-  // bill the user for someone else's generation.
   let reservation: Awaited<ReturnType<typeof reserve>> = null;
   if (activeSub) {
     reservation = await reserve(user.id, "suggestion");
@@ -191,8 +173,6 @@ Duplicates
       surface: "suggestions",
       billed: !!reservation,
       units: reservation?.costUnits,
-      // Always attributed, billed or not — without this the row lands with a
-      // NULL user_id and the spend can't be traced to anyone.
       userId: user.id,
       ...usageTokens(usage),
     });

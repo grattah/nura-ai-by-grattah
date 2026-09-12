@@ -11,13 +11,7 @@ import {
 
 export const maxDuration = 60;
 
-/**
- * Scores a recipe's bioactivities + categories + base nutrition, triggered by
- * the detail page on first view of an unscored recipe — the deferred completion
- * of a find-recipe generation (which no longer scores inline). Mirrors the lazy
- * hero-image route: awaited request (reliable on serverless), owner-or-admin
- * only, and the two sonnet passes are metered to the recipe's owner.
- */
+/** Scores an unscored recipe on first view. */
 export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -32,8 +26,6 @@ export async function POST(
   }
 
   const admin = createServiceRoleClient();
-  // `recipes` is cast to `never` so the select can reference BNS-v2 columns not
-  // yet in the (prod-generated) types; the row is re-typed below.
   const { data: recipeRaw } = await admin
     .from("recipes" as never)
     .select(
@@ -59,23 +51,18 @@ export async function POST(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  // What still needs doing. Nutrition is deterministic (USDA-derived) and re-runs
-  // whenever the v2 headline score is missing.
   const needsBio = (recipe.recipe_tags?.length ?? 0) === 0;
   const needsNut = recipe.final_score_10 == null;
   if (!needsBio && !needsNut) {
     return NextResponse.json({ scored: true });
   }
 
-  // Only the recipe's creator or an admin may trigger scoring (and be charged).
   const isOwner = recipe.created_by === user.id;
   const isAdmin = isOwner ? false : !!(await getAdminIdentity());
   if (!isOwner && !isAdmin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Run only the passes that are needed. Settle independently so one failing
-  // doesn't discard the other's result.
   const [bioRes, nutRes] = await Promise.allSettled([
     needsBio ? scoreBioactivities(recipe) : Promise.resolve(null),
     needsNut ? scoreNutritionFromDb(admin, recipe) : Promise.resolve(null),
@@ -89,8 +76,6 @@ export async function POST(
         bioRes.value.scoresBySlug,
       );
       if (isOwner) {
-        // Unbilled under the new spec: scoring is the deferred completion of a
-        // generation that already paid its flat 3 units.
         void recordUsage({
           provider: "anthropic",
           model: "claude-haiku-4-5",
@@ -100,9 +85,6 @@ export async function POST(
           totalTokens: bioRes.value.totalTokens,
         });
       } else {
-        // Admin-triggered: not charged to anyone, but the LLM call still cost
-        // real money. This used to record nothing at all, so admin scoring was
-        // invisible in token_usage. Log it unbilled, attributed to the admin.
         void recordUsage({
           provider: "anthropic",
           model: "claude-haiku-4-5",
@@ -117,7 +99,6 @@ export async function POST(
     }
 
     if (nutRes.status === "fulfilled" && nutRes.value) {
-      // Deterministic (USDA-derived) — no LLM, no metering.
       await writeNutritionV2(admin, recipe.id, nutRes.value.patch);
     } else if (nutRes.status === "rejected") {
       console.error("[recipes/score] nutrition", nutRes.reason);

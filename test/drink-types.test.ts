@@ -20,18 +20,14 @@ describe("classifyDrinkType", () => {
     expect(classifyDrinkType("Mango Lassi")).toBe("lassis");
     expect(classifyDrinkType("Cucumber Mint Cooler")).toBe("coolers");
     expect(classifyDrinkType("Raspberry Sorbet")).toBe("sorbets");
-    // The two real recipes this reclassifies out of the 'drinks' catch-all.
     expect(classifyDrinkType("Homemade Vanilla Oat Milk")).toBe("milks");
     expect(classifyDrinkType("Mung Bean Milk")).toBe("milks");
   });
 
   it("classifies spoonable items as bowls, not drinks", () => {
-    // Both were sitting in the 'drinks' catch-all; the BNS already tracks the
-    // acai bowl as Solid Food, so 'drinks' was plainly wrong.
     expect(classifyDrinkType("Acai Coconut Berry Bowl")).toBe("bowls");
     expect(classifyDrinkType("Greek Yogurt with Chia Seeds")).toBe("bowls");
     expect(classifyDrinkType("Berry Chia Pudding")).toBe("bowls");
-    // …but a thick oat smoothie is still a smoothie.
     expect(classifyDrinkType("Apple Banana Oats Smoothie")).toBe("smoothies");
     expect(classifyDrinkType("Avocado Oats Dates Smoothie")).toBe("smoothies");
   });
@@ -42,18 +38,16 @@ describe("classifyDrinkType", () => {
   });
 
   it("respects priority when a title matches several keywords", () => {
-    // `milk` is common in titles that are really something else, so it loses.
     expect(classifyDrinkType("Almond Milk Smoothie")).toBe("smoothies");
     expect(classifyDrinkType("Banana Milkshake")).toBe("shakes");
     expect(classifyDrinkType("Golden Milk Tea")).toBe("teas");
-    // …but wins when nothing more specific is present.
     expect(classifyDrinkType("Golden Milk")).toBe("milks");
   });
 
   it("every classifiable slug has a display name", () => {
     for (const t of DRINK_TYPES) {
       expect(drinkTypeName(t.slug)).toBe(t.name);
-      expect(t.name).not.toMatch(/s$/); // singular labels, per the design
+      expect(t.name).not.toMatch(/s$/);
     }
   });
 });

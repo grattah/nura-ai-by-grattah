@@ -42,7 +42,6 @@ export function RecipePaywallGate({ surface }: { surface?: string }) {
         }
       })
       .catch(() => {
-        // Network hiccup — keep the pill hidden rather than show it wrongly.
       });
     return () => {
       active = false;

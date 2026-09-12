@@ -7,15 +7,7 @@ import { PaywallModal } from "@/components/paywall/paywall-modal";
 import { backOrHome } from "@/lib/navigation";
 import { ANALYTICS_EVENTS, RESTRICTION_TYPES } from "@/lib/analytics/events";
 
-/**
- * A free user who has spent every free trial lands on the membership page with
- * the "Get Nuko+" paywall already open over it — the page stays visible behind
- * so they can see what they're upgrading to. Dismissing returns them to wherever
- * they came from (the account page in the usual flow), falling back to home when
- * there's no in-app history.
- *
- * Mirrors HealthProfilePaywallGate; the modal itself is the shared PaywallModal.
- */
+/** Opens the paywall for free users who have used every trial. */
 export function FreeTrialExhaustedGate({
   exhausted,
   children,

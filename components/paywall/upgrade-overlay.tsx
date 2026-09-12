@@ -4,7 +4,6 @@ import { PersonalizedSearchSkeleton } from "@/components/paywall/personalized-se
 import { FilledLock2 } from "../vectors/filled-lock";
 
 interface UpgradeOverlayProps {
-  /** Opens the Get Nuko+ modal when the lock is tapped. */
   onUpgrade: () => void;
 }
 
@@ -13,7 +12,6 @@ export function UpgradeOverlay({ onUpgrade }: UpgradeOverlayProps) {
     <div className="relative min-h-dvh bg-background overflow-hidden">
       <PersonalizedSearchSkeleton />
 
-      {/* Lock overlay — tapping opens the Get Nuko+ modal. */}
       <button
         type="button"
         onClick={onUpgrade}

@@ -38,7 +38,6 @@ export default function HealthProfilePage() {
   return exists ? <PopulatedView /> : <Intro />;
 }
 
-// ── Intro (no profile yet) ──────────────────────────────────────────────────
 function Intro() {
   const { startOnboarding } = useHealthProfile();
 
@@ -116,7 +115,6 @@ function Intro() {
   );
 }
 
-// ── Populated view (profile exists) ─────────────────────────────────────────
 function PopulatedView() {
   const {
     draft,
@@ -188,14 +186,6 @@ function PopulatedView() {
       title: "Medications & Supplements",
       values: summarizeMedications(draft),
     },
-    // {
-    //   step: "dietary",
-    //   section: "dietary",
-    //   icon: <Leaf className="size-5 text-[#0D9488]" strokeWidth={2} />,
-    //   iconBg: "#0D94881A",
-    //   title: "Dietary Pattern",
-    //   values: summarizeDietary(draft),
-    // },
   ];
 
   return (

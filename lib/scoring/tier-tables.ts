@@ -1,33 +1,3 @@
-// ⚠️ DORMANT — superseded by Category Score PRD-1.
-//
-// This file implements PRD-3 / v7 ingredient-tier scoring. Category Score now
-// runs on the bioactivity method in lib/bioactivity-categories.ts, and Recipe
-// Match Score runs on lib/scoring/match-score.ts (PRD-2). Nothing under app/,
-// lib/, actions/ or components/ imports this module.
-//
-// Why it was retired: a tier table of 3-4 rows worth 100/20/10 can only emit
-// 6-20 distinct scores per category, so 98 Weight Loss recipes all displayed
-// exactly 46% and Detox showed 7 qualifying recipes out of 512. PRD-1's
-// relevance-weighted average is continuous; the same library now spreads across
-// 46-78 distinct scores per category and Detox qualifies 269.
-//
-// Kept, not deleted, so the approach can be revived. Its tests stay green.
-
-// Calibration tables, transcribed verbatim from the PRDs.
-//
-//   Category Score PRD §6   — 14 categories
-//   Recipe Match Score §5   — 3 conditions
-//   Recipe Match Score §6   — 24 goals
-//
-// These are the source of truth for MaxPossible (PRD §4 Step 2), so editing a
-// row changes every score in that table. Both PRDs call them "starting
-// calibration examples, not exhaustive" and note that §9/§10 still want a
-// nutritionist review pass — treat them as calibrated, not final.
-//
-// `key` is the app's own slug (category slug, condition key, or goal key from
-// lib/health-profile/options.ts) so a user selection resolves without a second
-// mapping layer. `label` is the PRD's own name, used for display and citations.
-
 import type { CalibrationTable } from "./tier-score";
 
 const t = (
@@ -41,8 +11,6 @@ const t = (
   entries: entries.map(([ingredient, tier]) => ({ ingredient, tier })),
   penalties: penalties.map(([ingredient, type]) => ({ ingredient, type })),
 });
-
-// ── Category Score PRD §6 — the 14 general categories ───────────────────────
 
 export const CATEGORY_TABLES: CalibrationTable[] = [
   t("energy", "Energy", [
@@ -139,8 +107,6 @@ export const CATEGORY_TABLES: CalibrationTable[] = [
   ], [["Sodium", "flat"], ["Saturated fat", "flat"]]),
 ];
 
-// ── Match Score PRD §5 — the 3 existing conditions ──────────────────────────
-
 export const CONDITION_TABLES: CalibrationTable[] = [
   t("pcos", "PCOS", [
     ["Cinnamon", "primary"],
@@ -160,9 +126,6 @@ export const CONDITION_TABLES: CalibrationTable[] = [
     ["Vitamin K", "secondary"],
   ]),
 ];
-
-// ── Match Score PRD §6 — the 24 health goals ────────────────────────────────
-// Keys match lib/health-profile/options.ts so a selection resolves directly.
 
 export const GOAL_TABLES: CalibrationTable[] = [
   t("fat-metabolism", "Support fat metabolism", [
@@ -259,7 +222,6 @@ export const GOAL_TABLES: CalibrationTable[] = [
     ["Vitamin C", "secondary"],
   ], [["Calcium / dairy (if combined)", "flat"], ["Tannins (black tea)", "flat"]]),
 
-  // The ONLY multiplier table in either PRD (Category §4, Match §4 Step 4).
   t("clear-skin", "Clear my skin", [
     ["Zinc", "primary"],
     ["Vitamin A precursors (carrot, sweet potato)", "primary"],
@@ -314,21 +276,9 @@ export const CONDITION_TABLE_BY_KEY = byKey(CONDITION_TABLES);
 export const GOAL_TABLE_BY_KEY = byKey(GOAL_TABLES);
 
 
-/**
- * v7 table key → the category slug stored in the database, where they differ.
- *
- * `heart-health` is the PRD's name for the table; the `categories` row has
- * always been `heart`, and it is a public URL (/categories/heart), so the slug
- * stays and the key is mapped. Any key not listed here IS its slug.
- *
- * Exported so the recompute script and its test read the same mapping — when
- * this lived in the script alone, a key that failed to resolve was skipped in
- * silence and left a whole category on stale scores.
- */
 export const CATEGORY_SLUG_OVERRIDES: Record<string, string> = {
   "heart-health": "heart",
 };
 
-/** The database slug for a category table key. */
 export const categorySlugFor = (key: string): string =>
   CATEGORY_SLUG_OVERRIDES[key] ?? key;

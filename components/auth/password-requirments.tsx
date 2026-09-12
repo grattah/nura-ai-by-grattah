@@ -12,8 +12,6 @@ const satoshi = localFont({
   display: "swap",
 });
 
-// The rules live in lib/password-policy.ts so this component and the server
-// action behind /account cannot drift apart. Only the presentation is local.
 export type { PasswordStrength } from "@/lib/password-policy";
 export {
   checkPasswordStrength,

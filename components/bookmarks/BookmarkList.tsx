@@ -1,4 +1,3 @@
-// components/bookmarks-list.tsx
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -29,7 +28,6 @@ export function BookmarksList({
   initialBookmarks: BookmarkedRecipe[];
 }) {
   const supabase = useMemo(() => createClient(), []);
-  // Resolved from the session on first paginate, then reused.
   const userIdRef = useRef<string | null>(null);
 
   const [bookmarks, setBookmarks] = useState(initialBookmarks);
@@ -39,7 +37,7 @@ export function BookmarksList({
     initialBookmarks.length < BOOKMARKS_PAGE_SIZE,
   );
 
-  const pageRef = useRef(0); // page 0 came from the server
+  const pageRef = useRef(0);
   const hasMoreRef = useRef(initialBookmarks.length === BOOKMARKS_PAGE_SIZE);
   const fetchingRef = useRef(false);
   const loadMoreErrorRef = useRef(false);
@@ -124,7 +122,6 @@ export function BookmarksList({
     [loadMore],
   );
 
-  // Cancel any in-flight request and detach the observer on unmount.
   useEffect(() => {
     return () => {
       controllerRef.current?.abort();

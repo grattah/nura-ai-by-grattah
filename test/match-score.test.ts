@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import { computeMatchScore } from "@/lib/scoring/match-score";
 import { BIOACTIVITY_SLUG } from "@/lib/scoring/bioactivity-map";
 
-// Build a slug→score map from PRD-abbreviation scores (PRD §6 worked example).
 function bySlug(abbrevScores: Record<string, number>): Record<string, number> {
   const out: Record<string, number> = {};
   for (const [abbr, score] of Object.entries(abbrevScores)) {
@@ -11,17 +10,14 @@ function bySlug(abbrevScores: Record<string, number>): Record<string, number> {
   return out;
 }
 
-// ── §8 Worked Examples (the PRD's own acceptance criteria) ──────────────────
 describe("Recipe Match Score — PRD §8 worked examples", () => {
   const NONE = { sugar: 0, salt: 0, satFat: 0, energy: 0, protein: 0, fiber: 0 };
 
   it("§8.1 condition — Diabetes → 66.9%", () => {
-    // BioSubtotal = (74×95 + 24×65) ÷ 160 = 53.7
-    // Credit = (0.537 + (1 − 2÷10)) ÷ 2 = 0.669
     const r = computeMatchScore({
       bioBySlug: bySlug({ BloodSugar: 74, WeightMetabolic: 24 }),
       points: { ...NONE, sugar: 2 },
-      track: "Beverage", // maxSugar = 10
+      track: "Beverage",
       ironRich: false,
       waterContentPercent: 0,
       conditions: ["diabetes"],
@@ -31,8 +27,6 @@ describe("Recipe Match Score — PRD §8 worked examples", () => {
   });
 
   it("§8.2 goal WITH bonus — gut health → 75.1% on probiotic alone", () => {
-    // BioSubtotal 60.1; fiberPoints 0 fails, probioticFlag passes → +0.15.
-    // Under the old averaging model the zero fiber HALVED this to ~30%.
     const r = computeMatchScore({
       bioBySlug: bySlug({ Gut: 65, Microbiome: 55 }),
       points: NONE,
@@ -76,7 +70,6 @@ describe("Recipe Match Score — PRD §8 worked examples", () => {
     });
     expect(r.creditCount).toBe(3);
     expect(r.average).toBeCloseTo(60.2, 0);
-    // §7.1: the headline is the BEST credit, and it names its source.
     expect(r.highest?.percent).toBeCloseTo(75.1, 1);
     expect(r.highest?.key).toBe("gut-health");
   });
@@ -93,12 +86,10 @@ describe("Recipe Match Score — PRD §8 worked examples", () => {
     };
     const without = computeMatchScore(strong).highest!.credit;
     const with_ = computeMatchScore({ ...strong, probiotic: true }).highest!.credit;
-    expect(with_).toBeGreaterThan(without); // only ever adds
-    expect(with_).toBeLessThanOrEqual(1); // min(1, …)
+    expect(with_).toBeGreaterThan(without);
+    expect(with_).toBeLessThanOrEqual(1);
   });
 
-  // §9: "Gout has no defined credit formula and should not be included in the
-  // credit average if disclosed, until a metric is defined for it."
   it("§9: gout is excluded, not borrowed from Arthritis", () => {
     const r = computeMatchScore({
       bioBySlug: bySlug({ Inflammation: 90, PainComfort: 90, BoneJoint: 90, Antioxidant: 90 }),
@@ -116,8 +107,6 @@ describe("Recipe Match Score — PRD §8 worked examples", () => {
 
 describe("Recipe Match Score — structural cases", () => {
   it("Almond Maca Shake, Diabetes+HBP, 4 goals", () => {
-    // PRD §6 Step 1. Kidney/CholLipid/Inflammation are needed by the rewritten
-    // weighted condition formulas (the old single-bioactivity ones never read them).
     const bioBySlug = bySlug({
       BloodSugar: 20, Heart: 22, Hormonal: 52, StressResilience: 48, Mood: 42,
       BrainCognitive: 30, SleepRelaxation: 14, WeightMetabolic: 24, CellWellness: 30,
@@ -126,7 +115,7 @@ describe("Recipe Match Score — structural cases", () => {
     const r = computeMatchScore({
       bioBySlug,
       points: { sugar: 0, salt: 0, satFat: 0, energy: 8, protein: 2, fiber: 0 },
-      track: "Beverage", // maxSugar = 10
+      track: "Beverage",
       ironRich: false,
       waterContentPercent: 0,
       conditions: ["diabetes", "high-blood-pressure"],
@@ -134,23 +123,14 @@ describe("Recipe Match Score — structural cases", () => {
     });
 
     const byKey = Object.fromEntries(r.breakdown.map((b) => [b.key, b.credit]));
-    // §6 Step 3: BioSubtotal (20×95 + 24×65)/160 = 21.6 → (0.216 + 1)/2
     expect(byKey["diabetes"]).toBeCloseTo(0.608, 3);
-    // (22×95 + 18×60 + 20×55 + 25×50)/260 = 21.2 → (0.212 + 1)/2
     expect(byKey["high-blood-pressure"]).toBeCloseTo(0.606, 3);
-    // Goal weights are unchanged, but `energy` moved to the bonus model: its
-    // BioSubtotal is 27.5 and neither arm fires (protein 2/7 = 0.29, no iron), so
-    // the credit is 0.275. It was 0.454 when proteinPoints and energyPoints were
-    // AVERAGED IN — and that old model counted energyPoints as a POSITIVE, so a
-    // calorie-dense recipe scored better for "have more energy".
     expect(byKey["energy"]).toBeCloseTo(0.275, 2);
     expect(byKey["hormones"]).toBeCloseTo(0.48, 2);
     expect(byKey["focus"]).toBeCloseTo(0.335, 2);
     expect(byKey["sleep"]).toBeCloseTo(0.314, 2);
     expect(r.creditCount).toBe(6);
-    // 2.618 / 6 × 100 (was 46.6% under the averaging model).
     expect(r.average).toBeCloseTo(43.6, 1);
-    // §7.1: the headline is the BEST credit, not the average — Diabetes at 60.8%.
     expect(r.highest?.key).toBe("diabetes");
     expect(r.highest?.label).toBe("Diabetes");
     expect(r.highest?.percent).toBeCloseTo(60.8, 1);
@@ -174,12 +154,10 @@ describe("Recipe Match Score — structural cases", () => {
       conditions: ["osteoporosis", "thyroid-condition", "celiac-disease"],
       goals: [],
     });
-    // Only osteoporosis: (80×95 + 60×55)/150 = 72.67
     expect(r.creditCount).toBe(1);
     expect(r.average).toBeCloseTo(72.67, 1);
   });
 
-  // §4: conditions now use relevance-weighted subtotals, not a single bioactivity.
   it("weights each condition's qualifying bioactivities", () => {
     const ctx = {
       points: { sugar: 0, salt: 0, satFat: 0, energy: 0, protein: 0, fiber: 0 },
@@ -188,7 +166,6 @@ describe("Recipe Match Score — structural cases", () => {
       waterContentPercent: 0,
       goals: [],
     };
-    // Diabetes: (60×95 + 40×65)/160 = 51.875 → (0.51875 + 1)/2
     expect(
       computeMatchScore({
         ...ctx,
@@ -196,7 +173,6 @@ describe("Recipe Match Score — structural cases", () => {
         conditions: ["diabetes"],
       }).average,
     ).toBeCloseTo(75.94, 1);
-    // Arthritis: (60×95 + 40×80 + 20×65 + 80×50)/290 = 48.97
     expect(
       computeMatchScore({
         ...ctx,
@@ -204,7 +180,6 @@ describe("Recipe Match Score — structural cases", () => {
         conditions: ["arthritis"],
       }).average,
     ).toBeCloseTo(48.97, 1);
-    // Digestive Sensitivities: (80×95 + 60×85 + 40×55)/235 = 63.40
     expect(
       computeMatchScore({
         ...ctx,
@@ -215,11 +190,6 @@ describe("Recipe Match Score — structural cases", () => {
   });
 
   it("ignores a key the PRD does not define", () => {
-    // REVERSED. `ibs` used to alias Digestive Sensitivities so pre-consolidation
-    // profiles kept scoring. The maps now mirror the PRD exactly, and profiles
-    // holding a retired key are being reset rather than translated
-    // (scripts/reset-profile-selections.ts), so an unknown key contributes
-    // nothing — and, with nothing else selected, there is no score to show (§9).
     const r = computeMatchScore({
       bioBySlug: bySlug({ Gut: 80, Microbiome: 60, Inflammation: 40 }),
       points: { sugar: 0, salt: 0, satFat: 0, energy: 0, protein: 0, fiber: 0 },
@@ -229,7 +199,6 @@ describe("Recipe Match Score — structural cases", () => {
     expect(r.creditCount).toBe(0);
     expect(r.highest).toBeNull();
 
-    // The canonical key still scores, and to the same number the alias did.
     const canonical = computeMatchScore({
       bioBySlug: bySlug({ Gut: 80, Microbiome: 60, Inflammation: 40 }),
       points: { sugar: 0, salt: 0, satFat: 0, energy: 0, protein: 0, fiber: 0 },
@@ -247,16 +216,12 @@ describe("Recipe Match Score — structural cases", () => {
       track: "Solid Food" as const, waterContentPercent: 0,
       conditions: ["anemia"], goals: [],
     };
-    // (0.40 + 1)/2 = 0.70   |   (0.40 + 0)/2 = 0.20
     expect(computeMatchScore({ ...base, ironRich: true }).average).toBeCloseTo(70, 5);
     expect(computeMatchScore({ ...base, ironRich: false }).average).toBeCloseTo(20, 5);
   });
 });
 
-// ── §7 Display Specification ────────────────────────────────────────────────
 describe("Recipe Match Score — display spec (§7)", () => {
-  // With every bioactivity equal, all pure-BioSubtotal formulas return the same
-  // credit — which is exactly what's needed to exercise the tie-break rules.
   const allBio = (v: number) =>
     Object.fromEntries(Object.values(BIOACTIVITY_SLUG).map((slug) => [slug, v]));
   const flat = {
@@ -269,7 +234,7 @@ describe("Recipe Match Score — display spec (§7)", () => {
 
   it("§7.1 ties: a condition outranks a goal", () => {
     const r = computeMatchScore({ ...flat, conditions: ["arthritis"], goals: ["hormones"] });
-    expect(r.breakdown[0].credit).toBeCloseTo(r.breakdown[1].credit, 10); // genuinely tied
+    expect(r.breakdown[0].credit).toBeCloseTo(r.breakdown[1].credit, 10);
     expect(r.highest?.kind).toBe("condition");
     expect(r.highest?.key).toBe("arthritis");
   });
@@ -301,10 +266,6 @@ describe("Recipe Match Score — display spec (§7)", () => {
   });
 
   it("labels come from the picker, not the PRD formula name", () => {
-    // `detox` is labelled "Body detox" in the picker but scores through the
-    // PRD's "Support my body's detox" — the user must see the wording they
-    // actually selected. Back in the picker after the revert, so it exercises
-    // the divergence again rather than the fallback.
     const r = computeMatchScore({
       ...flat,
       conditions: [],
@@ -313,8 +274,6 @@ describe("Recipe Match Score — display spec (§7)", () => {
     expect(r.highest?.prd).toBe("Support my body's detox");
     expect(r.highest?.label).toBe("Body detox");
 
-    // A key that IS in the picker shows the picker's wording; one that resolves
-    // but is not offered falls back to the PRD name.
     const listed = computeMatchScore({
       ...flat,
       conditions: ["digestive-sensitivities"],
@@ -322,8 +281,6 @@ describe("Recipe Match Score — display spec (§7)", () => {
     });
     expect(listed.highest?.label).toBe("Digestive Sensitivities");
 
-    // `hydration` resolves ("Drink more water", §5.1) but is not in the picker,
-    // so it takes the PRD-name fallback rather than showing a raw slug.
     const unlisted = computeMatchScore({
       ...flat,
       conditions: [],
@@ -334,10 +291,6 @@ describe("Recipe Match Score — display spec (§7)", () => {
   });
 });
 
-// ── Alias de-duplication ────────────────────────────────────────────────────
-// Several keys alias to one PRD formula. A prod profile holding
-// {gout, gerd, type-2-diabetes, prediabetes, heart-disease, type-1-diabetes}
-// rendered "Diabetes 53%" three times AND divided the average by 6 instead of 4.
 describe("Recipe Match Score — §6 denominator", () => {
   const flat = {
     bioBySlug: bySlug({
@@ -351,11 +304,6 @@ describe("Recipe Match Score — §6 denominator", () => {
     goals: [] as string[],
   };
 
-  // These previously asserted that alias keys COLLAPSED into one credit —
-  // type-1-diabetes, type-2-diabetes and prediabetes all resolved to Diabetes,
-  // so counting them separately weighted one condition three times because a key
-  // had been renamed. The aliases are gone: the maps are 1:1 with the PRD, so
-  // §6's rule can be taken literally and every selection is one credit.
   it("gives one credit per selection", () => {
     const r = computeMatchScore({
       ...flat,
@@ -366,8 +314,6 @@ describe("Recipe Match Score — §6 denominator", () => {
   });
 
   it("skips a key the PRD does not define, without counting it", () => {
-    // §9 for gout, and now the retired aliases too — an unmapped key must not
-    // silently enter the denominator and drag the average toward zero.
     const r = computeMatchScore({
       ...flat,
       conditions: ["gout", "type-2-diabetes", "diabetes", "heart-disease"],

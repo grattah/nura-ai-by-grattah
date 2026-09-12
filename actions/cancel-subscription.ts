@@ -18,7 +18,6 @@ function planLabel(plan: string | null | undefined): string {
   return "Premium Plan";
 }
 
-/** The caller's most recent active subscription row. */
 async function getActiveSub(userId: string) {
   const supabase = await createClient();
   const { data } = await supabase
@@ -35,11 +34,7 @@ async function getActiveSub(userId: string) {
   );
 }
 
-/**
- * Cancel at period end: Stripe stops the renewal, the user keeps access until
- * `expires_at`. Optimistically writes the flag for instant UI and sends the
- * cancellation email (best-effort). The webhook later re-syncs the flag.
- */
+/** Cancels at period end; the user keeps access until expires_at. */
 export async function cancelSubscription(): Promise<Result> {
   const supabase = await createClient();
   const {
@@ -60,7 +55,6 @@ export async function cancelSubscription(): Promise<Result> {
     return { error: e instanceof Error ? e.message : "Failed to cancel" };
   }
 
-  // Optimistic flag write so the UI reflects it immediately (webhook re-syncs).
   await createServiceRoleClient()
     .from("subscriptions")
     .update({ cancel_at_period_end: true } as never)
@@ -82,7 +76,6 @@ export async function cancelSubscription(): Promise<Result> {
   return { success: true };
 }
 
-/** Undo a pending cancellation — the subscription will renew normally again. */
 export async function reactivateSubscription(): Promise<Result> {
   const supabase = await createClient();
   const {

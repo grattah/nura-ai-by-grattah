@@ -1,5 +1,3 @@
-// ─── Types ───────────────────────────────────────────────────────────────────
-
 export type GuideType = "risk_list" | "article" | "remedies";
 
 export interface FilterPill {
@@ -48,11 +46,8 @@ export interface Guide {
   description: string;
   type: GuideType;
   followUpQuestions: string[];
-  // type === "risk_list"
   riskItems?: RiskItem[];
 }
-
-// ─── Filter pills ─────────────────────────────────────────────────────────────
 
 export const filterPills: FilterPill[] = [
   { value: "all", label: "All" },
@@ -71,8 +66,6 @@ export const filterPills: FilterPill[] = [
   { value: "blood-sugar", label: "Blood Sugar" },
   { value: "bone", label: "Bone" },
 ];
-
-// ─── Categories ──────────────────────────────────────────────────────────────
 
 export const dummyCategories: Category[] = [
   { id: "cat-1", slug: "detoxing", title: "Detoxing", filterGroup: "detoxing" },
@@ -102,8 +95,6 @@ export const dummyCategories: Category[] = [
     filterGroup: "all",
   },
 ];
-
-// ─── Recipes ──────────────────────────────────────────────────────────────────
 
 export const dummyRecipes: Recipe[] = [
   {
@@ -303,8 +294,6 @@ export const dummyRecipes: Recipe[] = [
     insideTip: "Drink after meals.",
   },
 
-  // 11–40 (auto-generated but with tags array)
-
   ...Array.from({ length: 30 }).map((_, i) => ({
     id: `rec-${i + 11}`,
     slug: `recipe-${i + 11}`,
@@ -330,8 +319,6 @@ export const dummyRecipes: Recipe[] = [
     insideTip: "Adjust to taste.",
   })),
 ];
-
-// ─── Guides ───────────────────────────────────────────────────────────────────
 
 export const dummyGuides: Guide[] = [
   {
@@ -412,16 +399,12 @@ export const dummyGuides: Guide[] = [
   },
 ];
 
-// ─── Explore More items (maps directly to guide slugs) ────────────────────────
-
 export const exploreMoreItems = dummyGuides.map((g) => ({
   id: g.slug,
   title: g.title,
   description: g.description,
   href: `/guides/${g.slug}`,
 }));
-
-// ─── Shared follow-up questions ───────────────────────────────────────────────
 
 export const defaultFollowUpQuestions = [
   "Does my body actually need a detox?",

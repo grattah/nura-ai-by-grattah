@@ -11,7 +11,6 @@ import { getSubscriptionView } from "@/lib/subscription-state";
 
 type Row = { plan: string; expires_at: string | null; status: string };
 
-/** Records the status filter each query applied, and replays matching rows. */
 function mockDb(rows: Row[]) {
   const filters: { eq: string[]; in: string[][] } = { eq: [], in: [] };
 
@@ -50,14 +49,6 @@ function mockDb(rows: Row[]) {
 const future = new Date(Date.now() + 20 * 864e5).toISOString();
 const past = new Date(Date.now() - 864e5).toISOString();
 
-// ── The reported bug ────────────────────────────────────────────────────────
-//
-// A user cancels 12 days before their month ends. Cancelling through the app
-// keeps status 'active' (cancel_at_period_end), so that path always worked.
-// But an outright cancellation in Stripe fires customer.subscription.deleted
-// and the webhook writes status 'cancelled' immediately, while expires_at is
-// still weeks out — and every gate reads status = 'active'. Four production
-// users were locked out of periods they had already paid for.
 describe("entitlement survives cancellation", () => {
   it("keeps access for a cancelled subscription still inside its period", async () => {
     const { client } = mockDb([
@@ -87,8 +78,6 @@ describe("entitlement survives cancellation", () => {
   });
 
   it("is not masked by a newer suspended row", async () => {
-    // Status is filtered before ordering, so a failed re-purchase can't hide a
-    // period the user is still paid up for.
     const { client } = mockDb([
       { plan: "monthly", expires_at: future, status: "suspended" },
       { plan: "annual", expires_at: future, status: "active" },
@@ -97,9 +86,6 @@ describe("entitlement survives cancellation", () => {
   });
 });
 
-// Entitlement and billing are different questions. Someone who cancelled
-// mid-period may still USE the product, and must still be able to BUY a new
-// plan — so they must not look "occupied" to checkout.
 describe("billing occupancy stays 'active' only", () => {
   it("reports no active subscription for a cancelled-but-paid user", async () => {
     const { client, filters } = mockDb([
@@ -128,7 +114,6 @@ describe("getSubscriptionView", () => {
   });
 });
 
-// ── AUG 21 design: plan cards render cheapest-first ─────────────────────────
 describe("plan ordering and pricing", () => {
   it("lists weekly, monthly, annual in that order", async () => {
     const { PLANS } = await import("@/constants");
@@ -150,7 +135,6 @@ describe("plan ordering and pricing", () => {
     const claimed = num(
       PLANS.find((p) => p.id === "annual")!.description.match(/\$[\d.]+/)![0],
     );
-    // A stale saving figure is a pricing lie on the paywall, so pin it.
     expect(claimed).toBeCloseTo(monthly * 12 - annual, 2);
   });
 });

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-// retired
+/** Retired: admin sign-in is email OTP only. */
 export default function AdminAcceptPage() {
   redirect("/admin/login");
 }

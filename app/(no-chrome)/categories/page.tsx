@@ -9,7 +9,6 @@ export default async function CategoriesPage() {
 
   return (
     <div className="min-h-dvh bg-background pb-8">
-      {/* Header */}
       <div className="flex items-center px-6 pt-5 pb-4 gap-3">
         <Link
           href="/"
@@ -24,7 +23,6 @@ export default async function CategoriesPage() {
         <div className="size-10 shrink-0" aria-hidden />
       </div>
 
-      {/* Category list */}
       <CategoriesList categories={categories} />
     </div>
   );

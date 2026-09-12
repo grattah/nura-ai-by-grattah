@@ -24,7 +24,7 @@ async function getInfo(
   try {
     const res = await fetch(url, {
       signal: controller.signal,
-      next: { revalidate: 604800 }, // 1 week
+      next: { revalidate: 604800 },
     });
     if (!res.ok) return [];
     const data = (await res.json()) as {
@@ -58,11 +58,7 @@ export interface ResolvedMedication {
   buckets: Bucket[];
 }
 
-/**
- * The user's medications (those with an rxcui) each resolved to their interaction
- * buckets, so an alert can name the specific drug(s). Uses the per-drug cache;
- * resolves + caches any misses via RxClass.
- */
+/** Resolves each medication to its interaction buckets. */
 export async function resolveMedications(
   admin: Admin,
   meds: { name: string | null; rxcui: string | null }[],

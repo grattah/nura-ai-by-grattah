@@ -61,7 +61,6 @@ export function MembersManager({
 
   return (
     <div className="space-y-8">
-      {/* Invite */}
       <form
         onSubmit={invite}
         className="bg-card border border-border rounded-3xl p-5 space-y-4 max-w-xl"
@@ -96,7 +95,6 @@ export function MembersManager({
         {notice && <p className="text-sm text-success-c700">{notice}</p>}
       </form>
 
-      {/* List */}
       <div className="bg-card border border-border rounded-3xl overflow-hidden">
         <Table>
           <TableHeader>

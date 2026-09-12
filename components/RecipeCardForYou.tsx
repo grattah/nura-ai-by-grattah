@@ -10,7 +10,6 @@ export function RecipeCardForYou({
 }: {
   recipe: Pick<Recipe, "id" | "title" | "image_url">;
   priority?: boolean;
-  /** CategoryScore for the category being viewed (recipe_categories.score). */
   score?: number | null;
 }) {
   const imageUrl = recipe.image_url

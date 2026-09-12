@@ -16,8 +16,6 @@ export function DetoxCard({ recipeId, initialScores }: DetoxCardProps) {
   const [loading, setLoading] = useState(!hasInitial);
 
   useEffect(() => {
-    // Every recipe is scorable against the fixed support set, so always fetch
-    // when there are no server-provided scores.
     if (hasInitial) return;
 
     let cancelled = false;
@@ -33,7 +31,6 @@ export function DetoxCard({ recipeId, initialScores }: DetoxCardProps) {
         if (!cancelled && Array.isArray(data?.scores)) setScores(data.scores);
       })
       .catch(() => {
-        /* leave empty — card hides gracefully */
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -45,17 +42,13 @@ export function DetoxCard({ recipeId, initialScores }: DetoxCardProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recipeId]);
 
-  // Nothing to show (no tags / failed and uncached) — render nothing.
   if (!loading && scores.length === 0) return null;
 
-  // Each support keeps its own independent 0–100 strength (they don't sum to
-  // 100). Sort strongest-first; the ring shows the top support's own score.
   const sorted = [...scores]
     .sort((a, b) => b.score - a.score)
     .slice(0, MAX_SUPPORT_SCORES);
   const primary = sorted[0];
 
-  // Ring geometry
   const size = 82;
   const strokeWidth = 7;
   const radius = (size - strokeWidth) / 2;

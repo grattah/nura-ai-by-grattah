@@ -1,14 +1,9 @@
-// The in-memory draft shape used by the collection flow + the persisted row.
-// Mirrors the `health_profiles` table.
-
 export interface BasicProfile {
   ageRange: string | null;
   biologicalSex: string | null;
   pregnancyStatus: string | null;
 }
 
-// rxcui is captured from the RxNav search (null for free-text entries) and used
-// to resolve drug-interaction classes via RxClass.
 export interface Medication {
   name: string;
   rxcui: string | null;
@@ -16,23 +11,16 @@ export interface Medication {
 
 export interface HealthProfileDraft {
   basic: BasicProfile;
-  goals: string[]; // category slugs
+  goals: string[];
   conditions: string[];
   conditionsOther: string;
   allergies: string[];
   allergiesOther: string;
   medications: Medication[];
-  // dietaryPattern: string | null; // single-select
   consent: boolean;
-  /**
-   * Which CONSENT_VERSION the stored consent was given against (null when never
-   * consented). Carried in the draft so a version bump can re-prompt — see
-   * needsConsent() in lib/health-profile/consent.ts.
-   */
   consentVersion: string | null;
 }
 
-// Optional sections a user can clear individually from the populated view.
 export type ProfileSection =
   | "goals"
   | "conditions"
@@ -40,21 +28,17 @@ export type ProfileSection =
   | "medications";
 // | "dietary";
 
-// The steps of the questionnaire, in order. Used for navigation + the Review
-// screen's per-section "Edit" deep-links.
 export const STEP_ORDER = [
   "basic",
   "goals",
   "conditions",
   "allergies",
   "medications",
-  // "dietary",
   "review",
 ] as const;
 export type Step = (typeof STEP_ORDER)[number];
 
-// Sections that carry sensitive data (PRD §2.3–2.5) — presence of any triggers
-// the affirmative-consent requirement.
+/** True when the profile holds data that requires explicit consent. */
 export function hasSensitiveData(draft: HealthProfileDraft): boolean {
   return (
     draft.conditions.length > 0 ||
@@ -78,7 +62,6 @@ export const EMPTY_DRAFT: HealthProfileDraft = {
   allergies: [],
   allergiesOther: "",
   medications: [],
-  // dietaryPattern: null,
   consent: false,
   consentVersion: null,
 };

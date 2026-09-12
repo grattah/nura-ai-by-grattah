@@ -18,7 +18,6 @@ const EndSubscriptionModal = ({ onClose }: { onClose?: () => void }) => {
         onClick={onClose}
       />
 
-      {/* Card */}
       <div className="relative w-full max-w-95.5 px-6 pt-10 pb-8 bg-white rounded-2xl flex flex-col gap-8 items-center text-center">
         <Image
           src="/endSubscription.svg"

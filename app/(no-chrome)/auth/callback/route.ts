@@ -19,14 +19,10 @@ export async function GET(request: Request) {
         data: { user },
       } = await supabase.auth.getUser();
 
-      // Determine destination before deciding how to redirect
       let destination = next;
 
       if (user) {
-        // Signing in within the grace period recovers a deleted account. This is
-        // the OAuth/magic-link arm of the same rule the client form applies.
         await cancelScheduledDeletion();
-        // First-time accounts (incl. Google sign-ups) get the welcome email once.
         await ensureWelcomeEmail();
         const active = await hasActiveSubscription(supabase, user.id);
         destination = active ? next : "/checkout";

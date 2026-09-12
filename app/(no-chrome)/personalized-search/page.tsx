@@ -7,9 +7,7 @@ import { PersonalizedSearchClient } from "./personalized-search-client";
 
 export const maxDuration = 30;
 
-// Generate the search on the server (no caching, fresh every time) so the
-// home→search transition holds the homepage loader through generation and
-// commits straight to the result — never a loader over a blank route.
+/** Generates the personalized search server-side on each request. */
 export default async function PersonalizedSearchPage({
   searchParams,
 }: {
@@ -20,13 +18,10 @@ export default async function PersonalizedSearchPage({
     data: { user },
   } = await getCachedUser();
 
-  // Guests: RouteAuthGuard overlays the sign-in modal; the client renders the
-  // skeleton behind it.
   if (!user) {
     return <PersonalizedSearchClient query={query} serverBlocked={false} />;
   }
 
-  // Out of free searches / lapsed → lock overlay (decided without generating).
   const access = await getCachedAccess();
   let serverBlocked = false;
   if (access.isAuthenticated && !access.isSubscriber) {
@@ -42,7 +37,6 @@ export default async function PersonalizedSearchPage({
     );
   }
 
-  // Skip the (metered) generation on link prefetch — only real navigations run it.
   const isPrefetch = (await headers()).get("next-router-prefetch") === "1";
   if (isPrefetch) {
     return <PersonalizedSearchClient query={query} serverBlocked={false} />;

@@ -9,9 +9,6 @@ import { formatResetDate } from "@/lib/tokens-format";
 const PersonalizedTokenModal = () => {
   const { hasAccess, isLow, isOut, wallet } = useCredits();
 
-  // Nudge only while the period's grant is nearly spent AND buying more would
-  // actually help. A user already holding purchased tokens is not stuck, and a
-  // user with none left at all sees the full wall instead of this.
   if (!hasAccess || !isLow || isOut) return null;
 
   const hasPurchased = wallet.purchasedTokens > 0 && !wallet.purchasedFrozen;

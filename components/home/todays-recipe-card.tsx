@@ -30,12 +30,10 @@ export function TodaysRecipeCard({
 
   return (
     <>
-      {/* ── Hero Card ──────────────────────────────────────────────────────── */}
       <Card
         className="relative overflow-hidden border-0 rounded-3xl shadow-none p-0"
         style={{ backgroundColor: "#E8836A" }}
       >
-        {/* Noise texture overlay */}
         <div
           className="absolute inset-0 pointer-events-none opacity-[0.07]"
           style={{
@@ -47,22 +45,18 @@ export function TodaysRecipeCard({
         <CardContent className="relative p-5">
           <div className="flex items-start justify-between">
             <div className="flex-1 pr-4">
-              {/* Breadcrumb */}
               <p className="text-xs font-medium tracking-wide mb-2 text-black/70">
                 {category} → {date}
               </p>
 
-              {/* Title */}
               <h2 className="text-2xl font-bold leading-tight mb-2 text-black/75">
                 {title}
               </h2>
 
-              {/* Description */}
               <p className="text-sm leading-snug mb-5 max-w-50 text-black/70">
                 {description}
               </p>
 
-              {/* CTA */}
               <Button
                 variant="secondary"
                 size="sm"
@@ -73,7 +67,6 @@ export function TodaysRecipeCard({
               </Button>
             </div>
 
-            {/* Plant icon */}
             <div
               className="w-16 h-16 rounded-full flex items-center justify-center shrink-0 mt-1"
               style={{ backgroundColor: "#5C6B3A" }}
@@ -84,17 +77,14 @@ export function TodaysRecipeCard({
         </CardContent>
       </Card>
 
-      {/* ── Drawer ─────────────────────────────────────────────────────────── */}
       <Drawer open={open} onOpenChange={setOpen}>
         <DrawerContent
           className="border-0 rounded-t-3xl focus:outline-none bg-background"
           style={{ maxHeight: "96svh" }}
         >
-          {/* Hide default vaul drag handle */}
           <div className="mx-auto mt-2 h-1 w-10 rounded-full opacity-0" />
 
           <div className="flex flex-col overflow-y-auto px-5 pt-2 pb-10">
-            {/* Close row */}
             <div className="flex justify-end mb-4">
               <DrawerClose asChild>
                 <Button
@@ -107,7 +97,6 @@ export function TodaysRecipeCard({
               </DrawerClose>
             </div>
 
-            {/* Header */}
             <div className="flex flex-col items-center text-center mb-7">
               <div
                 className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
@@ -123,9 +112,7 @@ export function TodaysRecipeCard({
               </p>
             </div>
 
-            {/* Info cards */}
             <div className="space-y-3">
-              {/* Card 1 — Body + Causes */}
               <Card className="border-0 rounded-3xl shadow-none overflow-hidden bg-secondary">
                 <CardContent className="p-0">
                   <div className="px-5 py-4">
@@ -148,12 +135,10 @@ export function TodaysRecipeCard({
                 </CardContent>
               </Card>
 
-              {/* Card 2 — Symptoms + CTA */}
               <Card
                 className="border-0 rounded-3xl shadow-none overflow-hidden relative"
                 style={{ backgroundColor: "#FAF0EE" }}
               >
-                {/* Decorative diagonal lines */}
                 <div
                   className="absolute inset-0 pointer-events-none opacity-[0.18]"
                   style={{

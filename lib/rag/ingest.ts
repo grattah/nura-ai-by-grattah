@@ -1,9 +1,3 @@
-// Server-only: vectorize a single recipe's content into `nura_embeddings` so the
-// follow-up RAG chat can retrieve grounded context. Used by the admin lifecycle
-// (approve / edit / create of approved recipes). The bulk/backfill tool remains
-// `scripts/vectorise.mjs` — keep `buildRecipeChunks` below in sync with its
-// `recipeChunks()` (separate .mjs runtime, so the logic is intentionally
-// duplicated).
 import "server-only";
 
 import { embedder } from "./embedder";
@@ -22,10 +16,6 @@ export interface RecipeForIngest {
   inside_tip?: string | null;
 }
 
-/**
- * Build the self-contained, title-prefixed chunks for a recipe. Stable ids
- * (`<id>:<section>`) keep upserts idempotent. Empty sections are skipped.
- */
 export function buildRecipeChunks(
   r: RecipeForIngest,
 ): { id: string; content: string }[] {
@@ -62,18 +52,13 @@ export function buildRecipeChunks(
   return out;
 }
 
-/**
- * Embed a recipe's chunks and replace its existing vectors. Embeds before
- * deleting so a failed embedding call leaves the current chunks intact.
- */
+/** Embeds a recipe and replaces its existing vectors. */
 export async function vectorizeRecipe(r: RecipeForIngest): Promise<void> {
   const chunks = buildRecipeChunks(r);
   if (!chunks.length) return;
 
   const values = await embedder.embedBatch(chunks.map((c) => c.content));
 
-  // Drop stale chunks first so sections removed in an edit (e.g. the inside tip)
-  // don't linger; the upsert below writes the fresh set.
   await createServiceRoleClient()
     .from("nura_embeddings")
     .delete()
@@ -94,7 +79,6 @@ export async function vectorizeRecipe(r: RecipeForIngest): Promise<void> {
   );
 }
 
-/** Remove all embeddings for a recipe (used on delete). */
 export async function removeRecipeVectors(id: string): Promise<void> {
   await createServiceRoleClient()
     .from("nura_embeddings")

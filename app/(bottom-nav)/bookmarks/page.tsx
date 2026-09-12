@@ -14,7 +14,6 @@ export default async function BookmarksPage() {
   const { data, error } = await withTiming("bookmarks:getClaims", () =>
     supabase.auth.getClaims(),
   );
-  // Guests: show the empty shell behind the sign-in overlay (no user to fetch for).
   if (error || !data?.claims) {
     return (
       <div className="min-h-screen bg-background pb-12">
@@ -56,8 +55,6 @@ export default async function BookmarksPage() {
     </div>
   );
 }
-
-// ─── Empty state ──────────────────────────────────────────────────────────────
 
 function EmptyBookmarks() {
   return (

@@ -24,18 +24,15 @@ import {
 interface AccordionSectionProps {
   recipe: {
     why_it_works: string;
-    /** Per-ingredient breakdown; null on rows generated before QA ⑪. */
     inside_tip: string;
   };
   ingredients: { label: string; emoji: string }[];
   howToMake: { step: string; instruction: string }[];
   nutrition: NutritionFacts | null;
   popular: boolean;
-  /** PRD §5 — one block per qualifying ingredient; [] renders the empty state. */
   precautions?: IngredientPrecaution[];
 }
 
-/** Split copy on blank lines; a single block stays a single paragraph. */
 const paragraphs = (text: string): string[] =>
   text
     .split(/\n\s*\n/)
@@ -60,7 +57,6 @@ const AccordionSection = ({
 
   return (
     <Accordion type="multiple" defaultValue={[]} className="space-y-3">
-      {/* 1 — Nutritional Value (free, no paywall) */}
       {nutrition && (
         <AccordionItem
           value="nutritional-value"
@@ -100,7 +96,6 @@ const AccordionSection = ({
         </AccordionItem>
       )}
 
-      {/* 2 — Ingredients */}
       <AccordionItem
         value="ingredients"
         className="border-0 rounded-xl overflow-hidden bg-white"
@@ -134,7 +129,6 @@ const AccordionSection = ({
         </AccordionContent>
       </AccordionItem>
 
-      {/* 3 — How to make it */}
       <AccordionItem
         value="how-to"
         className="border-0 rounded-xl overflow-hidden bg-[#FFFFFF]"
@@ -167,7 +161,6 @@ const AccordionSection = ({
         </AccordionContent>
       </AccordionItem>
 
-      {/* 4 — Why it works */}
       <AccordionItem
         value="why"
         className="border-0 rounded-xl overflow-hidden bg-[#FFFFFF]"
@@ -184,13 +177,6 @@ const AccordionSection = ({
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-5 pb-5 pt-0">
-          {/* Prose, not a per-ingredient breakdown. The structured
-              earlier per-ingredient rendering gave each ingredient its own
-              heading, which fragmented what reads better as continuous
-              explanation. The 3-5 functions per ingredient are still required
-              (QA ⑪) — they are carried in the prose. Paragraphs are
-              split on blank lines so the copy keeps its intended spacing
-              instead of collapsing into one block. */}
           <div className="bg-[#F2F6F5] p-4 rounded-lg space-y-4">
             {paragraphs(recipe.why_it_works).map((para, i) => (
               <p
@@ -204,10 +190,6 @@ const AccordionSection = ({
         </AccordionContent>
       </AccordionItem>
 
-      {/* 5 — Precautions (PRD-4 §5). Always rendered: an empty tab is
-          reassuring, a missing tab reads as "we didn't check". Informational
-          only — unlike an allergy exclusion it never blocks access, so no
-          paywall lock here. */}
       <AccordionItem
         value="precautions"
         data-paywall-passthrough
@@ -228,21 +210,6 @@ const AccordionSection = ({
                 No specific usage precautions for this recipe&apos;s ingredients.
               </p>
             ) : (
-              // Prose only — no ingredient heading. The three answers are
-              // written as self-contained sentences (§4.1), so they read as one
-              // paragraph, and the section gets the same treatment as "Why it
-              // works" above rather than looking like a form.
-              //
-              // Measured before removing the heading: 123 of 132 profiles (93%)
-              // open by naming their own ingredient — "Ground cinnamon is safe
-              // daily…" — so for almost all of them the heading was repeating
-              // the first three words of the sentence beneath it.
-              //
-              // The remaining ~7% open without naming themselves ("Typical
-              // doses of 300–600 mg daily appear well tolerated…"). One
-              // paragraph per ingredient keeps them separable, and the fix for
-              // those is in the copy, not the layout — the §4.1 prompt should
-              // require the opening sentence to name the ingredient.
               precautions.map((entry) => (
                 <p
                   key={entry.ingredientId}
@@ -252,9 +219,6 @@ const AccordionSection = ({
                 </p>
               ))
             )}
-            {/* No "Sources:" line — PRD-4 removed live search, so there is
-                nothing verifiable to cite and an unverifiable one would only
-                lend borrowed authority. */}
             <p className="text-xs text-[#9CA5A3] leading-relaxed pt-1">
               General information only — not medical advice. Check with your
               doctor if you take medication or have a health condition.
@@ -263,7 +227,6 @@ const AccordionSection = ({
         </AccordionContent>
       </AccordionItem>
 
-      {/* 6 — Inside Tip */}
       <AccordionItem
         value="tip"
         className="border-0 rounded-xl overflow-hidden bg-[#EEF4FB]"

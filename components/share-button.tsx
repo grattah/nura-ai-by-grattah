@@ -19,7 +19,6 @@ interface ShareButtonProps {
   recipeTitle: string;
   text: string;
   addText: string;
-  /** Pending recipes can't be shared until an admin approves them. */
   disabled?: boolean;
 }
 

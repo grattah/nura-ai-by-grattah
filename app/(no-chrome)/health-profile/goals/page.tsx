@@ -17,7 +17,6 @@ export default function HealthGoalsStep() {
       <GoalGrid
         goals={GOALS}
         selected={draft.goals}
-        // Derived from the latest draft, never the render closure.
         onToggle={(k) =>
           update((d) => ({ goals: toggleCapped(d.goals, k, MAX_GOALS) }))
         }

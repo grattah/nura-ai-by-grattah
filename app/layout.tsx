@@ -90,8 +90,6 @@ export default async function RootLayout({
     await getCachedAccess();
 
   return (
-    // DARK MODE: to re-enable, restore className="dark" on <html> and revert
-    // ThemeProvider to: defaultTheme="system" enableSystem disableTransitionOnChange
     <html
       lang="en"
       suppressHydrationWarning
@@ -101,8 +99,6 @@ export default async function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Nuko" />
         <meta name="mobile-web-app-capable" content="yes" />
         <link rel="apple-touch-icon" href="/web-app-manifest-192x192.png" />
-        {/* Capture Chrome's install signal before hydration so the PWA prompt
-            never misses the (once-fired, early) beforeinstallprompt event. */}
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){window.__nukoBip=null;addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__nukoBip=e;dispatchEvent(new Event('nuko:bip'));});addEventListener('appinstalled',function(){window.__nukoBip=null;dispatchEvent(new Event('nuko:installed'));});})();`,
@@ -110,9 +106,6 @@ export default async function RootLayout({
         />
       </head>
       <body className="bg-[#F3F1E8] font-sans antialiased">
-        {/* Fixed app shell (body, see globals.css) + this one scrolling
-            container is what keeps Safari's native bottom bar from collapsing:
-            the document never scrolls, only .app-content does. */}
         <div className="app-content">
           <ClarityAnalytics />
           <ThemeProvider

@@ -1,21 +1,5 @@
 import { z } from "zod";
 
-/**
- * Copy rules for generated recipe text, in one place.
- *
- * Both the live generator (app/api/recipes/generate/route.ts) and the backfill
- * that rewrites existing rows read from here, so the rules can't drift apart —
- * a rewritten recipe and a freshly generated one must read the same.
- */
-
-// ── QA ⑩: the intro must not name specific body systems ─────────────────────
-//
-// The intro is marketing copy shown on cards and at the top of the recipe. QA's
-// rule is that it stays experiential ("light, refreshing, keeps you going")
-// rather than clinical ("supports cardiovascular health and cognitive
-// function") — naming organs and systems reads as a medical claim about what
-// the drink will do to the reader's body. The mechanism detail still lives in
-// "Why it works", which is where a specific claim belongs.
 export const BODY_SYSTEM_TERMS = [
   "cardiovascular", "heart health", "circulatory", "circulation",
   "digestive", "digestion", "gut health", "gastrointestinal",
@@ -36,7 +20,6 @@ const BODY_SYSTEM_RE = new RegExp(
   "i",
 );
 
-/** True when a recipe intro names a specific body system (QA ⑩ violation). */
 export function mentionsBodySystem(text: string | null | undefined): boolean {
   return !!text && BODY_SYSTEM_RE.test(text);
 }
@@ -48,8 +31,6 @@ name specific body systems, organs, or clinical markers — no "cardiovascular",
 pressure", "liver", "gut health", or similar. Say "keeps you feeling steady
 through the afternoon", not "supports cardiovascular and metabolic health".
 Save every mechanism and nutrient claim for why_it_works.`;
-
-// ── QA ⑪: 3-5 functions per ingredient, carried in prose ────────────────────
 
 export const WHY_IT_WORKS_RULE = `WHY IT WORKS (why_it_works): Flowing prose, NOT a list and NOT headed sections.
 
@@ -73,14 +54,6 @@ describe a different main ingredient instead.`;
 
 
 
-/**
- * Why-it-works copy that fails the prose format (QA ⑪).
- *
- * The requirement is 3-5 functions per ingredient carried in FLOWING prose —
- * an earlier pass rendered them as per-ingredient headings with bullet lists,
- * which fragmented copy that reads better continuous. These are the shapes that
- * betray the list format surviving into the text.
- */
 export function whyItWorksIssues(text: string | null | undefined): string[] {
   const issues: string[] = [];
   const body = (text ?? "").trim();
@@ -89,16 +62,13 @@ export function whyItWorksIssues(text: string | null | undefined): string[] {
 
   const lines = body.split("\n").map((l) => l.trim()).filter(Boolean);
 
-  // A bullet or dash starting a line is the list format leaking through.
   if (lines.some((l) => /^[•\-*\u2022]/.test(l))) issues.push("bullets");
 
-  // "Ginger:" or "**Ginger**" alone on a line is a heading, not prose.
   if (lines.some((l) => /^\*{0,2}[A-Z][A-Za-z'’\- ]{1,30}\*{0,2}:?$/.test(l))) {
     issues.push("headings");
   }
   if (/\*\*/.test(body)) issues.push("markdown");
 
-  // The rule asks for 2-4 paragraphs; one long block is the old summary shape.
   const paragraphs = body.split(/\n\s*\n/).filter((p) => p.trim());
   if (paragraphs.length < 2) issues.push("single-paragraph");
 

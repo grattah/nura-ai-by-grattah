@@ -57,16 +57,15 @@ interface Profile {
 
 const RECIPE_SELECT = "*, recipe_tags(score, tags(name, slug))";
 
-// The recipe's strongest bioactivities (from recipe_tags) for the supports card.
 function topBioactivities(
   recipeTags: RecipeRecord["recipe_tags"],
-  count = 5
+  count = 5,
 ): SupportScore[] {
   return (recipeTags ?? [])
     .flatMap((rt) =>
       rt.tags && rt.score != null
         ? [{ slug: rt.tags.slug, support: rt.tags.name, score: rt.score }]
-        : []
+        : [],
     )
     .sort((a, b) => b.score - a.score)
     .slice(0, count);
@@ -118,9 +117,6 @@ export async function generateMetadata({
   };
 }
 
-// `?generate=true` (set by /find-recipe after a generation) no longer changes what
-// renders — the layout follows the recipe's own image/status, so a first view and a
-// revisit look identical.
 export default async function RecipeDetailPage({
   params,
   searchParams,
@@ -162,7 +158,7 @@ export default async function RecipeDetailPage({
     likes,
     profiles (id, username, avatar_url),
     comment_likes!comment_id (user_id)
-  `
+  `,
       )
       .eq("recipe_id", recipe.id)
       .is("parent_id", null)
@@ -182,7 +178,7 @@ export default async function RecipeDetailPage({
         ...latestComment,
         hasLiked:
           latestComment.comment_likes?.some(
-            (like: { user_id: string }) => like.user_id === user?.id
+            (like: { user_id: string }) => like.user_id === user?.id,
           ) ?? false,
       }
     : null;
@@ -195,9 +191,6 @@ export default async function RecipeDetailPage({
 
   const nutrition = (recipe.nutrition as NutritionFacts | null) ?? null;
 
-  // The seven BNS point components, feeding the Nutri score breakdown drawer.
-  // They no longer contribute to the Match Score: v7 scores from ingredient
-  // tiers, not nutrient points.
   const nutritionPoints = {
     sugar: recipe.sugar_points,
     salt: recipe.salt_points,
@@ -239,12 +232,6 @@ export default async function RecipeDetailPage({
     isSubscribed = isSub;
     personalizedView = isSub && !!profileUpdatedAt;
     if (personalizedView && recipe.final_score_10 != null) {
-      // Fresh match, computed from the recipe's current scores + the profile.
-      //
-      // REVERTED to the bioactivity Match Score alongside the 12-goal picker.
-      // The ingredient-tier scorer (Category/Match PRD v7) is still what writes
-      // recipe_categories, so Category Score is untouched — only this personal
-      // number goes back to the earlier formula.
       const bioBySlug: Record<string, number> = {};
       for (const rt of recipe.recipe_tags ?? []) {
         if (rt.tags?.slug && rt.score != null)
@@ -279,11 +266,6 @@ export default async function RecipeDetailPage({
     }
   }
 
-  // A generated recipe is `pending` until an admin reviews it. Until then it
-  // renders without a hero image, without share/save and without the score cards
-  // — on first view and on every revisit. Computed here rather than earlier
-  // because the bioactivity list also depends on whether a match score resolved.
-  // See lib/recipe-visibility.ts.
   const chrome = recipeChrome({
     status: (recipe as { status?: string }).status ?? null,
     imageUrl: recipe.image_url,
@@ -300,7 +282,6 @@ export default async function RecipeDetailPage({
         isAuthenticated={!!user}
       >
         <div className="min-h-screen bg-background">
-          {/* Sub-header */}
           <div className="flex items-center justify-between px-6 pt-5 pb-3">
             <BackButton className="size-10 grid place-items-center rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
             {/* <div className="flex items-center gap-2">
@@ -357,7 +338,6 @@ export default async function RecipeDetailPage({
               />
 
               {personalizedView && matchResult?.highest ? (
-                // subscribed, has profile, real match → unlocked NutritionScore
                 <NutritionScore
                   baseScore={recipe.final_score_10 ?? 0}
                   match={matchResult.highest}
@@ -368,8 +348,6 @@ export default async function RecipeDetailPage({
                   isSubscribed
                 />
               ) : (
-                // Locked. NutritionScore itself picks the right copy: no
-                // profile yet, vs. has a profile but isn't subscribed.
                 <NutritionScore
                   baseScore={recipe.final_score_10 ?? 0}
                   match={{ percent: 0, label: "" }}
@@ -383,7 +361,6 @@ export default async function RecipeDetailPage({
               )}
             </div>
 
-            {/* Accordion sections */}
             <div className="px-6 space-y-3">
               <div data-paywall-passthrough>
                 <AccordionSection
@@ -396,11 +373,6 @@ export default async function RecipeDetailPage({
                 />
               </div>
 
-              {/* Follow-up questions + RAG chat: only exempt from AuthGate's
-                  blanket click-intercept when the page itself is already
-                  ungated (subscribed or popular view) — AuthGate's selector
-                  matches on attribute presence, not value, so the attribute
-                  must be omitted entirely rather than set to false. */}
               <div
                 className="pt-2"
                 {...(canViewFull ? { "data-paywall-passthrough": true } : {})}
@@ -434,9 +406,6 @@ export default async function RecipeDetailPage({
                   helpful
                 </p> */}
               </div>
-
-              {/* Sharing an unapproved recipe publishes it and saving pins it, so
-                  both are withheld until an admin has reviewed it. */}
 
               {recipe.status === "approved" ? (
                 <div className="flex gap-4 items-center mt-8 w-full">

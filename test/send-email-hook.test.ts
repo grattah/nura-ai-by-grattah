@@ -5,7 +5,6 @@ const h = vi.hoisted(() => ({
   verifyThrows: false,
 }));
 
-// Verify just parses the body unless we force a failure (bad signature).
 vi.mock("standardwebhooks", () => ({
   Webhook: class {
     verify(body: string) {

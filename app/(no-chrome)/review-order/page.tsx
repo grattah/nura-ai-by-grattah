@@ -7,7 +7,7 @@ export default async function ReviewOrderPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return null; // guest → RouteAuthGuard sign-in overlay
+  if (!user) return null;
 
   return <ReviewOrderClient />;
 }

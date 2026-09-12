@@ -2,15 +2,7 @@ import "server-only";
 import type Stripe from "stripe";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
-/**
- * Idempotently credit a user's "extra" token bucket from a completed Stripe
- * Checkout session. Shared by the webhook (`checkout.session.completed`) and the
- * `/buy-tokens/return` page so the purchase lands synchronously and never depends
- * solely on webhook delivery. `credit_purchased_units` dedups on the Stripe session id,
- * so calling this from both paths credits exactly once.
- *
- * Returns true when the purchase was (or had already been) applied.
- */
+/** Idempotently credits purchased tokens from a completed Checkout session. */
 export async function creditTokenPurchaseFromSession(
   session: Stripe.Checkout.Session,
 ): Promise<boolean> {

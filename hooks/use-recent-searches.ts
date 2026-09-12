@@ -1,4 +1,3 @@
-// hooks/use-recent-searches.ts
 import { useEffect, useState } from "react";
 import {
   getRecentSearches,
@@ -9,8 +8,6 @@ import {
 export function useRecentSearches() {
   const [recents, setRecents] = useState<string[]>([]);
 
-  // Read from localStorage on mount. We use useEffect because
-  // localStorage is only available on the client.
   useEffect(() => {
     setRecents(getRecentSearches());
   }, []);

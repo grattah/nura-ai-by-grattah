@@ -12,10 +12,7 @@ export default async function BuyTokensReturnPage({
 }) {
   const { session_id: sessionId } = await searchParams;
 
-  // Credit the extra tokens synchronously so the purchase lands even if the
-  // Stripe webhook is delayed/undelivered. Idempotent with the webhook.
-  // Read the credited amount from the verified Stripe session (not the URL
-  // param) so the success copy can't be spoofed (audit L4).
+  // Credit synchronously (idempotent with the webhook), reading the amount from the verified session.
   let credits: string | null = null;
   if (sessionId) {
     try {

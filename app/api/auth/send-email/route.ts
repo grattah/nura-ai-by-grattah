@@ -11,7 +11,6 @@ import {
 
 export const maxDuration = 15;
 
-// Supabase "Send Email" auth hook payload (Standard Webhooks signed).
 interface SendEmailPayload {
   user: { email: string };
   email_data: {
@@ -26,8 +25,6 @@ interface SendEmailPayload {
 function buildEmail(data: SendEmailPayload["email_data"]): EmailContent {
   const { token, token_hash, redirect_to, email_action_type } = data;
 
-  // Use the app's own domain, not the payload's site_url (which resolves to
-  // the API/Supabase domain and has no /auth/confirm route).
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://nuko.health";
 
   const confirmUrl = (type: string) => {
@@ -60,8 +57,6 @@ export async function POST(req: Request) {
     return new NextResponse("Not configured", { status: 500 });
   }
 
-  // Verify the Standard Webhooks signature. Supabase stores the secret as
-  // "v1,whsec_<base64>"; standardwebhooks wants the base64 portion.
   const h = await headers();
   let payload: SendEmailPayload;
   try {
@@ -86,8 +81,6 @@ export async function POST(req: Request) {
     const { subject, html } = buildEmail(payload.email_data);
     await sendEmail({ to, subject, html });
   } catch (err) {
-    // Return 500 so Supabase surfaces the failure to the user (auth emails must
-    // be reliable) and can retry.
     const msg = err instanceof Error ? err.message : "send failed";
     console.error(`[send-email] failed to send: ${msg}`);
     return new NextResponse("Send failed", { status: 500 });

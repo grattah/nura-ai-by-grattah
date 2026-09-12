@@ -1,17 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { withRollback, makeUser, hasTestDb } from "../helpers/db";
 
-// QA: "User ID is visible in the browser Network tab (security concern)."
-//
-// A user id in a payload is only dangerous if holding one lets you read data it
-// shouldn't. That is a database question, not a client one — so these assert
-// what the `authenticated` role can actually reach, with RLS applied.
-//
-// Every other test in this suite mocks Supabase, and a mock returns whatever it
-// was told to. That is precisely how `ingredients` and `recipe_ingredients`
-// shipped with RLS enabled and ZERO policies — denying every read — while the
-// suite stayed green and every Match Score silently came out 0%.
-
 const d = hasTestDb ? describe : describe.skip;
 
 d("RLS — one user cannot read another's rows", () => {
@@ -97,8 +86,6 @@ d("RLS — one user cannot read another's rows", () => {
   });
 });
 
-// The other half of the same coin: a table with RLS on and no policy denies
-// EVERYTHING, which fails silently as an empty result rather than an error.
 d("RLS — tables the app reads must actually be readable", () => {
   it("reports which public tables have RLS on but no policy", async () => {
     await withRollback(async (tx) => {
@@ -116,9 +103,6 @@ d("RLS — tables the app reads must actually be readable", () => {
           order by c.relname`,
       );
 
-      // Not asserted as empty: some tables are deliberately service-role only.
-      // This surfaces the list so a NEW one is noticed in review rather than
-      // discovered as a page full of zeros.
       const names = rows.map((r) => r.relname);
       expect(
         names,

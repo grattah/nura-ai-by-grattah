@@ -3,13 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-/**
- * Scores a freshly generated recipe on first view. Generated recipes are created
- * unscored (no bioactivities/categories/nutrition score); this fires an awaited
- * POST to `/api/recipes/[id]/score` once, then refreshes so the server-rendered
- * supports card, category badge and nutrition ring appear. Mirrors the lazy
- * hero-image trigger. Renders a placeholder only while scoring is in flight.
- */
+/** Scores a freshly generated recipe on first view. */
 export function RecipeScoreTrigger({
   recipeId,
   canTrigger,
@@ -31,7 +25,6 @@ export function RecipeScoreTrigger({
           method: "POST",
         });
         if (!res.ok) throw new Error("score request failed");
-        // Re-render the server components with the newly written scores.
         router.refresh();
       } catch {
         setPending(false);

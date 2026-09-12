@@ -5,20 +5,11 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/admin/auth";
 import { MAX_PROMO_BODY, type HomePromo } from "@/lib/home-promo";
 
-/**
- * The homepage promo card, edited from /admin/home-promo.
- *
- * Single row (see the migration): the table's primary key is pinned to `true`,
- * so an upsert always targets the same record and there is no way to end up
- * with two cards competing to be shown.
- */
-
 export interface PromoRecipeOption {
   id: string;
   title: string;
 }
 
-/** Current card, for the admin form. */
 export async function getHomePromoForAdmin(): Promise<
   { promo: HomePromo; recipeTitle: string | null } | { error: string }
 > {
@@ -51,12 +42,6 @@ export async function getHomePromoForAdmin(): Promise<
   };
 }
 
-/**
- * Recipe picker search.
- *
- * Approved only — the card links straight to the recipe page, and pointing the
- * homepage at a pending recipe would surface unreviewed content.
- */
 export async function searchPromoRecipes(
   query: string,
 ): Promise<{ recipes: PromoRecipeOption[] } | { error: string }> {
@@ -73,8 +58,6 @@ export async function searchPromoRecipes(
     .order("title", { ascending: true })
     .limit(20);
 
-  // Empty search shows the first 20 rather than nothing, so the picker is
-  // usable before typing.
   if (term) q = q.ilike("title", `%${term}%`);
 
   const { data, error } = await q;
@@ -87,7 +70,6 @@ export async function saveHomePromo(input: {
   body: string;
   recipeId: string | null;
 }): Promise<{ success: true } | { error: string }> {
-  // Editor and above — this is homepage copy, the same bar as editing a recipe.
   const gate = await requireAdmin("editor");
   if (!gate.ok) return { error: gate.error };
 
@@ -99,9 +81,6 @@ export async function saveHomePromo(input: {
 
   const admin = createServiceRoleClient();
 
-  // Verify the recipe exists and is approved rather than trusting the id from
-  // the form — the picker only offers approved recipes, but the id arrives from
-  // the client and a stale tab could submit one that has since been unpublished.
   if (input.recipeId) {
     const { data: recipe } = await admin
       .from("recipes")
@@ -129,8 +108,6 @@ export async function saveHomePromo(input: {
 
   if (error) return { error: error.message };
 
-  // The homepage is a server component; without this the old copy is served
-  // from the route cache until it happens to revalidate.
   revalidatePath("/");
   return { success: true };
 }

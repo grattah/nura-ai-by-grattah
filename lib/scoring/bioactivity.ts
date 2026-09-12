@@ -66,8 +66,6 @@ export async function scoreBioactivities(
   recipe: ScorableRecipe,
 ): Promise<BioactivityResult> {
   const { object, usage } = await generateObject({
-    // Haiku over sonnet for the inline lazy path — sonnet ran ~59s, near the
-    // 60s function cap. The batch scripts still use sonnet for the catalogue.
     model: anthropic("claude-haiku-4-5"),
     maxOutputTokens: 2000,
     schema: scoreSchema,

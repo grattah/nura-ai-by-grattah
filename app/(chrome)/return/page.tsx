@@ -18,8 +18,7 @@ export default async function ReturnPage({
   if (session.status === "open") redirect("/");
 
   if (session.status === "complete") {
-    // Activate synchronously so paid access persists even if the Stripe webhook
-    // is delayed, undelivered, or misconfigured. Idempotent with the webhook.
+    // Activate synchronously so access doesn't depend on webhook delivery; idempotent with it.
     try {
       await activateSubscriptionFromSession(session);
     } catch (err) {

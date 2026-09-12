@@ -1,7 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-// Audit H2: /api/rag/questions and /api/recipes/suggestions are LLM calls that
-// must reject unauthenticated callers (no free Anthropic token burn).
 const h = vi.hoisted(() => ({
   user: null as { id: string } | null,
   generateText: vi.fn(),
@@ -64,7 +62,7 @@ describe("LLM endpoints require authentication (audit H2)", () => {
   it("recipes/suggestions returns 401 and skips the model when unauthenticated", async () => {
     const res = await suggestionsPOST(
       req(
-        { query: `unique-${Date.now()}` }, // avoid the module-level cache
+        { query: `unique-${Date.now()}` },
         "http://test/api/recipes/suggestions",
       ),
     );
@@ -95,7 +93,7 @@ describe("LLM endpoints require authentication (audit H2)", () => {
     });
     const res = await suggestionsPOST(
       req(
-        { query: `unique-${Date.now()}` }, // avoid the module-level cache
+        { query: `unique-${Date.now()}` },
         "http://test/api/recipes/suggestions",
       ),
     );

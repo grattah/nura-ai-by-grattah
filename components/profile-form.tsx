@@ -40,7 +40,6 @@ interface ProfileFormProps {
 export function ProfileForm({ user, subscription }: ProfileFormProps) {
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-5 pb-4">
         <Button
           variant="ghost"
@@ -59,7 +58,6 @@ export function ProfileForm({ user, subscription }: ProfileFormProps) {
       </div>
 
       <main className="px-4 pb-24 space-y-4">
-        {/* ── Avatar + identity ────────────────────────────────────────────── */}
         <Card className="border-0 rounded-3xl shadow-none bg-card">
           <CardContent className="p-5 flex items-center gap-4">
             <div
@@ -77,20 +75,15 @@ export function ProfileForm({ user, subscription }: ProfileFormProps) {
           </CardContent>
         </Card>
 
-        {/* ── Name ────────────────────────────────────────────────────────── */}
         <NameSection initialName={user.name} />
 
-        {/* ── Password ────────────────────────────────────────────────────── */}
         <PasswordSection hasPassword={user.hasPassword} />
 
-        {/* ── Subscription ────────────────────────────────────────────────── */}
         <SubscriptionSection subscription={subscription} />
       </main>
     </div>
   );
 }
-
-// ─── Name section ──────────────────────────────────────────────────────────
 
 function NameSection({ initialName }: { initialName: string }) {
   const [name, setName] = useState(initialName);
@@ -145,8 +138,6 @@ function NameSection({ initialName }: { initialName: string }) {
     </SectionCard>
   );
 }
-
-// ─── Password section ──────────────────────────────────────────────────────
 
 function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
   const [newPassword, setNewPassword] = useState("");
@@ -230,8 +221,6 @@ function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
     </SectionCard>
   );
 }
-
-// ─── Subscription section ──────────────────────────────────────────────────
 
 function SubscriptionSection({
   subscription,
@@ -320,8 +309,6 @@ function SubscriptionSection({
     </SectionCard>
   );
 }
-
-// ─── Shared card wrapper ──────────────────────────────────────────────────
 
 function SectionCard({
   icon,

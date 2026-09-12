@@ -7,7 +7,6 @@ export default async function ContinuePaymentPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Guests: land here and get the sign-in overlay from RouteAuthGuard.
   if (!user) return null;
 
   return <ContinuePaymentClient />;

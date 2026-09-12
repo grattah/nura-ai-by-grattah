@@ -25,14 +25,11 @@ export function AvatarUpload({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  // Last image we know is actually persisted — used to roll the preview back if
-  // an upload fails, so the UI never claims a change that didn't stick.
   const lastGoodUrl = useRef<string | null>(avatarUrl ?? null);
 
   const handleFile = (file: File) => {
     setError(null);
 
-    // Validate up front with specific reasons.
     if (!file.type.startsWith("image/")) {
       setError(
         `"${file.name}" isn't an image (${file.type || "unknown type"}). Please choose a JPG, PNG, or WebP file.`,
@@ -47,7 +44,6 @@ export function AvatarUpload({
       return;
     }
 
-    // Optimistic preview while the upload runs.
     const objectUrl = URL.createObjectURL(file);
     setPreview(objectUrl);
 
@@ -55,10 +51,6 @@ export function AvatarUpload({
       try {
         const supabase = createClient();
 
-        // The storage policy requires the first path segment to equal
-        // auth.uid(), so the id has to come from the live session: a stale one
-        // fails the policy with an opaque "new row violates row-level security"
-        // rather than anything the user could act on.
         const userId = await getCurrentUserId(supabase);
         if (!userId) {
           setError("Your session has expired. Please sign in again.");
@@ -79,10 +71,6 @@ export function AvatarUpload({
           return;
         }
 
-        // The path is reused on every change, so the public URL is identical
-        // between uploads — append a cache-busting token so the browser/CDN
-        // fetches the new image instead of serving the stale cached one (which
-        // made the avatar appear to revert to the previous photo).
         const { data } = supabase.storage.from("avatars").getPublicUrl(path);
         const publicUrl = `${data.publicUrl}?v=${Date.now()}`;
 
@@ -139,7 +127,6 @@ export function AvatarUpload({
             </span>
           )}
         </div>
-        {/* Camera badge */}
         <div
           className="absolute bottom-0 right-0 w-7 h-7 rounded-full flex items-center justify-center border-2 border-background"
           style={{ backgroundColor: "var(--mint-green)" }}
@@ -170,7 +157,6 @@ export function AvatarUpload({
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) handleFile(file);
-          // Reset so re-selecting the same file still fires onChange.
           e.target.value = "";
         }}
       />

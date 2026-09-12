@@ -11,24 +11,13 @@ function periodEndToIso(sub: Stripe.Subscription): string | null {
   return end ? new Date(end * 1000).toISOString() : null;
 }
 
-/**
- * Idempotently persist an active subscription from a completed Stripe Checkout
- * session. Shared by the webhook (`checkout.session.completed`) and the `/return`
- * page so paid access is written synchronously and never depends solely on
- * webhook delivery. Upserts via the service-role client (bypasses RLS) keyed on
- * `stripe_session_id`, so calling it from both paths is safe.
- *
- * Returns true when a subscription row was written.
- */
+/** Idempotently activates a subscription from a completed Checkout session. */
 export async function activateSubscriptionFromSession(
   session: Stripe.Checkout.Session,
 ): Promise<boolean> {
-  // Not a subscription checkout (one-time token purchase) — nothing to do.
-  // (Both callers already ensure the session is complete: the webhook only fires
-  // on checkout.session.completed, and the /return page checks status first.)
   if (session.metadata?.type === "credits") return false;
 
-  const userId = session.client_reference_id; // Supabase user_id
+  const userId = session.client_reference_id;
   if (!userId) return false;
 
   let expiresAt: string | null = null;
@@ -40,8 +29,6 @@ export async function activateSubscriptionFromSession(
   }
 
   const supabase = createServiceRoleClient();
-  // Upsert on user_id (UNIQUE) so re-payments UPDATE the single row instead of
-  // inserting a new active row each time (which broke the access reads).
   const plan = (session.metadata?.plan ?? "annual") as Plan;
 
   const { error } = await supabase.from("subscriptions").upsert(
@@ -61,10 +48,7 @@ export async function activateSubscriptionFromSession(
     throw new Error(`Failed to activate subscription: ${error.message}`);
   }
 
-  // Spec §3 — the first period's grant, on confirmed payment. Renewals are
-  // granted from invoice.payment_succeeded; this covers the initial checkout,
-  // which produces no renewal invoice. The RPC replaces rather than adds, so
-  // this and the webhook both firing cannot double-grant.
+  // Initial grant only; renewals come from invoice.payment_succeeded and the RPC replaces rather than adds.
   await allocateForPayment({
     userId,
     plan,

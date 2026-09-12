@@ -1,11 +1,6 @@
 import Image from "next/image";
 import { Info, Heart } from "lucide-react";
 
-/**
- * Blurred placeholder that mirrors a real wellness-support result. Rendered
- * behind the sign-in modal (guests) and the "Upgrade to Nuko+" lock overlay
- * (out-of-uses) so those screens show realistic content rather than a blank page.
- */
 export function PersonalizedSearchSkeleton() {
   return (
     <div
@@ -23,7 +18,6 @@ export function PersonalizedSearchSkeleton() {
 
       <div className="px-6 space-y-10">
         <div className="space-y-4">
-          {/* Query row */}
           <div className="bg-white rounded-2xl p-4 border border-[#E3E1D880] flex items-center gap-3">
             <span className="text-xl">🌿</span>
             <div className="space-y-1 flex-1">
@@ -32,7 +26,6 @@ export function PersonalizedSearchSkeleton() {
             </div>
           </div>
 
-          {/* AI summary */}
           <div className="bg-white rounded-2xl border-[#E3E1D880] p-4 flex gap-3 items-start">
             <div className="size-11 bg-mint-green rounded-full flex items-center justify-center shrink-0">
               <Image
@@ -49,7 +42,6 @@ export function PersonalizedSearchSkeleton() {
             </div>
           </div>
 
-          {/* What to try */}
           <div className="bg-success-c100 rounded-2xl border border-[#C4CAC8] p-4 flex flex-col gap-y-2">
             <div className="flex items-center justify-between gap-3">
               <div className="h-3.5 w-1/2 rounded bg-black/10" />
@@ -59,7 +51,6 @@ export function PersonalizedSearchSkeleton() {
           </div>
         </div>
 
-        {/* Recipes list */}
         <section>
           <h2 className="text-xl font-medium text-base-text mb-3">
             Recipes that can help 🌿
@@ -77,7 +68,6 @@ export function PersonalizedSearchSkeleton() {
           </div>
         </section>
 
-        {/* Important note */}
         <div className="bg-success-c100 rounded-2xl border border-[#C4CAC8] p-4 flex items-start gap-x-5">
           <div className="flex-1 space-y-2">
             <div className="h-3.5 w-1/3 rounded bg-black/10" />

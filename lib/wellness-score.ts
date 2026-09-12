@@ -2,13 +2,6 @@ import { generateObject } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 
-// AI bioactivity scoring (DetoxCard). Each recipe is scored against a fixed set
-// of predefined bioactivity categories; the LLM returns ONE 0–100 bioactivityScore
-// per category (effects driven by non-nutritive bioactive compounds — distinct
-// from nutrition). That score is used directly as the final strength shown.
-
-// Maximum number of support scores ever returned/shown for a recipe (top N by
-// score).
 export const MAX_SUPPORT_SCORES = 2;
 
 export interface AssignedSupport {
@@ -16,9 +9,6 @@ export interface AssignedSupport {
   slug: string;
 }
 
-// Fixed set of wellness supports every recipe is scored against (replaces the
-// per-recipe category tags). The top MAX_SUPPORT_SCORES by final score are shown.
-// Keep in sync with the inlined copy in scripts/score-supports.mjs.
 export const WELLNESS_SUPPORTS: AssignedSupport[] = [
   { name: "Antioxidant & Cellular Protection", slug: "antioxidant-cellular-protection" },
   { name: "Inflammation Support", slug: "inflammation-support" },
@@ -54,7 +44,7 @@ export interface SupportScore {
 export interface ScorableRecipe {
   title: string;
   short_description?: string | null;
-  ingredients?: unknown; // [{ emoji, label }]
+  ingredients?: unknown;
   why_it_works?: string | null;
 }
 
@@ -154,7 +144,6 @@ export async function scoreSupports(
 
   const { object } = await generateObject({
     model: anthropic("claude-haiku-4-5"),
-    // One small number per assigned bioactivity — headroom for all 23.
     maxOutputTokens: 1500,
     schema: scoreSchema,
     system: SCORING_SYSTEM,
@@ -165,7 +154,6 @@ export async function scoreSupports(
   const scoredBySlug = new Map<string, SupportScore>();
 
   for (const s of object.supports) {
-    // Keep only assigned slugs (never invent bioactivities) and ignore duplicates.
     if (!nameBySlug.has(s.slug) || scoredBySlug.has(s.slug)) continue;
     scoredBySlug.set(s.slug, {
       slug: s.slug,
@@ -174,7 +162,6 @@ export async function scoreSupports(
     });
   }
 
-  // Drop any the model failed to return, then keep only the top N by final score.
   return supports
     .map((s) => scoredBySlug.get(s.slug))
     .filter((x): x is SupportScore => !!x)

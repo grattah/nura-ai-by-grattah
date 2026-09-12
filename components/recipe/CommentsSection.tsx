@@ -1,4 +1,3 @@
-// components/recipe/CommentsSection.tsx
 "use client";
 
 import React from "react";

@@ -16,7 +16,6 @@ import { Button } from "@/components/ui/button";
 import { setCommentHidden, deleteComment } from "@/actions/admin-comments";
 import type { AdminComment } from "@/lib/admin/comments";
 
-/** Long comments would otherwise set the row height for the whole table. */
 const PREVIEW_CHARS = 180;
 
 export function AdminCommentsTable({
@@ -28,8 +27,6 @@ export function AdminCommentsTable({
   canModerate: boolean;
   canDelete: boolean;
 }) {
-  // Optimistic local copy so a hide/restore updates the row immediately; the
-  // server action revalidates the page behind it.
   const [rows, setRows] = useState(comments);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -69,8 +66,6 @@ export function AdminCommentsTable({
   };
 
   const remove = (row: AdminComment) => {
-    // Deletion is irreversible and cascades to replies, so the confirmation
-    // states the actual count rather than a generic "are you sure".
     const extra =
       row.replyCount > 0
         ? `\n\nThis will also delete ${row.replyCount} ${

@@ -1,10 +1,5 @@
 import { Sparkles } from "lucide-react";
 
-/**
- * Full-screen "Preparing your answer…" loader. Shown over the (blurred) current
- * page while a personalized search is being prepared — during navigation from
- * home and while the result streams in.
- */
 export function SearchLoading({
   title = "Preparing your answer...",
   message = "Please hold on while we find the best answer for you",

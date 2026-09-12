@@ -25,8 +25,6 @@ describe("resend cooldown timing", () => {
   });
 
   it("never goes negative when a tab was backgrounded past the deadline", () => {
-    // Timers are throttled in background tabs, so the next tick can land long
-    // after the deadline; recomputing from the deadline must still clamp at 0.
     expect(secondsRemaining(deadline, deadline + 600_000)).toBe(0);
   });
 });
@@ -39,7 +37,6 @@ describe("forgot-password form", () => {
   });
 
   it("guards the send itself, not just the button", () => {
-    // A disabled button alone is a UI-only guard; the handler must refuse too.
     expect(src).toContain("if (isCoolingDown) return;");
   });
 
@@ -48,8 +45,6 @@ describe("forgot-password form", () => {
   });
 });
 
-// Entitlement is decided in one place. An inline `status === "active"` check
-// silently paywalls users who cancelled mid-period but are still paid up.
 describe("no inline entitlement checks", () => {
   function walk(dir: string): string[] {
     return readdirSync(dir).flatMap((e) => {
@@ -60,13 +55,11 @@ describe("no inline entitlement checks", () => {
   }
 
   const ALLOWED = new Set([
-    // Billing occupancy, deliberately 'active' only — see lib/subscription.ts.
     "lib/subscription.ts",
     "actions/cancel-subscription.ts",
     "app/api/cron/purge-deleted-accounts/route.ts",
     "app/(no-chrome)/review-order/review-order-client.tsx",
     "components/auth/auth-form.tsx",
-    // Maps STRIPE's subscription status, not ours.
     "app/api/webhooks/stripe/route.ts",
   ]);
 

@@ -4,22 +4,6 @@ import { useReportWebVitals } from "next/web-vitals";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-/**
- * Dev-only on-screen performance profiler.
- *
- * Surfaces, per page, the metrics that explain the "click a link and wait"
- * feeling:
- *   - Initial load — DOMContentLoaded from the Navigation Timing API.
- *   - Nav — soft-navigation latency: time from an internal <Link> click until
- *     the new route has rendered (paint after commit). For RSC pages this
- *     includes the server round trip, which is the real cost.
- *   - Core Web Vitals — LCP / INP / CLS / FCP / TTFB, colour-coded by Google's
- *     good / needs-improvement / poor rating.
- *
- * Everything is also mirrored to the console (`[perf:*]`). Mount this only in
- * development (see app/layout.tsx); it renders nothing in production.
- */
-
 interface VitalEntry {
   value: number;
   rating: "good" | "needs-improvement" | "poor";
@@ -45,11 +29,6 @@ export function PerfProfiler() {
   const [open, setOpen] = useState(false);
   const pendingNav = useRef<{ path: string; t: number } | null>(null);
 
-  // IMPORTANT: this callback must be referentially stable. `useReportWebVitals`
-  // re-subscribes the web-vitals observers whenever the callback identity
-  // changes — passing an inline arrow re-subscribes on every render, and since
-  // the callback itself calls setState (→ re-render → new callback → re-subscribe),
-  // that becomes a feedback loop that piles up observers and freezes the UI.
   const reportVital = useCallback(
     (metric: { name: string; value: number; rating: string }) => {
       setVitals((prev) => ({
@@ -67,7 +46,6 @@ export function PerfProfiler() {
   );
   useReportWebVitals(reportVital);
 
-  // Initial hard-load timing from the Navigation Timing API.
   useEffect(() => {
     const [nav] = performance.getEntriesByType(
       "navigation",
@@ -79,8 +57,6 @@ export function PerfProfiler() {
     }
   }, []);
 
-  // Capture internal <Link>/<a> clicks so the soft navigation that follows can
-  // be timed. (router.push()/back-forward navigations aren't captured here.)
   useEffect(() => {
     function onClick(e: MouseEvent) {
       const anchor = (e.target as HTMLElement | null)?.closest?.(
@@ -88,8 +64,8 @@ export function PerfProfiler() {
       ) as HTMLAnchorElement | null;
       if (!anchor) return;
       const url = new URL(anchor.href, window.location.origin);
-      if (url.origin !== window.location.origin) return; // external link
-      if (url.pathname === window.location.pathname) return; // same page
+      if (url.origin !== window.location.origin) return;
+      if (url.pathname === window.location.pathname) return;
       pendingNav.current = { path: url.pathname, t: performance.now() };
     }
     document.addEventListener("click", onClick, { capture: true });
@@ -97,8 +73,6 @@ export function PerfProfiler() {
       document.removeEventListener("click", onClick, { capture: true });
   }, []);
 
-  // When the path actually changes, measure how long the transition took —
-  // until the second paint after the new route commits.
   useEffect(() => {
     const pending = pendingNav.current;
     if (!pending || pending.path !== pathname) return;

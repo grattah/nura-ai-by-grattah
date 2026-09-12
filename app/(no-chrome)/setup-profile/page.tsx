@@ -71,7 +71,6 @@ export default function SetupProfilePage() {
   return (
     <>
       <div className="min-h-dvh bg-background pb-10">
-        {/* Header */}
         <div className="flex items-center px-6 pt-5 pb-11 relative">
           <button
             onClick={() => router.back()}
@@ -92,7 +91,6 @@ export default function SetupProfilePage() {
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 space-y-4">
-          {/* Email (read-only) */}
           <div className="space-y-1.5">
             <label className="text-sm text-muted-foreground">
               Your email address
@@ -103,7 +101,6 @@ export default function SetupProfilePage() {
             </div>
           </div>
 
-          {/* Password */}
           <div className="space-y-1.5">
             <label className="text-sm text-muted-foreground">
               Create password
@@ -132,7 +129,6 @@ export default function SetupProfilePage() {
             </div>
           </div>
 
-          {/* Full name */}
           <div className="space-y-1.5">
             <label className="text-sm text-muted-foreground">
               Your full name
@@ -149,12 +145,10 @@ export default function SetupProfilePage() {
             </div>
           </div>
 
-          {/* Password requirements */}
           <PasswordRequirements strength={strength} />
 
           {error && <p className="text-sm text-red-500 text-center">{error}</p>}
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={!canSubmit}
@@ -166,10 +160,8 @@ export default function SetupProfilePage() {
         </form>
       </div>
 
-      {/* Success dialog */}
       <Dialog open={done}>
         <DialogContent className="sm:max-w-sm p-8 text-center space-y-4 [&>button]:hidden">
-          {/* Confetti check */}
           <div className="flex justify-center items-center text-center">
             <SuccessAnimation />
           </div>

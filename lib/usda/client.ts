@@ -1,8 +1,3 @@
-// USDA FoodData Central API client (PRD: USDA Nutrient Data Integration §6).
-// Used only by the one-time batch resolve process — never at request/view time
-// (nutrient values are cached permanently per ingredient). Requires
-// USDA_FOOD_DATA_API_KEY.
-
 const BASE = "https://api.nal.usda.gov/fdc/v1";
 
 export interface UsdaFood {
@@ -21,8 +16,6 @@ function apiKey(): string {
 }
 
 async function getJson(url: string, init?: RequestInit): Promise<unknown> {
-  // API key travels as a header, not a query param, so it never lands in
-  // request logs/proxies (audit S5). Retry transient errors with backoff.
   const withKey: RequestInit = {
     ...init,
     headers: { ...(init?.headers ?? {}), "X-Api-Key": apiKey() },
@@ -39,17 +32,10 @@ async function getJson(url: string, init?: RequestInit): Promise<unknown> {
   throw new Error("USDA request failed after retries");
 }
 
-/**
- * Search for a food by name. Prefers whole/less-processed data types
- * (Foundation, SR Legacy) over Branded, which matches how we want to classify
- * generic recipe ingredients.
- */
 export async function searchFoods(
   query: string,
   pageSize = 5,
 ): Promise<UsdaFood[]> {
-  // POST with a JSON body — the dataType filter (with spaces/parens like
-  // "Survey (FNDDS)") breaks the GET query string (nginx 400), but POST is fine.
   const url = `${BASE}/foods/search`;
   const data = (await getJson(url, {
     method: "POST",
@@ -63,7 +49,6 @@ export async function searchFoods(
   return data.foods ?? [];
 }
 
-/** Fetch full nutrient data for up to 20 FDC ids in one request. */
 export async function getFoods(fdcIds: number[]): Promise<UsdaFood[]> {
   if (fdcIds.length === 0) return [];
   if (fdcIds.length > 20) throw new Error("getFoods accepts at most 20 ids");

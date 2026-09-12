@@ -31,8 +31,6 @@ vi.mock("@/lib/credits-server", () => ({
   getTokenState: (...args: unknown[]) => h.getTokenState(...args),
   meter: (...args: unknown[]) => h.meter(...args),
 }));
-// The route reserves units up front now (spec §6). Default to a successful
-// reservation so these tests exercise chat behaviour, not the token path.
 vi.mock("@/lib/tokens/server", () => ({
   reserve: (userId: string, action: string) =>
     (h.reserve as (u: string, a: string) => unknown)(userId, action),
@@ -40,7 +38,6 @@ vi.mock("@/lib/tokens/server", () => ({
   release: (r: unknown) => h.release(r),
 }));
 
-// Authenticated subscriber by default — chainable stub for the auth + sub reads.
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({
     auth: {
@@ -52,7 +49,6 @@ vi.mock("@/lib/supabase/server", () => ({
         eq: () => chain,
         in: () => chain,
         order: () => chain,
-        // getEntitledSubscription reads via .in().order().limit() → array of rows.
         limit: async () => ({
           data: [{ status: "active", expires_at: null }],
         }),
@@ -103,7 +99,6 @@ describe("rag/chat — input clamping (audit M1)", () => {
       description: "d",
     });
     expect(res.status).toBe(200);
-    // retrieve gets the last user question, proving the clamped list still resolves.
     expect(h.retrieve).toHaveBeenCalledWith("q29", "ctx1", 6, 0.5);
   });
 

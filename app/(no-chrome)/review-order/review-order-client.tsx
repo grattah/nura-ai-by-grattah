@@ -8,8 +8,6 @@ import { createClient } from "@/lib/supabase/client";
 import { format } from "date-fns";
 import FilledLock from "@/components/vectors/filled-lock";
 
-// Derived from the single source of truth in constants/index.ts — this used to
-// be a third hardcoded copy of the prices and had drifted to stale GBP values.
 const PLAN_CONFIG = Object.fromEntries(
   PLANS.map((p) => [
     p.id,
@@ -52,7 +50,6 @@ function ReviewOrderContent() {
 
   return (
     <div className="min-h-dvh bg-background pb-10">
-      {/* Header */}
       <div className="flex items-center px-6 pt-5 pb-10 relative">
         <button
           onClick={() => router.back()}
@@ -68,7 +65,6 @@ function ReviewOrderContent() {
       </div>
 
       <div className="px-6 space-y-6">
-        {/* Order summary */}
         <div className="bg-[#E8E6DC] rounded-3xl px-4 py-6 space-y-5.5 border border-border">
           <p className="text-base font-semibold text-foreground">
             Order summary
@@ -94,7 +90,6 @@ function ReviewOrderContent() {
           <p className="text-sm text-subtle -mt-4">Cancel anytime</p>
         </div>
 
-        {/* Deferred billing note (only if existing subscription) */}
         {formattedExpiry && (
           <div
             className="flex items-start gap-3 p-4 rounded-2xl"
@@ -111,7 +106,6 @@ function ReviewOrderContent() {
           </div>
         )}
 
-        {/* Pay button */}
         <div className="space-y-2 pt-2">
           <button
             onClick={() => router.push(`/continue-payment?plan=${plan}`)}

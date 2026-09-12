@@ -12,7 +12,6 @@ import {
 import { needsConsent } from "@/lib/health-profile/consent";
 import { MAX_GOALS } from "@/lib/health-profile/toggle";
 
-// Shape of a `health_profiles` row (table not yet in generated types).
 interface HealthProfileRow {
   user_id: string;
   age_range: string | null;
@@ -49,7 +48,6 @@ function rowToDraft(row: HealthProfileRow): HealthProfileDraft {
   };
 }
 
-/** The current user's health profile, or null if none saved yet. */
 export async function getHealthProfile(): Promise<HealthProfileDraft | null> {
   const supabase = await createClient();
   const {
@@ -66,11 +64,6 @@ export async function getHealthProfile(): Promise<HealthProfileDraft | null> {
   return data ? rowToDraft(data as unknown as HealthProfileRow) : null;
 }
 
-/**
- * Upsert the current user's health profile. Free for every user.
- * Basic profile (§2.1) is required; sensitive sections (§2.3–2.5) may only be
- * stored with affirmative consent (PRD §3).
- */
 export async function saveHealthProfile(
   draft: HealthProfileDraft,
 ): Promise<ActionResult> {
@@ -83,17 +76,12 @@ export async function saveHealthProfile(
   if (!isBasicComplete(draft))
     return { error: "Please complete your basic profile." };
 
-  // Authoritative guard. The client routes users to Review & Consent before they
-  // can get here, so this is the backstop for direct/stale calls.
   if (needsConsent(draft))
     return {
       error:
         "Please consent to storing your health data to continue, or clear the sensitive sections.",
     };
 
-  // Consent is STICKY: it's a historical fact, so never re-stamp or erase it on
-  // an unrelated save. Read what's on record, then only write when consent is
-  // affirmatively given. A version bump re-stamps the date (a new agreement).
   const { data: priorRaw } = await supabase
     .from("health_profiles" as never)
     .select("consent_given_at, consent_version")
@@ -104,16 +92,12 @@ export async function saveHealthProfile(
     consent_version: string | null;
   } | null;
 
-  // Only record consent when there is sensitive data to consent to — that's
-  // exactly when the checkbox is shown. Without this, clearing all sensitive
-  // sections while an old consent flag lingers would silently stamp agreement to
-  // a version the user never saw.
   const giveConsent = hasSensitiveData(draft) && draft.consent;
   const consentGivenAt = giveConsent
     ? prior?.consent_given_at && prior.consent_version === CONSENT_VERSION
-      ? prior.consent_given_at // same version → keep the original timestamp
-      : new Date().toISOString() // first consent, or a new version
-    : (prior?.consent_given_at ?? null); // preserve, never null out
+      ? prior.consent_given_at
+      : new Date().toISOString()
+    : (prior?.consent_given_at ?? null);
   const consentVersion = giveConsent
     ? CONSENT_VERSION
     : (prior?.consent_version ?? null);
@@ -123,11 +107,7 @@ export async function saveHealthProfile(
     age_range: draft.basic.ageRange,
     biological_sex: draft.basic.biologicalSex,
     pregnancy_status: draft.basic.pregnancyStatus,
-    // Capped server-side too. The picker enforces 3, but the cap is what feeds
-    // the Match Score average — a crafted request saving ten goals would
-    // silently dilute every score, and nothing downstream re-checks it.
     goals: draft.goals.slice(0, MAX_GOALS),
-    // Dietary-pattern step is disabled for now — always clear the column.
     dietary_pattern: null,
     conditions: draft.conditions,
     conditions_other: draft.conditionsOther.trim() || null,
@@ -148,7 +128,6 @@ export async function saveHealthProfile(
   return { success: true };
 }
 
-/** Clear a single optional section (keeps the rest of the profile). */
 export async function deleteHealthProfileSection(
   section: ProfileSection,
 ): Promise<ActionResult> {
@@ -178,7 +157,6 @@ export async function deleteHealthProfileSection(
   return { success: true };
 }
 
-/** Delete the entire health profile. */
 export async function deleteHealthProfile(): Promise<ActionResult> {
   const supabase = await createClient();
   const {

@@ -1,5 +1,3 @@
-// Client-safe helpers for displaying the weekly token reset time.
-
 function diffParts(resetAt: string | null) {
   if (!resetAt) return null;
   const ms = new Date(resetAt).getTime() - Date.now();
@@ -13,21 +11,18 @@ function diffParts(resetAt: string | null) {
   };
 }
 
-/** Full live countdown, e.g. "4d 12h 34m 56s". */
 export function formatResetCountdown(resetAt: string | null): string {
   const p = diffParts(resetAt);
   if (!p) return "—";
   return `${p.d}d ${p.h}h ${p.m}m ${p.s}s`;
 }
 
-/** Compact countdown for badges, e.g. "5d 12h". */
 export function formatResetShort(resetAt: string | null): string {
   const p = diffParts(resetAt);
   if (!p) return "—";
   return `${p.d}d ${p.h}h`;
 }
 
-/** Long reset timestamp, e.g. "Monday, 12 May 2025 | 00:00". */
 export function formatResetLong(resetAt: string | null): string {
   if (!resetAt) return "—";
   const d = new Date(resetAt);
@@ -45,7 +40,6 @@ export function formatResetLong(resetAt: string | null): string {
   return `${date} | ${time}`;
 }
 
-/** Short reset date, e.g. "Jun 12, 2025". */
 export function formatResetDate(resetAt: string | null): string {
   if (!resetAt) return "—";
   return new Date(resetAt).toLocaleDateString("en-US", {
@@ -55,7 +49,6 @@ export function formatResetDate(resetAt: string | null): string {
   });
 }
 
-/** Short purchase date, e.g. "Jun 17, 2026". */
 export function formatBoughtDate(iso: string | null): string {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString("en-US", {

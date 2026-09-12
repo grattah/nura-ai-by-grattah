@@ -8,12 +8,7 @@ import type { BonusContext } from "@/lib/scoring/bonuses";
 
 type Admin = SupabaseClient<Database>;
 
-/**
- * Build the Category Score bonus context (PRD Category §4) from a recipe's
- * stored nutrient columns. Returns undefined when the recipe hasn't been
- * nutrition-scored yet — categories then fall back to BioSubtotal alone rather
- * than silently scoring every bonus trigger as false against zeroed data.
- */
+/** Builds the Category Score bonus context from stored nutrient columns. */
 export async function recipeBonusContext(
   admin: Admin,
   recipeId: string,
@@ -49,8 +44,7 @@ export async function recipeBonusContext(
   };
 }
 
-// Mirrors the write logic in scripts/score-supports.mjs: replace a recipe's
-// recipe_tags (23 bioactivities) + recipe_categories (all 14 with qualified).
+/** Replaces a recipe's bioactivity scores and category rows. */
 export async function writeBioactivityAndCategories(
   admin: Admin,
   recipeId: string,
@@ -67,7 +61,6 @@ export async function writeBioactivityAndCategories(
     (cats ?? []).map((c) => [c.slug as string, c.id as string]),
   );
 
-  // Bioactivities → recipe_tags (replace).
   const tagRows = WELLNESS_SUPPORTS.filter((b) => tagIdBySlug.has(b.slug)).map(
     (b) => ({
       recipe_id: recipeId,
@@ -80,9 +73,6 @@ export async function writeBioactivityAndCategories(
     await admin.from("recipe_tags").insert(tagRows as never);
   }
 
-  // Categories → recipe_categories (all 14, replace). The bonus context comes
-  // from the recipe's own nutrient columns — Category PRD §8 requires the same
-  // bonus the Match Score applies to the equivalent goal.
   const bonusCtx = await recipeBonusContext(admin, recipeId);
   const categories = computeAllCategoryScores(scoresBySlug, bonusCtx);
   const catRows = categories
@@ -99,6 +89,3 @@ export async function writeBioactivityAndCategories(
   }
 }
 
-// The legacy LLM nutrition writer (writeNutrition) moved to
-// archive/old-scoring/ — the deterministic path writes via
-// lib/scoring/nutrition-deterministic.ts (writeNutritionV2).

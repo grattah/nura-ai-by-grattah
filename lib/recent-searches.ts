@@ -1,4 +1,3 @@
-// lib/recent-searches.ts
 const STORAGE_KEY = "nuko:recent-searches";
 const MAX_RECENT = 5;
 
@@ -26,7 +25,6 @@ export function addRecentSearch(term: string) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   } catch {
-    // localStorage may be full or disabled; silently fail
   }
 }
 
@@ -35,6 +33,5 @@ export function clearRecentSearches() {
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch {
-    // ignore
   }
 }

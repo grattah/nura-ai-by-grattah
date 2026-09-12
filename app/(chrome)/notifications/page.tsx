@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 interface Notification {
   id: string;
   title: string;
@@ -15,8 +13,6 @@ interface Notification {
   read_at: string | null;
   created_at: string;
 }
-
-// ─── Data fetching ────────────────────────────────────────────────────────────
 
 async function getNotifications(): Promise<Notification[]> {
   const supabase = await createClient();
@@ -37,7 +33,6 @@ async function getNotifications(): Promise<Notification[]> {
   return data;
 }
 
-// Mark all unread notifications as read (fire-and-forget on page load)
 async function markAllRead(userId: string) {
   const supabase = await createClient();
   await supabase
@@ -46,8 +41,6 @@ async function markAllRead(userId: string) {
     .eq("user_id", userId)
     .is("read_at", null);
 }
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatDate(iso: string): string {
   const date = new Date(iso);
@@ -61,15 +54,12 @@ function formatDate(iso: string): string {
   });
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
 export default async function NotificationsPage() {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  // Guests: show the empty shell behind the sign-in overlay (no user to fetch for).
   if (error || !data?.claims || !user) {
     return (
       <div className="min-h-screen bg-background">
@@ -96,7 +86,6 @@ export default async function NotificationsPage() {
 
   const notifications = await getNotifications();
 
-  // Mark all as read in the background after fetch
   if (notifications.some((n) => !n.read_at)) {
     await markAllRead(user.id);
   }
@@ -105,7 +94,6 @@ export default async function NotificationsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Sub-header */}
       <div className="flex items-center gap-3 px-4 pt-5 pb-4">
         <Button
           variant="ghost"
@@ -148,8 +136,6 @@ export default async function NotificationsPage() {
   );
 }
 
-// ─── NotificationCard ─────────────────────────────────────────────────────────
-
 function NotificationCard({ notification }: { notification: Notification }) {
   const isUnread = !notification.read_at;
 
@@ -161,7 +147,6 @@ function NotificationCard({ notification }: { notification: Notification }) {
       )}
     >
       <CardContent className="p-5">
-        {/* Title row */}
         <div className="flex items-center gap-3 mb-3">
           <div
             className={cn(
@@ -187,7 +172,6 @@ function NotificationCard({ notification }: { notification: Notification }) {
             >
               {notification.title}
             </p>
-            {/* Unread dot */}
             {isUnread && (
               <span
                 className="w-2 h-2 rounded-full shrink-0"
@@ -197,14 +181,12 @@ function NotificationCard({ notification }: { notification: Notification }) {
           </div>
         </div>
 
-        {/* Body */}
         <p className="text-sm text-muted-foreground leading-relaxed mb-4 line-clamp-3">
           {notification.body}
         </p>
 
         <Separator className="bg-border mb-3" />
 
-        {/* Timestamp */}
         <p className="text-xs text-muted-foreground">
           {formatDate(notification.created_at)}
         </p>
@@ -212,8 +194,6 @@ function NotificationCard({ notification }: { notification: Notification }) {
     </Card>
   );
 }
-
-// ─── Empty state ──────────────────────────────────────────────────────────────
 
 function EmptyNotifications() {
   return (

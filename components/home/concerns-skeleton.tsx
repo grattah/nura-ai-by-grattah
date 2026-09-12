@@ -1,5 +1,4 @@
 export default function ConcernsSkeleton() {
-  // Varied widths so the placeholders read as separate pills, not one bar.
   const widths = ["w-20", "w-24", "w-16", "w-28", "w-20"];
   return (
     <div className="flex flex-wrap gap-2" aria-hidden="true">

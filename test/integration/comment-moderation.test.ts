@@ -1,22 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { withRollback, makeUser, hasTestDb, type Tx } from "../helpers/db";
 
-/**
- * Comment moderation (admin: review / hide / delete).
- *
- * Integration rather than unit, deliberately: hiding is enforced by an RLS
- * policy, and a mocked Supabase client returns whatever rows the mock was told
- * to return. Only a real connection, as the real roles, can show that a hidden
- * comment is actually unreachable — the same gap that let `ingredients` sit
- * behind RLS with zero policies while every test stayed green.
- */
-
 const d = hasTestDb ? describe : describe.skip;
 
 async function fixture(tx: Tx) {
   const userId = await makeUser(tx);
-  // A trigger on auth.users already creates the profile row, so this names
-  // it rather than inserting a second one.
   await tx.sql(
     `insert into public.profiles (id, username) values ($1, $2)
      on conflict (id) do update set username = excluded.username`,
@@ -76,8 +64,6 @@ d("hiding a comment", () => {
   });
 
   it("hides it from its own author, rather than shadow-banning", async () => {
-    // Showing a hidden comment back to its author alone would let them believe
-    // it still stands. The policy is `hidden = false` with no author exception.
     await withRollback(async (tx) => {
       const { userId, parentId } = await fixture(tx);
       await hide(tx, parentId);
@@ -91,8 +77,6 @@ d("hiding a comment", () => {
   });
 
   it("drops it from the count a recipe page renders", async () => {
-    // The recipe page counts with `head: true`. A comment filtered only in
-    // application code would still be counted here.
     await withRollback(async (tx) => {
       const { recipeId, parentId } = await fixture(tx);
       const before = await tx.asAnon<{ n: string }>(
@@ -124,8 +108,6 @@ d("hiding a comment", () => {
   });
 
   it("stops the author unhiding their own comment", async () => {
-    // comments_update_own carries `hidden = false` in USING and WITH CHECK, so
-    // a hidden row is not an updatable target for its author.
     await withRollback(async (tx) => {
       const { userId, parentId } = await fixture(tx);
       await hide(tx, parentId);
@@ -163,8 +145,6 @@ d("hiding a comment", () => {
 
 d("deleting a comment", () => {
   it("takes its replies with it", async () => {
-    // comments_parent_id_fkey is ON DELETE CASCADE. The admin UI states the
-    // reply count in the confirmation because of this.
     await withRollback(async (tx) => {
       const { parentId, replyId } = await fixture(tx);
       await tx.sql(`delete from public.comments where id = $1`, [parentId]);

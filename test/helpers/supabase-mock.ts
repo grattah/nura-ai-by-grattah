@@ -8,11 +8,7 @@ export interface RecordedCall {
 
 type Result = { data: unknown; error: unknown };
 
-/**
- * Minimal chainable Supabase client mock. Records insert/upsert/update/delete/
- * select operations per table and resolves terminal calls (`await builder`,
- * `.maybeSingle()`) with a per-table configured `{ data, error }`.
- */
+/** Minimal chainable Supabase client mock. */
 export function makeSupabaseMock() {
   const calls: RecordedCall[] = [];
   const results = new Map<string, Result>();

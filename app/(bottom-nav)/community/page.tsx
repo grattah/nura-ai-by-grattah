@@ -5,8 +5,6 @@ import { CommunityFeed } from "@/components/community/CommunityFeed";
 const page = async () => {
   const supabase = await createClient();
 
-  // Personal feed — only the signed-in user's own activity. Guests get the
-  // sign-in overlay (RouteAuthGuard) over an empty feed.
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -15,9 +13,6 @@ const page = async () => {
     ? await fetchActivitiesPage(supabase, 0, user.id)
     : [];
 
-  // The actor is the same on every row, so resolve the name once here instead of
-  // joining profiles per row. `user_metadata.full_name` is what the profile form
-  // writes; `profiles.username` only mirrors it and can drift.
   const actorName = actorLabel(
     user?.user_metadata?.full_name as string | undefined,
   );

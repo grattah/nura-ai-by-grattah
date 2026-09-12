@@ -64,17 +64,14 @@ export default function CategoryDetailPage() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
-      // Shared rule — see lib/subscription.ts. The old inline check ignored
-      // expires_at and paywalled anyone who had cancelled mid-period.
       setIsSubscribed(await hasActiveSubscription(supabase, user.id));
     };
     check();
   }, [supabase]);
 
-  // Separate effect: once we know they're NOT subscribed, start the peek timer.
   useEffect(() => {
     if (recipesLoaded && isSubscribed === false) {
-      const timer = setTimeout(() => setShowPaywall(true), 600); // peek delay
+      const timer = setTimeout(() => setShowPaywall(true), 600);
       return () => clearTimeout(timer);
     }
   }, [recipesLoaded, isSubscribed]);
@@ -89,8 +86,6 @@ export default function CategoryDetailPage() {
       const start = pageNum * PAGE_SIZE;
       const end = start + PAGE_SIZE - 1;
 
-      // Rank recipes within the category by their computed CategoryScore
-      // (recipe_categories.score), highest first.
       let query = supabase
         .from("recipe_categories")
         .select(
@@ -150,7 +145,7 @@ export default function CategoryDetailPage() {
     try {
       const next = pageRef.current + 1;
       const rows = await fetchPage(next, controller.signal);
-      if (myEpoch !== epochRef.current) return; // category changed mid-flight
+      if (myEpoch !== epochRef.current) return;
 
       if (rows.length > 0) {
         pageRef.current = next;
@@ -285,7 +280,6 @@ export default function CategoryDetailPage() {
 
   return (
     <div className="bg-white pb-24 min-h-svh flex flex-col">
-      {/* Header */}
       <div className="px-6 bg-background">
         <div className="relative">
           <div className="flex items-center pt-5 pb-4 gap-3 shrink-0">
@@ -334,10 +328,8 @@ export default function CategoryDetailPage() {
       </div>
 
       <div className="space-y-6 flex-1 mb-2">
-        {/* Category banner */}
         <CategoryBanner name={categoryLabel} config={config} />
 
-        {/* Drink-type sub-sub-category filter (shown once present types load) */}
         {pills.length > 1 && (
           <div className="px-6">
             <FilterPills
@@ -375,7 +367,6 @@ export default function CategoryDetailPage() {
           </p>
         )}
 
-        {/* Recipe grid */}
         {isLoading ? (
           <div className="grid grid-cols-2 gap-4 animate-pulse px-6">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -447,7 +438,6 @@ export default function CategoryDetailPage() {
         )}
       </div>
 
-      {/* Find a recipe CTA */}
       <div className="px-6 mt-auto">
         <Link
           href="/find-recipe"

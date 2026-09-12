@@ -11,7 +11,6 @@ import {
 import type { BonusContext } from "@/lib/scoring/bonuses";
 import { maxesForTrack } from "@/lib/scoring/match-metrics";
 
-// A context where every bonus trigger FAILS — the baseline for isolating one.
 const noBonus: BonusContext = {
   points: { sugar: 0, salt: 0, satFat: 0, energy: 10, fiber: 0, protein: 0 },
   maxes: maxesForTrack("Beverage"),
@@ -26,7 +25,6 @@ const noBonus: BonusContext = {
 describe("categoryBioSubtotal (relevance-weighted, ≥50 qualifiers)", () => {
   it("matches the Diabetes worked example (blood-sugar 95, weight-metabolic 65)", () => {
     const scores = { "blood-sugar-support": 85, "weight-metabolic-support": 40 };
-    // (85*95 + 40*65) / (95+65) = 10675 / 160 = 66.7
     expect(categoryBioSubtotal(scores, "diabetes")).toBeCloseTo(66.72, 1);
   });
 
@@ -36,12 +34,10 @@ describe("categoryBioSubtotal (relevance-weighted, ≥50 qualifiers)", () => {
   });
 });
 
-// Category PRD §7 — the document's own worked example, end to end.
 describe("Category PRD §7 worked example — Gut Health", () => {
   const scores = { "gut-digestive-support": 65, "microbiome-support": 55 };
 
   it("computes BioSubtotal 60.1 from the two ≥50 bioactivities", () => {
-    // (65×95 + 55×90) ÷ (95+90) = 11125 ÷ 185 = 60.1
     expect(categoryBioSubtotal(scores, "gut-health")).toBeCloseTo(60.1, 1);
   });
 
@@ -86,7 +82,6 @@ describe("§4 bonus behaviour", () => {
   });
 
   it("gives the 6 bonus-less categories nothing, however rich the context", () => {
-    // §5: Hormones, Focus, Sleep, Diabetes, Menopause, Heart Health.
     const scores = { "hormonal-balance-support": 70, "sleep-relaxation-support": 70 };
     for (const cat of ["hormones", "focus", "sleep", "diabetes", "menopause", "heart"] as const) {
       expect(calculateCategoryScore(scores, cat, rich)).toBeCloseTo(
@@ -103,7 +98,6 @@ describe("§4 bonus behaviour", () => {
   });
 });
 
-// §6.1/§6.2 — the display floor is absolute; the trace exception is gone.
 describe("display floor and tiers", () => {
   it("qualifies at exactly 40 and not below", () => {
     expect(supportTier(QUALIFY_THRESHOLD)).toBe("moderate");
@@ -116,7 +110,6 @@ describe("display floor and tiers", () => {
   });
 
   it("drops every sub-40 category — no exception admits one", () => {
-    // Previously a ≥80-confidence LLM "trace override" could admit these.
     const scores = { "blood-sugar-support": 20, "weight-metabolic-support": 10 };
     const out = computeRecipeCategories(scores);
     expect(out.every((c) => c.score >= QUALIFY_THRESHOLD)).toBe(true);

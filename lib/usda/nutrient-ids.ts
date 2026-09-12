@@ -1,11 +1,3 @@
-// USDA FoodData Central nutrient-number → Nuko field map (PRD: USDA Nutrient
-// Data Integration §3). USDA's API tags nutrients by numeric id, not name. We
-// extract exactly these 13 fields and ignore the rest of USDA's 50+ panel.
-//
-// Note: 2000 "Total sugars" reflects ALL sugar (intrinsic + added). The
-// intrinsic-vs-added distinction (Base Nutrition Score Beverage Juiced/Blended
-// rule) is applied later in scoring — USDA does not make that distinction.
-
 export const USDA_NUTRIENT_IDS = {
   1008: "energy_kcal",
   1003: "protein_g",
@@ -15,32 +7,20 @@ export const USDA_NUTRIENT_IDS = {
   1079: "fiber_g",
   2000: "total_sugar_g",
   1093: "sodium_mg",
-  1087: "calcium_mg", // raw mg — converted to %DV downstream
-  1162: "vitamin_c_mg", // raw mg — converted to %DV downstream
+  1087: "calcium_mg",
+  1162: "vitamin_c_mg",
   1089: "iron_mg",
-  1092: "potassium_mg", // raw mg — the Hydration bonus's electrolyte arm
-  1051: "water_g", // grams per 100g == water_pct on a 100g basis
+  1092: "potassium_mg",
+  1051: "water_g",
 
-  // ── Category Score PRD-3 §6 ──────────────────────────────────────────────
-  // Added because their calibration rows were UNSCOREABLE without them. A row
-  // with no data behind it still counts toward MaxPossible (§4 Step 2), so
-  // Sleep and Focus could not exceed 50% however good a recipe was, and
-  // Beauty, Energy, Detox, Immunity, Gut Health, Hormones and Heart Health
-  // were each capped well under 100%.
-  //
-  // Ids confirmed against the live FDC API (fdcId 170567, "Nuts, almonds").
-  1090: "magnesium_mg", // Sleep (Primary)
-  1095: "zinc_mg", // Immunity (Primary), Beauty (Tertiary)
-  1210: "tryptophan_g", // Sleep (Secondary)
+  1090: "magnesium_mg",
+  1095: "zinc_mg",
+  1210: "tryptophan_g",
 
-  // Omega-3 is three separate USDA entries, summed into one field below.
-  // Hormones (Secondary), Focus (Primary), Heart Health (Primary).
   1404: "ala_g",
   1278: "epa_g",
   1272: "dha_g",
 
-  // "B vitamins" is a class, not a USDA field — the six below roll up into one
-  // %DV figure below. Energy (Primary).
   1165: "thiamin_mg",
   1166: "riboflavin_mg",
   1167: "niacin_mg",
@@ -51,24 +31,20 @@ export const USDA_NUTRIENT_IDS = {
 
 export type UsdaNutrientField = (typeof USDA_NUTRIENT_IDS)[keyof typeof USDA_NUTRIENT_IDS];
 
-// FDA Daily Values used to convert raw amounts to %DV. Iron is stored as mg
-// (PRD lists mg/%DV).
 export const DAILY_VALUES = {
-  calcium_mg: 1300, // mg
-  vitamin_c_mg: 90, // mg
-  iron_mg: 18, // mg (available if a %DV is ever needed)
-  magnesium_mg: 420, // mg
-  zinc_mg: 11, // mg
-  // The six B vitamins, for the composite below.
+  calcium_mg: 1300,
+  vitamin_c_mg: 90,
+  iron_mg: 18,
+  magnesium_mg: 420,
+  zinc_mg: 11,
   thiamin_mg: 1.2,
   riboflavin_mg: 1.3,
-  niacin_mg: 16, // mg NE
+  niacin_mg: 16,
   b6_mg: 1.7,
-  folate_ug: 400, // µg DFE
-  b12_ug: 2.4, // µg
+  folate_ug: 400,
+  b12_ug: 2.4,
 } as const;
 
-/** The six USDA fields that roll up into the single "B vitamins" figure. */
 const B_VITAMIN_FIELDS = [
   "thiamin_mg",
   "riboflavin_mg",
@@ -78,18 +54,7 @@ const B_VITAMIN_FIELDS = [
   "b12_ug",
 ] as const;
 
-/**
- * Values that are not single USDA entries and have to be derived.
- *
- * `omega3_g` sums ALA + EPA + DHA, which is how the total is normally quoted.
- *
- * `b_vitamin_dv` takes the HIGHEST %DV among the six B vitamins, not the mean.
- * A mean punishes exactly the foods the Energy row is meant to catch —
- * nutritional yeast is an enormous B12 source and unremarkable elsewhere, and
- * plant foods report no B12 at all, which a mean would read as a zero rather
- * than as "not measured". The max maps cleanly onto the FDA's own wording: at
- * a 20% threshold it means "an excellent source of at least one B vitamin".
- */
+/** Derives omega-3 (ALA+EPA+DHA) and the max B-vitamin %DV. */
 export function deriveComposites(
   n: Partial<Record<UsdaNutrientField, number>>,
 ): { omega3_g?: number; b_vitamin_dv?: number } {
@@ -110,11 +75,6 @@ export function deriveComposites(
   return out;
 }
 
-/**
- * Reduce a USDA food's `foodNutrients[]` into our 12-field record. Accepts the
- * shape returned by both the Search and Foods endpoints (nutrient id may live at
- * `nutrientId`, `nutrient.id`, or `nutrientNumber`).
- */
 export function extractNutrients(
   foodNutrients: Array<Record<string, unknown>>,
 ): Partial<Record<UsdaNutrientField, number>> {

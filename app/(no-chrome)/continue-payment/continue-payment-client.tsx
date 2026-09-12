@@ -7,8 +7,6 @@ import { ArrowLeft, X } from "lucide-react";
 import { CheckoutEmbed } from "@/components/checkout-embed";
 import { fetchClientSecretForPlan } from "@/actions/stripe";
 
-// PLAN_LABELS comes from constants/index.ts (was duplicated here in GBP).
-
 function ContinuePaymentContent() {
   const router = useRouter();
   const params = useSearchParams();
@@ -29,7 +27,6 @@ function ContinuePaymentContent() {
 
   return (
     <div className="min-h-dvh bg-background pb-10">
-      {/* Header */}
       <div className="flex items-center justify-between px-6 pt-5 pb-4">
         <button
           onClick={() => router.back()}
@@ -54,7 +51,6 @@ function ContinuePaymentContent() {
       </div>
 
       <div className="px-6 space-y-4">
-        {/* Plan summary */}
         <div
           className="flex items-center justify-between px-4 py-3 rounded-2xl border"
           style={{
@@ -78,7 +74,6 @@ function ContinuePaymentContent() {
           </div>
         </div>
 
-        {/* Stripe checkout */}
         {error ? (
           <p className="text-sm text-red-500 text-center">{error}</p>
         ) : !clientSecret ? (

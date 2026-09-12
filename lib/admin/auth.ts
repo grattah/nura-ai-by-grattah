@@ -17,8 +17,6 @@ export async function getAdminIdentity(): Promise<AdminIdentity | null> {
   if (!isAllowedAdminEmail(user.email)) return null;
 
   const admin = createServiceRoleClient();
-  // admin_members isn't in the generated types yet (migration 20260616120000),
-  // so the table name is cast until `npm run generate-types` is re-run.
   const { data } = await admin
     .from("admin_members" as never)
     .select("role, email")
@@ -37,10 +35,7 @@ export type RequireAdminResult =
   | { ok: true; identity: AdminIdentity }
   | { ok: false; error: string };
 
-/**
- * Gate a server action by minimum role. Returns the identity on success or a
- * typed error to surface to the client.
- */
+/** Gates a server action by minimum admin role. */
 export async function requireAdmin(
   min: AdminRole = "viewer",
 ): Promise<RequireAdminResult> {

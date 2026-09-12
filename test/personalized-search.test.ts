@@ -11,20 +11,15 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(() => Promise.resolve(h.client!.client)),
 }));
 
-// Token state/metering run via the service-role client; mock the module so the
-// access-control tests don't need it wired up.
 vi.mock("@/lib/credits-server", () => ({
   getTokenState: (...args: unknown[]) => h.getTokenState(...args),
   meter: (...args: unknown[]) => h.meter(...args),
 }));
 
-// Free-trial consumption also uses the service-role client; deny it here so a
-// user with no subscription exercises the blocked (403) path deterministically.
 vi.mock("@/lib/free-trial-server", () => ({
   tryConsumeFreeView: vi.fn().mockResolvedValue(false),
 }));
 
-// Don't hit the model — if auth passes we still shouldn't call Anthropic in these tests.
 vi.mock("ai", () => ({ generateObject: vi.fn(), generateText: vi.fn() }));
 vi.mock("@ai-sdk/anthropic", () => ({ anthropic: vi.fn() }));
 
@@ -42,7 +37,6 @@ function post(body: unknown) {
 beforeEach(() => {
   vi.clearAllMocks();
   h.client = makeSupabaseMock();
-  // Default: tokens available (access-control tests fail earlier anyway).
   h.getTokenState.mockResolvedValue({ totalRemaining: 100 });
 });
 

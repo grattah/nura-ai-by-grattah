@@ -18,7 +18,6 @@ export async function toggleBookmark(
     return { bookmarked: false, error: "not_authenticated" };
   }
 
-  // Check if bookmark already exists
   const { data: existing, error: selectError } = await supabase
     .from("bookmarks")
     .select("id")
@@ -31,7 +30,6 @@ export async function toggleBookmark(
   }
 
   if (existing) {
-    // Remove bookmark
     const { error: deleteError } = await supabase
       .from("bookmarks")
       .delete()
@@ -45,7 +43,6 @@ export async function toggleBookmark(
     revalidatePath(`/recipes/${recipeId}`);
     return { bookmarked: false };
   } else {
-    // Add bookmark
     const { error: insertError } = await supabase
       .from("bookmarks")
       .insert({ user_id: user.id, recipe_id: recipeId });

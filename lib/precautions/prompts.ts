@@ -1,14 +1,3 @@
-// Prompts for the Precautions tab. Kept out of the script so the wording is
-// reviewable on its own and pinned by tests — this is consumer-facing safety
-// copy, so drift here matters more than in the scoring prompts.
-
-/**
- * PRD §2 — which ingredients need a usage/dosage profile at all.
- *
- * Runs first: it is a cheap yes/no over the whole ingredient library, and only
- * the "yes" answers go on to the research pass. Most of a recipe library is
- * whole food, so this is what keeps the job small.
- */
 export const QUALIFY_SYSTEM = `You decide whether a food ingredient needs a usage/dosage safety profile.
 
 An ingredient NEEDS one when it has concentrated, dose-dependent effects — herbs, adaptogens, spices used therapeutically, botanical extracts, and similar actives. Examples: ashwagandha, maca, turmeric, concentrated ginger, cinnamon, licorice root, saffron, elderberry, hibiscus, cranberry extract, medicinal spearmint.
@@ -19,24 +8,6 @@ Judge the ingredient as it is typically used in a drink or recipe. When genuinel
 
 export const qualifyPrompt = (name: string) => `INGREDIENT: ${name}`;
 
-/**
- * PRD-4 §4.1 — the research prompt, reproduced as specified.
- *
- * The defining change from PRD-3: there is no web search. The model answers
- * from training knowledge and cites nothing, because a citation it cannot
- * verify is worse than no citation — it lends borrowed authority to a recalled
- * number. That also removed the fourth question (daily limit): a dosage figure
- * with no fact sheet behind it is precisely what "do not fabricate" rules out.
- *
- * Cost consequence, measured: search was the entire expense. Research fell
- * from ~$2.42/ingredient to ~$0.027 on Opus, which is why the whole backfill
- * now runs on Opus for well under $2 rather than being priced onto a smaller
- * model.
- *
- * PRD-4 §7 requires a nutritionist or qualified reviewer to spot-check this
- * output before it ships, particularly for ingredients with strong
- * dosage-dependent effects. Nothing in this pipeline substitutes for that.
- */
 export const RESEARCH_SYSTEM = `You are identifying usage and safety precautions for a specific ingredient, to inform consumers before regular consumption — not to diagnose or replace medical advice, based on your own training knowledge.
 
 Report ONLY precautions that genuinely apply. This is not a questionnaire to complete: if an ingredient has nothing worth cautioning about in one of the areas below, say nothing about that area at all.
@@ -73,15 +44,6 @@ Other rules:
 
 export const researchPrompt = (name: string) => `INGREDIENT: ${name}`;
 
-/**
- * Re-ask for a missing "who should avoid" answer.
- *
- * Sent only when the first research call omitted that field. It is a genuine
- * question, not a demand for an answer: the model is explicitly told that
- * "no one in particular" is an acceptable reply, because pressing for a
- * contraindication is a good way to manufacture one. See CRITICAL_FIELD in
- * ./types for the measurement that prompted this.
- */
 export const AVOID_RECHECK_SYSTEM = `You previously answered questions about an ingredient's safe use and did not identify anyone who should avoid it.
 
 Reconsider only that question: is there any group who should avoid this ingredient or consult a doctor before regular use? Explicitly consider pregnancy and breastfeeding, common medication interactions, and conditions affected by the ingredient's known actions.

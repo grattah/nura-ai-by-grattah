@@ -1,21 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { withRollback, makeUser, hasTestDb, type Tx } from "../helpers/db";
 
-// QA: "Comment activity not logged in activities."
-//
-// Confirmed against prod before writing these: 7 comments have been posted
-// since the logging code shipped (2026-08-21) and NOT ONE produced an activity
-// row. `activities` contains only 'viewed'.
-//
-// add-comment.ts inserts the row and then swallows any failure into a
-// console.error, so the action still reports success. These tests exercise the
-// insert as the user actually performs it — under RLS — which is the only way
-// to see what that swallowed error is.
-
 const d = hasTestDb ? describe : describe.skip;
 
-/** Only the NOT NULL columns without defaults — kept minimal so a new
- *  optional column on `recipes` cannot break every test in this file. */
 const makeRecipe = async (tx: Tx): Promise<string> => {
   const [row] = await tx.sql<{ id: string }>(
     `insert into public.recipes
@@ -73,9 +60,6 @@ d("activity logging under RLS", () => {
       const user = await makeUser(tx);
       const recipe = await makeRecipe(tx);
 
-      // If a CHECK constraint ever restricts `action` to a set that omits
-      // "commented on", the insert fails and add-comment.ts swallows it — the
-      // comment still saves and nothing surfaces. Pin the literal.
       await tx.asUser(
         user,
         `insert into public.activities (user_id, recipe_id, action)
@@ -115,8 +99,6 @@ d("activity logging under RLS", () => {
   });
 });
 
-// QA (clarified): "the most recent comment a user made must show on the recipe
-// page, while other comments are reserved for the page 'See all' redirects to."
 d("recipe page comment visibility", () => {
   it("returns the newest comment first, so the page can show one", async () => {
     await withRollback(async (tx) => {
@@ -135,8 +117,6 @@ d("recipe page comment visibility", () => {
         );
       }
 
-      // The recipe page takes limit(1) off this ordering; if the sort were
-      // ascending it would surface the oldest comment instead.
       const rows = await tx.sql<{ content: string }>(
         `select content from public.comments
           where recipe_id = $1::uuid and parent_id is null
@@ -168,7 +148,6 @@ d("recipe page comment visibility", () => {
           where recipe_id = $1::uuid and parent_id is null`,
         [recipe],
       );
-      // "Comments (12)" must not inflate by counting replies.
       expect(Number(count)).toBe(1);
     });
   });

@@ -42,12 +42,8 @@ export function UpdatePasswordForm({
         data: { user },
       } = await supabase.auth.getUser();
 
-      // Best-effort confirmation email; must run before sign-out while the
-      // recovery session is still active.
       await sendPasswordChangedEmail();
 
-      // Password changed — sign out of the recovery session and have the
-      // user log back in with their new password.
       await supabase.auth.signOut();
       posthog.reset();
       router.push(

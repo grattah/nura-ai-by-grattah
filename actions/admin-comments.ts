@@ -9,22 +9,11 @@ import {
   type CommentFilter,
 } from "@/lib/admin/comments";
 
-/**
- * Admin comment moderation.
- *
- * Reads go through the service-role client because the RLS select policy now
- * excludes hidden rows — a moderator using the cookie client could not see the
- * very comments they are meant to review.
- */
-
-
 export async function listComments(input: {
   filter: CommentFilter;
   search?: string;
   page?: number;
-}): Promise<
-  { comments: AdminComment[]; total: number } | { error: string }
-> {
+}): Promise<{ comments: AdminComment[]; total: number } | { error: string }> {
   const gate = await requireAdmin("viewer");
   if (!gate.ok) return { error: gate.error };
 
@@ -54,9 +43,6 @@ export async function listComments(input: {
 
   const term = input.search?.trim();
   if (term) {
-    // Content only. Searching the joined author/recipe would need an embedded
-    // filter that also drops rows whose join is null, silently hiding comments
-    // from deleted accounts — exactly the ones a moderator is looking for.
     rows = rows.ilike("content" as never, `%${term}%` as never);
     counter = counter.ilike("content" as never, `%${term}%` as never);
   }
@@ -83,9 +69,6 @@ export async function listComments(input: {
     profiles: { username: string | null } | null;
   }[];
 
-  // Reply counts for the top-level rows on this page. Deleting a parent
-  // cascades to its replies (comments_parent_id_fkey ON DELETE CASCADE), so a
-  // moderator needs to see how many go with it BEFORE confirming.
   const parentIds = list.filter((c) => !c.parent_id).map((c) => c.id);
   const replyCounts = new Map<string, number>();
   if (parentIds.length) {
@@ -114,15 +97,12 @@ export async function listComments(input: {
       recipeId: c.recipe_id,
       recipeTitle: c.recipes?.title ?? "(deleted recipe)",
       authorId: c.user_id,
-      // A comment outlives its author's profile row; showing the comment with
-      // no name beats dropping it from moderation entirely.
       authorName: c.profiles?.username ?? "(deleted account)",
       replyCount: replyCounts.get(c.id) ?? 0,
     })),
   };
 }
 
-/** Hide or restore one comment. Editor and above. */
 export async function setCommentHidden(input: {
   id: string;
   hidden: boolean;
@@ -168,13 +148,6 @@ export async function setCommentHidden(input: {
   return { success: true };
 }
 
-/**
- * Delete one comment permanently. Admin and above.
- *
- * Irreversible, and `comments_parent_id_fkey` cascades — deleting a top-level
- * comment takes its replies with it. Hiding is the reversible option and the
- * one the UI leads with.
- */
 export async function deleteComment(
   id: string,
 ): Promise<{ success: true; deletedReplies: number } | { error: string }> {

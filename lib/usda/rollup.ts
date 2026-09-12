@@ -1,10 +1,3 @@
-// Deterministic per-recipe nutrient roll-up (PRD: USDA §4/§5 consumption).
-// Sums resolved per-ingredient USDA values (each stored per-100 basis) scaled by
-// the ingredient's gram weight, then derives the per-100g/ml standardized values,
-// FVL%, water content, iron flag, and the NOVA-weighted IngredientScore that the
-// Base Nutrition Score and Recipe Match Score need. No LLM, no network.
-
-// Per-100 nutrient fields carried on each resolved ingredient.
 export interface Per100Nutrients {
   energy_kcal: number;
   protein_g: number;
@@ -24,31 +17,29 @@ export interface Per100Nutrients {
 export interface ResolvedIngredient extends Per100Nutrients {
   name: string;
   grams: number;
-  nova_group: number; // 1..4
+  nova_group: number;
   is_fvl: boolean;
   iron_rich: boolean;
-  is_added_sweetener?: boolean; // honey/syrup/juice concentrate — added sugar source
-  is_sweetener_nnutritive?: boolean; // stevia/sucralose/aspartame — +4 beverage penalty
-  is_probiotic?: boolean; // yogurt/kefir/kimchi… — the Gut Health bonus trigger
+  is_added_sweetener?: boolean;
+  is_sweetener_nnutritive?: boolean;
+  is_probiotic?: boolean;
 }
 
 const NOVA_TIER_POINTS: Record<number, number> = { 1: 100, 2: 75, 3: 50, 4: 25 };
 const WATER_RE = /\b(water|ice)\b/;
 
 export interface RecipeRollup {
-  totalWeight: number; // grams incl. water/ice
+  totalWeight: number;
   servings: number;
-  // Standardized per-100 (by mass; ≈ per-100ml for water-based beverages).
   per100: Per100Nutrients;
-  added_sugar_per100: number; // sugar from added-sweetener ingredients only
-  // Per-serving absolute amounts (for display nutrition).
+  added_sugar_per100: number;
   perServing: Per100Nutrients & { energy_kj: number };
-  fvl_pct: number; // 0..100, water/ice excluded from denominator
-  water_content_pct: number; // 0..1
+  fvl_pct: number;
+  water_content_pct: number;
   iron_rich: boolean;
-  probiotic: boolean; // any fermented/live-culture ingredient present
-  sweetener_present: boolean; // any non-nutritive sweetener present
-  ingredient_score: number; // 0..100 NOVA-weighted average (water/ice excluded)
+  probiotic: boolean;
+  sweetener_present: boolean;
+  ingredient_score: number;
 }
 
 const NUTRIENT_KEYS: (keyof Per100Nutrients)[] = [
@@ -64,7 +55,6 @@ export function rollupRecipe(
   const s = Math.max(1, servings || 1);
   const totalWeight = ingredients.reduce((a, i) => a + (i.grams || 0), 0);
 
-  // Absolute totals: per-100 value ÷ 100 × grams.
   const totals = Object.fromEntries(
     NUTRIENT_KEYS.map((k) => [
       k,
@@ -86,7 +76,6 @@ export function rollupRecipe(
     energy_kj: (totals.energy_kcal / s) * 4.184,
   };
 
-  // FVL% and IngredientScore exclude water/ice from the weight base.
   const solids = ingredients.filter((i) => !WATER_RE.test(i.name.toLowerCase()));
   const solidWeight = solids.reduce((a, i) => a + (i.grams || 0), 0);
   const fvlWeight = solids
@@ -100,14 +89,12 @@ export function rollupRecipe(
   );
   const ingredient_score = solidWeight > 0 ? novaWeighted / solidWeight : 0;
 
-  // Water content = total water mass / total mass (0..1).
   const waterMass = ingredients.reduce(
     (a, i) => a + ((i.water_pct || 0) / 100) * (i.grams || 0),
     0,
   );
   const water_content_pct = totalWeight > 0 ? waterMass / totalWeight : 0;
 
-  // Added sugar (per-100): sugar contributed only by added-sweetener ingredients.
   const addedSugarTotal = ingredients
     .filter((i) => i.is_added_sweetener)
     .reduce((a, i) => a + ((i.total_sugar_g || 0) / 100) * (i.grams || 0), 0);

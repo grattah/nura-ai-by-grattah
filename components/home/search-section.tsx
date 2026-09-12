@@ -19,8 +19,6 @@ interface CommonConcerns {
 export function SearchSection() {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  // Navigate inside a transition so the current (home) UI stays mounted while
-  // /personalized-search loads — the loader shows over the blurred homepage.
   const [isRouteLoading, startTransition] = useTransition();
 
   const handleSubmit = useCallback(() => {
@@ -46,7 +44,6 @@ export function SearchSection() {
       {isRouteLoading && <SearchLoading />}
 
       <div className="space-y-3 z-10 relative">
-        {/* Input row */}
         <div
           style={{
             border: query ? "1px solid var(--mint-green)" : "none",
@@ -84,7 +81,6 @@ export function SearchSection() {
           </button>
         </div>
 
-        {/* Common concerns */}
         <div>
           <p className="text-xs font-medium text-subtle uppercase tracking-wider mb-3 mt-6">
             Common Concerns

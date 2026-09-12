@@ -8,17 +8,7 @@ import {
   nextWeeklyAllocation,
 } from "./spec";
 
-/**
- * Grant a subscription period's tokens (spec §3).
- *
- * MUST be driven by a Stripe payment event. §3 is explicit: "Do not grant
- * tokens until Stripe confirms the renewal payment… never from a local timer
- * or a scheduled job that assumes success." A cron that grants on a schedule
- * would hand tokens to subscribers whose renewal actually failed.
- *
- * Idempotent by design: the RPC REPLACES the balance rather than adding to it,
- * so a webhook Stripe delivers twice cannot double-grant.
- */
+/** Grants a subscription period's tokens (spec §3). */
 export async function allocateForPayment({
   userId,
   plan,
@@ -27,7 +17,6 @@ export async function allocateForPayment({
 }: {
   userId: string;
   plan: Plan;
-  /** Subscription creation date — the source of the anniversary anchor. */
   subscriptionStart?: Date | null;
   paidAt?: Date;
 }): Promise<number | null> {
@@ -35,8 +24,6 @@ export async function allocateForPayment({
 
   const anchorDay = subscriptionStart ? anchorDayFrom(subscriptionStart) : null;
 
-  // Weekly renews seven days on; monthly and annual both land on the
-  // anniversary day — annual is NOT front-loaded, it grants monthly.
   const next =
     PLAN_GRANTS[plan].cadence === "weekly"
       ? nextWeeklyAllocation(paidAt)
@@ -56,12 +43,7 @@ export async function allocateForPayment({
   return (data as number | null) ?? null;
 }
 
-/**
- * §7 — the period ended without a live subscription.
- *
- * Subscription units die, purchased units freeze. Never deletes purchased
- * value: that is money already paid, and destroying it invites chargebacks.
- */
+/** Lapses the balance when the period ends without a live subscription (§7). */
 export async function lapseBalance(userId: string): Promise<void> {
   const admin = createServiceRoleClient();
   const { error } = await admin.rpc("lapse_token_balance" as never, {
@@ -70,13 +52,12 @@ export async function lapseBalance(userId: string): Promise<void> {
   if (error) console.error(`[tokens] lapse failed for ${userId}:`, error.message);
 }
 
-/** §4 — credit a purchased pack (1 token = 1 unit). */
+/** Credits a purchased pack (1 token = 1 unit). */
 export async function creditPurchasedUnits(
   userId: string,
   units: number,
   label?: string,
-  /** Stripe session id — the RPC dedups on it, since a checkout is credited
-   *  from both /return and the webhook. */
+  // The RPC dedups on this, since checkout is credited by both /return and the webhook.
   sessionId?: string,
 ): Promise<number | null> {
   const admin = createServiceRoleClient();

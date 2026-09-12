@@ -11,7 +11,6 @@ import { cn } from "@/lib/utils";
 import BackButton from "@/components/back-button";
 import Image from "next/image";
 
-// ─── Risk level config ────────────────────────────────────────────────────────
 const levelConfig = {
   1: {
     dot: "bg-red-500",
@@ -54,15 +53,11 @@ const riskLabelConfig: Record<
   },
 };
 
-// This page is the concrete implementation of the "high-cancer-risks" guide.
-// The slug is the contextId used to scope Pinecone/Supabase vector queries.
 const GUIDE_SLUG = "high-cancer-risks";
 
 export default function GuidesPage() {
   const router = useRouter();
 
-  // Pull title + description + follow-up questions from the guide record
-  // so they stay in sync with the data layer — no hardcoded strings here.
   const guide = dummyGuides.find((g) => g.slug === GUIDE_SLUG);
   const title = guide?.title ?? "High Cancer Risks";
   const description = guide?.description ?? "";
@@ -70,7 +65,6 @@ export default function GuidesPage() {
 
   return (
     <div className="min-h-screen bg-background">
-        {/* ── Header ──────────────────────────────────────────────────────────── */}
         <header className="px-4 pt-12 pb-3">
           <BackButton className="p-0 h-auto text-foreground hover:opacity-70 transition-opacity gap-1 font-normal mb-4" />
 
@@ -83,7 +77,6 @@ export default function GuidesPage() {
         </header>
 
         <main className="px-4 pb-10 space-y-4">
-          {/* ── Risk Level Legend ────────────────────────────────────────────── */}
           <Card className="border-0 rounded-2xl shadow-none bg-card">
             <CardContent className="px-4 py-3">
               <div className="flex items-center gap-2 flex-wrap">
@@ -113,14 +106,12 @@ export default function GuidesPage() {
             </CardContent>
           </Card>
 
-          {/* ── Risk Item Cards ──────────────────────────────────────────────── */}
           <div className="space-y-3">
             {dummyRiskItems.map((item) => (
               <RiskCard key={item.id} item={item} />
             ))}
           </div>
 
-          {/* ── Follow Up Questions + RAG chat ───────────────────────────────── */}
           <div className="pt-2">
             <FollowUpSection
               contextId={GUIDE_SLUG}
@@ -135,7 +126,6 @@ export default function GuidesPage() {
   );
 }
 
-// ─── RiskCard ─────────────────────────────────────────────────────────────────
 function RiskCard({ item }: { item: RiskItem }) {
   const lvl = levelConfig[item.level];
   const risk = riskLabelConfig[item.riskLabel];

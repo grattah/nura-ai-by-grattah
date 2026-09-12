@@ -16,7 +16,6 @@ export function LogoutButton() {
     try {
       await createClient().auth.signOut();
     } catch {
-      // ignore — proceed to navigate regardless
     }
     posthog.reset();
     router.replace("/");

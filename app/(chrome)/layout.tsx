@@ -41,11 +41,6 @@ export default async function ChromeLayout({
 
     if(user) {
       const supabase = await createClient();
-        // Shared rule: honours the paid-for period after a cancellation, and
-        // (unlike the old check) actually looks at expires_at — a stale
-        // 'active' row used to read as a live subscriber forever. The old
-        // .maybeSingle() also ERRORED on the >1 row a user can legitimately
-        // have, silently reporting "not subscribed".
         if (headerUser) {
           headerUser.isSubscriber = await hasActiveSubscription(
             supabase,

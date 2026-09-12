@@ -2,14 +2,9 @@ import { redirect } from "next/navigation";
 import { LockKeyhole, MailCheck } from "lucide-react";
 import { confirmOtp } from "@/actions/confirm-otp";
 
-// Token-bearing URL — never let it into an index.
 export const metadata = { robots: { index: false, follow: false } };
 
-/**
- * Interstitial for emailed auth links. Renders the token back as a form and
- * does nothing until the user submits it; see actions/confirm-otp.ts for why
- * the verification can't happen on GET.
- */
+/** Interstitial that verifies emailed auth links only on submit. */
 export default async function ConfirmPage({
   searchParams,
 }: {

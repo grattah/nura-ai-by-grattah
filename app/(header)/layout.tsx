@@ -37,13 +37,6 @@ export default async function ChromeLayout({
 	  }
 	: null;
 
-  // Entitlement goes through the shared helper, never an inline status check.
-  // The inline version this replaces had three separate failure modes:
-  //   • it tested the status column for active only, locking out anyone who
-  //     cancelled mid-period despite having paid through expires_at;
-  //   • it ignored expires_at, so a stale 'active' row read as a subscriber;
-  //   • .maybeSingle() ERRORS when a user legitimately has more than one row
-  //     (re-payments), which reads as null and silently drops the header state.
   if (user && headerUser) {
     const supabase = await createClient();
     headerUser.isSubscriber = await hasActiveSubscription(supabase, user.id);

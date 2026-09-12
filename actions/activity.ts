@@ -1,9 +1,8 @@
-// actions/activity.ts
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
 
-const DEDUPE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const DEDUPE_WINDOW_MS = 60 * 60 * 1000;
 
 export async function logRecipeView(recipeId: string) {
   const supabase = await createClient();
@@ -12,7 +11,7 @@ export async function logRecipeView(recipeId: string) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return; // anonymous views are not logged
+  if (!user) return;
 
   const cutoff = new Date(Date.now() - DEDUPE_WINDOW_MS).toISOString();
 
@@ -25,7 +24,7 @@ export async function logRecipeView(recipeId: string) {
     .gte("created_at", cutoff)
     .maybeSingle();
 
-  if (recent) return; // already logged within the window
+  if (recent) return;
 
   const { error } = await supabase.from("activities").insert({
     user_id: user.id,

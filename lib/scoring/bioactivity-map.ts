@@ -1,7 +1,3 @@
-// PRD Recipe Match Score abbreviation → existing bioactivity slug (the 23 rows in
-// `tags`, scored per recipe in `recipe_tags.score`). Lets the Match Score
-// formulas reference PRD names while reading the app's stored slugs.
-
 export const BIOACTIVITY_SLUG: Record<string, string> = {
   BloodSugar: "blood-sugar-support",
   Heart: "heart-circulation-support",
@@ -28,9 +24,8 @@ export const BIOACTIVITY_SLUG: Record<string, string> = {
   NaturalDefense: "natural-defense-support",
 };
 
-export type BioScores = Record<string, number>; // PRD abbreviation → 0..100
+export type BioScores = Record<string, number>;
 
-/** Build a PRD-abbreviation → score map from stored {slug: score} rows. */
 export function bioFromSlugScores(bySlug: Record<string, number>): BioScores {
   const out: BioScores = {};
   for (const [abbr, slug] of Object.entries(BIOACTIVITY_SLUG)) {

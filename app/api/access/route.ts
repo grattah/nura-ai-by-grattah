@@ -34,8 +34,6 @@ export async function POST() {
     }
   }
 
-  // Webhook hasn't fired yet — the user will still land on home and
-  // useAccess() will re-check on mount once the session is established.
   console.warn(
     `[api/access] Subscription not found after ${MAX_ATTEMPTS} attempts for user ${user.id}`,
   );

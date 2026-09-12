@@ -13,7 +13,6 @@ export function SignInModal({ onClose }: { onClose?: () => void }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Lock background scroll while the modal is open (it mounts only when open).
   useEffect(() => {
     return lockAppScroll();
   }, []);
@@ -27,7 +26,6 @@ export function SignInModal({ onClose }: { onClose?: () => void }) {
         onClick={onClose}
       />
 
-      {/* Card */}
       <div className="relative w-full max-w-70 h-66.25 bg-white rounded-3xl px-6 pt-4 pb-6 flex flex-col items-center text-center">
         <div className="absolute top-2 right-2.5">
           <button

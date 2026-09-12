@@ -49,7 +49,6 @@ const Page = () => {
     <div className="bg-background pb-10">
       <main className="px-6 pt-3">
         <div className="flex flex-col gap-6">
-          {/* Header — always shown, doesn't depend on data */}
           <div className="relative">
             <div className="flex items-center justify-between">
               <BackButton className="size-10 grid place-items-center rounded-full bg-[#E8E6DC] hover:opacity-70 transition-opacity" />
@@ -133,7 +132,6 @@ const Page = () => {
 
 const ForYouSkeleton = () => (
   <>
-    {/* Pill row placeholders */}
     <div className="flex gap-2.25">
       {[0, 1, 2, 3, 4].map((i) => (
         <div
@@ -142,7 +140,6 @@ const ForYouSkeleton = () => (
         />
       ))}
     </div>
-    {/* Card grid placeholders */}
     <div className="grid grid-cols-2 gap-4">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="min-w-0 space-y-3">

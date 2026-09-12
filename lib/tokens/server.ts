@@ -8,19 +8,6 @@ import {
   type WalletView,
 } from "./spec";
 
-// Server side of the token system (spec 21 Aug 2026 §5/§6).
-//
-// The contract every metered surface follows:
-//
-//   const res = await reserve(userId, "generate");
-//   if (!res) return insufficient();          // §5 step 4 — show purchase sheet
-//   try   { ...do the work...; await settle(res); }
-//   catch { await release(res); throw; }
-//
-// Units leave the balance at RESERVE time, so ten concurrent requests cannot
-// all pass the same affordability check. A request that dies between reserve
-// and settle is swept by release_stale_reservations().
-
 export interface Reservation {
   id: string;
   action: TokenAction;
@@ -37,12 +24,7 @@ interface ReservationRow {
   from_purchased: number;
 }
 
-/**
- * Reserve the cost of an action.
- *
- * Returns null when the user cannot afford it — the caller must block and
- * offer the purchase sheet rather than doing the work for free.
- */
+/** Reserves an action's cost before the work runs. */
 export async function reserve(
   userId: string,
   action: TokenAction,
@@ -58,7 +40,6 @@ export async function reserve(
     return null;
   }
 
-  // The RPC returns the reservation row, or null when the balance is short.
   const row = (Array.isArray(data) ? data[0] : data) as ReservationRow | null;
   if (!row?.id) return null;
 
@@ -71,25 +52,18 @@ export async function reserve(
   };
 }
 
-/** §6 — the work succeeded; the units are consumed. */
+/** Consumes reserved units after success. */
 export async function settle(reservation: Reservation): Promise<void> {
   const admin = createServiceRoleClient();
   const { error } = await admin.rpc("settle_reservation" as never, {
     p_id: reservation.id,
   } as never);
   if (error) {
-    // Settling is bookkeeping — the units already left the balance at reserve
-    // time, so a failure here does not over-charge. Left for the sweeper.
     console.error("[tokens] settle failed:", error.message);
   }
 }
 
-/**
- * §6 — the work failed, timed out, or was cancelled; refund in full.
- *
- * Never throws: it runs on the error path, and masking the original failure
- * with a refund error would lose the reason the request failed.
- */
+/** Refunds reserved units after failure. */
 export async function release(reservation: Reservation): Promise<void> {
   try {
     const admin = createServiceRoleClient();
@@ -102,13 +76,7 @@ export async function release(reservation: Reservation): Promise<void> {
   }
 }
 
-/**
- * Run `work` with the cost reserved, settling on success and releasing on any
- * failure. Returns null if the user cannot afford the action.
- *
- * Preferred over calling reserve/settle/release by hand: the release path is
- * easy to forget, and forgetting it charges users for work that never ran.
- */
+/** Runs work with its cost reserved: settles on success, releases on failure. */
 export async function withReservation<T>(
   userId: string,
   action: TokenAction,
@@ -126,8 +94,6 @@ export async function withReservation<T>(
     throw err;
   }
 }
-
-// ── Reading the wallet ──────────────────────────────────────────────────────
 
 interface CreditsRow {
   subscription_units: number | null;
@@ -154,7 +120,6 @@ export async function getWallet(userId: string): Promise<WalletView> {
   return walletView(await getBalances(userId));
 }
 
-/** Whether the user could afford `action` right now (no reservation taken). */
 export async function canAfford(
   userId: string,
   action: TokenAction,

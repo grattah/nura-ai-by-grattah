@@ -1,8 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
-// No UPSTASH_* env in tests → exercises the in-memory fallback path.
-
 describe("rateLimit (in-memory fallback)", () => {
   beforeEach(() => {
     vi.useRealTimers();

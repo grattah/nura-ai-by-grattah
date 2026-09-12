@@ -10,7 +10,6 @@ import type { BnsResult } from "./base-nutrition";
 
 type Admin = SupabaseClient<Database>;
 
-// Row shape of recipe_ingredients joined to its ingredient (per-100 nutrients).
 interface JoinedIngredientRow {
   grams: number | null;
   ingredients: {
@@ -39,16 +38,10 @@ interface JoinedIngredientRow {
 
 export interface DeterministicNutrition {
   bns: BnsResult;
-  // recipes column patch (BNS-v2 + scoring input + derived recipe fields).
   patch: Record<string, unknown>;
 }
 
-/**
- * Deterministically score a recipe's Base Nutrition Score from its resolved USDA
- * ingredients. If the recipe hasn't been USDA-resolved yet (e.g. freshly
- * generated), it resolves on demand here (first-view lazy scoring). Returns null
- * only when the recipe has no resolvable ingredients at all.
- */
+/** Scores Base Nutrition from a recipe's resolved USDA ingredients. */
 export async function scoreNutritionFromDb(
   admin: Admin,
   recipe: {
@@ -96,7 +89,6 @@ export async function scoreNutritionFromDb(
       };
     });
 
-  // Not USDA-resolved yet (freshly generated recipe) → resolve on demand.
   if (resolved.length === 0) {
     const out = await resolveRecipeIngredients(
       admin as unknown as SupabaseClient,
@@ -138,13 +130,10 @@ export async function scoreNutritionFromDb(
     servings,
     water_content_pct: rollup.water_content_pct,
     iron_rich: rollup.iron_rich,
-    // PRD v2 bonus inputs, PER SERVING — "20% of your daily vitamin C" is only a
-    // meaningful claim about a serving, not about 100 g of recipe.
     vitamin_c_dv: rollup.perServing.vitamin_c_dv,
     potassium_mg: rollup.perServing.potassium_mg,
     sodium_mg: rollup.perServing.sodium_mg,
     probiotic: rollup.probiotic,
-    // Per-serving display nutrition (USDA-derived), replacing the LLM estimate.
     nutrition: {
       kcal: Math.round(rollup.perServing.energy_kcal),
       protein: Math.round(rollup.perServing.protein_g),
@@ -157,7 +146,6 @@ export async function scoreNutritionFromDb(
   return { bns, patch };
 }
 
-/** Persist the deterministic nutrition patch. */
 export async function writeNutritionV2(
   admin: Admin,
   recipeId: string,

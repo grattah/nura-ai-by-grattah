@@ -7,16 +7,11 @@ interface EmailStatus {
   hasPassword: boolean;
 }
 
-// Primary path: a SECURITY DEFINER function (see
-// supabase/migrations/*_check_email_status_fn.sql) does an indexed O(1) lookup
-// on auth.users without exposing the auth schema. Returns null if the function
-// isn't deployed yet so the caller can fall back.
+/** Looks up a user by email via a SECURITY DEFINER RPC. */
 async function lookupViaRpc(
   admin: ReturnType<typeof createServiceRoleClient>,
   email: string,
 ): Promise<EmailStatus | null> {
-  // The function lives in the (exposed) public schema; the typed client doesn't
-  // know it, so call through an untyped view of rpc().
   const { data, error } = await (
     admin.rpc as unknown as (
       fn: string,
@@ -33,9 +28,7 @@ async function lookupViaRpc(
   return { exists: true, hasPassword: row.has_password === true };
 }
 
-// Fallback path: page through ALL users (admin.listUsers defaults to the first
-// page only — audit finding H2). Correct but O(n); used only until the RPC
-// migration is applied.
+/** Fallback lookup that pages through every user. */
 async function lookupViaListUsers(
   admin: ReturnType<typeof createServiceRoleClient>,
   email: string,
@@ -58,7 +51,6 @@ async function lookupViaListUsers(
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req.headers);
 
-  // Durable, cross-instance limit (audit H1/H3): 5 lookups / minute / IP.
   const { success } = await rateLimit(`check-email:${ip}`, 5, 60_000);
   if (!success) {
     return NextResponse.json(
@@ -77,7 +69,7 @@ export async function POST(req: NextRequest) {
   const admin = createServiceRoleClient();
 
   try {
-    await new Promise((r) => setTimeout(r, 200)); // timing-attack mitigation
+    await new Promise((r) => setTimeout(r, 200));
 
     const status =
       (await lookupViaRpc(admin, normalized)) ??

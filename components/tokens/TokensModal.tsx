@@ -33,7 +33,6 @@ const TokensModal = ({ onClose }: { onClose?: () => void }) => {
     fetchUser();
   }, []);
 
-  // If the parent passes onClose, use it. Otherwise fall back to routing home.
   const handleClose = onClose ?? (() => router.push("/"));
   return (
     <div className="bg-white rounded-2xl py-6.25 px-6 flex flex-col gap-5.5 items-center">

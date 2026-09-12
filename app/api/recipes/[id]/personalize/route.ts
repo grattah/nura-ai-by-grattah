@@ -11,12 +11,7 @@ import { detectAllergens } from "@/lib/interactions/allergens";
 
 export const maxDuration = 60;
 
-// Computes + caches the deterministic SAFETY ALERTS (allergy + medication) for the
-// signed-in user + this recipe. The Recipe Match Score is NOT computed here — it's
-// deterministic + cheap and now computed inline on the recipe page (always fresh),
-// so only the expensive medication path (RxClass) is cached. Cache is keyed on the
-// profile (safety alerts don't depend on recipe scores). Path unchanged for the UI
-// trigger, which fires this in the background.
+/** Computes and caches allergy and medication alerts for this user and recipe. */
 export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -66,8 +61,6 @@ export async function POST(
     return NextResponse.json({ error: "No health profile" }, { status: 403 });
   }
 
-  // Reuse the cache unless the profile changed (safety alerts don't depend on
-  // recipe scores).
   const { data: cache } = await admin
     .from("recipe_personalized_scores")
     .select("profile_updated_at")
@@ -79,15 +72,12 @@ export async function POST(
   }
 
   try {
-    // Allergy alerts — local + fast.
     const allergyAlerts = detectAllergens(
       recipe.ingredients,
       profile.allergies ?? [],
       profile.allergies_other ?? "",
       (profile.conditions ?? []).includes("celiac-disease"),
     );
-    // Medication alerts — external RxClass; best-effort so a slow/failing lookup
-    // never fails the write.
     const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
     let medicationAlerts: Array<{
       type: "medication";
@@ -125,14 +115,9 @@ export async function POST(
     }
     const safetyAlerts = [...allergyAlerts, ...medicationAlerts];
 
-    // Deprecated columns (base_final_score, personalized_final_score, …) are no
-    // longer written — migration 20260725130000 relaxed their constraints.
     const { error: upErr } = await admin
       .from("recipe_personalized_scores")
       .upsert(
-        // Cast: the generated Insert type still requires the deprecated NOT
-        // NULL columns; drop this cast after applying migration 20260725130000
-        // and regenerating lib/database.types.ts.
         {
           user_id: user.id,
           recipe_id: recipe.id,

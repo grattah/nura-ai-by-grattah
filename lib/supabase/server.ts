@@ -5,10 +5,7 @@ import { createClient as createClientImport } from "@supabase/supabase-js";
 import { Database } from "../database.types";
 import { hasActiveSubscription, hasEverSubscribed } from "../subscription";
 
-/**
- * If using Fluid compute: Don't put this client in a global variable. Always create a new client within each
- * function when using it.
- */
+/** Create per request; don't cache in a global (Fluid compute). */
 export async function createClient() {
   const cookieStore = await cookies();
 
@@ -26,30 +23,17 @@ export async function createClient() {
               cookieStore.set(name, value, options),
             );
           } catch {
-            // The `setAll` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
-            // user sessions.
           }
         },
       },
     },
   );
 }
-/**
- * `auth.getUser()` memoized per request (React `cache()`), so layouts, pages,
- * and server actions invoked during the same render only hit Supabase once.
- */
 export const getCachedUser = cache(async () => {
   const supabase = await createClient();
   return supabase.auth.getUser();
 });
 
-/**
- * Authoritative auth + subscription state for the current request, memoized per
- * render (React `cache()`). This is the server source of truth that hydrates the
- * client `useAccess` hook (see `AccessProvider`), so access checks react to
- * server-action sign-out/sign-in instantly without a page reload.
- */
 export const getCachedAccess = cache(
   async (): Promise<{
     isAuthenticated: boolean;

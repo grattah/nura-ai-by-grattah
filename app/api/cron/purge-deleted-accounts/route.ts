@@ -9,19 +9,8 @@ import {
 
 export const maxDuration = 60;
 
-/**
- * Permanently deletes accounts whose 30-day grace period has lapsed, and
- * reactivates any that signed back in.
- *
- * Deliberately conservative: a row is only destroyed when the grace period has
- * lapsed AND `auth.users.last_sign_in_at` shows no sign-in since the request.
- * That second check is GoTrue's own bookkeeping, so it holds even if a sign-in
- * path forgets to call cancelScheduledDeletion(). Anything uncertain (missing
- * auth user, Stripe failure) is skipped and retried on the next run rather than
- * deleted.
- */
+/** Deletes accounts past the 30-day grace period and restores those who signed back in. */
 export async function GET(req: Request) {
-  // Constant-time compare (audit S4), same as clean-up-ghosts.
   if (
     !secureCompare(
       req.headers.get("authorization"),
@@ -34,11 +23,7 @@ export async function GET(req: Request) {
   const admin = createServiceRoleClient();
   const now = new Date();
 
-  // Safety net for subscription status. The webhook keeps status current when
-  // events arrive, but they can be missed (they were, for a month, while the
-  // endpoint pointed at the retired domain) — and a missed event left rows
-  // reading "active" long past expires_at. Cheap, idempotent, runs first so a
-  // later failure in the purge below doesn't skip it.
+  // Safety net: sync subscription status in case webhook events were missed.
   let subscriptionsExpired = 0;
   {
     const { data, error } = await admin.rpc(
@@ -51,9 +36,6 @@ export async function GET(req: Request) {
     }
   }
 
-  // Spec §7 — subscription units die at period end and purchased units freeze.
-  // Runs beside the expiry sweep above because it depends on it: a row must be
-  // out of its paid period before its balance is lapsed.
   let balancesLapsed = 0;
   {
     const { data, error } = await admin.rpc("lapse_expired_balances" as never);
@@ -85,15 +67,12 @@ export async function GET(req: Request) {
     const { data: userData, error: userErr } =
       await admin.auth.admin.getUserById(row.user_id);
 
-    // No auth user: the account is already gone and the cascade should have taken
-    // this row with it. Clear the orphan rather than looping on it forever.
     if (userErr || !userData?.user) {
       await admin.from("account_deletions").delete().eq("user_id", row.user_id);
       skipped++;
       continue;
     }
 
-    // They came back — cancel the request regardless of how long it's been.
     if (
       signedInSinceScheduling(row.scheduled_at, userData.user.last_sign_in_at)
     ) {
@@ -107,15 +86,6 @@ export async function GET(req: Request) {
       continue;
     }
 
-    // Cancel any live Stripe subscription IMMEDIATELY (not at period end) — the
-    // account is about to stop existing, so there's nothing left to bill for.
-    //
-    // Every row with a Stripe id is attempted, NOT just the ones our `status`
-    // column calls 'active'. That column can disagree with Stripe (prod has
-    // rows reading 'cancelled' against subscriptions Stripe still reports as
-    // active), and filtering on it would leave a deleted user's card being
-    // charged forever. Cancelling an already-cancelled subscription 404s, which
-    // is handled below, so the wider net costs nothing.
     const { data: subs } = await admin
       .from("subscriptions")
       .select("stripe_subscription_id")
@@ -130,7 +100,6 @@ export async function GET(req: Request) {
       try {
         await stripe.subscriptions.cancel(sub.stripe_subscription_id);
       } catch (e) {
-        // Already-cancelled subscriptions 404 — that's the desired end state.
         const code = (e as { code?: string; statusCode?: number })?.statusCode;
         if (code !== 404) {
           console.error(
@@ -142,7 +111,6 @@ export async function GET(req: Request) {
       }
     }
 
-    // Never destroy an account while it might still be billable. Retry next run.
     if (stripeFailed) {
       skipped++;
       continue;
@@ -157,7 +125,6 @@ export async function GET(req: Request) {
       skipped++;
       continue;
     }
-    // The FK cascade removes the account_deletions row with the auth user.
     deleted++;
   }
 

@@ -1,6 +1,5 @@
 "use client";
 
-import Script from "next/script";
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -26,10 +25,9 @@ import { sanitizeNext } from "@/lib/safe-redirect";
 import loader from "@/public/loader.png";
 import authImage from "@/public/authImage.webp";
 import authFooterBanner from "@/public/authFooterBanner.webp";
-import LineStack from "../vectors/LineStack";
+import GoogleIcon from "../vectors/google-icon";
 import Leaflet from "../vectors/Leaflet";
 import ShieldMark from "../vectors/ShieldMark";
-// import { checkGoogleAccount } from "@/actions/check-google-account";
 import {
   PasswordRequirements,
   checkPasswordStrength,
@@ -45,11 +43,8 @@ interface NuraAuthFormProps {
   className?: string;
 }
 
-// Remember an in-progress OTP step so a refresh or browser-back restores the
-// code-entry screen instead of dropping the user on the email step — which would
-// force a redundant re-send and hit Supabase's 60s OTP cooldown.
 const OTP_PENDING_KEY = "nura-auth-pending";
-const OTP_PENDING_TTL = 15 * 60 * 1000; // OTPs are valid for ~1h; 15m is a safe window.
+const OTP_PENDING_TTL = 15 * 60 * 1000;
 
 type OtpStep = "signup-otp" | "login-otp";
 
@@ -57,27 +52,20 @@ function savePendingOtp(email: string, step: OtpStep) {
   try {
     sessionStorage.setItem(
       OTP_PENDING_KEY,
-      JSON.stringify({ email, step, ts: Date.now() })
+      JSON.stringify({ email, step, ts: Date.now() }),
     );
-  } catch {
-    /* sessionStorage unavailable — non-critical */
-  }
+  } catch {}
 }
 
 function clearPendingOtp() {
   try {
     sessionStorage.removeItem(OTP_PENDING_KEY);
-  } catch {
-    /* ignore */
-  }
+  } catch {}
 }
 
-// Paths that aren't worth returning to after login — home is just as good.
 const NO_RETURN_PREFIXES = ["/landing", "/auth"];
 
-// Resolve where to send the user after a successful sign-in: back to the page
-// that sent them to /auth/login (via ?next=), or home if there isn't one worth
-// returning to.
+/** Where to send the user after sign-in: the ?next= page, else home. */
 function resolveNextDestination(rawNext: string | null): string {
   if (!rawNext) return "/";
   const sanitized = sanitizeNext(rawNext, window.location.origin);
@@ -99,7 +87,6 @@ function isRateLimited(err: unknown): boolean {
   );
 }
 
-// Shown in place of a button's label while its action is in flight.
 function ButtonLoader() {
   return (
     <Image
@@ -112,10 +99,9 @@ function ButtonLoader() {
   );
 }
 
-// module scope: defined once, outside the component
 const generateNonce = async (): Promise<[string, string]> => {
   const nonce = btoa(
-    String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))
+    String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32))),
   );
   const encoded = new TextEncoder().encode(nonce);
   const hashBuffer = await crypto.subtle.digest("SHA-256", encoded);
@@ -142,7 +128,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   const query = searchParams.get("landing");
   const rawNonceRef = useRef<string>("");
   const [googleReady, setGoogleReady] = useState(
-    () => typeof google !== "undefined" && !!google?.accounts
+    () => typeof google !== "undefined" && !!google?.accounts,
   );
   const strength = checkPasswordStrength(password);
   const canCreateProfileDisabled =
@@ -151,30 +137,19 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     !isPasswordValid(strength) ||
     isLoading;
 
-  // OTP autofill can trigger verification twice (the otpCode effect and the
-  // form's onSubmit both fire for the same code). OTP tokens are single-use,
-  // so the loser of that race gets "invalid or expired" — guard against
-  // running verifyOtp more than once per code.
+  // OTP autofill can fire verifyOtp twice and tokens are single-use.
   const verifyInFlightRef = useRef(false);
 
   const goToStep = (newStep: AuthStep) => {
     window.history.pushState(
       { step: newStep },
       "",
-      window.location.pathname + window.location.search
+      window.location.pathname + window.location.search,
     );
 
     setStep(newStep);
   };
 
-  // If the user is already signed in, there's nothing to do here — bounce them
-  // home. This is what actually saves anyone who lands back on this page via a
-  // stale /auth/login history entry (e.g. an earlier form step, from before a
-  // prior successful sign-in): rather than depending on history bookkeeping to
-  // keep such entries from ever being reachable, this makes reaching one
-  // harmless by never rendering the form for an authenticated visitor.
-  // `checkingSession` stays true (holding the loading screen up) when a
-  // redirect is in flight, so the form itself never gets to flash on screen.
   const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
@@ -195,8 +170,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Restore an in-progress OTP screen after a refresh / browser-back so the user
-  // can enter the code they were already sent (no re-send, no cooldown error).
   useEffect(() => {
     let initialStep: AuthStep = "email";
 
@@ -218,15 +191,12 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
           clearPendingOtp();
         }
       }
-    } catch {
-      /* ignore malformed state */
-    }
+    } catch {}
 
-    // Establish the current page's initial history state.
     window.history.replaceState(
       { step: initialStep },
       "",
-      window.location.pathname + window.location.search
+      window.location.pathname + window.location.search,
     );
 
     const handlePopState = (event: PopStateEvent) => {
@@ -235,8 +205,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       if (previousStep) {
         setStep(previousStep);
 
-        // If we're going back to the email step,
-        // there is no longer an OTP step in progress.
         if (previousStep === "email") {
           clearPendingOtp();
 
@@ -255,8 +223,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       window.removeEventListener("popstate", handlePopState);
     };
   }, []);
-
-  // ─── Step 1: resolve email ─────────────────────────────────────────────────
 
   const handleEmailContinue = async () => {
     if (!email) return;
@@ -300,7 +266,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
           setError(
             isRateLimited(otpError)
               ? "Please wait a minute before requesting another code."
-              : "We couldn't send a verification code to this email. Please try again."
+              : "We couldn't send a verification code to this email. Please try again.",
           );
           return;
         }
@@ -324,18 +290,16 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       });
 
       if (otpError) {
-        // A cooldown almost always means a code from a prior attempt is already
-        // in their inbox — let them enter it instead of dead-ending here.
         if (isRateLimited(otpError)) {
           savePendingOtp(email, "login-otp");
           goToStep("login-otp");
           setError(
-            "You already have a code in your inbox — enter it below, or wait a minute to resend."
+            "You already have a code in your inbox — enter it below, or wait a minute to resend.",
           );
           return;
         }
         setError(
-          "We couldn't send a sign-in code to this email. Please try again."
+          "We couldn't send a sign-in code to this email. Please try again.",
         );
         return;
       }
@@ -349,19 +313,13 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     }
   };
 
-  // ─── Shared post-auth redirect ─────────────────────────────────────────────
-
   const redirectAfterAuth = async (
-    supabase: ReturnType<typeof createClient>
+    supabase: ReturnType<typeof createClient>,
   ) => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    // Signing in within the 30-day grace period recovers a deleted account. This
-    // is the single funnel for every client sign-in (password + both OTP steps),
-    // and the purge cron independently re-checks last_sign_in_at, so a miss here
-    // can't cost the user their account.
     if (user) await cancelScheduledDeletion();
 
     let destination = "/";
@@ -377,32 +335,19 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       if (sub) {
         destination = "/";
       } else {
-        // Not subscribed: send to free-tokens only if they've never seen it.
-        // This RPC atomically checks-and-sets the flag, so it returns true
-        // exactly once per user, ever.
         destination = "/";
       }
 
-      // Send the user back to the page that sent them to login, if any.
       destination = resolveNextDestination(searchParams.get("next"));
     }
 
     router.refresh();
-    // replace, not push: /auth/login was itself pushed onto history to get
-    // here, so a plain push would leave it sandwiched behind this page —
-    // "back" would land right back on the login screen. Any earlier form-step
-    // entries (from goToStep, still at the /auth/login URL) may remain further
-    // back in history, but the already-authenticated guard below sends anyone
-    // who lands back on one of those straight home instead of showing the form.
     router.replace(destination);
   };
-
-  // ─── OTP Form submit ──────────────────────────────────────────────────────
 
   const handleOtpFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Read directly from the DOM to bypass React's asynchronous state delays
     const formData = new FormData(e.currentTarget);
     const rawOtp = formData.get("otp") as string;
     const finalCode = (rawOtp || otpCode).replace(/\D/g, "").slice(0, 8);
@@ -415,8 +360,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       }
     }
   };
-
-  // ─── OTP verification ──────────────────────────────────────────────────────
 
   const handleOtpVerify = async (codeToVerify?: string) => {
     const token = codeToVerify || otpCode.trim();
@@ -458,7 +401,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       await redirectAfterAuth(supabase);
     } catch {
       setError(
-        "Something went wrong while verifying your code. Please try again."
+        "Something went wrong while verifying your code. Please try again.",
       );
     } finally {
       setIsLoading(false);
@@ -466,7 +409,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     }
   };
 
-  // New user verifying their email before creating a profile
   const handleSignupOtpVerify = async (codeToVerify?: string) => {
     const token = codeToVerify || otpCode.trim();
     if (!token) return;
@@ -494,7 +436,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       goToStep("signup");
     } catch {
       setError(
-        "Something went wrong while verifying your code. Please try again."
+        "Something went wrong while verifying your code. Please try again.",
       );
     } finally {
       setIsLoading(false);
@@ -508,7 +450,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     const supabase = createClient();
 
     try {
-      /* code */
       const res = await fetch("/api/auth/check-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -538,19 +479,17 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         setError(
           isRateLimited(otpError)
             ? "Please wait a minute before requesting another code."
-            : "Couldn't resend the code. Please try again."
+            : "Couldn't resend the code. Please try again.",
         );
       }
       setIsLoading(false);
       setOtpCode("");
     } catch (e) {
       setError(
-        "Something went wrong while resending your code. Please try again."
+        "Something went wrong while resending your code. Please try again.",
       );
     }
   };
-
-  // ─── Password sign-in ──────────────────────────────────────────────────────
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -572,14 +511,12 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         err instanceof Error &&
           err.message.includes("Invalid login credentials")
           ? "Incorrect password. Please try again."
-          : "Something went wrong while signing you in. Please try again."
+          : "Something went wrong while signing you in. Please try again.",
       );
     } finally {
       setIsLoading(false);
     }
   };
-
-  // ─── Sign up ───────────────────────────────────────────────────────────────
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -601,7 +538,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
       if (error) throw error;
 
-      // New account fully created — send the one-time welcome (idempotent).
       await ensureWelcomeEmail();
       posthog.capture(ANALYTICS_EVENTS.SIGNUP_COMPLETED);
       await redirectAfterAuth(supabase);
@@ -609,14 +545,12 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       setError(
         err instanceof Error
           ? err.message
-          : "We couldn't save your profile. Please try again."
+          : "We couldn't save your profile. Please try again.",
       );
     } finally {
       setIsLoading(false);
     }
   };
-
-  // ─── Google ────────────────────────────────────────────────────────────────
 
   const handleGoogleSignIn = async () => {
     const supabase = createClient();
@@ -634,7 +568,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       if (error) throw error;
     } catch (err: unknown) {
       setError(
-        err instanceof Error ? err.message : "Failed to sign in with Google."
+        err instanceof Error ? err.message : "Failed to sign in with Google.",
       );
       setIsGoogleLoading(false);
     }
@@ -657,8 +591,8 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       step === "email"
         ? "google-btn-email"
         : step === "login"
-        ? "google-btn-login"
-        : null;
+          ? "google-btn-login"
+          : null;
     if (!targetId) return;
     if (typeof google === "undefined") return;
 
@@ -699,18 +633,16 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
     const supabase = createClient();
 
     try {
-      // Decode the email for a ROUTING decision only (no signature check here).
       const payload = JSON.parse(
         atob(
           response.credential
             .split(".")[1]
             .replace(/-/g, "+")
-            .replace(/_/g, "/")
-        )
+            .replace(/_/g, "/"),
+        ),
       );
       const emailFromToken = payload.email as string;
 
-      // Reuse the existence check you already built.
       const res = await fetch("/api/auth/check-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -718,8 +650,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       });
       const { exists } = await res.json();
 
-      // New Google user who did NOT arrive through the signup funnel:
-      // never call signInWithIdToken, so no account is ever created.
       if (!exists && query !== "true") {
         setIsGoogleSignUpError(true);
         setError("You need to sign up first to continue with Google.");
@@ -730,26 +660,28 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       // Existing user (any context), or a new user who came from signup:
       // spend the token -> this is what creates/enters the session.
       posthog.capture(
-        exists ? ANALYTICS_EVENTS.LOGIN_STARTED : ANALYTICS_EVENTS.SIGNUP_STARTED
+        exists
+          ? ANALYTICS_EVENTS.LOGIN_STARTED
+          : ANALYTICS_EVENTS.SIGNUP_STARTED,
       );
       const { error } = await supabase.auth.signInWithIdToken({
         provider: "google",
         token: response.credential,
-        nonce: rawNonceRef.current, // RAW form; Google got the HASHED form
+        nonce: rawNonceRef.current,
       });
       if (error) throw error;
 
-      if (!exists) await ensureWelcomeEmail(); // new Google user only
+      if (!exists) await ensureWelcomeEmail();
 
       posthog.capture(
         exists
           ? ANALYTICS_EVENTS.LOGIN_COMPLETED
-          : ANALYTICS_EVENTS.SIGNUP_COMPLETED
+          : ANALYTICS_EVENTS.SIGNUP_COMPLETED,
       );
       await redirectAfterAuth(supabase);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to sign in with Google."
+        err instanceof Error ? err.message : "Failed to sign in with Google.",
       );
       setIsGoogleLoading(false);
     }
@@ -781,8 +713,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
   //   }
   // };
 
-  // ─── Helpers ───────────────────────────────────────────────────────────────
-
   const goBack = () => {
     if (step === "email") {
       clearPendingOtp();
@@ -799,7 +729,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
       clearPendingOtp();
       setOtpCode("");
       setError(null);
-      goToStep("email"); // deterministically go to email, don't trust history
+      goToStep("email");
       return;
     }
 
@@ -813,8 +743,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
   const isEmailStep = step === "email";
   const isOtpStep = step === "login-otp" || step === "signup-otp";
-
-  // ─── Render ────────────────────────────────────────────────────────────────
 
   if (checkingSession) {
     return (
@@ -852,7 +780,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
 
   return (
     <div className={cn("min-h-screen flex flex-col", className)}>
-      {/* Top bar */}
       <div className="flex items-center justify-end px-4 py-4">
         {isOtpStep && (
           <button
@@ -864,7 +791,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         )}
       </div>
 
-      {/* Main */}
       <div>
         <div
           className={`flex-1 flex flex-col items-center px-6 ${
@@ -910,7 +836,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
           </div>
 
           <div className="w-full max-w-sm space-y-3">
-            {/* ── Email step ── */}
             {step === "email" && (
               <div className="mt-4">
                 {email.length === 0 && (
@@ -947,7 +872,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                       disabled={isGoogleLoading}
                       className={cn(
                         "w-full flex items-center justify-center gap-3 bg-[#FFFCF7] text-[#333333] py-4 rounded-2xl font-semibold hover:opacity-90 transition-opacity",
-                        isGoogleLoading ? "opacity-50" : "disabled:opacity-50"
+                        isGoogleLoading ? "opacity-50" : "disabled:opacity-50",
                       )}
                     >
                       {isGoogleLoading ? (
@@ -1003,7 +928,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                       disabled={!email || isLoading}
                       className={cn(
                         "w-full flex items-center justify-center bg-mint-green text-white py-4 rounded-full font-medium border border-border hover:opacity-90 transition-opacity",
-                        isLoading ? "opacity-50" : "disabled:opacity-40"
+                        isLoading ? "opacity-50" : "disabled:opacity-40",
                       )}
                     >
                       {isLoading ? <ButtonLoader /> : "Continue"}
@@ -1056,7 +981,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
               </div>
             )}
 
-            {/* ── Password login step ── */}
             {step === "login" && (
               <div className="flex flex-col gap-y-11">
                 <form onSubmit={handleSignIn} className="space-y-3">
@@ -1122,7 +1046,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                     disabled={isLoading || !password}
                     className={cn(
                       "w-full flex items-center justify-center bg-mint-green text-white py-4 rounded-full font-medium hover:opacity-90 transition-opacity",
-                      isLoading ? "opacity-50" : "disabled:opacity-40"
+                      isLoading ? "opacity-50" : "disabled:opacity-40",
                     )}
                   >
                     {isLoading ? <ButtonLoader /> : "Sign in"}
@@ -1141,7 +1065,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                     disabled={isGoogleLoading}
                     className={cn(
                       "w-full flex items-center justify-center gap-3 bg-[#E8E6DC] text-nura-forest py-4 rounded-full font-medium hover:opacity-90 transition-opacity",
-                      isGoogleLoading ? "opacity-50" : "disabled:opacity-50"
+                      isGoogleLoading ? "opacity-50" : "disabled:opacity-50",
                     )}
                   >
                     {isGoogleLoading ? (
@@ -1157,10 +1081,8 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
               </div>
             )}
 
-            {/* ── OTP step (login or signup) ── */}
             {isOtpStep && (
               <form onSubmit={handleOtpFormSubmit} className="space-y-3">
-                {/* Icon */}
                 <input
                   name="otp"
                   type="text"
@@ -1210,7 +1132,6 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
               </form>
             )}
 
-            {/* ── Signup step ── */}
             {step === "signup" && (
               <form onSubmit={handleSignUp} className="space-y-3">
                 <div>
@@ -1293,7 +1214,7 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
                   disabled={canCreateProfileDisabled}
                   className={cn(
                     "w-full flex items-center justify-center bg-[#227B6F] text-white py-4 rounded-full font-medium hover:opacity-90 transition-opacity",
-                    isLoading ? "opacity-50" : "disabled:opacity-40"
+                    isLoading ? "opacity-50" : "disabled:opacity-40",
                   )}
                 >
                   {isLoading ? <ButtonLoader /> : "Create profile"}
@@ -1313,28 +1234,5 @@ export function NuraAuthForm({ className }: NuraAuthFormProps) {
         )}
       </div>
     </div>
-  );
-}
-
-function GoogleIcon() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-        fill="#4285F4"
-      />
-      <path
-        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-        fill="#34A853"
-      />
-      <path
-        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-        fill="#FBBC05"
-      />
-      <path
-        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-        fill="#EA4335"
-      />
-    </svg>
   );
 }

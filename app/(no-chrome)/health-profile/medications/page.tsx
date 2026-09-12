@@ -11,7 +11,6 @@ interface MedResult {
   rxcui: string;
 }
 
-// Bold the portion of `name` that matches `query` (case-insensitive).
 function highlight(name: string, query: string) {
   const q = query.trim();
   if (!q) return name;
@@ -38,7 +37,6 @@ export default function MedicationsStep() {
   const inputRef = useRef<HTMLInputElement>(null);
   const shouldFocus = useRef(false);
 
-  // Debounced, abortable search.
   useEffect(() => {
     const q = query.trim();
     if (q.length < 2) {
@@ -69,7 +67,6 @@ export default function MedicationsStep() {
     };
   }, [query]);
 
-  // Focus the input only when the user deliberately (re)opens search.
   useEffect(() => {
     if (mode === "search" && shouldFocus.current) {
       inputRef.current?.focus();
@@ -77,7 +74,6 @@ export default function MedicationsStep() {
     }
   }, [mode]);
 
-  // Removing the last chip in list mode returns to the resting search.
   useEffect(() => {
     if (mode === "list" && meds.length === 0) setMode("search");
   }, [mode, meds.length]);
@@ -88,7 +84,6 @@ export default function MedicationsStep() {
         medications: [...meds, { name: med.name, rxcui: med.rxcui }],
       });
     }
-    // Stay in search with the input focused so the user can add more.
     inputRef.current?.focus();
   };
 
@@ -121,7 +116,6 @@ export default function MedicationsStep() {
 
       {mode === "search" ? (
         <>
-          {/* Search input — Search icon left, clear (X) right */}
           <div className="flex items-center gap-2 bg-white rounded-xl px-4 h-13 border border-[#9CA5A3] focus-within:border-mint-green">
             <Search className="size-5 text-subtle shrink-0" strokeWidth={1.75} />
             <input
@@ -130,9 +124,6 @@ export default function MedicationsStep() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onBlur={() => {
-                // Genuine blur (keyboard dismissed / tapped away). Result & clear
-                // buttons prevent the pointerdown blur, so this only fires when
-                // the user truly leaves the field.
                 if (meds.length > 0) setMode("list");
               }}
               placeholder="Search medications or supplements"
@@ -154,7 +145,6 @@ export default function MedicationsStep() {
             )}
           </div>
 
-          {/* Results */}
           {showResults && (
             <div className="mt-5">
               <p className="text-base font-semibold text-base-text">Results</p>
@@ -187,7 +177,6 @@ export default function MedicationsStep() {
             </div>
           )}
 
-          {/* Already-selected, shifted down beneath the search */}
           {meds.length > 0 && (
             <div className="mt-8 space-y-4">
               <p className="text-base font-semibold text-[#43474E]">
@@ -201,7 +190,6 @@ export default function MedicationsStep() {
           )}
         </>
       ) : (
-        /* List mode */
         <div className="space-y-5">
           <p className="text-base font-semibold text-[#43474E]">
             Current medications / supplements

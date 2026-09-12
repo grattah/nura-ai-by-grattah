@@ -98,7 +98,6 @@ export default function ProfilePage() {
     setPwPending(true);
     setPwError(null);
 
-    // Verify current password by re-authenticating
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email: user?.email ?? "",
       password: currentPw,
@@ -118,7 +117,6 @@ export default function ProfilePage() {
       return;
     }
 
-    // Supabase invalidates the session after password change
     await supabase.auth.signOut();
     posthog.reset();
     router.push(`/log-back-in?email=${encodeURIComponent(user?.email ?? "")}`);
@@ -134,7 +132,6 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-dvh bg-background pb-10 flex flex-col">
-      {/* Header */}
       <div className="flex items-center px-6 pt-5 pb-11 relative">
         <button
           onClick={() => router.back()}
@@ -153,7 +150,6 @@ export default function ProfilePage() {
       </div>
 
       <div className="px-6 space-y-6 flex-1 flex flex-col">
-        {/* Avatar */}
         <div className="flex justify-center">
           <AvatarUpload
             avatarUrl={user.avatarUrl}
@@ -161,7 +157,6 @@ export default function ProfilePage() {
           />
         </div>
 
-        {/* PROFILE section */}
         <div className="space-y-3">
           <p
             className="text-sm font-medium uppercase tracking-widest"
@@ -170,7 +165,6 @@ export default function ProfilePage() {
             Profile
           </p>
 
-          {/* Full name */}
           <div className="bg-card rounded-sm px-4 h-14 flex items-center border border-[#E2E4E4] gap-3">
             <input
               type="text"
@@ -194,7 +188,6 @@ export default function ProfilePage() {
             )}
           </div>
 
-          {/* Email (read-only) */}
           <div className="bg-card rounded-sm px-4 h-14 flex items-center border border-[#E2E4E4] gap-3">
             <span className="flex-1 text-base text-base-text">
               {user.email}
@@ -206,7 +199,6 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* SECURITY section */}
         <div className="space-y-3">
           <p
             className="text-sm font-medium uppercase tracking-widest"
@@ -215,7 +207,6 @@ export default function ProfilePage() {
             Security
           </p>
 
-          {/* Change password collapsible */}
           <div className="bg-white rounded-2xl px-4 divide-y border border-[#E3E1D880] overflow-hidden">
             <button
               type="button"
@@ -250,7 +241,6 @@ export default function ProfilePage() {
                 onSubmit={handlePasswordUpdate}
                 className="pb-4 space-y-3 pt-4"
               >
-                {/* Current password */}
                 <div className="space-y-1">
                   <label className="text-sm text-subtle">
                     Current password
@@ -277,7 +267,6 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                {/* New password */}
                 <div className="space-y-1">
                   <label className="text-sm text-subtle">New password</label>
                   <div className="flex items-center gap-3 bg-white rounded-sm px-4 h-12 border border-[#E2E4E4]">
@@ -302,7 +291,6 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                {/* Confirm password */}
                 <div className="space-y-1">
                   <label className="text-sm text-subtle">
                     Re-enter new password

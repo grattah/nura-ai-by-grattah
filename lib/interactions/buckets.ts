@@ -1,14 +1,3 @@
-// Mechanism buckets shared by both sides of an ingredient↔drug interaction.
-// The ingredient side tags each curated ingredient with a bucket (DB seed); the
-// drug side derives a drug's buckets from its RxClass pharmacologic classes.
-// Matching is a plain string intersection of buckets.
-//
-// Drug-class keys below are the drug's OWN classes (EPC / PE / ATC) as returned
-// by RxClass class/byDrugName (relaSource DAILYMED|MEDRT|ATC, own relas only) —
-// verified against 10 real drugs. Matching is case-insensitive substring.
-// CYP3A4-substrate is the exception: RxClass substrate data is unreliable
-// (atorvastatin returns no CYP class), so it uses a curated substrate-class list.
-
 export type Bucket =
   | "cyp3a4_substrate"
   | "additive_hmgcoa"
@@ -34,18 +23,15 @@ interface BucketRule {
   epc?: string[];
   pe?: string[];
   atc?: string[];
-  /** cyp3a4_substrate only — matched via CYP3A4_SUBSTRATE_CLASSES instead. */
   curatedSubstrate?: boolean;
 }
 
-// Drug classes whose members are clinically-significant CYP3A4 substrates. Used
-// where RxClass can't be trusted for substrate status.
 export const CYP3A4_SUBSTRATE_CLASSES = [
-  "HMG-CoA Reductase Inhibitor", // simvastatin, atorvastatin, lovastatin
-  "Dihydropyridine Calcium Channel Blocker", // amlodipine, felodipine, nifedipine
+  "HMG-CoA Reductase Inhibitor",
+  "Dihydropyridine Calcium Channel Blocker",
   "Calcium Channel Blocker",
-  "Benzodiazepine", // midazolam, triazolam, alprazolam
-  "Calcineurin Inhibitor", // cyclosporine, tacrolimus
+  "Benzodiazepine",
+  "Calcineurin Inhibitor",
   "Immunosuppressant",
   "Macrolide Antimicrobial",
   "HIV Protease Inhibitor",
@@ -105,7 +91,6 @@ export const BUCKET_MATCH: Record<Bucket, BucketRule> = {
   },
   ace_cough: { epc: ["Angiotensin Converting Enzyme Inhibitor"] },
   sympathomimetic_bp: {
-    // BP-raising herbs: risk with antihypertensives (reduced efficacy) and MAOIs.
     pe: ["Decreased Blood Pressure"],
     epc: ["Monoamine Oxidase Inhibitor"],
   },
@@ -136,8 +121,6 @@ export const BUCKET_MATCH: Record<Bucket, BucketRule> = {
     atc: ["Estrogens", "Hormonal contraceptives"],
   },
   chelation_absorption: {
-    // Same-time chelation matters most for these. RxClass labels quinolones as
-    // "Fluoroquinolone Antibacterial" / "Fluoroquinolones" (not "Quinolone").
     epc: ["l-Thyroxine", "Fluoroquinolone", "Quinolone", "Tetracycline"],
     atc: ["Thyroid hormones", "Fluoroquinolones", "Tetracyclines", "Quinolone antibacterials"],
   },
@@ -147,7 +130,6 @@ export const BUCKET_MATCH: Record<Bucket, BucketRule> = {
   },
 };
 
-/** Case-insensitive: does any class name contain any of the needles? */
 function anyMatch(classNames: string[], needles?: string[]): boolean {
   if (!needles?.length) return false;
   const lower = classNames.map((c) => c.toLowerCase());
@@ -157,7 +139,7 @@ function anyMatch(classNames: string[], needles?: string[]): boolean {
   });
 }
 
-/** Buckets a drug is susceptible to, from its own RxClass class names. */
+/** Interaction buckets a drug falls into, from its RxClass classes. */
 export function deriveBuckets(classNames: string[]): Bucket[] {
   const out: Bucket[] = [];
   for (const [bucket, rule] of Object.entries(BUCKET_MATCH) as [
